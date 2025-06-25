@@ -50,6 +50,23 @@ export interface Team {
   };
 }
 
+export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
+
+export interface Match {
+  matchId: string;
+  teamAId: string;
+  teamAName: string;
+  teamBId: string;
+  teamBName: string;
+  seasonId: string;
+  seasonName: string;
+  fieldId: string;
+  fieldName: string;
+  dateTime: Date;
+  status: MatchStatus;
+}
+
+
 // Data
 export const initialDivisions: Division[] = [
     { divisionId: "div_1", name: "U19 Varsity" },

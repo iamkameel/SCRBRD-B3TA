@@ -4,8 +4,12 @@ import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { getMatches } from "@/lib/actions/matches";
+import { format } from "date-fns";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const recentMatches = (await getMatches()).slice(0, 5);
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -71,7 +75,7 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Recent Matches</CardTitle>
           <CardDescription>
-            A list of your recently played or ongoing matches will appear here.
+            A list of your recently played or ongoing matches.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -84,24 +88,29 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell className="font-medium">
-                  <Link href={`/matches/fixture_1`} className="hover:underline">
-                    Greenwood Gators vs Oakdale Eagles
-                  </Link>
-                </TableCell>
-                <TableCell>July 28, 2024</TableCell>
-                <TableCell><Badge variant="default">Scheduled</Badge></TableCell>
-              </TableRow>
-               <TableRow>
-                <TableCell className="font-medium">
-                  <Link href={`/matches/fixture_2`} className="hover:underline">
-                    Riverbend Ravens vs Greenwood Gators
-                  </Link>
-                </TableCell>
-                <TableCell>July 30, 2024</TableCell>
-                <TableCell><Badge variant="default">Scheduled</Badge></TableCell>
-              </TableRow>
+              {recentMatches.length > 0 ? (
+                recentMatches.map((match) => (
+                  <TableRow key={match.matchId}>
+                    <TableCell className="font-medium">
+                      <Link href={`/matches/${match.matchId}`} className="hover:underline">
+                        {match.teamAName} vs {match.teamBName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{format(match.dateTime, "PPP")}</TableCell>
+                    <TableCell>
+                      <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
+                        {match.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="h-24 text-center">
+                    No recent matches found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

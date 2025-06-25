@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, Season, Field } from "@/lib/data";
+import { addMatchAction } from "@/lib/actions/matches";
 
 const fixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
@@ -44,6 +46,9 @@ interface NewMatchClientProps {
 
 export default function NewMatchClient({ teams, seasons, fields }: NewMatchClientProps) {
   const { toast } = useToast();
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
+
   const form = useForm<FixtureFormValues>({
     resolver: zodResolver(fixtureSchema),
     defaultValues: {
@@ -52,22 +57,32 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
   });
 
   function onSubmit(data: FixtureFormValues) {
-    const [hours, minutes] = data.time.split(':').map(Number);
-    const combinedDateTime = new Date(data.dateTime);
-    combinedDateTime.setHours(hours, minutes, 0, 0);
+    startTransition(async () => {
+      try {
+        const [hours, minutes] = data.time.split(':').map(Number);
+        const combinedDateTime = new Date(data.dateTime);
+        combinedDateTime.setHours(hours, minutes, 0, 0);
 
-    const teamA = teams.find(t => t.teamId === data.teamAId);
-    const teamB = teams.find(t => t.teamId === data.teamBId);
-    toast({
-      title: "Fixture Created",
-      description: `Successfully created fixture: ${teamA?.name} vs ${teamB?.name}.`
+        const { time, ...rest } = data;
+        const finalData = { ...rest, dateTime: combinedDateTime };
+        
+        await addMatchAction(finalData);
+        
+        // The action handles the redirect, but we can show a toast as a fallback
+        // or for actions that don't redirect. Here, it might not be visible.
+        toast({
+          title: "Fixture Created",
+          description: "Redirecting to the match page..."
+        });
+
+      } catch (error) {
+        toast({
+          title: "Error Creating Match",
+          description: error instanceof Error ? error.message : "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      }
     });
-
-    const { time, ...rest } = data;
-    const finalData = { ...rest, dateTime: combinedDateTime };
-
-    console.log("Fixture data:", finalData);
-    form.reset();
   }
 
 
@@ -98,7 +113,7 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Home Team</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a team" />
@@ -122,7 +137,7 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Away Team</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a team" />
@@ -147,7 +162,7 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Season</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a season" />
@@ -171,7 +186,7 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Venue / Field</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a field" />
@@ -206,6 +221,7 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
                                         "w-full justify-start text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                     )}
+                                    disabled={isPending}
                                     >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {field.value ? (
@@ -239,16 +255,16 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
                             <FormItem className="flex flex-col">
                             <FormLabel>Match Time</FormLabel>
                                 <FormControl>
-                                    <Input type="time" className="w-full" {...field} />
+                                    <Input type="time" className="w-full" {...field} disabled={isPending}/>
                                 </FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
                     />
                 </div>
-
-
-                <Button type="submit">Create Fixture & Start Scoring</Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? "Creating Match..." : "Create Fixture & Start Scoring"}
+                </Button>
             </form>
           </Form>
         </CardContent>

@@ -1,7 +1,7 @@
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { LayoutDashboard, Users, User, PlusCircle, CalendarDays, MapPin, Building, Trophy } from 'lucide-react';
+import { LayoutDashboard, Users, User, PlusCircle, CalendarDays, MapPin, Building, Trophy, ClipboardList } from 'lucide-react';
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 function Sidebar() {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/matches', label: 'Matches', icon: ClipboardList },
     { href: '/teams', label: 'Teams', icon: Users },
     { href: '/players', label: 'Players', icon: User },
     { href: '/seasons', label: 'Seasons', icon: CalendarDays },
