@@ -1,10 +1,76 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+
+const fixtureSchema = z.object({
+  teamAId: z.string({ required_error: "Please select the home team." }),
+  teamBId: z.string({ required_error: "Please select the away team." }),
+  seasonId: z.string({ required_error: "Please select a season." }),
+  fieldId: z.string({ required_error: "Please select a field." }),
+  dateTime: z.date({
+    required_error: "A date for the match is required.",
+  }),
+}).refine(data => data.teamAId !== data.teamBId, {
+  message: "Home and away teams cannot be the same.",
+  path: ["teamBId"],
+});
+
+type FixtureFormValues = z.infer<typeof fixtureSchema>;
+
+// Mock data. In a real app, this would come from a database.
+const teams = [
+  { id: "team_1", name: "Greenwood Gators" },
+  { id: "team_2", name: "Oakdale Eagles" },
+  { id: "team_3", name: "Riverbend Ravens" },
+];
+
+const seasons = [
+  { id: "season_1", name: "2024-2025" },
+  { id: "season_2", name: "2023-2024" },
+];
+
+const fields = [
+    { id: "field_1", name: "Greenwood High Main Oval" },
+    { id: "field_2", name: "Oakdale Academy Pitch 1" },
+    { id: "field_3", name: "Riverbend School Cricket Ground" },
+]
 
 export default function NewMatchPage() {
+  const { toast } = useToast();
+  const form = useForm<FixtureFormValues>({
+    resolver: zodResolver(fixtureSchema),
+    defaultValues: {},
+  });
+
+  function onSubmit(data: FixtureFormValues) {
+    const teamA = teams.find(t => t.id === data.teamAId);
+    const teamB = teams.find(t => t.id === data.teamBId);
+    toast({
+      title: "Fixture Created",
+      description: `Successfully created fixture: ${teamA?.name} vs ${teamB?.name}.`
+    });
+    console.log("Fixture data:", data);
+    form.reset();
+  }
+
+
   return (
     <div className="flex flex-col gap-8">
-       <header>
+      <header>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Create a New Match
         </h1>
@@ -16,14 +82,155 @@ export default function NewMatchPage() {
         <CardHeader>
           <CardTitle>Match Setup</CardTitle>
           <CardDescription>
-            Select teams, venue, and officials to start a new match.
+            Select teams, venue, and date to create a new match.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            Fixture creation form will be here. You'll be able to select from your existing teams and players.
-          </p>
-           <Button disabled>Start Scoring</Button>
+        <CardContent>
+           <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="teamAId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Home Team</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a team" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {teams.map((team) => (
+                                    <SelectItem key={team.id} value={team.id}>
+                                    {team.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="teamBId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Away Team</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a team" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {teams.map((team) => (
+                                    <SelectItem key={team.id} value={team.id}>
+                                    {team.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <FormField
+                    control={form.control}
+                    name="seasonId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Season</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a season" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {seasons.map((season) => (
+                                <SelectItem key={season.id} value={season.id}>
+                                {season.name}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="fieldId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Venue / Field</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a field" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {fields.map((field) => (
+                                <SelectItem key={field.id} value={field.id}>
+                                {field.name}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="dateTime"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Match Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full md:w-[280px] justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                date < new Date(new Date().setHours(0,0,0,0))
+                                }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <Button type="submit">Create Fixture & Start Scoring</Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
