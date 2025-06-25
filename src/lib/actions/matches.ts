@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc } from 'firebase/firestore';
 import type { Match, Official } from '@/lib/data';
 
 export async function getMatches(): Promise<Match[]> {
@@ -183,6 +183,43 @@ export async function assignOfficialToMatchAction(matchId: string, data: Assignm
         throw error;
     }
     throw new Error("Could not assign official to match.");
+  }
+
+  revalidatePath(`/matches/${matchId}`);
+  return { success: true };
+}
+
+export async function getMatchLineup(matchId: string, teamId: string): Promise<string[]> {
+  try {
+    const lineupDocRef = doc(db, 'matches', matchId, 'lineups', teamId);
+    const lineupSnap = await getDoc(lineupDocRef);
+    if (!lineupSnap.exists()) {
+      return [];
+    }
+    return lineupSnap.data().playerIds || [];
+  } catch (error)
+ {
+    console.error(`Error fetching lineup for match ${matchId}, team ${teamId}:`, error);
+    return [];
+  }
+}
+
+const lineupSchema = z.object({
+  playerIds: z.array(z.string()),
+});
+
+export async function saveMatchLineupAction(matchId: string, teamId: string, playerIds: string[]) {
+  const validatedFields = lineupSchema.safeParse({ playerIds });
+  if (!validatedFields.success) {
+    throw new Error('Invalid lineup data.');
+  }
+
+  try {
+    const lineupDocRef = doc(db, 'matches', matchId, 'lineups', teamId);
+    await setDoc(lineupDocRef, { playerIds });
+  } catch (error) {
+    console.error("Error saving lineup: ", error);
+    throw new Error("Could not save lineup.");
   }
 
   revalidatePath(`/matches/${matchId}`);

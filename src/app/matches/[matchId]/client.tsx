@@ -8,6 +8,7 @@ import * as z from "zod";
 import { PlusCircle, MoreHorizontal, Calendar, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,8 +19,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { assignOfficialToMatchAction } from '@/lib/actions/matches';
-import type { Match, Person, Official, Innings } from "@/lib/data";
+import { Checkbox } from "@/components/ui/checkbox";
+import { assignOfficialToMatchAction, saveMatchLineupAction } from '@/lib/actions/matches';
+import type { Match, Person, Official, Innings, RosterMember } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 
 // From schema: match_role_assignments
@@ -123,8 +125,131 @@ function AssignOfficialDialog({ matchId, people }: { matchId: string, people: Pe
   );
 }
 
+const lineupSchema = z.object({
+  playerIds: z.array(z.string()).refine(value => value.length > 0, {
+    message: "You must select at least one player.",
+  }).refine(value => value.length <= 11, {
+    message: "You can select a maximum of 11 players."
+  }),
+});
 
-export default function MatchDetailsClient({ match, initialOfficials, people }: { match: Match; initialOfficials: Official[]; people: Person[] }) {
+type LineupFormValues = z.infer<typeof lineupSchema>;
+
+interface LineupSelectionCardProps {
+  teamId: string;
+  teamName: string;
+  matchId: string;
+  roster: RosterMember[];
+  lineup: string[];
+}
+
+function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: LineupSelectionCardProps) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
+
+  const form = useForm<LineupFormValues>({
+    resolver: zodResolver(lineupSchema),
+    defaultValues: {
+      playerIds: lineup || [],
+    },
+  });
+
+  function onSubmit(data: LineupFormValues) {
+    startTransition(async () => {
+      try {
+        await saveMatchLineupAction(matchId, teamId, data.playerIds);
+        toast({
+          title: "Lineup Saved",
+          description: `The lineup for ${teamName} has been updated.`,
+        });
+        router.refresh();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Could not save lineup.",
+          variant: "destructive",
+        });
+      }
+    });
+  }
+
+  const selectedCount = form.watch('playerIds')?.length || 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{teamName} - Select Lineup ({selectedCount}/11)</CardTitle>
+        <CardDescription>Select the 11 players for this match.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {roster.length > 0 ? (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="playerIds"
+                render={() => (
+                  <FormItem className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {roster.map((member) => (
+                        <FormField
+                          key={member.personId}
+                          control={form.control}
+                          name="playerIds"
+                          render={({ field }) => (
+                            <FormItem key={member.personId} className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(member.personId)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, member.personId])
+                                      : field.onChange(field.value?.filter((id) => id !== member.personId));
+                                  }}
+                                  disabled={isPending}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal flex flex-col">
+                                {member.personName}
+                                <span className="text-xs text-muted-foreground">{member.role}</span>
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Saving..." : `Save ${teamName} Lineup`}
+              </Button>
+            </form>
+          </Form>
+        ) : (
+          <p className="text-center text-muted-foreground py-8">
+            No players on this team's roster. Add players on the <Link href={`/teams/${teamId}`} className="underline">team page</Link>.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+
+interface MatchDetailsClientProps {
+  match: Match;
+  initialOfficials: Official[];
+  people: Person[];
+  teamARoster: RosterMember[];
+  teamBRoster: RosterMember[];
+  teamALineup: string[];
+  teamBLineup: string[];
+}
+
+export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup }: MatchDetailsClientProps) {
   
   const placeholderInnings1: Innings = {
     teamName: match.teamAName,
@@ -209,6 +334,23 @@ export default function MatchDetailsClient({ match, initialOfficials, people }: 
         </Card>
       </Tabs>
       
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <LineupSelectionCard
+          teamId={match.teamAId}
+          teamName={match.teamAName}
+          matchId={match.matchId}
+          roster={teamARoster}
+          lineup={teamALineup}
+        />
+        <LineupSelectionCard
+          teamId={match.teamBId}
+          teamName={match.teamBName}
+          matchId={match.matchId}
+          roster={teamBRoster}
+          lineup={teamBLineup}
+        />
+      </div>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
