@@ -72,7 +72,7 @@ export default function DataManagementClient() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled>
+                        <Button variant="ghost" size="icon">
                           <Download className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
@@ -85,7 +85,7 @@ export default function DataManagementClient() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled>
+                        <Button variant="ghost" size="icon">
                           <Upload className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
@@ -127,7 +127,7 @@ export default function DataManagementClient() {
           <CardContent>
              <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled>
+                  <Button variant="destructive">
                     Delete All Application Data
                   </Button>
                 </AlertDialogTrigger>
