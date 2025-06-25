@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -23,6 +24,27 @@ export async function getMatches(): Promise<Match[]> {
   } catch (error) {
     console.error("Error fetching matches:", error);
     return [];
+  }
+}
+
+export async function getMatch(matchId: string): Promise<Match | null> {
+  try {
+    const matchDocRef = doc(db, 'matches', matchId);
+    const matchSnap = await getDoc(matchDocRef);
+
+    if (!matchSnap.exists()) {
+      return null;
+    }
+
+    const data = matchSnap.data();
+    return {
+      matchId: matchSnap.id,
+      ...data,
+      dateTime: (data.dateTime as Timestamp).toDate(),
+    } as Match;
+  } catch (error) {
+    console.error(`Error fetching match with ID ${matchId}:`, error);
+    return null;
   }
 }
 
