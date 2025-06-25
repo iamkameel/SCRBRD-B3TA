@@ -1,30 +1,83 @@
-import { Header } from '@/components/header';
-import { MatchForm } from '@/components/match-form';
-import { Suspense } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import Link from "next/link";
 
-function HomePageContent() {
+export default function DashboardPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <section className="text-center mb-12 animate-in fade-in-50 duration-500">
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-primary font-headline">
-            AI-Powered Match Summaries
-          </h1>
-          <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl mt-4">
-            Instantly generate professional cricket match reports. Just enter the stats, and let our AI do the writing for you.
-          </p>
-        </section>
-        <MatchForm />
-      </main>
+    <div className="flex flex-col gap-8">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Dashboard
+        </h1>
+        <p className="text-muted-foreground">
+          Welcome to your cricket scoring and management dashboard.
+        </p>
+      </header>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="flex flex-col">
+          <CardHeader>
+            <CardTitle>Start a New Match</CardTitle>
+            <CardDescription>
+              Set up teams and get ready to score your next game.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-grow flex items-end">
+            <Button asChild className="w-full">
+              <Link href="/new-match">
+                <PlusCircle className="mr-2 h-4 w-4" /> New Match
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Manage Teams</CardTitle>
+            <CardDescription>
+              Create, view, and edit your cricket teams.
+            </CardDescription>
+          </CardHeader>
+           <CardContent className="flex-grow flex items-end">
+             <Button asChild variant="secondary" className="w-full">
+              <Link href="/teams">
+                View Teams
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Manage Players</CardTitle>
+            <CardDescription>
+              Manage your player roster and assign players to teams.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-grow flex items-end">
+             <Button asChild variant="secondary" className="w-full">
+              <Link href="/players">
+                View Players
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+       <Card>
+        <CardHeader>
+          <CardTitle>Recent Matches</CardTitle>
+          <CardDescription>
+            A list of your recently played or ongoing matches will appear here.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-muted-foreground py-8">
+            <p>No recent matches found.</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
-}
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <HomePageContent />
-    </Suspense>
   );
 }
