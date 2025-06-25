@@ -1,7 +1,7 @@
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { LayoutDashboard, Users, User, PlusCircle, CalendarDays, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, User, PlusCircle, CalendarDays, MapPin, Building, Trophy } from 'lucide-react';
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -19,6 +19,8 @@ function Sidebar() {
     { href: '/teams', label: 'Teams', icon: Users },
     { href: '/players', label: 'Players', icon: User },
     { href: '/seasons', label: 'Seasons', icon: CalendarDays },
+    { href: '/schools', label: 'Schools', icon: Building },
+    { href: '/divisions', label: 'Divisions', icon: Trophy },
     { href: '/fields', label: 'Fields', icon: MapPin },
     { href: '/new-match', label: 'New Match', icon: PlusCircle },
   ];
