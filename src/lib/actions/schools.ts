@@ -1,13 +1,27 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { initialSchools, type School } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import type { School } from '@/lib/data';
 
-// This is a placeholder for a database call to get all schools.
-export async function getSchools() {
-  // In a real app, you'd fetch this from your database.
-  return Promise.resolve(initialSchools);
+// This function now fetches data from Firestore
+export async function getSchools(): Promise<School[]> {
+  try {
+    const schoolsCollection = collection(db, 'schools');
+    const schoolSnapshot = await getDocs(schoolsCollection);
+    const schoolsList = schoolSnapshot.docs.map(doc => ({
+      schoolId: doc.id,
+      name: doc.data().name,
+    }));
+    return schoolsList;
+  } catch (error) {
+    console.error("Error fetching schools:", error);
+    // Return empty array or handle error as needed
+    return [];
+  }
 }
 
 const schoolSchema = z.object({
@@ -16,27 +30,27 @@ const schoolSchema = z.object({
 
 type SchoolFormValues = z.infer<typeof schoolSchema>;
 
-// This is a placeholder for a database insert.
+// This function now adds a document to Firestore
 export async function addSchoolAction(data: SchoolFormValues) {
   const validatedFields = schoolSchema.safeParse(data);
 
   if (!validatedFields.success) {
-    // This is a simple error handling. A real app might return more detailed errors.
     throw new Error('Invalid school name.');
   }
 
   const { name } = validatedFields.data;
 
-  const newSchool: School = {
-    name,
-    schoolId: `school_${new Date().getTime()}`, // Temporary unique ID
-  };
-
-  // In a real app, you'd insert this into your database.
-  initialSchools.push(newSchool);
-
-  // Revalidate the path to show the new school in the list.
+  try {
+    await addDoc(collection(db, 'schools'), {
+      name: name,
+    });
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    throw new Error("Could not add school.");
+  }
+  
   revalidatePath('/schools');
-
-  return { success: true, school: newSchool };
+  revalidatePath('/teams'); // Also revalidate teams page as it uses schools
+  
+  return { success: true };
 }

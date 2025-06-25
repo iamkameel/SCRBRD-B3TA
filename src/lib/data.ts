@@ -51,12 +51,6 @@ export interface Team {
 }
 
 // Data
-export const initialSchools: School[] = [
-    { schoolId: "school_1", name: "Greenwood High" },
-    { schoolId: "school_2", name: "Oakdale Academy" },
-    { schoolId: "school_3", name: "Riverbend School" },
-];
-
 export const initialDivisions: Division[] = [
     { divisionId: "div_1", name: "U19 Varsity" },
     { divisionId: "div_2", name: "U17 Junior Varsity" },

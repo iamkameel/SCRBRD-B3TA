@@ -1,8 +1,11 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { initialTeams, initialSchools, initialDivisions, initialSeasons, type Team } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { initialTeams, initialDivisions, initialSeasons, type Team } from '@/lib/data';
 
 // This is a placeholder for a database call to get all teams.
 export async function getTeams() {
@@ -31,19 +34,23 @@ export async function addTeamAction(data: TeamFormValues) {
   
   const { name, schoolId, divisionId, seasonId, primaryColor, secondaryColor } = validatedFields.data;
 
-  const school = initialSchools.find((s) => s.schoolId === schoolId);
+  const schoolDocRef = doc(db, 'schools', schoolId);
+  const schoolSnap = await getDoc(schoolDocRef);
+  
   const division = initialDivisions.find((d) => d.divisionId === divisionId);
   const season = initialSeasons.find((s) => s.seasonId === seasonId);
 
-  if (!school || !division || !season) {
+  if (!schoolSnap.exists() || !division || !season) {
       throw new Error("Invalid selection for school, division, or season.");
   }
+
+  const schoolName = schoolSnap.data().name;
 
   const newTeam: Team = {
     teamId: `team_${new Date().getTime()}`,
     name,
     schoolId,
-    schoolName: school.name,
+    schoolName: schoolName,
     divisionId,
     divisionName: division.name,
     seasonId,
