@@ -2,12 +2,24 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { initialDivisions, type Division } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import type { Division } from '@/lib/data';
 
-// This is a placeholder for a database call to get all divisions.
-export async function getDivisions() {
-  // In a real app, you'd fetch this from your database.
-  return Promise.resolve(initialDivisions);
+// This function now fetches data from Firestore
+export async function getDivisions(): Promise<Division[]> {
+  try {
+    const divisionsCollection = collection(db, 'divisions');
+    const divisionSnapshot = await getDocs(divisionsCollection);
+    const divisionsList = divisionSnapshot.docs.map(doc => ({
+      divisionId: doc.id,
+      name: doc.data().name,
+    }));
+    return divisionsList;
+  } catch (error) {
+    console.error("Error fetching divisions:", error);
+    return [];
+  }
 }
 
 const divisionSchema = z.object({
@@ -16,27 +28,27 @@ const divisionSchema = z.object({
 
 type DivisionFormValues = z.infer<typeof divisionSchema>;
 
-// This is a placeholder for a database insert.
+// This function now adds a document to Firestore
 export async function addDivisionAction(data: DivisionFormValues) {
   const validatedFields = divisionSchema.safeParse(data);
 
   if (!validatedFields.success) {
-    // This is a simple error handling. A real app might return more detailed errors.
     throw new Error('Invalid division name.');
   }
 
   const { name } = validatedFields.data;
-
-  const newDivision: Division = {
-    name,
-    divisionId: `div_${new Date().getTime()}`, // Temporary unique ID
-  };
-
-  // In a real app, you'd insert this into your database.
-  initialDivisions.push(newDivision);
-
-  // Revalidate the path to show the new division in the list.
+  
+  try {
+    await addDoc(collection(db, 'divisions'), {
+      name: name,
+    });
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    throw new Error("Could not add division.");
+  }
+  
   revalidatePath('/divisions');
+  revalidatePath('/teams'); // Also revalidate teams page as it uses divisions
 
-  return { success: true, division: newDivision };
+  return { success: true };
 }
