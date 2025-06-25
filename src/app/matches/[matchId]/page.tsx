@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Scorecard } from "./scorecard";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // From schema: match_role_assignments
 const assignmentSchema = z.object({
@@ -26,6 +28,21 @@ const assignmentSchema = z.object({
 });
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
+
+// From schema: scoring_actions (simplified)
+const scoringActionSchema = z.object({
+  batsmanId: z.string({ required_error: "Please select the batsman." }),
+  bowlerId: z.string({ required_error: "Please select the bowler." }),
+  runsOffBat: z.coerce.number().int().min(0).max(6).default(0),
+  isWicket: z.boolean().default(false),
+}).refine(data => data.batsmanId !== data.bowlerId, {
+    message: "Batsman and bowler cannot be the same person.",
+    path: ["bowlerId"],
+});
+
+
+type ScoringActionFormValues = z.infer<typeof scoringActionSchema>;
+
 
 // Mock Data
 const mockFixture = {
@@ -43,7 +60,7 @@ const mockPeople = [
     { personId: "person_2", firstName: "Jane", lastName: "Smith", email: "jane.smith@example.com", roles: ["Player", "Guardian"] },
     { personId: "person_3", firstName: "Peter", lastName: "Jones", email: "peter.jones@example.com", roles: ["Coach", "Umpire"] },
     { personId: "person_4", firstName: "Mary", lastName: "Williams", email: "mary.w@example.com", roles: ["Player", "Scorer"] },
-    { personId: "person_5", firstName: "Sam", lastName: "Brown", email: "sam.b@example.com", roles: ["Umpire"] },
+    { personId: "person_5", firstName: "Sam", lastName: "Brown", email: "sam.b@example.com", roles: ["Umpire", "Player"] },
 ];
 
 interface Official {
@@ -102,6 +119,117 @@ const mockScorecard = {
   };
 
 const ROLES = ["Umpire", "Scorer"];
+
+function AddScoringActionEventDialog({ onActionAdded }: { onActionAdded: (action: ScoringActionFormValues) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const { toast } = useToast();
+  const form = useForm<ScoringActionFormValues>({
+    resolver: zodResolver(scoringActionSchema),
+    defaultValues: {
+      runsOffBat: 0,
+      isWicket: false,
+    },
+  });
+
+  const players = mockPeople.filter(p => p.roles.includes("Player"));
+
+  function onSubmit(data: ScoringActionFormValues) {
+    onActionAdded(data);
+    toast({
+      title: "Scoring Action Recorded",
+      description: `A new event has been logged for this match.`,
+    });
+    setOpen(false);
+    form.reset();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Add Scoring Action
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Record Scoring Event</DialogTitle>
+          <DialogDescription>Log a ball-by-ball event. This will be used to build the live scorecard.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+             <FormField
+              control={form.control}
+              name="batsmanId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>On-strike Batsman</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select a batsman" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {players.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bowlerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bowler</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select a bowler" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {players.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="runsOffBat"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Runs off Bat</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" max="6" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isWicket"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Is it a wicket?</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit">Record Action</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function AssignOfficialDialog({ onOfficialAssigned }: { onOfficialAssigned: (assignment: Official) => void }) {
   const [open, setOpen] = React.useState(false);
@@ -191,11 +319,17 @@ function AssignOfficialDialog({ onOfficialAssigned }: { onOfficialAssigned: (ass
 
 export default function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const [officials, setOfficials] = React.useState<Official[]>([]);
+  const [scoringActions, setScoringActions] = React.useState<ScoringActionFormValues[]>([]);
 
   const handleOfficialAssigned = (assignment: Official) => {
     setOfficials(prev => [...prev, assignment]);
   };
   
+  const handleActionAdded = (action: ScoringActionFormValues) => {
+    setScoringActions(prev => [...prev, action]);
+    console.log("New Scoring Action: ", action);
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <Card>
@@ -243,6 +377,26 @@ export default function MatchDetailsPage({ params }: { params: { matchId: string
             </Card>
         </TabsContent>
       </Tabs>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Live Scoring</CardTitle>
+          <CardDescription>Record ball-by-ball events for this match.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AddScoringActionEventDialog onActionAdded={handleActionAdded} />
+          <div className="mt-4 space-y-2">
+            <h4 className="font-medium">Recent Events</h4>
+            {scoringActions.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto rounded-md border bg-muted p-4">
+                    <pre className="text-xs">{JSON.stringify(scoringActions, null, 2)}</pre>
+                </div>
+            ) : (
+                <p className="text-sm text-muted-foreground p-4 text-center">No scoring events recorded yet.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
