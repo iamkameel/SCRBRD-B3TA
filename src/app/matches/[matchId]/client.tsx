@@ -5,14 +5,30 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,11 +36,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
 import type { Match, Person, Official, Innings, RosterMember } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 
-// From schema: match_role_assignments
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
   role: z.string({ required_error: "Please select a role." }),
@@ -238,7 +253,6 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
   );
 }
 
-
 interface MatchDetailsClientProps {
   match: Match;
   initialOfficials: Official[];
@@ -250,7 +264,27 @@ interface MatchDetailsClientProps {
 }
 
 export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup }: MatchDetailsClientProps) {
-  
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+  const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+
+  const handleRemoveOfficial = () => {
+    if (!selectedOfficial) return;
+    startTransition(async () => {
+      try {
+        await removeOfficialFromMatchAction(match.matchId, selectedOfficial.assignmentId);
+        toast({ title: "Official Removed", description: `${selectedOfficial.personName} has been removed from the match.` });
+        setIsDeleteDialogOpen(false);
+        setSelectedOfficial(null);
+      } catch (error) {
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not remove official.", variant: "destructive" });
+        setIsDeleteDialogOpen(false);
+        setSelectedOfficial(null);
+      }
+    });
+  };
+
   const placeholderInnings1: Innings = {
     teamName: match.teamAName,
     totalRuns: 150,
@@ -294,111 +328,108 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl">{match.teamAName} vs {match.teamBName}</CardTitle>
-          <CardDescription className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-             <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(match.dateTime, "PPPP")}</span>
-             <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {format(match.dateTime, "p")}</span>
-             <span>{match.fieldName}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge>
-        </CardContent>
-      </Card>
-      
-      <Tabs defaultValue="team-a-innings">
+    <>
+      <div className="flex flex-col gap-8">
         <Card>
-            <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <CardTitle>Scorecard</CardTitle>
-                        <CardDescription>Detailed match scorecard for both innings.</CardDescription>
-                    </div>
-                    <TabsList className="mt-4 md:mt-0">
-                        <TabsTrigger value="team-a-innings">{match.teamAName}</TabsTrigger>
-                        <TabsTrigger value="team-b-innings">{match.teamBName}</TabsTrigger>
-                    </TabsList>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <TabsContent value="team-a-innings">
-                    <Scorecard innings={placeholderInnings1} />
-                </TabsContent>
-                <TabsContent value="team-b-innings">
-                    <Scorecard innings={placeholderInnings2} />
-                </TabsContent>
-            </CardContent>
+          <CardHeader>
+            <CardTitle className="text-3xl">{match.teamAName} vs {match.teamBName}</CardTitle>
+            <CardDescription className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(match.dateTime, "PPPP")}</span>
+              <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {format(match.dateTime, "p")}</span>
+              <span>{match.fieldName}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge>
+          </CardContent>
         </Card>
-      </Tabs>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <LineupSelectionCard
-          teamId={match.teamAId}
-          teamName={match.teamAName}
-          matchId={match.matchId}
-          roster={teamARoster}
-          lineup={teamALineup}
-        />
-        <LineupSelectionCard
-          teamId={match.teamBId}
-          teamName={match.teamBName}
-          matchId={match.matchId}
-          roster={teamBRoster}
-          lineup={teamBLineup}
-        />
+        
+        <Tabs defaultValue="team-a-innings">
+          <Card>
+              <CardHeader>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                      <div>
+                          <CardTitle>Scorecard</CardTitle>
+                          <CardDescription>Detailed match scorecard for both innings.</CardDescription>
+                      </div>
+                      <TabsList className="mt-4 md:mt-0">
+                          <TabsTrigger value="team-a-innings">{match.teamAName}</TabsTrigger>
+                          <TabsTrigger value="team-b-innings">{match.teamBName}</TabsTrigger>
+                      </TabsList>
+                  </div>
+              </CardHeader>
+              <CardContent>
+                  <TabsContent value="team-a-innings">
+                      <Scorecard innings={placeholderInnings1} />
+                  </TabsContent>
+                  <TabsContent value="team-b-innings">
+                      <Scorecard innings={placeholderInnings2} />
+                  </TabsContent>
+              </CardContent>
+          </Card>
+        </Tabs>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
+          <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
+        </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Match Officials</CardTitle>
+              <CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription>
+            </div>
+            <AssignOfficialDialog matchId={match.matchId} people={people} />
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {initialOfficials.length > 0 ? (
+                  initialOfficials.map(official => (
+                    <TableRow key={official.assignmentId}>
+                      <TableCell className="font-medium">{official.personName}</TableCell>
+                      <TableCell>{official.role}</TableCell>
+                      <TableCell><Badge variant={official.confirmed ? 'secondary' : 'outline'}>{official.confirmed ? 'Confirmed' : 'Pending'}</Badge></TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={4} className="h-24 text-center">No officials assigned to this match yet.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Match Officials</CardTitle>
-            <CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription>
-          </div>
-          <AssignOfficialDialog matchId={match.matchId} people={people} />
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {initialOfficials.length > 0 ? (
-                initialOfficials.map(official => (
-                  <TableRow key={official.assignmentId}>
-                    <TableCell className="font-medium">{official.personName}</TableCell>
-                    <TableCell>{official.role}</TableCell>
-                    <TableCell>
-                      <Badge variant={official.confirmed ? 'secondary' : 'outline'}>
-                        {official.confirmed ? 'Confirmed' : 'Pending'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    No officials assigned to this match yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      
-    </div>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>This will remove <strong>{selectedOfficial?.personName}</strong> from this match. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedOfficial(null)} disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveOfficial} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Official"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

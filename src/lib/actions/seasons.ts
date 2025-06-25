@@ -3,13 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, Timestamp, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, Timestamp, query, where } from 'firebase/firestore';
 import type { Season } from '@/lib/data';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-// This function now fetches data from Firestore for the current user
 export async function getSeasons(): Promise<Season[]> {
   if (!userId) return [];
   try {
@@ -19,14 +18,12 @@ export async function getSeasons(): Promise<Season[]> {
     const seasonsList = seasonSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
-        seasonId: doc.id,
-        name: data.name,
+        seasonId: doc.id, name: data.name,
         startDate: (data.startDate as Timestamp).toDate(),
         endDate: (data.endDate as Timestamp).toDate(),
         active: data.active,
       };
     });
-    // Sort seasons by start date descending
     return seasonsList.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
   } catch (error) {
     console.error("Error fetching seasons:", error);
@@ -46,33 +43,54 @@ const seasonSchema = z.object({
 
 type SeasonFormValues = z.infer<typeof seasonSchema>;
 
-// This function now adds a document to Firestore for the current user
 export async function addSeasonAction(data: SeasonFormValues) {
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = seasonSchema.safeParse(data);
-
-  if (!validatedFields.success) {
-    throw new Error('Invalid season data.');
-  }
-
+  if (!validatedFields.success) throw new Error('Invalid season data.');
   const { name, startDate, endDate, active } = validatedFields.data;
-
   try {
-    await addDoc(collection(db, 'seasons'), {
-      name,
-      startDate: Timestamp.fromDate(startDate),
-      endDate: Timestamp.fromDate(endDate),
-      active,
-      userId: userId,
-    });
+    await addDoc(collection(db, 'seasons'), { name, startDate: Timestamp.fromDate(startDate), endDate: Timestamp.fromDate(endDate), active, userId: userId });
   } catch (error) {
     console.error("Error adding document: ", error);
     throw new Error("Could not add season.");
   }
-  
-  revalidatePath('/seasons');
-  revalidatePath('/teams');
-  revalidatePath('/new-match');
+  revalidatePath('/seasons'); revalidatePath('/teams'); revalidatePath('/new-match');
+}
 
-  return { success: true };
+const updateSeasonSchema = seasonSchema.extend({ seasonId: z.string() });
+
+export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema>) {
+    if (!userId) throw new Error("User not authenticated");
+    const validatedFields = updateSeasonSchema.safeParse(data);
+    if (!validatedFields.success) throw new Error('Invalid season data.');
+    
+    const { seasonId, name, startDate, endDate, active } = validatedFields.data;
+    const seasonDocRef = doc(db, 'seasons', seasonId);
+    const seasonSnap = await getDoc(seasonDocRef);
+    if (!seasonSnap.exists() || seasonSnap.data().userId !== userId) throw new Error("Season not found or you do not have permission to edit it.");
+
+    try {
+        await updateDoc(seasonDocRef, { name, startDate: Timestamp.fromDate(startDate), endDate: Timestamp.fromDate(endDate), active });
+    } catch (error) {
+        console.error("Error updating season:", error);
+        throw new Error("Could not update season.");
+    }
+    revalidatePath('/seasons'); revalidatePath('/teams'); revalidatePath('/new-match');
+}
+
+export async function deleteSeasonAction(seasonId: string) {
+  if (!userId) throw new Error("User not authenticated");
+  if (!seasonId) throw new Error("Season ID is required.");
+  
+  const seasonDocRef = doc(db, 'seasons', seasonId);
+  const seasonSnap = await getDoc(seasonDocRef);
+  if (!seasonSnap.exists() || seasonSnap.data().userId !== userId) throw new Error("Season not found or you do not have permission to delete it.");
+  
+  try {
+    await deleteDoc(seasonDocRef);
+  } catch (error) {
+    console.error("Error deleting season:", error);
+    throw new Error("Could not delete season.");
+  }
+  revalidatePath('/seasons'); revalidatePath('/teams'); revalidatePath('/new-match');
 }

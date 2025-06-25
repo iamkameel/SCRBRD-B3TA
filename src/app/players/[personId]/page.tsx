@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import PlayerDetailsClient from './client';
 import { getPerson, getPersonLinks, getPlayers } from '@/lib/actions/players';
 import { Button } from '@/components/ui/button';
+import { AddLinkDialog } from './add-link-dialog';
 
 export default async function PersonDetailsPage({ params }: { params: { personId: string } }) {
   

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Person as Player } from "@/lib/data";
-import { addPlayerAction, deletePlayerAction } from '@/lib/actions/players';
+import { addPlayerAction, updatePlayerAction, deletePlayerAction } from '@/lib/actions/players';
 
 const playerSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -49,178 +49,87 @@ const playerSchema = z.object({
 type PlayerFormValues = z.infer<typeof playerSchema>;
 
 const ROLES = [
-  { id: "Player", label: "Player" },
-  { id: "Coach", label: "Coach" },
-  { id: "Umpire", label: "Umpire" },
-  { id: "Scorer", label: "Scorer" },
-  { id: "Guardian", label: "Guardian" },
-  { id: "Sportmaster", label: "Sportmaster" },
+  { id: "Player", label: "Player" }, { id: "Coach", label: "Coach" },
+  { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" },
+  { id: "Guardian", label: "Guardian" }, { id: "Sportmaster", label: "Sportmaster" },
 ] as const;
 
-function AddPlayerDialog() {
-  const [open, setOpen] = React.useState(false);
+function PlayerDialog({ mode, player, open, onOpenChange }: { mode: 'add' | 'edit', player?: Player, open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
-  const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      roles: ["Player"],
+    defaultValues: mode === 'edit' && player ? {
+      firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, roles: player.roles,
+    } : {
+      firstName: "", lastName: "", email: "", phone: "", roles: ["Player"],
     },
   });
+  
+  React.useEffect(() => {
+    if (mode === 'edit' && player) {
+      form.reset({
+        firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, roles: player.roles,
+      });
+    } else {
+      form.reset({
+        firstName: "", lastName: "", email: "", phone: "", roles: ["Player"],
+      });
+    }
+  }, [player, mode, open, form]);
 
   function onSubmit(data: PlayerFormValues) {
     startTransition(async () => {
       try {
-        await addPlayerAction(data);
-        toast({
-          title: "Person Added",
-          description: `${data.firstName} ${data.lastName} has been added.`,
-        });
-        setOpen(false);
-        form.reset();
-        router.refresh();
+        if (mode === 'edit' && player) {
+          await updatePlayerAction({ personId: player.personId, ...data });
+          toast({ title: "Person Updated", description: `${data.firstName} ${data.lastName} has been updated.` });
+        } else {
+          await addPlayerAction(data);
+          toast({ title: "Person Added", description: `${data.firstName} ${data.lastName} has been added.` });
+        }
+        onOpenChange(false);
       } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Could not add person.",
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: error instanceof Error ? error.message : `Could not ${mode} person.`, variant: "destructive" });
       }
     });
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2" />
-          Add Person
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Add New Person</DialogTitle>
-          <DialogDescription>
-            Enter the details for the new person. Click save when you're done.
-          </DialogDescription>
+          <DialogTitle>{mode === 'edit' ? 'Edit Person' : 'Add New Person'}</DialogTitle>
+          <DialogDescription>Enter the details for the person. Click save when you're done.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John" {...field} disabled={isPending}/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} disabled={isPending}/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
             </div>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="john.doe@example.com" {...field} disabled={isPending}/>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1 234 567 890" {...field} disabled={isPending}/>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="roles"
-              render={() => (
-                <FormItem>
-                  <div className="mb-4">
-                    <FormLabel>Roles</FormLabel>
-                    <FormDescription>
-                      Assign at least one role to this person.
-                    </FormDescription>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {ROLES.map((item) => (
-                      <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="roles"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={item.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, item.id])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== item.id
-                                          )
-                                        );
-                                  }}
-                                  disabled={isPending}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {item.label}
-                              </FormLabel>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (Optional)</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="roles" render={() => (
+              <FormItem>
+                <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>
+                <div className="grid grid-cols-2 gap-2">
+                  {ROLES.map((item) => (
+                    <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
+                      <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => (checked ? field.onChange([...field.value, item.id]) : field.onChange(field.value?.filter((v) => v !== item.id)))} disabled={isPending} /></FormControl>
+                        <FormLabel className="font-normal">{item.label}</FormLabel>
+                      </FormItem>
+                    )} />
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )} />
             <DialogFooter>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save Person"}
-              </Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Person"}</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -232,27 +141,22 @@ function AddPlayerDialog() {
 export default function PlayersClient({ players }: { players: Player[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
   const [selectedPerson, setSelectedPerson] = React.useState<Player | null>(null);
+  const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
+  const [isPlayerDialogOpen, setIsPlayerDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   const handleDelete = () => {
     if (!selectedPerson) return;
     startTransition(async () => {
       try {
         await deletePlayerAction(selectedPerson.personId);
-        toast({
-          title: "Person Deleted",
-          description: `${selectedPerson.firstName} ${selectedPerson.lastName} has been deleted.`,
-        });
-        setDialogOpen(false);
+        toast({ title: "Person Deleted", description: `${selectedPerson.firstName} ${selectedPerson.lastName} has been deleted.` });
+        setIsDeleteDialogOpen(false);
         setSelectedPerson(null);
       } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Could not delete person.",
-          variant: "destructive",
-        });
-        setDialogOpen(false);
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not delete person.", variant: "destructive" });
+        setIsDeleteDialogOpen(false);
         setSelectedPerson(null);
       }
     });
@@ -262,76 +166,40 @@ export default function PlayersClient({ players }: { players: Player[] }) {
     <>
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              People
-            </h1>
-            <p className="text-muted-foreground">
-              Manage your roster of players, coaches, and officials.
-            </p>
-          </div>
-          <AddPlayerDialog />
+          <div><h1 className="text-3xl font-bold tracking-tight text-foreground">People</h1><p className="text-muted-foreground">Manage your roster of players, coaches, and officials.</p></div>
+          <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPlayerDialogOpen(true); }}><PlusCircle className="mr-2" />Add Person</Button>
         </header>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Person Roster</CardTitle>
-            <CardDescription>A list of all people in the system.</CardDescription>
-          </CardHeader>
+          <CardHeader><CardTitle>Person Roster</CardTitle><CardDescription>A list of all people in the system.</CardDescription></CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Roles</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
+                <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Roles</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
               </TableHeader>
               <TableBody>
                 {players.length > 0 ? (
                   players.map((player) => (
                     <TableRow key={player.personId}>
                       <TableCell className="font-medium flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} />
-                          <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <Link href={`/players/${player.personId}`} className="hover:underline">
-                          {player.firstName} {player.lastName}
-                        </Link>
+                        <Avatar><AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} /><AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback></Avatar>
+                        <Link href={`/players/${player.personId}`} className="hover:underline">{player.firstName} {player.lastName}</Link>
                       </TableCell>
                       <TableCell>{player.email}</TableCell>
                       <TableCell>{player.roles.join(', ')}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onSelect={() => {
-                                setSelectedPerson(player);
-                                setDialogOpen(true);
-                              }}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { setSelectedPerson(player); setDialogMode('edit'); setIsPlayerDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { setSelectedPerson(player); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                      No people found. Get started by adding someone.
-                    </TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={4} className="h-24 text-center">No people found. Get started by adding someone.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -339,25 +207,17 @@ export default function PlayersClient({ players }: { players: Player[] }) {
         </Card>
       </div>
 
-      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <PlayerDialog mode={dialogMode} player={selectedPerson ?? undefined} open={isPlayerDialogOpen} onOpenChange={setIsPlayerDialogOpen} />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete{" "}
-              <strong>{selectedPerson?.firstName} {selectedPerson?.lastName}</strong>
-              {" "}and their associated family links. It will not yet remove them from any team rosters or match assignments.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This action cannot be undone. This will permanently delete <strong>{selectedPerson?.firstName} {selectedPerson?.lastName}</strong> and their associated family links. It will not yet remove them from any team rosters or match assignments.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedPerson(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className={buttonVariants({ variant: "destructive" })}
-              disabled={isPending}
-            >
-              {isPending ? "Deleting..." : "Delete Person"}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Person"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
