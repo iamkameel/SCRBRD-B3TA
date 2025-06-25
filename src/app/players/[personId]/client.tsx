@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { mockPlayerStats } from "@/lib/data";
 import type { Person } from "@/lib/data";
 import { addPersonLinkAction } from "@/lib/actions/players";
 
@@ -130,6 +129,29 @@ interface PlayerDetailsClientProps {
 }
 
 export default function PlayerDetailsClient({ person, initialGuardians, initialChildren, availablePeople }: PlayerDetailsClientProps) {
+  
+  // Placeholder for real stats in the future
+  const placeholderStats = {
+    matchesPlayed: 0,
+    inningsBatted: 0,
+    totalRuns: 0,
+    highestScore: 0,
+    battingAverage: 0,
+    strikeRate: 0,
+    hundreds: 0,
+    fifties: 0,
+    oversBowled: 0,
+    wicketsTaken: 0,
+    bowlingAverage: 0,
+    economyRate: 0,
+    maidens: 0,
+    bestBowling: "0/0",
+    runsConceded: 0,
+    catches: 0,
+    stumpings: 0,
+  };
+  
+  const playerStats = placeholderStats;
 
   return (
     <div className="flex flex-col gap-8">
@@ -213,14 +235,14 @@ export default function PlayerDetailsClient({ person, initialGuardians, initialC
                 <div>
                     <h3 className="text-lg font-medium mb-4 text-primary">Batting</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                        <StatItem label="Matches" value={mockPlayerStats.matchesPlayed} />
-                        <StatItem label="Innings" value={mockPlayerStats.inningsBatted} />
-                        <StatItem label="Runs" value={mockPlayerStats.totalRuns} />
-                        <StatItem label="Highest" value={mockPlayerStats.highestScore} />
-                        <StatItem label="Average" value={mockPlayerStats.battingAverage.toFixed(2)} />
-                        <StatItem label="Strike Rate" value={mockPlayerStats.strikeRate.toFixed(2)} />
-                        <StatItem label="100s" value={mockPlayerStats.hundreds} />
-                        <StatItem label="50s" value={mockPlayerStats.fifties} />
+                        <StatItem label="Matches" value={playerStats.matchesPlayed} />
+                        <StatItem label="Innings" value={playerStats.inningsBatted} />
+                        <StatItem label="Runs" value={playerStats.totalRuns} />
+                        <StatItem label="Highest" value={playerStats.highestScore} />
+                        <StatItem label="Average" value={playerStats.battingAverage.toFixed(2)} />
+                        <StatItem label="Strike Rate" value={playerStats.strikeRate.toFixed(2)} />
+                        <StatItem label="100s" value={playerStats.hundreds} />
+                        <StatItem label="50s" value={playerStats.fifties} />
                     </div>
                 </div>
 
@@ -229,13 +251,13 @@ export default function PlayerDetailsClient({ person, initialGuardians, initialC
                 <div>
                     <h3 className="text-lg font-medium mb-4 text-primary">Bowling</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                        <StatItem label="Overs" value={mockPlayerStats.oversBowled} />
-                        <StatItem label="Wickets" value={mockPlayerStats.wicketsTaken} />
-                        <StatItem label="Average" value={mockPlayerStats.bowlingAverage.toFixed(2)} />
-                        <StatItem label="Economy" value={mockPlayerStats.economyRate.toFixed(2)} />
-                        <StatItem label="Maidens" value={mockPlayerStats.maidens} />
-                        <StatItem label="Best" value={mockPlayerStats.bestBowling} />
-                        <StatItem label="Runs Conceded" value={mockPlayerStats.runsConceded} />
+                        <StatItem label="Overs" value={playerStats.oversBowled} />
+                        <StatItem label="Wickets" value={playerStats.wicketsTaken} />
+                        <StatItem label="Average" value={playerStats.bowlingAverage.toFixed(2)} />
+                        <StatItem label="Economy" value={playerStats.economyRate.toFixed(2)} />
+                        <StatItem label="Maidens" value={playerStats.maidens} />
+                        <StatItem label="Best" value={playerStats.bestBowling} />
+                        <StatItem label="Runs Conceded" value={playerStats.runsConceded} />
                     </div>
                 </div>
                 
@@ -244,8 +266,8 @@ export default function PlayerDetailsClient({ person, initialGuardians, initialC
                 <div>
                     <h3 className="text-lg font-medium mb-4 text-primary">Fielding</h3>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                        <StatItem label="Catches" value={mockPlayerStats.catches} />
-                        <StatItem label="Stumpings" value={mockPlayerStats.stumpings} />
+                        <StatItem label="Catches" value={playerStats.catches} />
+                        <StatItem label="Stumpings" value={playerStats.stumpings} />
                     </div>
                 </div>
 

@@ -4,44 +4,7 @@
 import * as React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-
-// These types would ideally be in a shared types file
-interface BatsmanStats {
-  name: string;
-  status: string; // e.g., "b. Bowler", "not out"
-  runs: number;
-  balls: number;
-  fours: number;
-  sixes: number;
-  strikeRate: number;
-}
-
-interface BowlerStats {
-  name: string;
-  overs: number;
-  maidens: number;
-  runs: number;
-  wickets: number;
-  economy: number;
-}
-
-interface FallOfWicket {
-    runs: number;
-    wicket: number;
-    batsmanName: string;
-    over: number;
-}
-
-interface Innings {
-  teamName: string;
-  totalRuns: number;
-  wickets: number;
-  overs: number;
-  battingCard: BatsmanStats[];
-  bowlingCard: BowlerStats[];
-  fallOfWickets: FallOfWicket[];
-  extras: { total: number; details: string };
-}
+import type { Innings } from "@/lib/data";
 
 export function Scorecard({ innings }: { innings: Innings }) {
   return (
