@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Scorecard } from "./scorecard";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
 // From schema: match_role_assignments
 const assignmentSchema = z.object({
@@ -51,10 +52,22 @@ const ballEventSchema = z.object({
 
 type BallEventFormValues = z.infer<typeof ballEventSchema>;
 
+const commentarySchema = z.object({
+  text: z.string().min(1, { message: "Comment cannot be empty." }),
+});
+type CommentaryFormValues = z.infer<typeof commentarySchema>;
+
 interface BallEvent {
   eventId: string;
   eventType: string;
   details: string;
+}
+
+interface Commentary {
+  commentId: string;
+  authorName: string;
+  text: string;
+  timestamp: Date;
 }
 
 const EVENT_TYPES = ["Fielding Change", "Weather Delay", "Injury Break", "Pitch Report", "Other"];
@@ -414,6 +427,15 @@ export default function MatchDetailsPage({ params }: { params: { matchId: string
   const [officials, setOfficials] = React.useState<Official[]>([]);
   const [scoringActions, setScoringActions] = React.useState<ScoringActionFormValues[]>([]);
   const [ballEvents, setBallEvents] = React.useState<BallEvent[]>([]);
+  const [commentary, setCommentary] = React.useState<Commentary[]>([]);
+  const { toast } = useToast();
+  
+  const commentaryForm = useForm<CommentaryFormValues>({
+    resolver: zodResolver(commentarySchema),
+    defaultValues: {
+      text: "",
+    },
+  });
 
   const handleOfficialAssigned = (assignment: Official) => {
     setOfficials(prev => [...prev, assignment]);
@@ -426,6 +448,21 @@ export default function MatchDetailsPage({ params }: { params: { matchId: string
 
   const handleBallEventAdded = (event: BallEvent) => {
     setBallEvents(prev => [...prev, event]);
+  };
+  
+  const handleCommentaryAdded = (data: CommentaryFormValues) => {
+    const newComment: Commentary = {
+        commentId: `comment_${new Date().getTime()}`,
+        authorName: "System Scorer", // Placeholder author
+        text: data.text,
+        timestamp: new Date(),
+    };
+    setCommentary(prev => [newComment, ...prev]);
+    commentaryForm.reset();
+    toast({
+      title: "Comment Added",
+      description: "Your commentary has been logged.",
+    });
   };
 
   return (
@@ -563,6 +600,53 @@ export default function MatchDetailsPage({ params }: { params: { matchId: string
           </Table>
         </CardContent>
       </Card>
+      
+      <Card>
+        <CardHeader>
+            <CardTitle>Match Commentary</CardTitle>
+            <CardDescription>Provide live updates and insights on the match.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Form {...commentaryForm}>
+                <form onSubmit={commentaryForm.handleSubmit(handleCommentaryAdded)} className="flex items-start gap-4">
+                    <FormField
+                        control={commentaryForm.control}
+                        name="text"
+                        render={({ field }) => (
+                            <FormItem className="flex-grow">
+                            <FormControl>
+                                <Textarea placeholder="e.g. What a catch at slip!" {...field} rows={3} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit">Add Comment</Button>
+                </form>
+            </Form>
+            <div className="mt-6 space-y-4">
+                <h4 className="font-medium">Live Feed</h4>
+                {commentary.length > 0 ? (
+                <div className="space-y-4 max-h-72 overflow-y-auto pr-4">
+                    {commentary.map((comment) => (
+                    <div key={comment.commentId} className="flex items-start gap-4">
+                        <div className="flex-shrink-0 text-sm font-medium text-muted-foreground pt-0.5">
+                            {format(comment.timestamp, "HH:mm")}
+                        </div>
+                        <div className="flex-grow border-l-2 border-border pl-4">
+                            <p className="text-sm font-semibold">{comment.authorName}</p>
+                            <p className="text-sm text-foreground/90">{comment.text}</p>
+                        </div>
+                    </div>
+                    ))}
+                </div>
+                ) : (
+                <p className="text-sm text-muted-foreground p-4 text-center border rounded-md">No commentary yet.</p>
+                )}
+            </div>
+        </CardContent>
+      </Card>
+
     </div>
   )
 }
