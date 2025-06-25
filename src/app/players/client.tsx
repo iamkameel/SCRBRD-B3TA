@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -19,7 +18,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import type { Person as Player } from "@/lib/data";
-import { addPlayerAction, playerSchema } from '@/lib/actions/players';
+import { addPlayerAction } from '@/lib/actions/players';
+
+const playerSchema = z.object({
+  firstName: z.string().min(1, { message: "First name is required." }),
+  lastName: z.string().min(1, { message: "Last name is required." }),
+  email: z.string().email({ message: "Invalid email address." }),
+  phone: z.string().optional(),
+  roles: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: "You have to select at least one role.",
+  }),
+});
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
 
