@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -16,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
 
 // Mock Data (Should be centralized later)
@@ -32,6 +34,32 @@ const mockParentChildLinks: { parentId: string, childId: string }[] = [
     { parentId: "person_2", childId: "person_5" },
     { parentId: "person_3", childId: "person_1" },
 ];
+
+// From schema: player_season_stats
+const mockPlayerStats = {
+  personId: "person_1",
+  seasonId: "season_1",
+  teamId: "team_1",
+  matchesPlayed: 10,
+  inningsBatted: 8,
+  notOuts: 2,
+  totalRuns: 350,
+  highestScore: 102,
+  fifties: 2,
+  hundreds: 1,
+  battingAverage: 58.33,
+  strikeRate: 125.45,
+  oversBowled: 25.3,
+  maidens: 2,
+  runsConceded: 150,
+  wicketsTaken: 12,
+  bowlingAverage: 12.5,
+  economyRate: 5.93,
+  bestBowling: "4/25",
+  catches: 5,
+  stumpings: 0,
+};
+
 
 interface Person {
   personId: string;
@@ -240,6 +268,65 @@ export default function PersonDetailsPage({ params }: { params: { personId: stri
             </div>
         </CardContent>
       </Card>
+
+      {person.roles.includes("Player") && (
+        <Card>
+            <CardHeader>
+                <CardTitle>Player Statistics</CardTitle>
+                <CardDescription>Overall career statistics for the current season.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-medium mb-4 text-primary">Batting</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                        <StatItem label="Matches" value={mockPlayerStats.matchesPlayed} />
+                        <StatItem label="Innings" value={mockPlayerStats.inningsBatted} />
+                        <StatItem label="Runs" value={mockPlayerStats.totalRuns} />
+                        <StatItem label="Highest" value={mockPlayerStats.highestScore} />
+                        <StatItem label="Average" value={mockPlayerStats.battingAverage.toFixed(2)} />
+                        <StatItem label="Strike Rate" value={mockPlayerStats.strikeRate.toFixed(2)} />
+                        <StatItem label="100s" value={mockPlayerStats.hundreds} />
+                        <StatItem label="50s" value={mockPlayerStats.fifties} />
+                    </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                    <h3 className="text-lg font-medium mb-4 text-primary">Bowling</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                        <StatItem label="Overs" value={mockPlayerStats.oversBowled} />
+                        <StatItem label="Wickets" value={mockPlayerStats.wicketsTaken} />
+                        <StatItem label="Average" value={mockPlayerStats.bowlingAverage.toFixed(2)} />
+                        <StatItem label="Economy" value={mockPlayerStats.economyRate.toFixed(2)} />
+                        <StatItem label="Maidens" value={mockPlayerStats.maidens} />
+                        <StatItem label="Best" value={mockPlayerStats.bestBowling} />
+                        <StatItem label="Runs Conceded" value={mockPlayerStats.runsConceded} />
+                    </div>
+                </div>
+                
+                <Separator />
+
+                <div>
+                    <h3 className="text-lg font-medium mb-4 text-primary">Fielding</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                        <StatItem label="Catches" value={mockPlayerStats.catches} />
+                        <StatItem label="Stumpings" value={mockPlayerStats.stumpings} />
+                    </div>
+                </div>
+
+            </CardContent>
+        </Card>
+      )}
     </div>
   )
+}
+
+function StatItem({ label, value }: { label: string, value: string | number }) {
+    return (
+        <div>
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="font-bold text-2xl text-foreground">{value}</p>
+        </div>
+    )
 }
