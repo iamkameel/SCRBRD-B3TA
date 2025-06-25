@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -15,6 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Scorecard } from "./scorecard";
 
 // From schema: match_role_assignments
 const assignmentSchema = z.object({
@@ -30,7 +33,7 @@ const mockFixture = {
   teamA: "Greenwood Gators",
   teamB: "Oakdale Eagles",
   dateTime: new Date("2024-07-28T14:00:00"),
-  status: "Scheduled",
+  status: "Completed",
   venue: "Greenwood High Main Oval",
 };
 
@@ -50,6 +53,53 @@ interface Official {
   role: string;
   confirmed: boolean;
 }
+
+const mockScorecard = {
+    resultSummary: "Greenwood Gators won by 2 wickets",
+    innings1: {
+      teamName: "Oakdale Eagles",
+      totalRuns: 152,
+      wickets: 3,
+      overs: 19.4,
+      battingCard: [
+        { name: "Sam Brown", status: "c. John Doe b. Peter Jones", runs: 45, balls: 30, fours: 5, sixes: 2, strikeRate: 150.00 },
+        { name: "Alex Ray", status: "lbw b. Peter Jones", runs: 12, balls: 15, fours: 1, sixes: 0, strikeRate: 80.00 },
+        { name: "Ben Stokes", status: "b. John Doe", runs: 28, balls: 22, fours: 3, sixes: 1, strikeRate: 127.27 },
+        { name: "Chris Woakes", status: "not out", runs: 15, balls: 10, fours: 1, sixes: 1, strikeRate: 150.00 },
+      ],
+      bowlingCard: [
+          { name: "Peter Jones", overs: 4, maidens: 0, runs: 25, wickets: 2, economy: 6.25 },
+          { name: "John Doe", overs: 4, maidens: 0, runs: 30, wickets: 1, economy: 7.5 },
+          { name: "Mary Williams", overs: 4, maidens: 0, runs: 40, wickets: 0, economy: 10.00 },
+      ],
+      fallOfWickets: [
+          { wicket: 1, runs: 25, batsmanName: "Alex Ray", over: 4.1 },
+          { wicket: 2, runs: 78, batsmanName: "Sam Brown", over: 9.3 },
+          { wicket: 3, runs: 120, batsmanName: "Ben Stokes", over: 15.2 },
+      ],
+      extras: { total: 10, details: "(b 1, lb 2, w 5, nb 2)" }
+    },
+    innings2: {
+      teamName: "Greenwood Gators",
+      totalRuns: 153,
+      wickets: 2,
+      overs: 19.1,
+      battingCard: [
+          { name: "John Doe", status: "not out", runs: 68, balls: 45, fours: 7, sixes: 3, strikeRate: 151.11 },
+          { name: "Mary Williams", status: "run out (Sam Brown)", runs: 22, balls: 20, fours: 2, sixes: 0, strikeRate: 110.00 },
+          { name: "Peter Jones", status: "c. Alex Ray b. Sam Brown", runs: 35, balls: 25, fours: 4, sixes: 0, strikeRate: 140.00 },
+      ],
+      bowlingCard: [
+          { name: "Sam Brown", overs: 4, maidens: 0, runs: 35, wickets: 1, economy: 8.75 },
+          { name: "Alex Ray", overs: 4, maidens: 0, runs: 30, wickets: 1, economy: 7.50 },
+      ],
+      fallOfWickets: [
+          { wicket: 1, runs: 40, batsmanName: "Mary Williams", over: 5.5 },
+          { wicket: 2, runs: 100, batsmanName: "Peter Jones", over: 12.1 },
+      ],
+      extras: { total: 8, details: "(lb 4, w 4)" }
+    }
+  };
 
 const ROLES = ["Umpire", "Scorer"];
 
@@ -158,10 +208,42 @@ export default function MatchDetailsPage({ params }: { params: { matchId: string
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <Badge variant="default">{mockFixture.status}</Badge>
+            <Badge variant={mockFixture.status === 'Completed' ? 'secondary' : 'default'}>{mockFixture.status}</Badge>
+            {mockFixture.status === 'Completed' && (
+                <p className="mt-2 font-semibold text-lg">{mockScorecard.resultSummary}</p>
+            )}
         </CardContent>
       </Card>
       
+       <Tabs defaultValue="innings1" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="innings1">{mockScorecard.innings1.teamName}</TabsTrigger>
+            <TabsTrigger value="innings2">{mockScorecard.innings2.teamName}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="innings1">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Innings 1 Scorecard</CardTitle>
+                    <CardDescription>Detailed scorecard for the first innings.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Scorecard innings={mockScorecard.innings1} />
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="innings2">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Innings 2 Scorecard</CardTitle>
+                    <CardDescription>Detailed scorecard for the second innings.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Scorecard innings={mockScorecard.innings2} />
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
