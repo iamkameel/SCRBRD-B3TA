@@ -17,8 +17,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { assignOfficialToMatchAction } from '@/lib/actions/matches';
-import type { Match, Person, Official } from "@/lib/data";
+import type { Match, Person, Official, Innings } from "@/lib/data";
+import { Scorecard } from "./scorecard";
 
 // From schema: match_role_assignments
 const assignmentSchema = z.object({
@@ -124,6 +126,48 @@ function AssignOfficialDialog({ matchId, people }: { matchId: string, people: Pe
 
 export default function MatchDetailsClient({ match, initialOfficials, people }: { match: Match; initialOfficials: Official[]; people: Person[] }) {
   
+  const placeholderInnings1: Innings = {
+    teamName: match.teamAName,
+    totalRuns: 150,
+    wickets: 5,
+    overs: 20.0,
+    battingCard: [
+      { name: "Player A1", status: "c & b Bowler B1", runs: 30, balls: 25, fours: 4, sixes: 1, strikeRate: 120.00 },
+      { name: "Player A2", status: "run out", runs: 15, balls: 20, fours: 1, sixes: 0, strikeRate: 75.00 },
+      { name: "Player A3", status: "not out", runs: 50, balls: 40, fours: 5, sixes: 2, strikeRate: 125.00 },
+      { name: "Player A4", status: "b Bowler B2", runs: 5, balls: 10, fours: 0, sixes: 0, strikeRate: 50.00 },
+    ],
+    bowlingCard: [
+      { name: "Bowler B1", overs: 4, maidens: 0, runs: 30, wickets: 2, economy: 7.50 },
+      { name: "Bowler B2", overs: 4, maidens: 0, runs: 25, wickets: 1, economy: 6.25 },
+    ],
+    fallOfWickets: [
+      { wicket: 1, runs: 25, batsmanName: "Player A2", over: 5.2 },
+      { wicket: 2, runs: 80, batsmanName: "Player A1", over: 12.1 },
+    ],
+    extras: { total: 10, details: "(w 5, nb 1, b 2, lb 2)" },
+  };
+  
+  const placeholderInnings2: Innings = {
+      teamName: match.teamBName,
+      totalRuns: 148,
+      wickets: 8,
+      overs: 20.0,
+      battingCard: [
+        { name: "Player B1", status: "c Player A1 b Bowler A1", runs: 40, balls: 30, fours: 6, sixes: 0, strikeRate: 133.33 },
+        { name: "Player B2", status: "st Player A2 b Bowler A2", runs: 20, balls: 22, fours: 2, sixes: 0, strikeRate: 90.91 },
+      ],
+      bowlingCard: [
+         { name: "Bowler A1", overs: 4, maidens: 0, runs: 28, wickets: 3, economy: 7.00 },
+         { name: "Bowler A2", overs: 4, maidens: 0, runs: 35, wickets: 2, economy: 8.75 },
+      ],
+      fallOfWickets: [
+         { wicket: 1, runs: 50, batsmanName: "Player B1", over: 8.1 },
+         { wicket: 2, runs: 90, batsmanName: "Player B2", over: 14.5 },
+      ],
+      extras: { total: 8, details: "(w 4, nb 0, b 4, lb 0)" },
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <Card>
@@ -140,17 +184,30 @@ export default function MatchDetailsClient({ match, initialOfficials, people }: 
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Scorecard</CardTitle>
-          <CardDescription>Live scoring and scorecard details will be available soon.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-40 rounded-md border border-dashed">
-            <p className="text-muted-foreground">Scorecard feature coming soon.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="team-a-innings">
+        <Card>
+            <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <CardTitle>Scorecard</CardTitle>
+                        <CardDescription>Detailed match scorecard for both innings.</CardDescription>
+                    </div>
+                    <TabsList className="mt-4 md:mt-0">
+                        <TabsTrigger value="team-a-innings">{match.teamAName}</TabsTrigger>
+                        <TabsTrigger value="team-b-innings">{match.teamBName}</TabsTrigger>
+                    </TabsList>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <TabsContent value="team-a-innings">
+                    <Scorecard innings={placeholderInnings1} />
+                </TabsContent>
+                <TabsContent value="team-b-innings">
+                    <Scorecard innings={placeholderInnings2} />
+                </TabsContent>
+            </CardContent>
+        </Card>
+      </Tabs>
       
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
