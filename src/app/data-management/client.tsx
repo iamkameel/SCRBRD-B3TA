@@ -9,6 +9,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const DATA_SUBSETS = [
+  "People",
+  "Schools",
+  "Divisions",
+  "Seasons",
+  "Fields",
+  "Teams",
+  "Matches",
+];
+
 
 export default function DataManagementClient() {
   return (
@@ -28,12 +40,27 @@ export default function DataManagementClient() {
           <AccordionContent>
             <div className="space-y-4 pt-2">
               <p className="text-sm text-muted-foreground">
-                Download all your data as a JSON file.
+                Download specific subsets of your data as JSON files.
               </p>
-              <Button disabled>
-                <Download className="mr-2" />
-                Export All Data
-              </Button>
+              <div className="space-y-2">
+                {DATA_SUBSETS.map((subset) => (
+                  <div key={`export-${subset}`} className="flex items-center justify-between rounded-lg border p-3">
+                    <p className="font-medium">{subset}</p>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled>
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Export {subset}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                ))}
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -42,12 +69,27 @@ export default function DataManagementClient() {
           <AccordionContent>
             <div className="space-y-4 pt-2">
                 <p className="text-sm text-muted-foreground">
-                  Import data from a previously exported JSON file. This will overwrite existing data.
+                  Import data from a JSON file. This will overwrite existing data for that subset.
                 </p>
-                <Button variant="outline" disabled>
-                    <Upload className="mr-2" />
-                    Import Data
-                </Button>
+                <div className="space-y-2">
+                  {DATA_SUBSETS.map((subset) => (
+                    <div key={`import-${subset}`} className="flex items-center justify-between rounded-lg border p-3">
+                      <p className="font-medium">{subset}</p>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                             <Button variant="ghost" size="icon" disabled>
+                                <Upload className="h-4 w-4" />
+                             </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Import {subset}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  ))}
+                </div>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -57,14 +99,29 @@ export default function DataManagementClient() {
           </AccordionTrigger>
           <AccordionContent>
              <div className="space-y-4 rounded-lg border border-destructive p-4">
-                <h4 className="font-semibold">Clear All Data</h4>
+                <h4 className="font-semibold">Clear Data Subsets</h4>
                 <p className="text-sm text-muted-foreground">
-                    Permanently delete all your data. This action cannot be undone.
+                    Permanently delete specific subsets of your data. This action cannot be undone.
                 </p>
-                <Button variant="destructive" disabled>
-                    <Trash2 className="mr-2" />
-                    Delete All Data
-                </Button>
+                <div className="space-y-2">
+                  {DATA_SUBSETS.map((subset) => (
+                    <div key={`delete-${subset}`} className="flex items-center justify-between rounded-lg border border-destructive/50 p-3">
+                      <p className="font-medium">{subset}</p>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                             <Button variant="ghost" size="icon" disabled>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                             </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            <p>Delete all {subset}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  ))}
+                </div>
              </div>
           </AccordionContent>
         </AccordionItem>
