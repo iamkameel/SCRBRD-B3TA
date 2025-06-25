@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const DATA_SUBSETS = [
   "People",
@@ -40,6 +41,7 @@ const DATA_SUBSETS = [
 
 export default function DataManagementClient() {
   const [subsetToDelete, setSubsetToDelete] = React.useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleDeleteClick = (subset: string) => {
     setSubsetToDelete(subset);
@@ -75,7 +77,7 @@ export default function DataManagementClient() {
                         {/* Export Button */}
                         <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => console.log(`Exporting ${subset}...`)}>
+                            <Button variant="ghost" size="icon" onClick={() => toast({ title: "Export Started", description: `Exporting ${subset} data...` })}>
                             <Download className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -85,7 +87,7 @@ export default function DataManagementClient() {
                         {/* Import Button */}
                         <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => console.log(`Importing ${subset}...`)}>
+                            <Button variant="ghost" size="icon" onClick={() => toast({ title: "Import Started", description: `Importing ${subset} data...`})}>
                             <Upload className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -143,7 +145,14 @@ export default function DataManagementClient() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                                 className={buttonVariants({ variant: "destructive" })}
-                                onClick={() => console.log("Deleting all data...")}
+                                onClick={() => {
+                                  console.log("Deleting all data...");
+                                  toast({
+                                    title: "All Data Deleted",
+                                    description: "All application data has been permanently deleted.",
+                                    variant: "destructive",
+                                  });
+                                }}
                             >
                                 Yes, delete everything
                             </AlertDialogAction>
@@ -170,6 +179,10 @@ export default function DataManagementClient() {
                 className={buttonVariants({ variant: "destructive" })}
                 onClick={() => {
                     console.log(`Deleting ${subsetToDelete}`);
+                    toast({
+                        title: "Data Deleted",
+                        description: `The ${subsetToDelete} data has been deleted.`
+                    });
                     setSubsetToDelete(null);
                 }}
             >
