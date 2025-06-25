@@ -6,11 +6,16 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 
-// This function now fetches data from Firestore
+// This user ID will be replaced with dynamic auth state later.
+const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+
+// This function now fetches data from Firestore for the current user
 export async function getPlayers(): Promise<Person[]> {
+  if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
-    const peopleSnapshot = await getDocs(peopleCollection);
+    const q = query(peopleCollection, where("userId", "==", userId));
+    const peopleSnapshot = await getDocs(q);
     const peopleList = peopleSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -31,11 +36,12 @@ export async function getPlayers(): Promise<Person[]> {
 }
 
 export async function getPerson(personId: string): Promise<Person | null> {
+    if (!userId) return null;
     try {
         const personDocRef = doc(db, 'people', personId);
         const personSnap = await getDoc(personDocRef);
 
-        if (!personSnap.exists()) {
+        if (!personSnap.exists() || personSnap.data().userId !== userId) {
             return null;
         }
 
@@ -51,6 +57,14 @@ export async function getPerson(personId: string): Promise<Person | null> {
 }
 
 export async function getPersonLinks(personId: string): Promise<{ guardians: Person[], children: Person[] }> {
+    if (!userId) return { guardians: [], children: [] };
+    
+    // First, verify ownership of the person being queried
+    const personCheck = await getPerson(personId);
+    if (!personCheck) {
+        return { guardians: [], children: [] };
+    }
+
     const linksCollection = collection(db, 'familyLinks');
 
     // Find who are the guardians of the person (personId is the child)
@@ -68,18 +82,19 @@ export async function getPersonLinks(personId: string): Promise<{ guardians: Per
         const guardianIds = guardiansSnapshot.docs.map(doc => doc.data().parentId);
         const childrenIds = childrenSnapshot.docs.map(doc => doc.data().childId);
 
-        const guardianPromises = guardianIds.map(id => getDoc(doc(db, 'people', id)));
-        const childrenPromises = childrenIds.map(id => getDoc(doc(db, 'people', id)));
+        // Fetch person details only if there are IDs to fetch
+        const guardianPromises = guardianIds.length > 0 ? guardianIds.map(id => getDoc(doc(db, 'people', id))) : [];
+        const childrenPromises = childrenIds.length > 0 ? childrenIds.map(id => getDoc(doc(db, 'people', id))) : [];
 
         const guardianDocs = await Promise.all(guardianPromises);
         const childrenDocs = await Promise.all(childrenPromises);
 
         const guardians = guardianDocs
-            .filter(doc => doc.exists())
+            .filter(doc => doc.exists() && doc.data()?.userId === userId)
             .map(doc => ({ personId: doc.id, ...doc.data() } as Person));
 
         const children = childrenDocs
-            .filter(doc => doc.exists())
+            .filter(doc => doc.exists() && doc.data()?.userId === userId)
             .map(doc => ({ personId: doc.id, ...doc.data() } as Person));
 
         return { guardians, children };
@@ -97,9 +112,18 @@ const linkSchema = z.object({
 });
 
 export async function addPersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
+  if (!userId) throw new Error("User not authenticated");
+  
   const validatedFields = linkSchema.safeParse({ currentPersonId, linkedPersonId, relationship });
   if (!validatedFields.success) {
     throw new Error('Invalid link data.');
+  }
+
+  // Check that both people exist and belong to the current user
+  const person1 = await getPerson(currentPersonId);
+  const person2 = await getPerson(linkedPersonId);
+  if (!person1 || !person2) {
+    throw new Error("One or both people could not be found.");
   }
 
   const { parentId, childId } = relationship === 'guardian'
@@ -116,6 +140,7 @@ export async function addPersonLinkAction(currentPersonId: string, linkedPersonI
   }
   
   try {
+    // Note: We don't add userId to the link itself, as ownership is derived from the linked people.
     await addDoc(linksCollection, { parentId, childId });
   } catch (error) {
     console.error("Error adding family link:", error);
@@ -127,8 +152,10 @@ export async function addPersonLinkAction(currentPersonId: string, linkedPersonI
 }
 
 
-// This function now adds a document to Firestore
+// This function now adds a document to Firestore for the current user
 export async function addPlayerAction(data: { firstName: string; lastName: string; email: string; phone?: string; roles: string[]; }) {
+  if (!userId) throw new Error("User not authenticated");
+  
   const playerSchema = z.object({
     firstName: z.string().min(1, { message: "First name is required." }),
     lastName: z.string().min(1, { message: "Last name is required." }),
@@ -155,6 +182,7 @@ export async function addPlayerAction(data: { firstName: string; lastName: strin
       phone: phone || '',
       roles,
       profileImageUrl: '', // Default value
+      userId: userId,
     });
   } catch (error) {
     console.error("Error adding document: ", error);

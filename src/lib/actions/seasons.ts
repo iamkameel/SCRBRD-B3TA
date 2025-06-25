@@ -3,14 +3,19 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, Timestamp, query, where } from 'firebase/firestore';
 import type { Season } from '@/lib/data';
 
-// This function now fetches data from Firestore
+// This user ID will be replaced with dynamic auth state later.
+const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+
+// This function now fetches data from Firestore for the current user
 export async function getSeasons(): Promise<Season[]> {
+  if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
-    const seasonSnapshot = await getDocs(seasonsCollection);
+    const q = query(seasonsCollection, where("userId", "==", userId));
+    const seasonSnapshot = await getDocs(q);
     const seasonsList = seasonSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -41,8 +46,9 @@ const seasonSchema = z.object({
 
 type SeasonFormValues = z.infer<typeof seasonSchema>;
 
-// This function now adds a document to Firestore
+// This function now adds a document to Firestore for the current user
 export async function addSeasonAction(data: SeasonFormValues) {
+  if (!userId) throw new Error("User not authenticated");
   const validatedFields = seasonSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -57,6 +63,7 @@ export async function addSeasonAction(data: SeasonFormValues) {
       startDate: Timestamp.fromDate(startDate),
       endDate: Timestamp.fromDate(endDate),
       active,
+      userId: userId,
     });
   } catch (error) {
     console.error("Error adding document: ", error);

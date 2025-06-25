@@ -3,14 +3,19 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
 import type { Division } from '@/lib/data';
 
-// This function now fetches data from Firestore
+// This user ID will be replaced with dynamic auth state later.
+const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+
+// This function now fetches data from Firestore for the current user
 export async function getDivisions(): Promise<Division[]> {
+  if (!userId) return [];
   try {
     const divisionsCollection = collection(db, 'divisions');
-    const divisionSnapshot = await getDocs(divisionsCollection);
+    const q = query(divisionsCollection, where("userId", "==", userId));
+    const divisionSnapshot = await getDocs(q);
     const divisionsList = divisionSnapshot.docs.map(doc => ({
       divisionId: doc.id,
       name: doc.data().name,
@@ -28,8 +33,9 @@ const divisionSchema = z.object({
 
 type DivisionFormValues = z.infer<typeof divisionSchema>;
 
-// This function now adds a document to Firestore
+// This function now adds a document to Firestore for the current user
 export async function addDivisionAction(data: DivisionFormValues) {
+  if (!userId) throw new Error("User not authenticated");
   const validatedFields = divisionSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -41,6 +47,7 @@ export async function addDivisionAction(data: DivisionFormValues) {
   try {
     await addDoc(collection(db, 'divisions'), {
       name: name,
+      userId: userId,
     });
   } catch (error) {
     console.error("Error adding document: ", error);

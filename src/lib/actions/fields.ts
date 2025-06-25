@@ -3,14 +3,19 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
 import type { Field } from '@/lib/data';
 
-// This function now fetches data from Firestore
+// This user ID will be replaced with dynamic auth state later.
+const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+
+// This function now fetches data from Firestore for the current user
 export async function getFields(): Promise<Field[]> {
+  if (!userId) return [];
   try {
     const fieldsCollection = collection(db, 'fields');
-    const fieldSnapshot = await getDocs(fieldsCollection);
+    const q = query(fieldsCollection, where("userId", "==", userId));
+    const fieldSnapshot = await getDocs(q);
     const fieldsList = fieldSnapshot.docs.map(doc => ({
       fieldId: doc.id,
       name: doc.data().name,
@@ -32,8 +37,9 @@ const fieldSchema = z.object({
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
 
-// This function now adds a document to Firestore
+// This function now adds a document to Firestore for the current user
 export async function addFieldAction(data: FieldFormValues) {
+  if (!userId) throw new Error("User not authenticated");
   const validatedFields = fieldSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -47,6 +53,7 @@ export async function addFieldAction(data: FieldFormValues) {
       name,
       surfaceType: surfaceType || "",
       facilities: facilities || "",
+      userId: userId,
     });
   } catch (error) {
     console.error("Error adding document: ", error);

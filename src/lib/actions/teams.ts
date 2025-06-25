@@ -4,14 +4,20 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, addDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, query, where } from 'firebase/firestore';
 import type { Team, RosterMember } from '@/lib/data';
+import { getPerson } from './players';
 
-// This function now fetches data from Firestore
+// This user ID will be replaced with dynamic auth state later.
+const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+
+// This function now fetches data from Firestore for the current user
 export async function getTeams(): Promise<Team[]> {
+  if (!userId) return [];
   try {
     const teamsCollection = collection(db, 'teams');
-    const teamSnapshot = await getDocs(teamsCollection);
+    const q = query(teamsCollection, where("userId", "==", userId));
+    const teamSnapshot = await getDocs(q);
     const teamsList = teamSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -34,11 +40,12 @@ export async function getTeams(): Promise<Team[]> {
 }
 
 export async function getTeam(teamId: string): Promise<Team | null> {
+  if (!userId) return null;
   try {
     const teamDocRef = doc(db, 'teams', teamId);
     const teamSnap = await getDoc(teamDocRef);
 
-    if (!teamSnap.exists()) {
+    if (!teamSnap.exists() || teamSnap.data().userId !== userId) {
       return null;
     }
     const data = teamSnap.data();
@@ -60,12 +67,18 @@ export async function getTeam(teamId: string): Promise<Team | null> {
 }
 
 export async function getTeamRoster(teamId: string): Promise<RosterMember[]> {
+  // Check ownership of the team first
+  const team = await getTeam(teamId);
+  if (!team) return [];
+
   try {
     const rosterCol = collection(db, 'teams', teamId, 'roster');
     const rosterSnapshot = await getDocs(rosterCol);
 
     const rosterPromises = rosterSnapshot.docs.map(async (rosterDoc) => {
         const rosterData = rosterDoc.data();
+        // Since we already verified team ownership, we can assume the person is also owned by the user.
+        // A more secure implementation might re-verify each person.
         const personSnap = await getDoc(doc(db, 'people', rosterData.personId));
 
         if (!personSnap.exists()) {
@@ -102,6 +115,20 @@ type AssignmentFormValues = {
 };
 
 export async function addPlayerToRosterAction(teamId: string, data: AssignmentFormValues) {
+  if (!userId) throw new Error("User not authenticated");
+  
+  // Check ownership of the team
+  const team = await getTeam(teamId);
+  if (!team) {
+    throw new Error("Team not found or you do not have permission to edit it.");
+  }
+  
+  // Check ownership of the person being added
+  const person = await getPerson(data.personId);
+  if (!person) {
+    throw new Error("Person not found or you do not have permission to use them.");
+  }
+
   const assignmentSchema = z.object({
     personId: z.string({ required_error: "Please select a person." }),
     role: z.string({ required_error: "Please select a role." }),
@@ -117,13 +144,6 @@ export async function addPlayerToRosterAction(teamId: string, data: AssignmentFo
   }
   
   const { personId, ...rest } = validatedFields.data;
-
-  // Check if person exists
-  const personDocRef = doc(db, 'people', personId);
-  const personSnap = await getDoc(personDocRef);
-  if (!personSnap.exists()) {
-      throw new Error("Selected person does not exist.");
-  }
 
   const rosterCol = collection(db, 'teams', teamId, 'roster');
   
@@ -153,8 +173,9 @@ const teamSchema = z.object({
 
 type TeamFormValues = z.infer<typeof teamSchema>;
 
-// This function now adds a document to Firestore
+// This function now adds a document to Firestore for the current user
 export async function addTeamAction(data: TeamFormValues) {
+  if (!userId) throw new Error("User not authenticated");
   const validatedFields = teamSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -172,8 +193,10 @@ export async function addTeamAction(data: TeamFormValues) {
   const seasonDocRef = doc(db, 'seasons', seasonId);
   const seasonSnap = await getDoc(seasonDocRef);
 
-  if (!schoolSnap.exists() || !divisionSnap.exists() || !seasonSnap.exists()) {
-      throw new Error("Invalid selection for school, division, or season.");
+  if (!schoolSnap.exists() || schoolSnap.data().userId !== userId ||
+      !divisionSnap.exists() || divisionSnap.data().userId !== userId ||
+      !seasonSnap.exists() || seasonSnap.data().userId !== userId) {
+      throw new Error("Invalid selection for school, division, or season. Ensure they belong to you.");
   }
 
   const newTeamData = {
@@ -188,6 +211,7 @@ export async function addTeamAction(data: TeamFormValues) {
       primary: primaryColor || '#000000',
       secondary: secondaryColor || '#ffffff',
     },
+    userId: userId,
   };
   
   try {
