@@ -38,15 +38,18 @@ import { Switch } from "@/components/ui/switch";
 import type { Season } from "@/lib/data";
 import { addSeasonAction, updateSeasonAction, deleteSeasonAction } from '@/lib/actions/seasons';
 
-const seasonSchema = z.object({
+const baseSeasonSchema = z.object({
   name: z.string().min(1, { message: "Season name is required." }),
   startDate: z.date({ required_error: "A start date is required." }),
   endDate: z.date({ required_error: "An end date is required." }),
   active: z.boolean().default(false),
-}).refine(data => data.endDate > data.startDate, {
+});
+
+const seasonSchema = baseSeasonSchema.refine(data => data.endDate > data.startDate, {
   message: "End date must be after start date.",
   path: ["endDate"],
 });
+
 
 type SeasonFormValues = z.infer<typeof seasonSchema>;
 

@@ -31,15 +31,18 @@ export async function getSeasons(): Promise<Season[]> {
   }
 }
 
-const seasonSchema = z.object({
+const baseSeasonSchema = z.object({
   name: z.string().min(1, { message: "Season name is required." }),
   startDate: z.date({ required_error: "A start date is required." }),
   endDate: z.date({ required_error: "An end date is required." }),
   active: z.boolean().default(false),
-}).refine(data => data.endDate > data.startDate, {
+});
+
+const seasonSchema = baseSeasonSchema.refine(data => data.endDate > data.startDate, {
   message: "End date must be after start date.",
   path: ["endDate"],
 });
+
 
 type SeasonFormValues = z.infer<typeof seasonSchema>;
 
@@ -57,7 +60,11 @@ export async function addSeasonAction(data: SeasonFormValues) {
   revalidatePath('/seasons'); revalidatePath('/teams'); revalidatePath('/new-match');
 }
 
-const updateSeasonSchema = seasonSchema.extend({ seasonId: z.string() });
+const updateSeasonSchema = baseSeasonSchema.extend({ seasonId: z.string() }).refine(data => data.endDate > data.startDate, {
+  message: "End date must be after start date.",
+  path: ["endDate"],
+});
+
 
 export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema>) {
     if (!userId) throw new Error("User not authenticated");

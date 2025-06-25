@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Team, Season, Field } from "@/lib/data";
 import { addMatchAction } from "@/lib/actions/matches";
 
-const fixtureSchema = z.object({
+const baseFixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
   teamBId: z.string({ required_error: "Please select the away team." }),
   seasonId: z.string({ required_error: "Please select a season." }),
@@ -31,7 +31,9 @@ const fixtureSchema = z.object({
   time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
     message: "Invalid time format. Please use HH:MM.",
   }),
-}).refine(data => data.teamAId !== data.teamBId, {
+});
+
+const fixtureSchema = baseFixtureSchema.refine(data => data.teamAId !== data.teamBId, {
   message: "Home and away teams cannot be the same.",
   path: ["teamBId"],
 });
