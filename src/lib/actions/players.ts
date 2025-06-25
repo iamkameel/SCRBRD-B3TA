@@ -2,12 +2,32 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { initialPlayers, type Person } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import type { Person } from '@/lib/data';
 
-// This is a placeholder for a database call to get all players.
-export async function getPlayers() {
-  // In a real app, you'd fetch this from your database.
-  return Promise.resolve(initialPlayers);
+// This function now fetches data from Firestore
+export async function getPlayers(): Promise<Person[]> {
+  try {
+    const peopleCollection = collection(db, 'people');
+    const peopleSnapshot = await getDocs(peopleCollection);
+    const peopleList = peopleSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            personId: doc.id,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone || '',
+            profileImageUrl: data.profileImageUrl || '',
+            roles: data.roles || [],
+        }
+    });
+    return peopleList;
+  } catch (error) {
+    console.error("Error fetching people:", error);
+    return [];
+  }
 }
 
 type PlayerFormValues = {
@@ -18,7 +38,7 @@ type PlayerFormValues = {
   roles: string[];
 }
 
-// This is a placeholder for a database insert.
+// This function now adds a document to Firestore
 export async function addPlayerAction(data: PlayerFormValues) {
   const playerSchema = z.object({
     firstName: z.string().min(1, { message: "First name is required." }),
@@ -36,16 +56,25 @@ export async function addPlayerAction(data: PlayerFormValues) {
     throw new Error('Invalid person data.');
   }
 
-  const newPerson: Person = {
-    ...validatedFields.data,
-    personId: `person_${new Date().getTime()}`, // Temporary unique ID
-  };
+  const { firstName, lastName, email, phone, roles } = validatedFields.data;
 
-  // In a real app, you'd insert this into your database.
-  initialPlayers.push(newPerson);
-
-  // Revalidate the path to show the new person in the list.
+  try {
+    await addDoc(collection(db, 'people'), {
+      firstName,
+      lastName,
+      email,
+      phone: phone || '',
+      roles,
+    });
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    throw new Error("Could not add person.");
+  }
+  
+  // Revalidate paths that show player lists or details
   revalidatePath('/players');
+  revalidatePath('/teams');
+  revalidatePath('/new-match');
 
-  return { success: true, person: newPerson };
+  return { success: true };
 }
