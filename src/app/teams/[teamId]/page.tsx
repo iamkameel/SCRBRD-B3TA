@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import type { Team } from '@/lib/data';
 
 export default async function TeamDetailsPage({ params }: { params: { teamId: string } }) {
-  const [team, roster, people] = await Promise.all([
+  const [team, roster, allPeople] = await Promise.all([
     getTeam(params.teamId),
     getTeamRoster(params.teamId),
     getPlayers(), // for the 'Add to Roster' dialog
@@ -15,6 +15,10 @@ export default async function TeamDetailsPage({ params }: { params: { teamId: st
   if (!team) {
     notFound();
   }
+
+  // Filter out people who are already on the roster to prevent duplicates.
+  const rosterPersonIds = new Set(roster.map(member => member.personId));
+  const availablePeople = allPeople.filter(person => !rosterPersonIds.has(person.personId));
 
   // Placeholder for real stats implementation
   const teamStats = {
@@ -27,5 +31,5 @@ export default async function TeamDetailsPage({ params }: { params: { teamId: st
     netRunRate: 0.0,
   };
 
-  return <TeamDetailsClient team={team} initialRoster={roster} people={people} teamStats={teamStats} />;
+  return <TeamDetailsClient team={team} initialRoster={roster} people={availablePeople} teamStats={teamStats} />;
 }
