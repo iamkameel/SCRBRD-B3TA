@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { PlusCircle, MoreHorizontal, Calendar, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { useRouter } from 'next/navigation';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +22,9 @@ import { Scorecard } from "./scorecard";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { assignOfficialToMatchAction } from '@/lib/actions/matches';
 import { initialPlayers as mockPeople, mockScorecard } from "@/lib/data";
-import type { Match } from "@/lib/data";
+import type { Match, Person, Official } from "@/lib/data";
 
 // From schema: match_role_assignments
 const assignmentSchema = z.object({
@@ -73,14 +75,6 @@ interface Commentary {
 }
 
 const EVENT_TYPES = ["Fielding Change", "Weather Delay", "Injury Break", "Pitch Report", "Other"];
-
-interface Official {
-  assignmentId: string;
-  personId: string;
-  personName: string;
-  role: string;
-  confirmed: boolean;
-}
 
 const ROLES = ["Umpire", "Scorer"];
 
@@ -195,38 +189,42 @@ function AddScoringActionEventDialog({ onActionAdded }: { onActionAdded: (action
 }
 
 
-function AssignOfficialDialog({ onOfficialAssigned }: { onOfficialAssigned: (assignment: Official) => void }) {
+function AssignOfficialDialog({ matchId, people }: { matchId: string, people: Person[]}) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
+
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
     defaultValues: { role: "Umpire" },
   });
 
   function onSubmit(data: AssignmentFormValues) {
-    const person = mockPeople.find(p => p.personId === data.personId);
-    if (!person) return;
-
-    const newAssignment: Official = {
-      assignmentId: `assign_${Math.random().toString(36).substring(2, 9)}`,
-      personId: data.personId,
-      personName: `${person.firstName} ${person.lastName}`,
-      role: data.role,
-      confirmed: false,
-    };
-    onOfficialAssigned(newAssignment);
-    toast({
-      title: "Official Assigned",
-      description: `${newAssignment.personName} has been assigned as ${newAssignment.role}.`,
+    startTransition(async () => {
+      try {
+        await assignOfficialToMatchAction(matchId, data);
+        toast({
+          title: "Official Assigned",
+          description: `The person has been assigned to the match.`,
+        });
+        setOpen(false);
+        form.reset();
+        router.refresh();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Could not assign official.",
+          variant: "destructive",
+        });
+      }
     });
-    setOpen(false);
-    form.reset();
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button disabled={isPending}>
           <PlusCircle className="mr-2" />
           Assign Official
         </Button>
@@ -244,10 +242,10 @@ function AssignOfficialDialog({ onOfficialAssigned }: { onOfficialAssigned: (ass
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Person</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {mockPeople.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}
+                      {people.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -260,7 +258,7 @@ function AssignOfficialDialog({ onOfficialAssigned }: { onOfficialAssigned: (ass
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="Umpire">
+                  <Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="Umpire" disabled={isPending}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
                     <SelectContent>
                       {ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
@@ -271,7 +269,9 @@ function AssignOfficialDialog({ onOfficialAssigned }: { onOfficialAssigned: (ass
               )}
             />
             <DialogFooter>
-              <Button type="submit">Assign to Match</Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Assigning..." : "Assign to Match"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
@@ -358,8 +358,7 @@ function AddBallEventDialog({ onEventAdded }: { onEventAdded: (event: BallEvent)
 }
 
 
-export default function MatchDetailsClient({ match }: { match: Match }) {
-  const [officials, setOfficials] = React.useState<Official[]>([]);
+export default function MatchDetailsClient({ match, initialOfficials, people }: { match: Match; initialOfficials: Official[]; people: Person[] }) {
   const [scoringActions, setScoringActions] = React.useState<ScoringActionFormValues[]>([]);
   const [ballEvents, setBallEvents] = React.useState<BallEvent[]>([]);
   const [commentary, setCommentary] = React.useState<Commentary[]>([]);
@@ -372,10 +371,6 @@ export default function MatchDetailsClient({ match }: { match: Match }) {
     },
   });
 
-  const handleOfficialAssigned = (assignment: Official) => {
-    setOfficials(prev => [...prev, assignment]);
-  };
-  
   const handleActionAdded = (action: ScoringActionFormValues) => {
     setScoringActions(prev => [...prev, action]);
     console.log("New Scoring Action: ", action);
@@ -494,7 +489,7 @@ export default function MatchDetailsClient({ match }: { match: Match }) {
             <CardTitle>Match Officials</CardTitle>
             <CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription>
           </div>
-          <AssignOfficialDialog onOfficialAssigned={handleOfficialAssigned} />
+          <AssignOfficialDialog matchId={match.matchId} people={people} />
         </CardHeader>
         <CardContent>
           <Table>
@@ -507,8 +502,8 @@ export default function MatchDetailsClient({ match }: { match: Match }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {officials.length > 0 ? (
-                officials.map(official => (
+              {initialOfficials.length > 0 ? (
+                initialOfficials.map(official => (
                   <TableRow key={official.assignmentId}>
                     <TableCell className="font-medium">{official.personName}</TableCell>
                     <TableCell>{official.role}</TableCell>

@@ -76,6 +76,14 @@ export interface Match {
   status: MatchStatus;
 }
 
+export interface Official {
+  assignmentId: string;
+  personId: string;
+  personName: string;
+  role: string;
+  confirmed: boolean;
+}
+
 
 // Data
 export const initialDivisions: Division[] = [
