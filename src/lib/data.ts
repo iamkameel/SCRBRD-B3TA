@@ -50,6 +50,16 @@ export interface Team {
   };
 }
 
+export interface RosterMember {
+  assignmentId: string;
+  personId: string;
+  personName: string;
+  role: string;
+  status: string;
+  isCaptain: boolean;
+  isViceCaptain: boolean;
+}
+
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
 
 export interface Match {

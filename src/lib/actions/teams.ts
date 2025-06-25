@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc } from 'firebase/firestore';
-import type { Team } from '@/lib/data';
+import type { Team, RosterMember } from '@/lib/data';
 
 // This function now fetches data from Firestore
 export async function getTeams(): Promise<Team[]> {
@@ -32,6 +32,115 @@ export async function getTeams(): Promise<Team[]> {
     return [];
   }
 }
+
+export async function getTeam(teamId: string): Promise<Team | null> {
+  try {
+    const teamDocRef = doc(db, 'teams', teamId);
+    const teamSnap = await getDoc(teamDocRef);
+
+    if (!teamSnap.exists()) {
+      return null;
+    }
+    const data = teamSnap.data();
+    return {
+      teamId: teamSnap.id,
+      name: data.name,
+      schoolId: data.schoolId,
+      schoolName: data.schoolName,
+      divisionId: data.divisionId,
+      divisionName: data.divisionName,
+      seasonId: data.seasonId,
+      seasonName: data.seasonName,
+      teamColors: data.teamColors || {},
+    } as Team;
+  } catch (error) {
+    console.error(`Error fetching team with ID ${teamId}:`, error);
+    return null;
+  }
+}
+
+export async function getTeamRoster(teamId: string): Promise<RosterMember[]> {
+  try {
+    const rosterCol = collection(db, 'teams', teamId, 'roster');
+    const rosterSnapshot = await getDocs(rosterCol);
+
+    const rosterPromises = rosterSnapshot.docs.map(async (rosterDoc) => {
+        const rosterData = rosterDoc.data();
+        const personSnap = await getDoc(doc(db, 'people', rosterData.personId));
+
+        if (!personSnap.exists()) {
+            console.warn(`Person with ID ${rosterData.personId} not found, but is in roster for team ${teamId}`);
+            return null;
+        }
+        const personData = personSnap.data();
+        return {
+            assignmentId: rosterDoc.id,
+            personId: rosterData.personId,
+            personName: `${personData.firstName} ${personData.lastName}`,
+            role: rosterData.role,
+            status: rosterData.status,
+            isCaptain: rosterData.isCaptain,
+            isViceCaptain: rosterData.isViceCaptain,
+        };
+    });
+
+    const roster = (await Promise.all(rosterPromises)).filter((m): m is RosterMember => m !== null);
+    return roster;
+  } catch (error) {
+    console.error(`Error fetching roster for team ${teamId}:`, error);
+    return [];
+  }
+}
+
+
+type AssignmentFormValues = {
+  personId: string;
+  role: string;
+  status: string;
+  isCaptain: boolean;
+  isViceCaptain: boolean;
+};
+
+export async function addPlayerToRosterAction(teamId: string, data: AssignmentFormValues) {
+  const assignmentSchema = z.object({
+    personId: z.string({ required_error: "Please select a person." }),
+    role: z.string({ required_error: "Please select a role." }),
+    status: z.string({ required_error: "Please select a status." }),
+    isCaptain: z.boolean().default(false),
+    isViceCaptain: z.boolean().default(false),
+  });
+
+  const validatedFields = assignmentSchema.safeParse(data);
+
+  if (!validatedFields.success) {
+    throw new Error('Invalid assignment data.');
+  }
+  
+  const { personId, ...rest } = validatedFields.data;
+
+  // Check if person exists
+  const personDocRef = doc(db, 'people', personId);
+  const personSnap = await getDoc(personDocRef);
+  if (!personSnap.exists()) {
+      throw new Error("Selected person does not exist.");
+  }
+
+  const rosterCol = collection(db, 'teams', teamId, 'roster');
+  
+  try {
+    await addDoc(rosterCol, {
+        personId,
+        ...rest
+    });
+  } catch (error) {
+    console.error("Error adding player to roster: ", error);
+    throw new Error("Could not add player to roster.");
+  }
+
+  revalidatePath(`/teams/${teamId}`);
+  return { success: true };
+}
+
 
 const teamSchema = z.object({
   name: z.string().min(1, { message: "Team name is required." }),
