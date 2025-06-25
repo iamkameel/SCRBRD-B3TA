@@ -27,7 +27,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Separator } from "@/components/ui/separator";
 
 const DATA_SUBSETS = [
   "People",
@@ -58,84 +57,57 @@ export default function DataManagementClient() {
           </p>
         </header>
 
-        {/* Export Card */}
+        {/* Data Subset Management Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Export Data</CardTitle>
+            <CardTitle>Manage Data Subsets</CardTitle>
             <CardDescription>
-              Download backups of your application data.
+              Perform actions on specific categories of your data.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              {DATA_SUBSETS.map((subset) => (
-                <div key={subset} className="flex items-center justify-between rounded-lg border p-4">
-                  <p className="font-medium">Export {subset}</p>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={() => console.log(`Exporting ${subset}...`)}>
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Export {subset}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            <TooltipProvider>
+                <div className="space-y-3">
+                {DATA_SUBSETS.map((subset) => (
+                    <div key={subset} className="flex items-center justify-between rounded-lg border p-4">
+                    <p className="font-medium">{subset} Data</p>
+                    <div className="flex items-center gap-2">
+                        {/* Export Button */}
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => console.log(`Exporting ${subset}...`)}>
+                            <Download className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Export {subset}</p></TooltipContent>
+                        </Tooltip>
+
+                        {/* Import Button */}
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => console.log(`Importing ${subset}...`)}>
+                            <Upload className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Import {subset}</p></TooltipContent>
+                        </Tooltip>
+
+                        {/* Delete Button */}
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(subset)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Delete {subset}</p></TooltipContent>
+                        </Tooltip>
+                    </div>
+                    </div>
+                ))}
                 </div>
-              ))}
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between pt-4">
-              <p className="font-medium">Export All Data</p>
-              <Button onClick={() => console.log('Exporting all data...')}>
-                <Download className="mr-2 h-4 w-4" />
-                Export All
-              </Button>
-            </div>
+            </TooltipProvider>
           </CardContent>
         </Card>
-
-        {/* Import Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Import Data</CardTitle>
-            <CardDescription>
-              Import data from a previously exported file. This may overwrite existing data.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              {DATA_SUBSETS.map((subset) => (
-                <div key={subset} className="flex items-center justify-between rounded-lg border p-4">
-                  <p className="font-medium">Import {subset}</p>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={() => console.log(`Importing ${subset}...`)}>
-                          <Upload className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Import {subset}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              ))}
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between pt-4">
-                <p className="font-medium">Import All Data</p>
-                <Button onClick={() => console.log('Importing all data...')}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Import All
-                </Button>
-            </div>
-          </CardContent>
-        </Card>
-
 
         {/* Danger Zone / Delete Card */}
         <Card className="border-destructive">
@@ -145,34 +117,14 @@ export default function DataManagementClient() {
               <CardTitle>Danger Zone</CardTitle>
             </div>
             <CardDescription>
-              These actions are irreversible and will permanently remove data.
+              This action is irreversible and will permanently remove data.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              {DATA_SUBSETS.map((subset) => (
-                <div key={subset} className="flex items-center justify-between rounded-lg border border-destructive/50 p-4">
-                  <p className="font-medium">Delete {subset}</p>
-                   <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                           <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(subset)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">
-                        <p>Delete {subset}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              ))}
-            </div>
-            <Separator className="bg-destructive/50"/>
-            <div className="flex items-center justify-between pt-4">
-                <div className="flex flex-col">
+          <CardContent>
+             <div className="flex items-center justify-between rounded-lg border border-destructive/50 p-4">
+                <div>
                     <p className="font-bold text-destructive">Delete All Application Data</p>
-                    <p className="text-xs text-muted-foreground">Permanently delete everything.</p>
+                    <p className="text-xs text-muted-foreground">Permanently delete everything, including all subsets.</p>
                 </div>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
