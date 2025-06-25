@@ -4,13 +4,33 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { initialTeams, type Team } from '@/lib/data';
+import { collection, doc, getDoc, getDocs, addDoc } from 'firebase/firestore';
+import type { Team } from '@/lib/data';
 
-// This is a placeholder for a database call to get all teams.
-export async function getTeams() {
-  // In a real app, you'd fetch this from your database.
-  return Promise.resolve(initialTeams);
+// This function now fetches data from Firestore
+export async function getTeams(): Promise<Team[]> {
+  try {
+    const teamsCollection = collection(db, 'teams');
+    const teamSnapshot = await getDocs(teamsCollection);
+    const teamsList = teamSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            teamId: doc.id,
+            name: data.name,
+            schoolId: data.schoolId,
+            schoolName: data.schoolName,
+            divisionId: data.divisionId,
+            divisionName: data.divisionName,
+            seasonId: data.seasonId,
+            seasonName: data.seasonName,
+            teamColors: data.teamColors || {},
+        }
+    });
+    return teamsList;
+  } catch (error) {
+    console.error("Error fetching teams:", error);
+    return [];
+  }
 }
 
 const teamSchema = z.object({
@@ -24,7 +44,7 @@ const teamSchema = z.object({
 
 type TeamFormValues = z.infer<typeof teamSchema>;
 
-// This is a placeholder for a database insert.
+// This function now adds a document to Firestore
 export async function addTeamAction(data: TeamFormValues) {
   const validatedFields = teamSchema.safeParse(data);
 
@@ -47,28 +67,28 @@ export async function addTeamAction(data: TeamFormValues) {
       throw new Error("Invalid selection for school, division, or season.");
   }
 
-  const schoolName = schoolSnap.data().name;
-  const divisionName = divisionSnap.data().name;
-  const seasonName = seasonSnap.data().name;
-
-  const newTeam: Team = {
-    teamId: `team_${new Date().getTime()}`,
+  const newTeamData = {
     name,
     schoolId,
-    schoolName: schoolName,
+    schoolName: schoolSnap.data().name,
     divisionId,
-    divisionName: divisionName,
+    divisionName: divisionSnap.data().name,
     seasonId,
-    seasonName: seasonName,
+    seasonName: seasonSnap.data().name,
     teamColors: {
-      primary: primaryColor,
-      secondary: secondaryColor,
+      primary: primaryColor || '#000000',
+      secondary: secondaryColor || '#ffffff',
     },
   };
-
-  initialTeams.push(newTeam);
+  
+  try {
+    await addDoc(collection(db, 'teams'), newTeamData);
+  } catch (error) {
+    console.error("Error adding team: ", error);
+    throw new Error("Could not add team.");
+  }
 
   revalidatePath('/teams');
 
-  return { success: true, team: newTeam };
+  return { success: true };
 }
