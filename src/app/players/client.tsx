@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,8 +17,24 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Person as Player } from "@/lib/data";
-import { addPlayerAction } from '@/lib/actions/players';
+import { addPlayerAction, deletePlayerAction } from '@/lib/actions/players';
 
 const playerSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -214,68 +230,137 @@ function AddPlayerDialog() {
 }
 
 export default function PlayersClient({ players }: { players: Player[] }) {
-  return (
-    <div className="flex flex-col gap-8">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            People
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your roster of players, coaches, and officials.
-          </p>
-        </div>
-        <AddPlayerDialog />
-      </header>
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [selectedPerson, setSelectedPerson] = React.useState<Player | null>(null);
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Person Roster</CardTitle>
-          <CardDescription>A list of all people in the system.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Roles</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {players.length > 0 ? (
-                players.map((player) => (
-                  <TableRow key={player.personId}>
-                    <TableCell className="font-medium flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} />
-                        <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
-                      </Avatar>
-                      <Link href={`/players/${player.personId}`} className="hover:underline">
-                        {player.firstName} {player.lastName}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{player.email}</TableCell>
-                    <TableCell>{player.roles.join(', ')}</TableCell>
-                    <TableCell className="text-right">
-                       <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+  const handleDelete = () => {
+    if (!selectedPerson) return;
+    startTransition(async () => {
+      try {
+        await deletePlayerAction(selectedPerson.personId);
+        toast({
+          title: "Person Deleted",
+          description: `${selectedPerson.firstName} ${selectedPerson.lastName} has been deleted.`,
+        });
+        setDialogOpen(false);
+        setSelectedPerson(null);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Could not delete person.",
+          variant: "destructive",
+        });
+        setDialogOpen(false);
+        setSelectedPerson(null);
+      }
+    });
+  };
+  
+  return (
+    <>
+      <div className="flex flex-col gap-8">
+        <header className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              People
+            </h1>
+            <p className="text-muted-foreground">
+              Manage your roster of players, coaches, and officials.
+            </p>
+          </div>
+          <AddPlayerDialog />
+        </header>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Person Roster</CardTitle>
+            <CardDescription>A list of all people in the system.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Roles</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {players.length > 0 ? (
+                  players.map((player) => (
+                    <TableRow key={player.personId}>
+                      <TableCell className="font-medium flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} />
+                          <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <Link href={`/players/${player.personId}`} className="hover:underline">
+                          {player.firstName} {player.lastName}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{player.email}</TableCell>
+                      <TableCell>{player.roles.join(', ')}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                setSelectedPerson(player);
+                                setDialogOpen(true);
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      No people found. Get started by adding someone.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    No people found. Get started by adding someone.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete{" "}
+              <strong>{selectedPerson?.firstName} {selectedPerson?.lastName}</strong>
+              {" "}and their associated family links. It will not yet remove them from any team rosters or match assignments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedPerson(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className={buttonVariants({ variant: "destructive" })}
+              disabled={isPending}
+            >
+              {isPending ? "Deleting..." : "Delete Person"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

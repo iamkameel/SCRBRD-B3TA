@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 
 // This user ID will be replaced with dynamic auth state later.
@@ -194,5 +194,46 @@ export async function addPlayerAction(data: { firstName: string; lastName: strin
   revalidatePath('/teams');
   revalidatePath('/new-match');
 
+  return { success: true };
+}
+
+export async function deletePlayerAction(personId: string) {
+  if (!userId) throw new Error("User not authenticated");
+
+  const personRef = doc(db, 'people', personId);
+  const personSnap = await getDoc(personRef);
+
+  if (!personSnap.exists() || personSnap.data().userId !== userId) {
+    throw new Error("Person not found or you do not have permission to delete them.");
+  }
+  
+  const batch = writeBatch(db);
+
+  // 1. Delete the person document
+  batch.delete(personRef);
+
+  // 2. Find and delete related family links
+  const linksCollection = collection(db, 'familyLinks');
+  const parentLinksQuery = query(linksCollection, where("parentId", "==", personId));
+  const childLinksQuery = query(linksCollection, where("childId", "==", personId));
+
+  try {
+    const [parentLinksSnapshot, childLinksSnapshot] = await Promise.all([
+      getDocs(parentLinksQuery),
+      getDocs(childLinksQuery)
+    ]);
+
+    parentLinksSnapshot.forEach(doc => batch.delete(doc.ref));
+    childLinksSnapshot.forEach(doc => batch.delete(doc.ref));
+    
+    await batch.commit();
+  } catch (error) {
+    console.error("Error deleting person and their links: ", error);
+    throw new Error("Could not delete person.");
+  }
+  
+  revalidatePath('/players');
+  revalidatePath('/teams'); // Revalidate teams in case they were on a roster
+  
   return { success: true };
 }
