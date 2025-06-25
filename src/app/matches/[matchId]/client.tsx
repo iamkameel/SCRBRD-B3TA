@@ -261,9 +261,11 @@ interface MatchDetailsClientProps {
   teamBRoster: RosterMember[];
   teamALineup: string[];
   teamBLineup: string[];
+  innings1?: Innings;
+  innings2?: Innings;
 }
 
-export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup }: MatchDetailsClientProps) {
+export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup, innings1, innings2 }: MatchDetailsClientProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
@@ -285,47 +287,8 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
 
-  const placeholderInnings1: Innings = {
-    teamName: match.teamAName,
-    totalRuns: 150,
-    wickets: 5,
-    overs: 20.0,
-    battingCard: [
-      { name: "Player A1", status: "c & b Bowler B1", runs: 30, balls: 25, fours: 4, sixes: 1, strikeRate: 120.00 },
-      { name: "Player A2", status: "run out", runs: 15, balls: 20, fours: 1, sixes: 0, strikeRate: 75.00 },
-      { name: "Player A3", status: "not out", runs: 50, balls: 40, fours: 5, sixes: 2, strikeRate: 125.00 },
-      { name: "Player A4", status: "b Bowler B2", runs: 5, balls: 10, fours: 0, sixes: 0, strikeRate: 50.00 },
-    ],
-    bowlingCard: [
-      { name: "Bowler B1", overs: 4, maidens: 0, runs: 30, wickets: 2, economy: 7.50 },
-      { name: "Bowler B2", overs: 4, maidens: 0, runs: 25, wickets: 1, economy: 6.25 },
-    ],
-    fallOfWickets: [
-      { wicket: 1, runs: 25, batsmanName: "Player A2", over: 5.2 },
-      { wicket: 2, runs: 80, batsmanName: "Player A1", over: 12.1 },
-    ],
-    extras: { total: 10, details: "(w 5, nb 1, b 2, lb 2)" },
-  };
-  
-  const placeholderInnings2: Innings = {
-      teamName: match.teamBName,
-      totalRuns: 148,
-      wickets: 8,
-      overs: 20.0,
-      battingCard: [
-        { name: "Player B1", status: "c Player A1 b Bowler A1", runs: 40, balls: 30, fours: 6, sixes: 0, strikeRate: 133.33 },
-        { name: "Player B2", status: "st Player A2 b Bowler A2", runs: 20, balls: 22, fours: 2, sixes: 0, strikeRate: 90.91 },
-      ],
-      bowlingCard: [
-         { name: "Bowler A1", overs: 4, maidens: 0, runs: 28, wickets: 3, economy: 7.00 },
-         { name: "Bowler A2", overs: 4, maidens: 0, runs: 35, wickets: 2, economy: 8.75 },
-      ],
-      fallOfWickets: [
-         { wicket: 1, runs: 50, batsmanName: "Player B1", over: 8.1 },
-         { wicket: 2, runs: 90, batsmanName: "Player B2", over: 14.5 },
-      ],
-      extras: { total: 8, details: "(w 4, nb 0, b 4, lb 0)" },
-  };
+  const firstInnings = innings1?.teamName === match.teamAName ? innings1 : innings2;
+  const secondInnings = innings2?.teamName === match.teamBName ? innings2 : innings1;
 
   return (
     <>
@@ -360,10 +323,10 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
               </CardHeader>
               <CardContent>
                   <TabsContent value="team-a-innings">
-                      <Scorecard innings={placeholderInnings1} />
+                      {firstInnings ? <Scorecard innings={firstInnings} /> : <p className="text-center text-muted-foreground py-8">Scorecard data is being generated...</p>}
                   </TabsContent>
                   <TabsContent value="team-b-innings">
-                      <Scorecard innings={placeholderInnings2} />
+                      {secondInnings ? <Scorecard innings={secondInnings} /> : <p className="text-center text-muted-foreground py-8">Scorecard data is being generated...</p>}
                   </TabsContent>
               </CardContent>
           </Card>

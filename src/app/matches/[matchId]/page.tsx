@@ -4,6 +4,7 @@ import { getPlayers } from '@/lib/actions/players';
 import { getTeamRoster } from '@/lib/actions/teams';
 import MatchDetailsClient from './client';
 import { notFound } from 'next/navigation';
+import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const match = await getMatch(params.matchId);
@@ -12,13 +13,23 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     notFound();
   }
 
-  const [officials, people, teamARoster, teamBRoster, teamALineup, teamBLineup] = await Promise.all([
+  // Fetch all data in parallel
+  const [
+    officials,
+    people,
+    teamARoster,
+    teamBRoster,
+    teamALineup,
+    teamBLineup,
+    scorecardData,
+  ] = await Promise.all([
     getMatchOfficials(params.matchId),
     getPlayers(), // To populate the assignment dialog
     getTeamRoster(match.teamAId),
     getTeamRoster(match.teamBId),
     getMatchLineup(params.matchId, match.teamAId),
     getMatchLineup(params.matchId, match.teamBId),
+    generateScorecard({ teamAName: match.teamAName, teamBName: match.teamBName }),
   ]);
 
   return <MatchDetailsClient 
@@ -29,5 +40,7 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     teamBRoster={teamBRoster}
     teamALineup={teamALineup}
     teamBLineup={teamBLineup}
+    innings1={scorecardData?.innings1}
+    innings2={scorecardData?.innings2}
   />;
 }
