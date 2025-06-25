@@ -1,3 +1,4 @@
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -27,10 +28,11 @@ export default async function PersonDetailsPage({ params }: { params: { personId
 
   // Filter out the current person and anyone already linked
   const existingLinkIds = new Set([
+      person.personId,
       ...guardians.map(g => g.personId),
       ...children.map(c => c.personId)
   ]);
-  const availablePeople = allPeople.filter(p => p.personId !== person.personId && !existingLinkIds.has(p.personId));
+  const availablePeople = allPeople.filter(p => !existingLinkIds.has(p.personId));
 
   return (
     <PlayerDetailsClient 
