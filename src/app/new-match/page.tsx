@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
 const fixtureSchema = z.object({
@@ -23,6 +24,9 @@ const fixtureSchema = z.object({
   fieldId: z.string({ required_error: "Please select a field." }),
   dateTime: z.date({
     required_error: "A date for the match is required.",
+  }),
+  time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: "Invalid time format. Please use HH:MM.",
   }),
 }).refine(data => data.teamAId !== data.teamBId, {
   message: "Home and away teams cannot be the same.",
@@ -53,17 +57,27 @@ export default function NewMatchPage() {
   const { toast } = useToast();
   const form = useForm<FixtureFormValues>({
     resolver: zodResolver(fixtureSchema),
-    defaultValues: {},
+    defaultValues: {
+      time: "10:00",
+    },
   });
 
   function onSubmit(data: FixtureFormValues) {
+    const [hours, minutes] = data.time.split(':').map(Number);
+    const combinedDateTime = new Date(data.dateTime);
+    combinedDateTime.setHours(hours, minutes, 0, 0);
+
     const teamA = teams.find(t => t.id === data.teamAId);
     const teamB = teams.find(t => t.id === data.teamBId);
     toast({
       title: "Fixture Created",
       description: `Successfully created fixture: ${teamA?.name} vs ${teamB?.name}.`
     });
-    console.log("Fixture data:", data);
+
+    const { time, ...rest } = data;
+    const finalData = { ...rest, dateTime: combinedDateTime };
+
+    console.log("Fixture data:", finalData);
     form.reset();
   }
 
@@ -186,47 +200,64 @@ export default function NewMatchPage() {
                         </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="dateTime"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Match Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full md:w-[280px] justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
-                                )}
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                date < new Date(new Date().setHours(0,0,0,0))
-                                }
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <FormField
+                        control={form.control}
+                        name="dateTime"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Match Date</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                    date < new Date(new Date().setHours(0,0,0,0))
+                                    }
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="time"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Match Time</FormLabel>
+                                <FormControl>
+                                    <Input type="time" className="w-full" {...field} />
+                                </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
 
                 <Button type="submit">Create Fixture & Start Scoring</Button>
             </form>
