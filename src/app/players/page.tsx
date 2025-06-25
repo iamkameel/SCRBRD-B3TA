@@ -64,7 +64,7 @@ function AddPlayerDialog({ onPlayerAdded }: { onPlayerAdded: (player: Player) =>
   function onSubmit(data: PlayerFormValues) {
     const newPlayer: Player = {
       ...data,
-      personId: new Date().toISOString(), // Use a temporary unique ID
+      personId: `person_${new Date().getTime()}`, // Use a temporary unique ID
     };
     onPlayerAdded(newPlayer);
     toast({

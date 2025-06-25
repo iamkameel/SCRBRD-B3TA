@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -76,7 +77,7 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
     }
 
     const newTeam: Team = {
-      teamId: new Date().toISOString(), // Use a temporary unique ID
+      teamId: `team_${new Date().getTime()}`, // Use a temporary unique ID
       name: data.name,
       schoolName: school.name,
       divisionName: division.name,
@@ -245,7 +246,11 @@ export default function TeamsPage() {
               {teams.length > 0 ? (
                 teams.map((team) => (
                   <TableRow key={team.teamId}>
-                    <TableCell className="font-medium">{team.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/teams/${team.teamId}`} className="hover:underline">
+                        {team.name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{team.schoolName}</TableCell>
                     <TableCell>{team.divisionName}</TableCell>
                     <TableCell>{team.seasonName}</TableCell>
