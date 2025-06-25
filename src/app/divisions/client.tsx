@@ -280,6 +280,7 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete <strong>{selectedDivision?.name}</strong>.
+              Any teams in this division will need to be updated manually.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

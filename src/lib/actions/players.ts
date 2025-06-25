@@ -92,6 +92,13 @@ const removeLinkSchema = z.object({
 export async function removePersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
     if (!userId) throw new Error("User not authenticated");
     if (!removeLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
+    
+    // Permission check: ensure both users exist and belong to the current user
+    const [currentPerson, linkedPerson] = await Promise.all([getPerson(currentPersonId), getPerson(linkedPersonId)]);
+    if (!currentPerson || !linkedPerson) {
+        throw new Error("One or both people involved in the link could not be found.");
+    }
+    
     const { parentId, childId } = relationship === 'guardian' ? { parentId: linkedPersonId, childId: currentPersonId } : { parentId: currentPersonId, childId: linkedPersonId };
     
     const q = query(collection(db, 'familyLinks'), where("parentId", "==", parentId), where("childId", "==", childId));

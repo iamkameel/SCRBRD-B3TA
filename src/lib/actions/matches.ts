@@ -232,12 +232,26 @@ export async function deleteMatchAction(matchId: string) {
     if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
         throw new Error("Match not found or you do not have permission to delete it.");
     }
+
+    const batch = writeBatch(db);
+
+    // Delete lineups subcollection
+    const lineupsCol = collection(db, 'matches', matchId, 'lineups');
+    const lineupsSnap = await getDocs(lineupsCol);
+    lineupsSnap.forEach(doc => batch.delete(doc.ref));
+
+    // Delete officials subcollection
+    const officialsCol = collection(db, 'matches', matchId, 'officials');
+    const officialsSnap = await getDocs(officialsCol);
+    officialsSnap.forEach(doc => batch.delete(doc.ref));
+
+    // Delete the match itself
+    batch.delete(matchRef);
     
     try {
-        // In a real app, you might want to delete subcollections (lineups, officials) in a batch
-        await deleteDoc(matchRef);
+        await batch.commit();
     } catch (error) {
-        console.error("Error deleting match:", error);
+        console.error("Error deleting match and its subcollections:", error);
         throw new Error("Could not delete match.");
     }
     revalidatePath('/matches');

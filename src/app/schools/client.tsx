@@ -314,7 +314,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete <strong>{selectedSchool?.name}</strong>. 
-              Any teams associated with this school will not be deleted, which could lead to broken data references.
+              Any teams associated with this school will not be deleted and will need to be updated manually.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
