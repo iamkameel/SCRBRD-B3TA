@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -16,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import type { Person as Player } from "@/lib/data";
+import { initialPlayers } from "@/lib/data";
 
 const playerSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -37,26 +40,6 @@ const ROLES = [
   { id: "Guardian", label: "Guardian" },
   { id: "Sportmaster", label: "Sportmaster" },
 ] as const;
-
-interface Player {
-  personId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  profileImageUrl?: string;
-  roles: string[];
-}
-
-const initialPlayers: Player[] = [
-    { personId: "person_1", firstName: "John", lastName: "Doe", email: "john.doe@example.com", roles: ["Player"] },
-    { personId: "person_2", firstName: "Jane", lastName: "Smith", email: "jane.smith@example.com", roles: ["Player", "Guardian"] },
-    { personId: "person_3", firstName: "Peter", lastName: "Jones", email: "peter.jones@example.com", roles: ["Coach", "Umpire", "Guardian"] },
-    { personId: "person_4", firstName: "Mary", lastName: "Williams", email: "mary.w@example.com", roles: ["Player", "Scorer"] },
-    { personId: "person_5", firstName: "Sam", lastName: "Brown", email: "sam.b@example.com", roles: ["Player"] },
-    { personId: "person_6", firstName: "Emily", lastName: "Davis", email: "emily.d@example.com", roles: ["Guardian"] },
-];
-
 
 function AddPlayerDialog({ onPlayerAdded }: { onPlayerAdded: (player: Player) => void }) {
   const [open, setOpen] = React.useState(false);

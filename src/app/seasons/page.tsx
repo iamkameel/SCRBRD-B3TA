@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -19,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
+import type { Season } from "@/lib/data";
+import { initialSeasons } from "@/lib/data";
 
 // Schema based on competitions.seasons
 const seasonSchema = z.object({
@@ -32,19 +35,6 @@ const seasonSchema = z.object({
 });
 
 type SeasonFormValues = z.infer<typeof seasonSchema>;
-
-interface Season {
-  seasonId: string;
-  name: string;
-  startDate: Date;
-  endDate: Date;
-  active: boolean;
-}
-
-const initialSeasons: Season[] = [
-    { seasonId: "season_1", name: "2024-2025", startDate: new Date("2024-09-01"), endDate: new Date("2025-05-31"), active: true },
-    { seasonId: "season_2", name: "2023-2024", startDate: new Date("2023-09-01"), endDate: new Date("2024-05-31"), active: false },
-];
 
 function AddSeasonDialog({ onSeasonAdded }: { onSeasonAdded: (season: Season) => void }) {
   const [open, setOpen] = React.useState(false);

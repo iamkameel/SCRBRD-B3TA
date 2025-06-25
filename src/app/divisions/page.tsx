@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import type { Division } from "@/lib/data";
+import { initialDivisions } from "@/lib/data";
 
 // Schema based on competitions.divisions
 const divisionSchema = z.object({
@@ -21,17 +23,6 @@ const divisionSchema = z.object({
 });
 
 type DivisionFormValues = z.infer<typeof divisionSchema>;
-
-interface Division {
-  divisionId: string;
-  name: string;
-}
-
-const initialDivisions: Division[] = [
-    { divisionId: "div_1", name: "U19 Varsity" },
-    { divisionId: "div_2", name: "U17 Junior Varsity" },
-    { divisionId: "div_3", name: "U15 Freshmen" },
-];
 
 function AddDivisionDialog({ onDivisionAdded }: { onDivisionAdded: (division: Division) => void }) {
   const [open, setOpen] = React.useState(false);

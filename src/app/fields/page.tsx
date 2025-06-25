@@ -15,6 +15,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import type { Field } from "@/lib/data";
+import { initialFields } from "@/lib/data";
 
 // Schema based on competitions.fields
 const fieldSchema = z.object({
@@ -24,19 +26,6 @@ const fieldSchema = z.object({
 });
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
-
-interface Field {
-  fieldId: string;
-  name: string;
-  surfaceType?: string;
-  facilities?: string;
-}
-
-const initialFields: Field[] = [
-    { fieldId: "field_1", name: "Greenwood High Main Oval", surfaceType: "Grass", facilities: "Pavilion, Toilets, Scoreboard" },
-    { fieldId: "field_2", name: "Oakdale Academy Pitch 1", surfaceType: "Artificial Turf", facilities: "Electronic Scoreboard, Canteen, Nets" },
-    { fieldId: "field_3", name: "Riverbend School Cricket Ground", surfaceType: "Grass", facilities: "Nets, Changing Rooms" },
-];
 
 function AddFieldDialog({ onFieldAdded }: { onFieldAdded: (field: Field) => void }) {
   const [open, setOpen] = React.useState(false);

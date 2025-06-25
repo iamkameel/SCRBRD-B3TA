@@ -21,6 +21,7 @@ import { Scorecard } from "./scorecard";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { initialPlayers as mockPeople, mockFixture, mockScorecard } from "@/lib/data";
 
 // From schema: match_role_assignments
 const assignmentSchema = z.object({
@@ -72,26 +73,6 @@ interface Commentary {
 
 const EVENT_TYPES = ["Fielding Change", "Weather Delay", "Injury Break", "Pitch Report", "Other"];
 
-
-// Mock Data
-const mockFixture = {
-  fixtureId: "fixture_1",
-  teamA: "Greenwood Gators",
-  teamB: "Oakdale Eagles",
-  dateTime: new Date("2024-07-28T14:00:00"),
-  status: "Completed",
-  venue: "Greenwood High Main Oval",
-};
-
-// From schema: persons
-const mockPeople = [
-    { personId: "person_1", firstName: "John", lastName: "Doe", email: "john.doe@example.com", roles: ["Player"] },
-    { personId: "person_2", firstName: "Jane", lastName: "Smith", email: "jane.smith@example.com", roles: ["Player", "Guardian"] },
-    { personId: "person_3", firstName: "Peter", lastName: "Jones", email: "peter.jones@example.com", roles: ["Coach", "Umpire"] },
-    { personId: "person_4", firstName: "Mary", lastName: "Williams", email: "mary.w@example.com", roles: ["Player", "Scorer"] },
-    { personId: "person_5", firstName: "Sam", lastName: "Brown", email: "sam.b@example.com", roles: ["Umpire", "Player"] },
-];
-
 interface Official {
   assignmentId: string;
   personId: string;
@@ -99,53 +80,6 @@ interface Official {
   role: string;
   confirmed: boolean;
 }
-
-const mockScorecard = {
-    resultSummary: "Greenwood Gators won by 2 wickets",
-    innings1: {
-      teamName: "Oakdale Eagles",
-      totalRuns: 152,
-      wickets: 3,
-      overs: 19.4,
-      battingCard: [
-        { name: "Sam Brown", status: "c. John Doe b. Peter Jones", runs: 45, balls: 30, fours: 5, sixes: 2, strikeRate: 150.00 },
-        { name: "Alex Ray", status: "lbw b. Peter Jones", runs: 12, balls: 15, fours: 1, sixes: 0, strikeRate: 80.00 },
-        { name: "Ben Stokes", status: "b. John Doe", runs: 28, balls: 22, fours: 3, sixes: 1, strikeRate: 127.27 },
-        { name: "Chris Woakes", status: "not out", runs: 15, balls: 10, fours: 1, sixes: 1, strikeRate: 150.00 },
-      ],
-      bowlingCard: [
-          { name: "Peter Jones", overs: 4, maidens: 0, runs: 25, wickets: 2, economy: 6.25 },
-          { name: "John Doe", overs: 4, maidens: 0, runs: 30, wickets: 1, economy: 7.5 },
-          { name: "Mary Williams", overs: 4, maidens: 0, runs: 40, wickets: 0, economy: 10.00 },
-      ],
-      fallOfWickets: [
-          { wicket: 1, runs: 25, batsmanName: "Alex Ray", over: 4.1 },
-          { wicket: 2, runs: 78, batsmanName: "Sam Brown", over: 9.3 },
-          { wicket: 3, runs: 120, batsmanName: "Ben Stokes", over: 15.2 },
-      ],
-      extras: { total: 10, details: "(b 1, lb 2, w 5, nb 2)" }
-    },
-    innings2: {
-      teamName: "Greenwood Gators",
-      totalRuns: 153,
-      wickets: 2,
-      overs: 19.1,
-      battingCard: [
-          { name: "John Doe", status: "not out", runs: 68, balls: 45, fours: 7, sixes: 3, strikeRate: 151.11 },
-          { name: "Mary Williams", status: "run out (Sam Brown)", runs: 22, balls: 20, fours: 2, sixes: 0, strikeRate: 110.00 },
-          { name: "Peter Jones", status: "c. Alex Ray b. Sam Brown", runs: 35, balls: 25, fours: 4, sixes: 0, strikeRate: 140.00 },
-      ],
-      bowlingCard: [
-          { name: "Sam Brown", overs: 4, maidens: 0, runs: 35, wickets: 1, economy: 8.75 },
-          { name: "Alex Ray", overs: 4, maidens: 0, runs: 30, wickets: 1, economy: 7.50 },
-      ],
-      fallOfWickets: [
-          { wicket: 1, runs: 40, batsmanName: "Mary Williams", over: 5.5 },
-          { wicket: 2, runs: 100, batsmanName: "Peter Jones", over: 12.1 },
-      ],
-      extras: { total: 8, details: "(lb 4, w 4)" }
-    }
-  };
 
 const ROLES = ["Umpire", "Scorer"];
 

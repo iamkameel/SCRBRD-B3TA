@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -15,6 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import type { Team } from "@/lib/data";
+import { initialTeams, initialSchools, initialDivisions, initialSeasons } from "@/lib/data";
 
 // Schema based on competitions.teams
 const teamSchema = z.object({
@@ -27,42 +30,6 @@ const teamSchema = z.object({
 });
 
 type TeamFormValues = z.infer<typeof teamSchema>;
-
-// Mock data for related entities. In a real app, this would come from a database.
-const schools = [
-  { id: "school_1", name: "Greenwood High" },
-  { id: "school_2", name: "Oakdale Academy" },
-  { id: "school_3", name: "Riverbend School" },
-];
-
-const divisions = [
-  { id: "div_1", name: "U19 Varsity" },
-  { id: "div_2", name: "U17 Junior Varsity" },
-  { id: "div_3", name: "U15 Freshmen" },
-];
-
-const seasons = [
-  { id: "season_1", name: "2024-2025" },
-  { id: "season_2", name: "2023-2024" },
-];
-
-interface Team {
-  teamId: string;
-  name: string;
-  schoolName: string;
-  divisionName: string;
-  seasonName: string;
-  teamColors?: {
-    primary?: string;
-    secondary?: string;
-  };
-}
-
-const initialTeams: Team[] = [
-    { teamId: 'team_1', name: 'Greenwood Gators', schoolName: 'Greenwood High', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#004d00', secondary: '#ffc400'} },
-    { teamId: 'team_2', name: 'Oakdale Eagles', schoolName: 'Oakdale Academy', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#6a0dad', secondary: '#ffd700'} },
-]
-
 
 function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
   const [open, setOpen] = React.useState(false);
@@ -77,9 +44,9 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
   });
 
   function onSubmit(data: TeamFormValues) {
-    const school = schools.find((s) => s.id === data.schoolId);
-    const division = divisions.find((d) => d.id === data.divisionId);
-    const season = seasons.find((s) => s.id === data.seasonId);
+    const school = initialSchools.find((s) => s.schoolId === data.schoolId);
+    const division = initialDivisions.find((d) => d.divisionId === data.divisionId);
+    const season = initialSeasons.find((s) => s.seasonId === data.seasonId);
 
     if (!school || !division || !season) {
         toast({
@@ -93,8 +60,11 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
     const newTeam: Team = {
       teamId: `team_${new Date().getTime()}`, // Use a temporary unique ID
       name: data.name,
+      schoolId: school.schoolId,
       schoolName: school.name,
+      divisionId: division.divisionId,
       divisionName: division.name,
+      seasonId: season.seasonId,
       seasonName: season.name,
       teamColors: {
         primary: data.primaryColor,
@@ -153,8 +123,8 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {schools.map((school) => (
-                        <SelectItem key={school.id} value={school.id}>
+                      {initialSchools.map((school) => (
+                        <SelectItem key={school.schoolId} value={school.schoolId}>
                           {school.name}
                         </SelectItem>
                       ))}
@@ -177,8 +147,8 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {divisions.map((division) => (
-                        <SelectItem key={division.id} value={division.id}>
+                      {initialDivisions.map((division) => (
+                        <SelectItem key={division.divisionId} value={division.divisionId}>
                           {division.name}
                         </SelectItem>
                       ))}
@@ -201,8 +171,8 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {seasons.map((season) => (
-                        <SelectItem key={season.id} value={season.id}>
+                      {initialSeasons.map((season) => (
+                        <SelectItem key={season.seasonId} value={season.seasonId}>
                           {season.name}
                         </SelectItem>
                       ))}

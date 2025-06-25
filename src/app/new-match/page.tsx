@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -16,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { initialTeams as teams, initialSeasons as seasons, initialFields as fields } from "@/lib/data";
 
 const fixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
@@ -35,24 +37,6 @@ const fixtureSchema = z.object({
 
 type FixtureFormValues = z.infer<typeof fixtureSchema>;
 
-// Mock data. In a real app, this would come from a database.
-const teams = [
-  { id: "team_1", name: "Greenwood Gators" },
-  { id: "team_2", name: "Oakdale Eagles" },
-  { id: "team_3", name: "Riverbend Ravens" },
-];
-
-const seasons = [
-  { id: "season_1", name: "2024-2025" },
-  { id: "season_2", name: "2023-2024" },
-];
-
-const fields = [
-    { id: "field_1", name: "Greenwood High Main Oval" },
-    { id: "field_2", name: "Oakdale Academy Pitch 1" },
-    { id: "field_3", name: "Riverbend School Cricket Ground" },
-]
-
 export default function NewMatchPage() {
   const { toast } = useToast();
   const form = useForm<FixtureFormValues>({
@@ -67,8 +51,8 @@ export default function NewMatchPage() {
     const combinedDateTime = new Date(data.dateTime);
     combinedDateTime.setHours(hours, minutes, 0, 0);
 
-    const teamA = teams.find(t => t.id === data.teamAId);
-    const teamB = teams.find(t => t.id === data.teamBId);
+    const teamA = teams.find(t => t.teamId === data.teamAId);
+    const teamB = teams.find(t => t.teamId === data.teamBId);
     toast({
       title: "Fixture Created",
       description: `Successfully created fixture: ${teamA?.name} vs ${teamB?.name}.`
@@ -117,7 +101,7 @@ export default function NewMatchPage() {
                                 </FormControl>
                                 <SelectContent>
                                 {teams.map((team) => (
-                                    <SelectItem key={team.id} value={team.id}>
+                                    <SelectItem key={team.teamId} value={team.teamId}>
                                     {team.name}
                                     </SelectItem>
                                 ))}
@@ -141,7 +125,7 @@ export default function NewMatchPage() {
                                 </FormControl>
                                 <SelectContent>
                                 {teams.map((team) => (
-                                    <SelectItem key={team.id} value={team.id}>
+                                    <SelectItem key={team.teamId} value={team.teamId}>
                                     {team.name}
                                     </SelectItem>
                                 ))}
@@ -166,7 +150,7 @@ export default function NewMatchPage() {
                             </FormControl>
                             <SelectContent>
                             {seasons.map((season) => (
-                                <SelectItem key={season.id} value={season.id}>
+                                <SelectItem key={season.seasonId} value={season.seasonId}>
                                 {season.name}
                                 </SelectItem>
                             ))}
@@ -190,7 +174,7 @@ export default function NewMatchPage() {
                             </FormControl>
                             <SelectContent>
                             {fields.map((field) => (
-                                <SelectItem key={field.id} value={field.id}>
+                                <SelectItem key={field.fieldId} value={field.fieldId}>
                                 {field.name}
                                 </SelectItem>
                             ))}

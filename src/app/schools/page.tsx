@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import type { School } from "@/lib/data";
+import { initialSchools } from "@/lib/data";
 
 // Schema based on competitions.schools
 const schoolSchema = z.object({
@@ -21,17 +23,6 @@ const schoolSchema = z.object({
 });
 
 type SchoolFormValues = z.infer<typeof schoolSchema>;
-
-interface School {
-  schoolId: string;
-  name: string;
-}
-
-const initialSchools: School[] = [
-    { schoolId: "school_1", name: "Greenwood High" },
-    { schoolId: "school_2", name: "Oakdale Academy" },
-    { schoolId: "school_3", name: "Riverbend School" },
-];
 
 function AddSchoolDialog({ onSchoolAdded }: { onSchoolAdded: (school: School) => void }) {
   const [open, setOpen] = React.useState(false);

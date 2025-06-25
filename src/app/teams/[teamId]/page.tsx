@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { initialTeams as mockTeams, initialPlayers as mockPeople, mockTeamStats } from "@/lib/data";
 
 // From schema: team_role_assignments
 const assignmentSchema = z.object({
@@ -29,34 +30,6 @@ const assignmentSchema = z.object({
 });
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
-
-// Mock Data
-const mockTeams = [
-    { teamId: 'team_1', name: 'Greenwood Gators', schoolName: 'Greenwood High', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#004d00', secondary: '#ffc400'} },
-    { teamId: 'team_2', name: 'Oakdale Eagles', schoolName: 'Oakdale Academy', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#6a0dad', secondary: '#ffd700'} },
-];
-
-// From schema: persons
-const mockPeople = [
-  { personId: "person_1", firstName: "John", lastName: "Doe", email: "john.doe@example.com", roles: ["Player"] },
-  { personId: "person_2", firstName: "Jane", lastName: "Smith", email: "jane.smith@example.com", roles: ["Player", "Guardian"] },
-  { personId: "person_3", firstName: "Peter", lastName: "Jones", email: "peter.jones@example.com", roles: ["Coach"] },
-  { personId: "person_4", firstName: "Mary", lastName: "Williams", email: "mary.w@example.com", roles: ["Player"] },
-];
-
-// From schema: team_season_stats
-const mockTeamStats = {
-  teamId: "team_1",
-  seasonId: "season_1",
-  matchesPlayed: 12,
-  matchesWon: 8,
-  matchesLost: 3,
-  matchesDrawn: 1,
-  totalRunsScored: 2450,
-  totalWicketsTaken: 95,
-  netRunRate: 0.75,
-};
-
 
 interface RosterMember {
   assignmentId: string;

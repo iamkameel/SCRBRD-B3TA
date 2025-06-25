@@ -18,58 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-
-
-// Mock Data (Should be centralized later)
-const mockPeople = [
-    { personId: "person_1", firstName: "John", lastName: "Doe", email: "john.doe@example.com", roles: ["Player"] },
-    { personId: "person_2", firstName: "Jane", lastName: "Smith", email: "jane.smith@example.com", roles: ["Player", "Guardian"] },
-    { personId: "person_3", firstName: "Peter", lastName: "Jones", email: "peter.jones@example.com", roles: ["Coach", "Umpire", "Guardian"] },
-    { personId: "person_4", firstName: "Mary", lastName: "Williams", email: "mary.w@example.com", roles: ["Player", "Scorer"] },
-    { personId: "person_5", firstName: "Sam", lastName: "Brown", email: "sam.b@example.com", roles: ["Player"] },
-    { personId: "person_6", firstName: "Emily", lastName: "Davis", email: "emily.d@example.com", roles: ["Guardian"] },
-];
-
-const mockParentChildLinks: { parentId: string, childId: string }[] = [
-    { parentId: "person_2", childId: "person_5" },
-    { parentId: "person_3", childId: "person_1" },
-];
-
-// From schema: player_season_stats
-const mockPlayerStats = {
-  personId: "person_1",
-  seasonId: "season_1",
-  teamId: "team_1",
-  matchesPlayed: 10,
-  inningsBatted: 8,
-  notOuts: 2,
-  totalRuns: 350,
-  highestScore: 102,
-  fifties: 2,
-  hundreds: 1,
-  battingAverage: 58.33,
-  strikeRate: 125.45,
-  oversBowled: 25.3,
-  maidens: 2,
-  runsConceded: 150,
-  wicketsTaken: 12,
-  bowlingAverage: 12.5,
-  economyRate: 5.93,
-  bestBowling: "4/25",
-  catches: 5,
-  stumpings: 0,
-};
-
-
-interface Person {
-  personId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  profileImageUrl?: string;
-  roles: string[];
-}
+import { initialPlayers as mockPeople, mockParentChildLinks, mockPlayerStats } from "@/lib/data";
+import type { Person } from "@/lib/data";
 
 const linkSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
