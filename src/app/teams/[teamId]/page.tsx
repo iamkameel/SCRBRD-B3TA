@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -42,6 +43,20 @@ const mockPeople = [
   { personId: "person_3", firstName: "Peter", lastName: "Jones", email: "peter.jones@example.com", roles: ["Coach"] },
   { personId: "person_4", firstName: "Mary", lastName: "Williams", email: "mary.w@example.com", roles: ["Player"] },
 ];
+
+// From schema: team_season_stats
+const mockTeamStats = {
+  teamId: "team_1",
+  seasonId: "season_1",
+  matchesPlayed: 12,
+  matchesWon: 8,
+  matchesLost: 3,
+  matchesDrawn: 1,
+  totalRunsScored: 2450,
+  totalWicketsTaken: 95,
+  netRunRate: 0.75,
+};
+
 
 interface RosterMember {
   assignmentId: string;
@@ -301,6 +316,33 @@ export default function TeamDetailsPage({ params }: { params: { teamId: string }
           </Table>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Team Statistics</CardTitle>
+            <CardDescription>Overall performance for the current season.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                <StatItem label="Played" value={mockTeamStats.matchesPlayed} />
+                <StatItem label="Won" value={mockTeamStats.matchesWon} />
+                <StatItem label="Lost" value={mockTeamStats.matchesLost} />
+                <StatItem label="Drawn" value={mockTeamStats.matchesDrawn} />
+                <StatItem label="Runs Scored" value={mockTeamStats.totalRunsScored} />
+                <StatItem label="Wickets Taken" value={mockTeamStats.totalWicketsTaken} />
+                <StatItem label="Net Run Rate" value={mockTeamStats.netRunRate.toFixed(2)} />
+            </div>
+        </CardContent>
+      </Card>
     </div>
   )
+}
+
+function StatItem({ label, value }: { label: string, value: string | number }) {
+    return (
+        <div>
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="font-bold text-2xl text-foreground">{value}</p>
+        </div>
+    )
 }
