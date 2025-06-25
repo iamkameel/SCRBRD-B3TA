@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { School } from '@/lib/data';
 
 // This user ID will be replaced with dynamic auth state later.
@@ -61,4 +61,63 @@ export async function addSchoolAction(data: SchoolFormValues) {
   revalidatePath('/teams'); // Also revalidate teams page as it uses schools
   
   return { success: true };
+}
+
+
+const updateSchoolSchema = z.object({
+  schoolId: z.string(),
+  name: z.string().min(1, { message: "School name is required." }),
+});
+
+export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema>) {
+    if (!userId) throw new Error("User not authenticated");
+    const validatedFields = updateSchoolSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+        throw new Error('Invalid school data.');
+    }
+    
+    const { schoolId, name } = validatedFields.data;
+    const schoolDocRef = doc(db, 'schools', schoolId);
+
+    // Verify ownership
+    const schoolSnap = await getDoc(schoolDocRef);
+    if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) {
+        throw new Error("School not found or you do not have permission to edit it.");
+    }
+
+    try {
+        await updateDoc(schoolDocRef, { name });
+    } catch (error) {
+        console.error("Error updating school:", error);
+        throw new Error("Could not update school.");
+    }
+
+    revalidatePath('/schools');
+    revalidatePath('/teams');
+}
+
+export async function deleteSchoolAction(schoolId: string) {
+  if (!userId) throw new Error("User not authenticated");
+  
+  if (!schoolId) {
+    throw new Error("School ID is required.");
+  }
+  
+  const schoolDocRef = doc(db, 'schools', schoolId);
+
+  const schoolSnap = await getDoc(schoolDocRef);
+  if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) {
+    throw new Error("School not found or you do not have permission to delete it.");
+  }
+  
+  try {
+    await deleteDoc(schoolDocRef);
+  } catch (error) {
+    console.error("Error deleting school:", error);
+    throw new Error("Could not delete school.");
+  }
+
+  revalidatePath('/schools');
+  revalidatePath('/teams');
 }
