@@ -4,7 +4,8 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // From schema: team_role_assignments
 const assignmentSchema = z.object({
@@ -28,13 +30,10 @@ const assignmentSchema = z.object({
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
 // Mock Data
-const mockTeam = {
-  teamId: "team_1",
-  name: "Greenwood Gators",
-  schoolName: "Greenwood High",
-  divisionName: "U19 Varsity",
-  seasonName: "2024-2025",
-};
+const mockTeams = [
+    { teamId: 'team_1', name: 'Greenwood Gators', schoolName: 'Greenwood High', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#004d00', secondary: '#ffc400'} },
+    { teamId: 'team_2', name: 'Oakdale Eagles', schoolName: 'Oakdale Academy', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#6a0dad', secondary: '#ffd700'} },
+];
 
 // From schema: persons
 const mockPeople = [
@@ -185,21 +184,73 @@ function AddPlayerToRosterDialog({ onPlayerAdded }: { onPlayerAdded: (assignment
 
 
 export default function TeamDetailsPage({ params }: { params: { teamId: string } }) {
-  // In a real app, you'd fetch the roster for params.teamId
+  const team = mockTeams.find(t => t.teamId === params.teamId);
   const [roster, setRoster] = React.useState<RosterMember[]>([]);
 
   const handlePlayerAdded = (assignment: RosterMember) => {
     setRoster(prev => [...prev, assignment]);
   };
   
+  if (!team) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <h2 className="text-2xl font-bold">Team not found</h2>
+        <p className="text-muted-foreground">The team you are looking for does not exist.</p>
+        <Button asChild className="mt-4">
+          <Link href="/teams"><ArrowLeft className="mr-2" /> Back to Teams</Link>
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="flex flex-col gap-8">
+       <Link href="/teams" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Teams
+        </Link>
       <Card>
-        <CardHeader>
-          <CardTitle>{mockTeam.name}</CardTitle>
-          <CardDescription>
-            {mockTeam.divisionName} &bull; {mockTeam.schoolName} &bull; {mockTeam.seasonName}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+                <CardTitle>{team.name}</CardTitle>
+                <CardDescription>
+                    {team.divisionName} &bull; {team.schoolName} &bull; {team.seasonName}
+                </CardDescription>
+            </div>
+            {team.teamColors && (
+            <div className="flex items-center gap-2">
+                {team.teamColors.primary && (
+                <TooltipProvider>
+                    <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div
+                        className="h-8 w-8 rounded-full border"
+                        style={{ backgroundColor: team.teamColors.primary }}
+                        />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Primary: {team.teamColors.primary}</p>
+                    </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                )}
+                {team.teamColors.secondary && (
+                <TooltipProvider>
+                    <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div
+                        className="h-8 w-8 rounded-full border"
+                        style={{ backgroundColor: team.teamColors.secondary }}
+                        />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Secondary: {team.teamColors.secondary}</p>
+                    </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                )}
+            </div>
+            )}
         </CardHeader>
       </Card>
       

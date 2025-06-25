@@ -22,6 +22,8 @@ const teamSchema = z.object({
   schoolId: z.string({ required_error: "Please select a school." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   seasonId: z.string({ required_error: "Please select a season." }),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
 });
 
 type TeamFormValues = z.infer<typeof teamSchema>;
@@ -50,7 +52,17 @@ interface Team {
   schoolName: string;
   divisionName: string;
   seasonName: string;
+  teamColors?: {
+    primary?: string;
+    secondary?: string;
+  };
 }
+
+const initialTeams: Team[] = [
+    { teamId: 'team_1', name: 'Greenwood Gators', schoolName: 'Greenwood High', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#004d00', secondary: '#ffc400'} },
+    { teamId: 'team_2', name: 'Oakdale Eagles', schoolName: 'Oakdale Academy', divisionName: 'U19 Varsity', seasonName: '2024-2025', teamColors: { primary: '#6a0dad', secondary: '#ffd700'} },
+]
+
 
 function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
   const [open, setOpen] = React.useState(false);
@@ -59,6 +71,8 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
     resolver: zodResolver(teamSchema),
     defaultValues: {
       name: "",
+      primaryColor: "#000000",
+      secondaryColor: "#ffffff",
     },
   });
 
@@ -82,6 +96,10 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
       schoolName: school.name,
       divisionName: division.name,
       seasonName: season.name,
+      teamColors: {
+        primary: data.primaryColor,
+        secondary: data.secondaryColor,
+      },
     };
     onTeamAdded(newTeam);
     toast({
@@ -194,6 +212,34 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="primaryColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary Color</FormLabel>
+                    <FormControl>
+                      <Input type="color" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="secondaryColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Secondary Color</FormLabel>
+                    <FormControl>
+                      <Input type="color" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <DialogFooter>
               <Button type="submit">Save Team</Button>
             </DialogFooter>
@@ -206,7 +252,7 @@ function AddTeamDialog({ onTeamAdded }: { onTeamAdded: (team: Team) => void }) {
 
 
 export default function TeamsPage() {
-  const [teams, setTeams] = React.useState<Team[]>([]);
+  const [teams, setTeams] = React.useState<Team[]>(initialTeams);
 
   const handleTeamAdded = (newTeam: Team) => {
     setTeams((prevTeams) => [...prevTeams, newTeam]);
