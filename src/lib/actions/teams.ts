@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { initialTeams, initialSeasons, type Team } from '@/lib/data';
+import { initialTeams, type Team } from '@/lib/data';
 
 // This is a placeholder for a database call to get all teams.
 export async function getTeams() {
@@ -40,14 +40,16 @@ export async function addTeamAction(data: TeamFormValues) {
   const divisionDocRef = doc(db, 'divisions', divisionId);
   const divisionSnap = await getDoc(divisionDocRef);
 
-  const season = initialSeasons.find((s) => s.seasonId === seasonId);
+  const seasonDocRef = doc(db, 'seasons', seasonId);
+  const seasonSnap = await getDoc(seasonDocRef);
 
-  if (!schoolSnap.exists() || !divisionSnap.exists() || !season) {
+  if (!schoolSnap.exists() || !divisionSnap.exists() || !seasonSnap.exists()) {
       throw new Error("Invalid selection for school, division, or season.");
   }
 
   const schoolName = schoolSnap.data().name;
   const divisionName = divisionSnap.data().name;
+  const seasonName = seasonSnap.data().name;
 
   const newTeam: Team = {
     teamId: `team_${new Date().getTime()}`,
@@ -57,7 +59,7 @@ export async function addTeamAction(data: TeamFormValues) {
     divisionId,
     divisionName: divisionName,
     seasonId,
-    seasonName: season.name,
+    seasonName: seasonName,
     teamColors: {
       primary: primaryColor,
       secondary: secondaryColor,
