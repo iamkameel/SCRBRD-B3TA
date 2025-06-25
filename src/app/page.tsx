@@ -2,6 +2,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
   return (
@@ -73,9 +75,35 @@ export default function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center text-muted-foreground py-8">
-            <p>No recent matches found.</p>
-          </div>
+           <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Match</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium">
+                  <Link href={`/matches/fixture_1`} className="hover:underline">
+                    Greenwood Gators vs Oakdale Eagles
+                  </Link>
+                </TableCell>
+                <TableCell>July 28, 2024</TableCell>
+                <TableCell><Badge variant="default">Scheduled</Badge></TableCell>
+              </TableRow>
+               <TableRow>
+                <TableCell className="font-medium">
+                  <Link href={`/matches/fixture_2`} className="hover:underline">
+                    Riverbend Ravens vs Greenwood Gators
+                  </Link>
+                </TableCell>
+                <TableCell>July 30, 2024</TableCell>
+                <TableCell><Badge variant="default">Scheduled</Badge></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

@@ -198,7 +198,7 @@ export default function TeamDetailsPage({ params }: { params: { teamId: string }
         <CardHeader>
           <CardTitle>{mockTeam.name}</CardTitle>
           <CardDescription>
-            {mockTeam.divisionName} &bull; {mockTeam.schoolName} &bull; {mockeam.seasonName}
+            {mockTeam.divisionName} &bull; {mockTeam.schoolName} &bull; {mockTeam.seasonName}
           </CardDescription>
         </CardHeader>
       </Card>
