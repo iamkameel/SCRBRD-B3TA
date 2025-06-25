@@ -42,10 +42,6 @@ export default function DataManagementClient() {
   const [subsetToDelete, setSubsetToDelete] = React.useState<string | null>(null);
 
   const handleDeleteClick = (subset: string) => {
-    // This function will be called by the AlertDialogTrigger's child,
-    // even if it's a disabled button. However, for a real disabled button,
-    // you might need to handle the trigger differently.
-    // Since the functionality is not yet implemented, we'll proceed.
     setSubsetToDelete(subset);
   };
 
@@ -65,7 +61,7 @@ export default function DataManagementClient() {
           <CardHeader>
             <CardTitle>Data Subsets</CardTitle>
             <CardDescription>
-              Perform actions on individual data categories. All actions are currently disabled.
+              Perform actions on individual data categories. Delete is a placeholder and does not yet permanently remove data.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -102,11 +98,9 @@ export default function DataManagementClient() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" disabled>
+                           <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(subset)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
-                        </AlertDialogTrigger>
                       </TooltipTrigger>
                       <TooltipContent side="left">
                         <p>Delete {subset}</p>
@@ -159,7 +153,7 @@ export default function DataManagementClient() {
         </Card>
       </div>
 
-       {/* This dialog is a placeholder for when delete functionality is enabled */}
+       {/* This dialog is now correctly triggered by the delete buttons above */}
       <AlertDialog open={!!subsetToDelete} onOpenChange={(open) => !open && setSubsetToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
