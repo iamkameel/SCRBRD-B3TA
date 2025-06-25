@@ -1,9 +1,14 @@
 'use client';
 
 import * as React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Upload, Trash2 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function DataManagementClient() {
   return (
@@ -17,50 +22,53 @@ export default function DataManagementClient() {
         </p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Export Data</CardTitle>
-          <CardDescription>
-            Download all your data as a JSON file.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button disabled>
-            <Download className="mr-2" />
-            Export All Data
-          </Button>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Import Data</CardTitle>
-          <CardDescription>
-            Import data from a previously exported JSON file. This will overwrite existing data.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" disabled>
-            <Upload className="mr-2" />
-            Import Data
-          </Button>
-        </CardContent>
-      </Card>
-
-       <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
-          <CardDescription>
-            Permanently delete all your data. This action cannot be undone.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" disabled>
-            <Trash2 className="mr-2" />
-            Delete All Data
-          </Button>
-        </CardContent>
-      </Card>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="export">
+          <AccordionTrigger>Export Data</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-4 pt-2">
+              <p className="text-sm text-muted-foreground">
+                Download all your data as a JSON file.
+              </p>
+              <Button disabled>
+                <Download className="mr-2" />
+                Export All Data
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="import">
+          <AccordionTrigger>Import Data</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-4 pt-2">
+                <p className="text-sm text-muted-foreground">
+                  Import data from a previously exported JSON file. This will overwrite existing data.
+                </p>
+                <Button variant="outline" disabled>
+                    <Upload className="mr-2" />
+                    Import Data
+                </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="delete" className="border-b-0">
+          <AccordionTrigger className="text-destructive hover:no-underline data-[state=open]:text-destructive">
+            Danger Zone
+          </AccordionTrigger>
+          <AccordionContent>
+             <div className="space-y-4 rounded-lg border border-destructive p-4">
+                <h4 className="font-semibold">Clear All Data</h4>
+                <p className="text-sm text-muted-foreground">
+                    Permanently delete all your data. This action cannot be undone.
+                </p>
+                <Button variant="destructive" disabled>
+                    <Trash2 className="mr-2" />
+                    Delete All Data
+                </Button>
+             </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }
