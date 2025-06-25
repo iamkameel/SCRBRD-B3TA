@@ -43,6 +43,22 @@ const scoringActionSchema = z.object({
 
 type ScoringActionFormValues = z.infer<typeof scoringActionSchema>;
 
+// From schema: ball_events
+const ballEventSchema = z.object({
+  eventType: z.string({ required_error: "Please select an event type." }),
+  details: z.string().min(1, { message: "Details are required." }),
+});
+
+type BallEventFormValues = z.infer<typeof ballEventSchema>;
+
+interface BallEvent {
+  eventId: string;
+  eventType: string;
+  details: string;
+}
+
+const EVENT_TYPES = ["Fielding Change", "Weather Delay", "Injury Break", "Pitch Report", "Other"];
+
 
 // Mock Data
 const mockFixture = {
@@ -316,10 +332,88 @@ function AssignOfficialDialog({ onOfficialAssigned }: { onOfficialAssigned: (ass
   );
 }
 
+function AddBallEventDialog({ onEventAdded }: { onEventAdded: (event: BallEvent) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const { toast } = useToast();
+  const form = useForm<BallEventFormValues>({
+    resolver: zodResolver(ballEventSchema),
+  });
+
+  function onSubmit(data: BallEventFormValues) {
+    const newEvent: BallEvent = {
+        eventId: `event_${new Date().getTime()}`,
+        ...data
+    };
+    onEventAdded(newEvent);
+    toast({
+      title: "Match Event Logged",
+      description: `A new '${data.eventType}' event has been logged.`,
+    });
+    setOpen(false);
+    form.reset();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Log Match Event
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Log a Match Event</DialogTitle>
+          <DialogDescription>
+            Record a non-scoring event like a fielding change or a delay.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="eventType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {EVENT_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="details"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Details</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Mid-on moves to deep square leg" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit">Log Event</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const [officials, setOfficials] = React.useState<Official[]>([]);
   const [scoringActions, setScoringActions] = React.useState<ScoringActionFormValues[]>([]);
+  const [ballEvents, setBallEvents] = React.useState<BallEvent[]>([]);
 
   const handleOfficialAssigned = (assignment: Official) => {
     setOfficials(prev => [...prev, assignment]);
@@ -328,6 +422,10 @@ export default function MatchDetailsPage({ params }: { params: { matchId: string
   const handleActionAdded = (action: ScoringActionFormValues) => {
     setScoringActions(prev => [...prev, action]);
     console.log("New Scoring Action: ", action);
+  };
+
+  const handleBallEventAdded = (event: BallEvent) => {
+    setBallEvents(prev => [...prev, event]);
   };
 
   return (
@@ -393,6 +491,26 @@ export default function MatchDetailsPage({ params }: { params: { matchId: string
                 </div>
             ) : (
                 <p className="text-sm text-muted-foreground p-4 text-center">No scoring events recorded yet.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Match Events Log</CardTitle>
+          <CardDescription>Log and view non-scoring events like fielding changes or delays.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AddBallEventDialog onEventAdded={handleBallEventAdded} />
+          <div className="mt-4 space-y-2">
+            <h4 className="font-medium">Logged Events</h4>
+            {ballEvents.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto rounded-md border bg-muted p-4">
+                    <pre className="text-xs">{JSON.stringify(ballEvents, null, 2)}</pre>
+                </div>
+            ) : (
+                <p className="text-sm text-muted-foreground p-4 text-center">No match events logged yet.</p>
             )}
           </div>
         </CardContent>
