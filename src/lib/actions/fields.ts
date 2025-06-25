@@ -2,12 +2,26 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { initialFields, type Field } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import type { Field } from '@/lib/data';
 
-// This is a placeholder for a database call to get all fields.
-export async function getFields() {
-  // In a real app, you'd fetch this from your database.
-  return Promise.resolve(initialFields);
+// This function now fetches data from Firestore
+export async function getFields(): Promise<Field[]> {
+  try {
+    const fieldsCollection = collection(db, 'fields');
+    const fieldSnapshot = await getDocs(fieldsCollection);
+    const fieldsList = fieldSnapshot.docs.map(doc => ({
+      fieldId: doc.id,
+      name: doc.data().name,
+      surfaceType: doc.data().surfaceType,
+      facilities: doc.data().facilities,
+    }));
+    return fieldsList;
+  } catch (error) {
+    console.error("Error fetching fields:", error);
+    return [];
+  }
 }
 
 const fieldSchema = z.object({
@@ -18,7 +32,7 @@ const fieldSchema = z.object({
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
 
-// This is a placeholder for a database insert.
+// This function now adds a document to Firestore
 export async function addFieldAction(data: FieldFormValues) {
   const validatedFields = fieldSchema.safeParse(data);
 
@@ -28,18 +42,19 @@ export async function addFieldAction(data: FieldFormValues) {
 
   const { name, surfaceType, facilities } = validatedFields.data;
 
-  const newField: Field = {
-    name,
-    surfaceType,
-    facilities,
-    fieldId: `field_${new Date().getTime()}`, // Temporary unique ID
-  };
-
-  // In a real app, you'd insert this into your database.
-  initialFields.push(newField);
-
-  // Revalidate the path to show the new field in the list.
+  try {
+    await addDoc(collection(db, 'fields'), {
+      name,
+      surfaceType: surfaceType || "",
+      facilities: facilities || "",
+    });
+  } catch (error) {
+    console.error("Error adding document: ", error);
+    throw new Error("Could not add field.");
+  }
+  
   revalidatePath('/fields');
+  revalidatePath('/new-match'); // Also revalidate new match page as it uses fields
 
-  return { success: true, field: newField };
+  return { success: true };
 }
