@@ -37,7 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction } from '@/lib/actions/matches';
 import type { Match, Person, Official, Innings, RosterMember } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -280,6 +280,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [isGenerating, startGenerationTransition] = React.useTransition();
+  const [isGeneratingSummary, startSummaryGeneration] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
@@ -306,6 +307,17 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             toast({ title: "Success", description: result.message });
         } catch (error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate scorecard.", variant: "destructive" });
+        }
+    });
+  };
+  
+  const handleGenerateSummary = () => {
+    startSummaryGeneration(async () => {
+        try {
+            const result = await generateMatchSummaryAction(match.matchId);
+            toast({ title: "Success", description: result.message });
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate summary.", variant: "destructive" });
         }
     });
   };
@@ -407,6 +419,34 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
           </Card>
         </Tabs>
         
+        <Card>
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>Match Summary</CardTitle>
+                        <CardDescription>A journalistic summary of the match highlights.</CardDescription>
+                    </div>
+                    {innings1 && (
+                         <Button onClick={handleGenerateSummary} disabled={isGeneratingSummary}>
+                            <RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingSummary ? 'animate-spin' : ''}`} />
+                            {isGeneratingSummary ? "Generating..." : (match.summary ? "Regenerate" : "Generate")}
+                         </Button>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent>
+                {match.summary ? (
+                    <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.summary}</p>
+                ) : (
+                    <div className="text-center text-muted-foreground py-8">
+                        <p>No summary has been generated for this match yet.</p>
+                        {innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}
+                        {!innings1 && <p className="text-xs">A summary can be generated once a scorecard exists.</p>}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
           <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />

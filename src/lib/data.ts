@@ -73,6 +73,7 @@ export interface Match {
   fieldName: string;
   dateTime: Date;
   status: MatchStatus;
+  summary?: string;
 }
 
 export interface Official {
