@@ -80,6 +80,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 const dataToSave = { ...itemData, userId };
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
                 if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
+                if (collName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
                 const docRef = doc(collection(db, collName));
                 batch.set(docRef, dataToSave);
@@ -205,6 +206,8 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
             const dataToSave = { ...itemData, userId };
             if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
             if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
+            if (collection === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
+
 
             const docRef = doc(db.collection(collection));
             batch.set(docRef, dataToSave);

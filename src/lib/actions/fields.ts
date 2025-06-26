@@ -1,27 +1,54 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { Field } from '@/lib/data';
+import type { Field, FieldAssignment, Person } from '@/lib/data';
 
-// This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-// This function now fetches data from Firestore for the current user
 export async function getFields(): Promise<Field[]> {
   if (!userId) return [];
   try {
     const fieldsCollection = collection(db, 'fields');
     const q = query(fieldsCollection, where("userId", "==", userId));
     const fieldSnapshot = await getDocs(q);
-    const fieldsList = fieldSnapshot.docs.map(doc => ({
-      fieldId: doc.id,
-      name: doc.data().name,
-      surfaceType: doc.data().surfaceType,
-      facilities: doc.data().facilities,
+
+    const fieldsList = await Promise.all(fieldSnapshot.docs.map(async (docSnapshot) => {
+      const data = docSnapshot.data();
+      const field: Field = {
+        fieldId: docSnapshot.id,
+        name: data.name,
+        surfaceType: data.surfaceType,
+        facilities: data.facilities,
+        status: data.status,
+        assignments: [],
+      };
+
+      const assignmentsCol = collection(db, 'fields', docSnapshot.id, 'assignments');
+      const assignmentsSnapshot = await getDocs(assignmentsCol);
+
+      const assignmentsPromises = assignmentsSnapshot.docs.map(async (assignDoc) => {
+        const assignData = assignDoc.data();
+        const personSnap = await getDoc(doc(db, 'people', assignData.personId));
+        if (personSnap.exists()) {
+          const personData = personSnap.data() as Omit<Person, 'personId'>;
+          return {
+            assignmentId: assignDoc.id,
+            personId: assignData.personId,
+            personName: `${personData.firstName} ${personData.lastName}`,
+          };
+        }
+        return null;
+      });
+      
+      field.assignments = (await Promise.all(assignmentsPromises)).filter((a): a is FieldAssignment => a !== null);
+      
+      return field;
     }));
+
     return fieldsList;
   } catch (error) {
     console.error("Error fetching fields:", error);
@@ -33,11 +60,11 @@ const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
   surfaceType: z.string().optional(),
   facilities: z.string().optional(),
+  status: z.enum(['Available', 'Maintenance', 'Closed']).default('Available'),
 });
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
 
-// This function now adds a document to Firestore for the current user
 export async function addFieldAction(data: FieldFormValues) {
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = fieldSchema.safeParse(data);
@@ -46,13 +73,14 @@ export async function addFieldAction(data: FieldFormValues) {
     throw new Error('Invalid field data.');
   }
 
-  const { name, surfaceType, facilities } = validatedFields.data;
+  const { name, surfaceType, facilities, status } = validatedFields.data;
 
   try {
     await addDoc(collection(db, 'fields'), {
       name,
       surfaceType: surfaceType || "",
       facilities: facilities || "",
+      status,
       userId: userId,
     });
   } catch (error) {
@@ -61,17 +89,11 @@ export async function addFieldAction(data: FieldFormValues) {
   }
   
   revalidatePath('/fields');
-  revalidatePath('/new-match'); // Also revalidate new match page as it uses fields
-
-  return { success: true };
+  revalidatePath('/new-match');
 }
 
-
-const updateFieldSchema = z.object({
+const updateFieldSchema = fieldSchema.extend({
   fieldId: z.string(),
-  name: z.string().min(1, { message: "Field name is required." }),
-  surfaceType: z.string().optional(),
-  facilities: z.string().optional(),
 });
 
 export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>) {
@@ -82,7 +104,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
         throw new Error('Invalid field data.');
     }
 
-    const { fieldId, name, surfaceType, facilities } = validatedFields.data;
+    const { fieldId, ...updateData } = validatedFields.data;
     const fieldDocRef = doc(db, 'fields', fieldId);
 
     const fieldSnap = await getDoc(fieldDocRef);
@@ -91,7 +113,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
     }
 
     try {
-        await updateDoc(fieldDocRef, { name, surfaceType, facilities });
+        await updateDoc(fieldDocRef, updateData);
     } catch (error) {
         console.error("Error updating field:", error);
         throw new Error("Could not update field.");
@@ -104,9 +126,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
 export async function deleteFieldAction(fieldId: string) {
   if (!userId) throw new Error("User not authenticated");
   
-  if (!fieldId) {
-    throw new Error("Field ID is required.");
-  }
+  if (!fieldId) throw new Error("Field ID is required.");
   
   const fieldDocRef = doc(db, 'fields', fieldId);
   const fieldSnap = await getDoc(fieldDocRef);
@@ -123,4 +143,50 @@ export async function deleteFieldAction(fieldId: string) {
 
   revalidatePath('/fields');
   revalidatePath('/new-match');
+}
+
+export async function assignGroundskeeperToFieldAction(fieldId: string, personId: string) {
+    if (!userId) throw new Error("User not authenticated");
+    if (!fieldId || !personId) throw new Error("Field ID and Person ID are required.");
+
+    const fieldRef = doc(db, 'fields', fieldId);
+    const personRef = doc(db, 'people', personId);
+    const [fieldSnap, personSnap] = await Promise.all([getDoc(fieldRef), getDoc(personRef)]);
+
+    if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) throw new Error("Field not found.");
+    if (!personSnap.exists() || personSnap.data().userId !== userId) throw new Error("Person not found.");
+    if (!personSnap.data().roles.includes('Grounds-Keeper')) throw new Error("This person is not a grounds-keeper.");
+
+    const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
+    const q = query(assignmentsCol, where("personId", "==", personId));
+    const existing = await getDocs(q);
+
+    if (!existing.empty) throw new Error("This person is already assigned to this field.");
+
+    try {
+        await addDoc(assignmentsCol, { personId });
+    } catch (error) {
+        console.error("Error assigning grounds-keeper:", error);
+        throw new Error("Could not assign grounds-keeper.");
+    }
+
+    revalidatePath('/fields');
+}
+
+export async function removeGroundskeeperFromFieldAction(fieldId: string, assignmentId: string) {
+    if (!userId) throw new Error("User not authenticated");
+    if (!fieldId || !assignmentId) throw new Error("Field ID and Assignment ID are required.");
+
+    const fieldRef = doc(db, 'fields', fieldId);
+    const fieldSnap = await getDoc(fieldRef);
+    if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) throw new Error("Field not found.");
+
+    try {
+        await deleteDoc(doc(db, 'fields', fieldId, 'assignments', assignmentId));
+    } catch (error) {
+        console.error("Error removing assignment:", error);
+        throw new Error("Could not remove assignment.");
+    }
+
+    revalidatePath('/fields');
 }

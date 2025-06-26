@@ -1,3 +1,4 @@
+
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -26,8 +27,8 @@ export const sampleData = {
         { seasonId: 'temp_season_1', name: '2024-2025 Season', startDate: pastDate(30), endDate: futureDate(30), active: true },
     ],
     fields: [
-        { fieldId: 'temp_field_1', name: 'Main Oval', surfaceType: 'Grass', facilities: 'Pavilion, Toilets, Nets' },
-        { fieldId: 'temp_field_2', name: 'North Field', surfaceType: 'Turf', facilities: 'Nets, Canteen' },
+        { fieldId: 'temp_field_1', name: 'Main Oval', surfaceType: 'Grass', facilities: 'Pavilion, Toilets, Nets', status: 'Available' },
+        { fieldId: 'temp_field_2', name: 'North Field', surfaceType: 'Turf', facilities: 'Nets, Canteen', status: 'Maintenance' },
     ],
     people: [
         // Greenwood Gators (12 people)
@@ -58,8 +59,8 @@ export const sampleData = {
         { personId: 'p_23', firstName: 'Emma', lastName: 'Green', email: 'emma.g@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
         { personId: 'p_24', firstName: 'Susan', lastName: 'Hill', email: 'susan.h@example.com', roles: ['Coach'], profileImageUrl: 'https://placehold.co/100x100.png' },
 
-        // Officials
-        { personId: 'p_25', firstName: 'Robert', lastName: 'Baker', email: 'robert.b@example.com', roles: ['Umpire'] },
+        // Officials & Staff
+        { personId: 'p_25', firstName: 'Robert', lastName: 'Baker', email: 'robert.b@example.com', roles: ['Umpire', 'Grounds-Keeper'] },
         { personId: 'p_26', firstName: 'Patricia', lastName: 'Adams', email: 'patricia.a@example.com', roles: ['Umpire', 'Scorer'] },
     ],
     teams: [

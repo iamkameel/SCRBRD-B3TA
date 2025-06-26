@@ -1,3 +1,4 @@
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -27,11 +28,19 @@ export interface Season {
   active: boolean;
 }
 
+export interface FieldAssignment {
+  assignmentId: string;
+  personId: string;
+  personName: string;
+}
+
 export interface Field {
   fieldId: string;
   name: string;
   surfaceType?: string;
   facilities?: string;
+  status: 'Available' | 'Maintenance' | 'Closed';
+  assignments?: FieldAssignment[];
 }
 
 export interface Team {

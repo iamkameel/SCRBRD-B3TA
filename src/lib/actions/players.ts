@@ -25,6 +25,21 @@ export async function getPlayers(): Promise<Person[]> {
   }
 }
 
+export async function getPeopleByRole(role: string): Promise<Person[]> {
+  if (!userId) return [];
+  try {
+    const peopleCollection = collection(db, 'people');
+    const q = query(peopleCollection, where("userId", "==", userId), where("roles", "array-contains", role));
+    const peopleSnapshot = await getDocs(q);
+    return peopleSnapshot.docs.map(doc => ({
+      personId: doc.id, ...doc.data()
+    } as Person));
+  } catch (error) {
+    console.error(`Error fetching people with role ${role}:`, error);
+    return [];
+  }
+}
+
 export async function getPerson(personId: string): Promise<Person | null> {
     if (!userId) return null;
     try {
