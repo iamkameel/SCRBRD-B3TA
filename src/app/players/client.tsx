@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Person as Player } from "@/lib/data";
 import { addPlayerAction, updatePlayerAction, deletePlayerAction } from '@/lib/actions/players';
 
@@ -150,8 +151,20 @@ export default function PlayersClient({ players }: { players: Player[] }) {
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isPlayerDialogOpen, setIsPlayerDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [roleFilter, setRoleFilter] = React.useState<string>("all");
 
+  const filteredPlayers = players.filter(player => {
+    const matchesSearch = `${player.firstName} ${player.lastName} ${player.email}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'all' || player.roles.includes(roleFilter);
+    return matchesSearch && matchesRole;
+  });
+
+  const filtersApplied = searchQuery || roleFilter !== 'all';
+  
   const handleDelete = () => {
     if (!selectedPerson) return;
     startTransition(async () => {
@@ -168,12 +181,6 @@ export default function PlayersClient({ players }: { players: Player[] }) {
     });
   };
 
-  const filteredPlayers = players.filter(player =>
-    `${player.firstName} ${player.lastName} ${player.email}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
-  );
-  
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -194,7 +201,7 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                   <Button variant="outline" size="icon" className="relative">
                     <Search className="h-4 w-4" />
                     <span className="sr-only">Search</span>
-                    {searchQuery && (
+                    {filtersApplied && (
                       <span className="absolute -top-1 -right-1 flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
@@ -207,10 +214,10 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                     <div className="space-y-2">
                       <h4 className="font-medium leading-none">Filter Roster</h4>
                       <p className="text-sm text-muted-foreground">
-                        Find people by name or email.
+                        Find people by name, email, or role.
                       </p>
                     </div>
-                    <div className="grid gap-2">
+                    <div className="grid gap-4">
                        <div className="grid grid-cols-3 items-center gap-4">
                         <Label htmlFor="search-input">Search</Label>
                         <Input
@@ -220,6 +227,18 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="col-span-2 h-8"
                         />
+                      </div>
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="role-filter">Role</Label>
+                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                          <SelectTrigger className="col-span-2 h-8">
+                            <SelectValue placeholder="All Roles" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Roles</SelectItem>
+                            {ROLES.map(r => <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -254,7 +273,7 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={4} className="h-24 text-center">{searchQuery ? `No people found matching "${searchQuery}".` : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
