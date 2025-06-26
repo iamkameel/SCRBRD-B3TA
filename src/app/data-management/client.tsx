@@ -254,30 +254,30 @@ export default function DataManagementClient() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Backup, Restore &amp; Migration</CardTitle>
+            <CardTitle>Data Migration &amp; Backups</CardTitle>
             <CardDescription>
-              Perform bulk data operations. Use this for creating backups or migrating data.
+              Migrate data from another project or restore from a backup file. Migration is a two-step process.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
-                <p className="font-bold">Export All Data</p>
-                <p className="text-xs text-muted-foreground">Create a full backup or prepare for migration.</p>
+                <p className="font-bold">Step 1: Export Data</p>
+                <p className="text-xs text-muted-foreground">Export all data from the source project into a single file.</p>
               </div>
               <Button onClick={handleExportAllClick} disabled={isProcessing}>
                 {isExporting && currentExport === 'all' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
-                Export
+                Export All Data
               </Button>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
-                <p className="font-bold">Import All Data</p>
-                <p className="text-xs text-muted-foreground">Restore from a backup or migrate data in.</p>
+                <p className="font-bold">Step 2: Import Data</p>
+                <p className="text-xs text-muted-foreground">Import the file into this project to complete the migration.</p>
               </div>
                <Button onClick={handleImportAllClick} disabled={isProcessing} variant="outline">
                 {isImporting && currentImport === 'all' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
-                Import
+                Import All Data
               </Button>
             </div>
           </CardContent>
