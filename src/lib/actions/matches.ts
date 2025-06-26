@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc } from 'firebase/firestore';
 import type { Match, Official, Innings } from '@/lib/data';
 import { getPerson } from './players';
 import type { GenerateScorecardOutput } from '@/ai/flows/generate-scorecard-flow';
@@ -101,6 +101,48 @@ export async function addMatchAction(data: FixtureFormValues) {
   revalidatePath('/');
   
   redirect(`/matches/${newMatchId}`);
+}
+
+export async function updateMatchAction(matchId: string, data: FixtureFormValues) {
+  if (!userId) throw new Error("User not authenticated");
+  const validatedFields = fixtureSchema.safeParse(data);
+
+  if (!validatedFields.success) {
+    throw new Error('Invalid match data.');
+  }
+
+  const matchRef = doc(db, 'matches', matchId);
+  const matchSnap = await getDoc(matchRef);
+  if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+      throw new Error("Match not found or you do not have permission to edit it.");
+  }
+
+  const { teamAId, teamBId, seasonId, fieldId, dateTime } = validatedFields.data;
+
+  const [teamASnap, teamBSnap, seasonSnap, fieldSnap] = await Promise.all([
+    getDoc(doc(db, 'teams', teamAId)), getDoc(doc(db, 'teams', teamBId)),
+    getDoc(doc(db, 'seasons', seasonId)), getDoc(doc(db, 'fields', fieldId)),
+  ]);
+
+  if (!teamASnap.exists() || !teamBSnap.exists() || !seasonSnap.exists() || !fieldSnap.exists()) {
+      throw new Error("Invalid reference for one of the match entities.");
+  }
+
+  const updatedMatchData = {
+    teamAId, teamAName: teamASnap.data().name, teamBId, teamBName: teamBSnap.data().name,
+    seasonId, seasonName: seasonSnap.data().name, fieldId, fieldName: fieldSnap.data().name,
+    dateTime: Timestamp.fromDate(dateTime),
+  };
+
+  try {
+      await updateDoc(matchRef, updatedMatchData);
+  } catch (error) {
+      console.error("Error updating match:", error);
+      throw new Error("Could not update match.");
+  }
+
+  revalidatePath('/matches');
+  revalidatePath(`/matches/${matchId}`);
 }
 
 
