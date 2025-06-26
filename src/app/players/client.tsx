@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -34,6 +34,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import type { Person as Player } from "@/lib/data";
 import { addPlayerAction, updatePlayerAction, deletePlayerAction } from '@/lib/actions/players';
 
@@ -187,12 +189,42 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                 <CardTitle>Person Roster</CardTitle>
                 <CardDescription>A list of all people in the system.</CardDescription>
               </div>
-              <Input
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Search</span>
+                    {searchQuery && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Filter Roster</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Find people by name or email.
+                      </p>
+                    </div>
+                    <div className="grid gap-2">
+                       <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="search-input">Search</Label>
+                        <Input
+                          id="search-input"
+                          placeholder="Name or email..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="col-span-2 h-8"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </CardHeader>
           <CardContent>
