@@ -25,9 +25,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { deleteDataSubsetAction, deleteAllDataAction } from "@/lib/actions/data-management";
 
 const DATA_SUBSETS = [
   "People",
@@ -41,11 +41,36 @@ const DATA_SUBSETS = [
 
 export default function DataManagementClient() {
   const [subsetToDelete, setSubsetToDelete] = React.useState<string | null>(null);
+  const [isDeleting, startTransition] = React.useTransition();
   const { toast } = useToast();
 
   const handleDeleteClick = (subset: string) => {
     setSubsetToDelete(subset);
   };
+
+  const handleConfirmDelete = () => {
+    if (!subsetToDelete) return;
+    startTransition(async () => {
+        const result = await deleteDataSubsetAction(subsetToDelete);
+        if (result.success) {
+            toast({ title: "Data Deleted", description: result.message });
+        } else {
+            toast({ title: "Error", description: result.message, variant: "destructive" });
+        }
+        setSubsetToDelete(null);
+    });
+  }
+  
+  const handleConfirmDeleteAll = () => {
+    startTransition(async () => {
+        const result = await deleteAllDataAction();
+        if (result.success) {
+            toast({ title: "All Data Deleted", description: result.message, variant: "destructive" });
+        } else {
+            toast({ title: "Error", description: result.message, variant: "destructive" });
+        }
+    });
+  }
 
   return (
     <>
@@ -97,7 +122,7 @@ export default function DataManagementClient() {
                         {/* Delete Button */}
                         <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(subset)}>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(subset)} disabled={isDeleting}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                         </TooltipTrigger>
@@ -130,7 +155,7 @@ export default function DataManagementClient() {
                 </div>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
+                    <Button variant="destructive" disabled={isDeleting}>
                         Delete All
                     </Button>
                     </AlertDialogTrigger>
@@ -145,16 +170,10 @@ export default function DataManagementClient() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                                 className={buttonVariants({ variant: "destructive" })}
-                                onClick={() => {
-                                  console.log("Deleting all data...");
-                                  toast({
-                                    title: "All Data Deleted",
-                                    description: "All application data has been permanently deleted.",
-                                    variant: "destructive",
-                                  });
-                                }}
+                                onClick={handleConfirmDeleteAll}
+                                disabled={isDeleting}
                             >
-                                Yes, delete everything
+                                {isDeleting ? "Deleting..." : "Yes, delete everything"}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -170,23 +189,17 @@ export default function DataManagementClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete all <strong>{subsetToDelete}</strong> data.
+              This action cannot be undone. This will permanently delete all <strong>{subsetToDelete}</strong> data from the application.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSubsetToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setSubsetToDelete(null)} disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
                 className={buttonVariants({ variant: "destructive" })}
-                onClick={() => {
-                    console.log(`Deleting ${subsetToDelete}`);
-                    toast({
-                        title: "Data Deleted",
-                        description: `The ${subsetToDelete} data has been deleted.`
-                    });
-                    setSubsetToDelete(null);
-                }}
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
             >
-                Delete
+                {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
