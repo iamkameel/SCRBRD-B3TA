@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -39,6 +39,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
 import type { Match, Person, Official, Innings, RosterMember } from "@/lib/data";
 import { Scorecard } from "./scorecard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -253,6 +254,26 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
   );
 }
 
+function ScorecardLoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-64" />
+      </div>
+       <Skeleton className="h-px w-full" />
+       <div>
+        <Skeleton className="h-6 w-32 mb-4" />
+        <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+        </div>
+       </div>
+    </div>
+  );
+}
+
 interface MatchDetailsClientProps {
   match: Match;
   initialOfficials: Official[];
@@ -287,8 +308,8 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
 
-  const firstInnings = innings1?.teamName === match.teamAName ? innings1 : innings2;
-  const secondInnings = innings2?.teamName === match.teamBName ? innings2 : innings1;
+  const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
+  const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
 
   return (
     <>
@@ -323,10 +344,10 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
               </CardHeader>
               <CardContent>
                   <TabsContent value="team-a-innings">
-                      {firstInnings ? <Scorecard innings={firstInnings} /> : <p className="text-center text-muted-foreground py-8">Scorecard data is being generated...</p>}
+                      {firstInnings ? <Scorecard innings={firstInnings} /> : <ScorecardLoadingSkeleton />}
                   </TabsContent>
                   <TabsContent value="team-b-innings">
-                      {secondInnings ? <Scorecard innings={secondInnings} /> : <p className="text-center text-muted-foreground py-8">Scorecard data is being generated...</p>}
+                      {secondInnings ? <Scorecard innings={secondInnings} /> : <ScorecardLoadingSkeleton />}
                   </TabsContent>
               </CardContent>
           </Card>

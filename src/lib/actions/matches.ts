@@ -6,8 +6,9 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
-import type { Match, Official } from '@/lib/data';
+import type { Match, Official, Innings } from '@/lib/data';
 import { getPerson } from './players';
+import type { GenerateScorecardOutput } from '@/ai/flows/generate-scorecard-flow';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -235,17 +236,13 @@ export async function deleteMatchAction(matchId: string) {
 
     const batch = writeBatch(db);
 
-    // Delete lineups subcollection
-    const lineupsCol = collection(db, 'matches', matchId, 'lineups');
-    const lineupsSnap = await getDocs(lineupsCol);
-    lineupsSnap.forEach(doc => batch.delete(doc.ref));
+    const subcollections = ['lineups', 'officials', 'scorecards'];
+    for (const sub of subcollections) {
+        const subColRef = collection(db, 'matches', matchId, sub);
+        const subColSnap = await getDocs(subColRef);
+        subColSnap.forEach(doc => batch.delete(doc.ref));
+    }
 
-    // Delete officials subcollection
-    const officialsCol = collection(db, 'matches', matchId, 'officials');
-    const officialsSnap = await getDocs(officialsCol);
-    officialsSnap.forEach(doc => batch.delete(doc.ref));
-
-    // Delete the match itself
     batch.delete(matchRef);
     
     try {
@@ -256,4 +253,55 @@ export async function deleteMatchAction(matchId: string) {
     }
     revalidatePath('/matches');
     revalidatePath('/');
+}
+
+// SCORECARD ACTIONS
+export async function getScorecard(matchId: string): Promise<{ innings1: Innings; innings2: Innings } | null> {
+  const match = await getMatch(matchId);
+  if (!match) return null;
+
+  try {
+    const innings1Ref = doc(db, 'matches', matchId, 'scorecards', 'innings1');
+    const innings2Ref = doc(db, 'matches', matchId, 'scorecards', 'innings2');
+    const [innings1Snap, innings2Snap] = await Promise.all([getDoc(innings1Ref), getDoc(innings2Ref)]);
+    
+    if (innings1Snap.exists() && innings2Snap.exists()) {
+      return {
+        innings1: innings1Snap.data() as Innings,
+        innings2: innings2Snap.data() as Innings,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error fetching scorecard for match ${matchId}:`, error);
+    return null;
+  }
+}
+
+export async function saveScorecard(matchId: string, scorecardData: GenerateScorecardOutput) {
+  if (!userId) throw new Error("User not authenticated");
+  const match = await getMatch(matchId);
+  if (!match) throw new Error("Match not found or permission denied.");
+
+  const batch = writeBatch(db);
+
+  const innings1Ref = doc(db, 'matches', matchId, 'scorecards', 'innings1');
+  batch.set(innings1Ref, scorecardData.innings1);
+  
+  const innings2Ref = doc(db, 'matches', matchId, 'scorecards', 'innings2');
+  batch.set(innings2Ref, scorecardData.innings2);
+  
+  const matchRef = doc(db, 'matches', matchId);
+  batch.update(matchRef, { status: 'completed' });
+
+  try {
+    await batch.commit();
+  } catch (error) {
+    console.error(`Error saving scorecard for match ${matchId}:`, error);
+    throw new Error("Could not save scorecard.");
+  }
+  
+  revalidatePath(`/matches/${matchId}`);
+  revalidatePath('/matches');
+  revalidatePath('/');
 }
