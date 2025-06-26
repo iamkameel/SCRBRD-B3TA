@@ -1,10 +1,11 @@
+
 'use client';
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -430,6 +431,19 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
 
+  const handleDownloadSummary = () => {
+    if (!match.summary) return;
+    const blob = new Blob([match.summary], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `match-summary-${match.teamAName}-vs-${match.teamBName}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
   const canGenerateScorecard = teamALineup.length === 11 && teamBLineup.length === 11;
@@ -557,7 +571,15 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div><CardTitle>Match Summary</CardTitle><CardDescription>A journalistic summary of the match highlights.</CardDescription></div>
-                                {innings1 && (<Button onClick={handleGenerateSummary} disabled={isGeneratingSummary}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingSummary ? 'animate-spin' : ''}`} />{isGeneratingSummary ? "Generating..." : (match.summary ? "Regenerate" : "Generate")}</Button>)}
+                                <div className="flex items-center gap-2">
+                                    {match.summary && (
+                                        <Button variant="outline" onClick={handleDownloadSummary}>
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Download
+                                        </Button>
+                                    )}
+                                    {innings1 && (<Button onClick={handleGenerateSummary} disabled={isGeneratingSummary}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingSummary ? 'animate-spin' : ''}`} />{isGeneratingSummary ? "Generating..." : (match.summary ? "Regenerate" : "Generate")}</Button>)}
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent>{match.summary ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.summary}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No summary has been generated for this match yet.</p>{innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}{!innings1 && <p className="text-xs">A summary can be generated once a scorecard exists.</p>}</div>)}</CardContent>
