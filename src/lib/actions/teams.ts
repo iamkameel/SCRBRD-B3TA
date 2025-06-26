@@ -127,10 +127,18 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
   if (!await getPerson(data.personId)) throw new Error("Person not found or permission denied.");
   if (!assignmentSchema.safeParse(data).success) throw new Error('Invalid assignment data.');
 
+  const rosterCol = collection(db, 'teams', teamId, 'roster');
+  const q = query(rosterCol, where("personId", "==", data.personId));
+  const existingAssignment = await getDocs(q);
+  if (!existingAssignment.empty) {
+    throw new Error("This person is already on the team's roster.");
+  }
+
   try {
-    await addDoc(collection(db, 'teams', teamId, 'roster'), data);
+    await addDoc(rosterCol, data);
   } catch (error) {
     console.error("Error adding player to roster: ", error);
+    if (error instanceof Error) { throw error; }
     throw new Error("Could not add player to roster.");
   }
   revalidatePath(`/teams/${teamId}`);
