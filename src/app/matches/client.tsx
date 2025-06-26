@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MoreHorizontal, Trash2, Edit, CalendarIcon } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -126,6 +127,7 @@ function EditMatchDialog({ match, teams, seasons, fields, open, onOpenChange }: 
   );
 }
 
+const MATCH_STATUSES = ['scheduled', 'live', 'completed', 'cancelled'];
 
 export default function MatchesClient({ matches, teams, seasons, fields }: { matches: Match[], teams: Team[], seasons: Season[], fields: Field[] }) {
   const { toast } = useToast();
@@ -135,6 +137,10 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
   const [matchToEdit, setMatchToEdit] = React.useState<Match | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [seasonFilter, setSeasonFilter] = React.useState("all");
 
   const handleDelete = () => {
     if (!matchToDelete) return;
@@ -158,6 +164,17 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
       }
     });
   };
+
+  const filteredMatches = matches.filter(match => {
+    const matchesSearch = `${match.teamAName} ${match.teamBName}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || match.status === statusFilter;
+    const matchesSeason = seasonFilter === 'all' || match.seasonId === seasonFilter;
+    return matchesSearch && matchesStatus && matchesSeason;
+  });
+
+  const filtersApplied = searchQuery || statusFilter !== 'all' || seasonFilter !== 'all';
   
   return (
     <>
@@ -171,7 +188,72 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
         </header>
 
         <Card>
-          <CardHeader><CardTitle>Match List</CardTitle><CardDescription>A list of all matches in the system.</CardDescription></CardHeader>
+          <CardHeader>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Match List</CardTitle>
+                <CardDescription>A list of all matches in the system.</CardDescription>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Filter Matches</span>
+                    {filtersApplied && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Filter Matches</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Find matches by team, status, or season.
+                      </p>
+                    </div>
+                    <div className="grid gap-4">
+                       <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="search-input">Team</Label>
+                        <Input
+                          id="search-input"
+                          placeholder="Team name..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="col-span-2 h-8"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="status-filter">Status</Label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="col-span-2 h-8 capitalize">
+                            <SelectValue placeholder="All Statuses" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            {MATCH_STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="season-filter">Season</Label>
+                         <Select value={seasonFilter} onValueChange={setSeasonFilter}>
+                            <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Seasons</SelectItem>
+                              {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
@@ -184,8 +266,8 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {matches.length > 0 ? (
-                  matches.map((match) => (
+                {filteredMatches.length > 0 ? (
+                  filteredMatches.map((match) => (
                     <TableRow key={match.matchId}>
                       <TableCell className="font-medium">
                         <Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link>
@@ -205,7 +287,9 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={5} className="h-24 text-center">No matches found. Get started by creating a new match.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="h-24 text-center">
+                    {filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}
+                  </TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
