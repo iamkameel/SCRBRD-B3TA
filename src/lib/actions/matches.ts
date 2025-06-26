@@ -13,6 +13,7 @@ import type { GenerateScorecardOutput, GenerateMatchSummaryInput } from '@/ai/sc
 import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
 import { generateMatchSummary } from '@/ai/flows/generate-match-summary-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
+import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -90,6 +91,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     seasonId, seasonName: seasonSnap.data().name, fieldId, fieldName: fieldSnap.data().name,
     dateTime: Timestamp.fromDate(dateTime), status: 'scheduled', userId: userId,
     summary: '',
+    preview: '',
   };
 
   let newMatchId: string;
@@ -449,4 +451,28 @@ export async function getMatchForecastAction(matchId: string): Promise<MatchFore
         console.error(`Error getting forecast for match ${matchId}:`, error);
         return { error: message };
     }
+}
+
+export async function generateMatchPreviewAction(matchId: string) {
+    if (!userId) throw new Error("User not authenticated");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    const previewText = await generateMatchPreview(matchId);
+
+    if (!previewText) {
+        throw new Error("AI failed to generate a match preview.");
+    }
+
+    try {
+        const matchRef = doc(db, 'matches', matchId);
+        await updateDoc(matchRef, { preview: previewText });
+    } catch (error) {
+        console.error(`Error saving preview for match ${matchId}:`, error);
+        throw new Error("Could not save match preview.");
+    }
+
+    revalidatePath(`/matches/${matchId}`);
+    return { success: true, message: "Match preview generated successfully!" };
 }

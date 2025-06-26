@@ -1,12 +1,8 @@
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer } from '@/lib/data';
 import { getPlayers, getPlayerStats } from './players';
 import { getTeams, getTeamStats } from './teams';
-
-export interface LeaderboardPlayer extends Person {
-    stats: PlayerStats;
-}
 
 export interface StandingTeam extends Team {
     stats: TeamStats;

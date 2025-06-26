@@ -38,7 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction, generateMatchPreviewAction } from '@/lib/actions/matches';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
@@ -339,6 +339,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [isPending, startTransition] = React.useTransition();
   const [isGenerating, startGenerationTransition] = React.useTransition();
   const [isGeneratingSummary, startSummaryGeneration] = React.useTransition();
+  const [isGeneratingPreview, startPreviewGeneration] = React.useTransition();
   const [isFetchingForecast, startForecastTransition] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
   const [selectedTransport, setSelectedTransport] = React.useState<TransportAssignment | null>(null);
@@ -403,6 +404,17 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
         }
     });
   };
+  
+  const handleGeneratePreview = () => {
+    startPreviewGeneration(async () => {
+        try {
+            const result = await generateMatchPreviewAction(match.matchId);
+            toast({ title: "Success", description: result.message });
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate preview.", variant: "destructive" });
+        }
+    });
+  };
 
   const handleGetForecast = () => {
     startForecastTransition(async () => {
@@ -444,6 +456,33 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                 <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize h-fit">{match.status}</Badge>
             </div>
         </header>
+
+        {match.status === 'scheduled' && (
+             <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Match Preview</CardTitle>
+                            <CardDescription>An AI-generated preview of the upcoming match.</CardDescription>
+                        </div>
+                        <Button onClick={handleGeneratePreview} disabled={isGeneratingPreview}>
+                            <RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingPreview ? 'animate-spin' : ''}`} />
+                            {isGeneratingPreview ? "Generating..." : (match.preview ? "Regenerate" : "Generate")}
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {match.preview ? (
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.preview}</p>
+                    ) : (
+                        <div className="text-center text-muted-foreground py-8">
+                            <p>No preview has been generated for this match yet.</p>
+                            <p className="text-xs">Click the button above to generate one with AI.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        )}
         
         <Tabs defaultValue="team-a-innings">
           <Card>
@@ -451,10 +490,12 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                       <div>
                           <CardTitle>Scorecard</CardTitle>
-                          <CardDescription>Detailed match scorecard for both innings.</CardDescription>
+                          <CardDescription>
+                            {match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.'}
+                          </CardDescription>
                       </div>
                       <div className="flex items-center gap-2 mt-4 md:mt-0">
-                          {!innings1 ? (
+                          {match.status === 'scheduled' && !innings1 && (
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -472,80 +513,89 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                                     )}
                                 </Tooltip>
                             </TooltipProvider>
-                          ) : (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="outline" disabled={isGenerating}>
-                                        <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-                                        {isGenerating ? "Regenerating..." : "Regenerate Scorecard"}
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will generate a new scorecard, permanently overwriting the current one. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel disabled={isGenerating}>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={handleGenerateScorecard}
-                                            disabled={isGenerating}
-                                        >
-                                            {isGenerating ? "Regenerating..." : "Yes, Regenerate"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
                           )}
-                          {innings1 && (
-                            <TabsList>
-                                <TabsTrigger value="team-a-innings">{match.teamAName}</TabsTrigger>
-                                <TabsTrigger value="team-b-innings">{match.teamBName}</TabsTrigger>
-                            </TabsList>
+                          {match.status === 'completed' && innings1 && (
+                            <>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="outline" disabled={isGenerating}>
+                                            <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                                            {isGenerating ? "Regenerating..." : "Regenerate Scorecard"}
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will generate a new scorecard, permanently overwriting the current one. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel disabled={isGenerating}>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={handleGenerateScorecard}
+                                                disabled={isGenerating}
+                                            >
+                                                {isGenerating ? "Regenerating..." : "Yes, Regenerate"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                <TabsList>
+                                    <TabsTrigger value="team-a-innings">{match.teamAName}</TabsTrigger>
+                                    <TabsTrigger value="team-b-innings">{match.teamBName}</TabsTrigger>
+                                </TabsList>
+                            </>
                           )}
                       </div>
                   </div>
               </CardHeader>
               <CardContent>
-                  <TabsContent value="team-a-innings">
-                      {firstInnings ? <Scorecard innings={firstInnings} /> : <ScorecardPlaceholder />}
-                  </TabsContent>
-                  <TabsContent value="team-b-innings">
-                      {secondInnings ? <Scorecard innings={secondInnings} /> : <ScorecardPlaceholder />}
-                  </TabsContent>
+                  {match.status === 'completed' ? (
+                    <>
+                        <TabsContent value="team-a-innings">
+                            {firstInnings ? <Scorecard innings={firstInnings} /> : <ScorecardPlaceholder />}
+                        </TabsContent>
+                        <TabsContent value="team-b-innings">
+                            {secondInnings ? <Scorecard innings={secondInnings} /> : <ScorecardPlaceholder />}
+                        </TabsContent>
+                    </>
+                  ) : (
+                    <ScorecardPlaceholder />
+                  )}
               </CardContent>
           </Card>
         </Tabs>
         
-        <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle>Match Summary</CardTitle>
-                        <CardDescription>A journalistic summary of the match highlights.</CardDescription>
+        {match.status === 'completed' && (
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Match Summary</CardTitle>
+                            <CardDescription>A journalistic summary of the match highlights.</CardDescription>
+                        </div>
+                        {innings1 && (
+                            <Button onClick={handleGenerateSummary} disabled={isGeneratingSummary}>
+                                <RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingSummary ? 'animate-spin' : ''}`} />
+                                {isGeneratingSummary ? "Generating..." : (match.summary ? "Regenerate" : "Generate")}
+                            </Button>
+                        )}
                     </div>
-                    {innings1 && (
-                         <Button onClick={handleGenerateSummary} disabled={isGeneratingSummary}>
-                            <RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingSummary ? 'animate-spin' : ''}`} />
-                            {isGeneratingSummary ? "Generating..." : (match.summary ? "Regenerate" : "Generate")}
-                         </Button>
+                </CardHeader>
+                <CardContent>
+                    {match.summary ? (
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.summary}</p>
+                    ) : (
+                        <div className="text-center text-muted-foreground py-8">
+                            <p>No summary has been generated for this match yet.</p>
+                            {innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}
+                            {!innings1 && <p className="text-xs">A summary can be generated once a scorecard exists.</p>}
+                        </div>
                     )}
-                </div>
-            </CardHeader>
-            <CardContent>
-                {match.summary ? (
-                    <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.summary}</p>
-                ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                        <p>No summary has been generated for this match yet.</p>
-                        {innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}
-                        {!innings1 && <p className="text-xs">A summary can be generated once a scorecard exists.</p>}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        )}
 
         <Card>
             <CardHeader>
@@ -604,10 +654,12 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
-          <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
-        </div>
+        {match.status !== 'completed' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
+                <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
+            </div>
+        )}
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">

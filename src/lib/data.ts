@@ -84,6 +84,7 @@ export interface Match {
   dateTime: Date;
   status: MatchStatus;
   summary?: string;
+  preview?: string;
 }
 
 export interface Official {
@@ -209,4 +210,8 @@ export interface MatchForecast {
         precipitationChance: number;
         windSpeed: number;
     }
+}
+
+export interface LeaderboardPlayer extends Person {
+    stats: PlayerStats;
 }
