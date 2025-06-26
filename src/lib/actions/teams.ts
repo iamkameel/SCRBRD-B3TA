@@ -234,15 +234,43 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
 export async function deleteTeamAction(teamId: string) {
     if (!userId) throw new Error("User not authenticated");
     if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
+
     const batch = writeBatch(db);
+
+    // 1. Delete team's roster
+    const rosterSnapshot = await getDocs(collection(db, 'teams', teamId, 'roster'));
+    rosterSnapshot.forEach(doc => batch.delete(doc.ref));
+
+    // 2. Find and delete associated matches and their subcollections
+    const matchesCollection = collection(db, 'matches');
+    const teamAMatchesQuery = query(matchesCollection, where("userId", "==", userId), where("teamAId", "==", teamId));
+    const teamBMatchesQuery = query(matchesCollection, where("userId", "==", userId), where("teamBId", "==", teamId));
+    const [teamAMatchesSnap, teamBMatchesSnap] = await Promise.all([ getDocs(teamAMatchesQuery), getDocs(teamBMatchesQuery) ]);
+    const allMatches = [...teamAMatchesSnap.docs, ...teamBMatchesSnap.docs];
+    const uniqueMatches = Array.from(new Map(allMatches.map(doc => [doc.id, doc])).values());
+
+    for (const matchDoc of uniqueMatches) {
+        const matchRef = matchDoc.ref;
+        const subcollections = ['lineups', 'officials', 'scorecards'];
+        for (const sub of subcollections) {
+            const subColRef = collection(db, 'matches', matchDoc.id, sub);
+            const subColSnap = await getDocs(subColRef);
+            subColSnap.forEach(doc => batch.delete(doc.ref));
+        }
+        batch.delete(matchRef);
+    }
+    
+    // 3. Delete the team document itself
     batch.delete(doc(db, 'teams', teamId));
+    
     try {
-        const rosterSnapshot = await getDocs(collection(db, 'teams', teamId, 'roster'));
-        rosterSnapshot.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
     } catch (error) {
-        console.error("Error deleting team and roster: ", error);
+        console.error("Error deleting team and associated data: ", error);
         throw new Error("Could not delete team.");
     }
+
     revalidatePath('/teams');
+    revalidatePath('/matches');
+    revalidatePath('/');
 }
