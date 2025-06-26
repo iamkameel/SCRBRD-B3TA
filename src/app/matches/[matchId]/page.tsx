@@ -1,7 +1,9 @@
 
-import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
-import { getPlayers } from '@/lib/actions/players';
+
+import { getMatch, getMatchOfficials, getMatchLineup, getScorecard, getMatchTransportAssignments } from '@/lib/actions/matches';
+import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
 import { getTeamRoster } from '@/lib/actions/teams';
+import { getVehicles } from '@/lib/actions/transport';
 import MatchDetailsClient from './client';
 import { notFound } from 'next/navigation';
 
@@ -20,7 +22,10 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     teamBRoster,
     teamALineup,
     teamBLineup,
-    scorecardData
+    scorecardData,
+    transportAssignments,
+    vehicles,
+    drivers,
   ] = await Promise.all([
     getMatchOfficials(params.matchId),
     getPlayers(), // To populate the assignment dialog
@@ -29,6 +34,9 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getMatchLineup(params.matchId, match.teamAId),
     getMatchLineup(params.matchId, match.teamBId),
     getScorecard(params.matchId),
+    getMatchTransportAssignments(params.matchId),
+    getVehicles(),
+    getPeopleByRole('Driver'),
   ]);
 
   return <MatchDetailsClient 
@@ -41,5 +49,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     teamBLineup={teamBLineup}
     innings1={scorecardData?.innings1}
     innings2={scorecardData?.innings2}
+    transportAssignments={transportAssignments}
+    vehicles={vehicles}
+    drivers={drivers}
   />;
 }

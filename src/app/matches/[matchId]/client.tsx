@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -37,19 +38,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction } from '@/lib/actions/matches';
-import type { Match, Person, Official, Innings, RosterMember, MatchForecast } from "@/lib/data";
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction, assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/matches';
+import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const assignmentSchema = z.object({
+const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
   role: z.string({ required_error: "Please select a role." }),
 });
 
-type AssignmentFormValues = z.infer<typeof assignmentSchema>;
+type OfficialAssignmentFormValues = z.infer<typeof officialAssignmentSchema>;
 
-const ROLES = ["Umpire", "Scorer"];
+const OFFICIAL_ROLES = ["Umpire", "Scorer"];
 
 function AssignOfficialDialog({ matchId, people }: { matchId: string, people: Person[]}) {
   const [open, setOpen] = React.useState(false);
@@ -57,12 +58,12 @@ function AssignOfficialDialog({ matchId, people }: { matchId: string, people: Pe
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
-  const form = useForm<AssignmentFormValues>({
-    resolver: zodResolver(assignmentSchema),
+  const form = useForm<OfficialAssignmentFormValues>({
+    resolver: zodResolver(officialAssignmentSchema),
     defaultValues: { role: "Umpire" },
   });
 
-  function onSubmit(data: AssignmentFormValues) {
+  function onSubmit(data: OfficialAssignmentFormValues) {
     startTransition(async () => {
       try {
         await assignOfficialToMatchAction(matchId, data);
@@ -123,7 +124,7 @@ function AssignOfficialDialog({ matchId, people }: { matchId: string, people: Pe
                   <Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="Umpire" disabled={isPending}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                      {OFFICIAL_ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -135,6 +136,58 @@ function AssignOfficialDialog({ matchId, people }: { matchId: string, people: Pe
                 {isPending ? "Assigning..." : "Assign to Match"}
               </Button>
             </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const transportAssignmentSchema = z.object({
+  vehicleId: z.string({ required_error: "Please select a vehicle." }),
+  driverId: z.string({ required_error: "Please select a driver." }),
+});
+type TransportAssignmentFormValues = z.infer<typeof transportAssignmentSchema>;
+
+function AssignTransportDialog({ matchId, vehicles, drivers, transportAssignments }: { matchId: string; vehicles: Vehicle[]; drivers: Person[]; transportAssignments: TransportAssignment[] }) {
+  const [open, setOpen] = React.useState(false);
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+
+  const availableVehicles = vehicles.filter(v => !transportAssignments.some(a => a.vehicleId === v.vehicleId));
+  const availableDrivers = drivers.filter(d => !transportAssignments.some(a => a.driverId === d.personId));
+
+  const form = useForm<TransportAssignmentFormValues>({
+    resolver: zodResolver(transportAssignmentSchema),
+  });
+
+  function onSubmit(data: TransportAssignmentFormValues) {
+    startTransition(async () => {
+      try {
+        await assignVehicleToMatchAction(matchId, data);
+        toast({ title: "Vehicle Assigned", description: "The vehicle and driver have been assigned to this match." });
+        setOpen(false);
+        form.reset();
+      } catch (error) {
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not assign vehicle.", variant: "destructive" });
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button><PlusCircle className="mr-2" />Assign Vehicle</Button></DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Assign Vehicle &amp; Driver</DialogTitle><DialogDescription>Assign transport for this match.</DialogDescription></DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField control={form.control} name="vehicleId" render={({ field }) => (
+              <FormItem><FormLabel>Vehicle</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a vehicle" /></SelectTrigger></FormControl><SelectContent>{availableVehicles.map(v => <SelectItem key={v.vehicleId} value={v.vehicleId}>{v.name} ({v.type} - {v.capacity} seats)</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+            )}/>
+            <FormField control={form.control} name="driverId" render={({ field }) => (
+              <FormItem><FormLabel>Driver</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a driver" /></SelectTrigger></FormControl><SelectContent>{availableDrivers.map(d => <SelectItem key={d.personId} value={d.personId}>{d.firstName} {d.lastName}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+            )}/>
+            <DialogFooter><Button type="submit" disabled={isPending}>{isPending ? "Assigning..." : "Assign"}</Button></DialogFooter>
           </form>
         </Form>
       </DialogContent>
@@ -274,9 +327,12 @@ interface MatchDetailsClientProps {
   teamBLineup: string[];
   innings1?: Innings;
   innings2?: Innings;
+  transportAssignments: TransportAssignment[];
+  vehicles: Vehicle[];
+  drivers: Person[];
 }
 
-export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup, innings1, innings2 }: MatchDetailsClientProps) {
+export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup, innings1, innings2, transportAssignments, vehicles, drivers }: MatchDetailsClientProps) {
   const { toast } = useToast();
   const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
@@ -284,7 +340,9 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [isGeneratingSummary, startSummaryGeneration] = React.useTransition();
   const [isFetchingForecast, startForecastTransition] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [selectedTransport, setSelectedTransport] = React.useState<TransportAssignment | null>(null);
+  const [isDeleteOfficialDialogOpen, setIsDeleteOfficialDialogOpen] = React.useState(false);
+  const [isDeleteTransportDialogOpen, setIsDeleteTransportDialogOpen] = React.useState(false);
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
 
   React.useEffect(() => {
@@ -297,12 +355,28 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
       try {
         await removeOfficialFromMatchAction(match.matchId, selectedOfficial.assignmentId);
         toast({ title: "Official Removed", description: `${selectedOfficial.personName} has been removed from the match.` });
-        setIsDeleteDialogOpen(false);
+        setIsDeleteOfficialDialogOpen(false);
         setSelectedOfficial(null);
       } catch (error) {
         toast({ title: "Error", description: error instanceof Error ? error.message : "Could not remove official.", variant: "destructive" });
-        setIsDeleteDialogOpen(false);
+        setIsDeleteOfficialDialogOpen(false);
         setSelectedOfficial(null);
+      }
+    });
+  };
+
+  const handleRemoveTransport = () => {
+    if (!selectedTransport) return;
+    startTransition(async () => {
+      try {
+        await removeVehicleFromMatchAction(match.matchId, selectedTransport.assignmentId);
+        toast({ title: "Transport Removed", description: `${selectedTransport.vehicleName} has been removed from the match.` });
+        setIsDeleteTransportDialogOpen(false);
+        setSelectedTransport(null);
+      } catch (error) {
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not remove transport.", variant: "destructive" });
+        setIsDeleteTransportDialogOpen(false);
+        setSelectedTransport(null);
       }
     });
   };
@@ -533,6 +607,35 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
           <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
           <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
         </div>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div><CardTitle>Transport &amp; Logistics</CardTitle><CardDescription>Manage vehicles and drivers assigned to this match.</CardDescription></div>
+            <AssignTransportDialog matchId={match.matchId} vehicles={vehicles} drivers={drivers} transportAssignments={transportAssignments} />
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader><TableRow><TableHead>Vehicle</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {transportAssignments.length > 0 ? (
+                  transportAssignments.map(t => (
+                    <TableRow key={t.assignmentId}>
+                      <TableCell className="font-medium">{t.vehicleName}</TableCell>
+                      <TableCell>{t.vehicleType}</TableCell>
+                      <TableCell>{t.driverName}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedTransport(t); setIsDeleteTransportDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Remove</DropdownMenuItem></DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No transport assigned to this match yet.</TableCell></TableRow>)}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -540,7 +643,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
               <CardTitle>Match Officials</CardTitle>
               <CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription>
             </div>
-            <AssignOfficialDialog matchId={match.matchId} people={people} />
+            <AssignOfficialDialog matchId={match.matchId} people={people.filter(p => !initialOfficials.some(o => o.personId === p.personId) && (p.roles.includes('Umpire') || p.roles.includes('Scorer')))} />
           </CardHeader>
           <CardContent>
             <Table>
@@ -563,7 +666,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteOfficialDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -578,7 +681,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
         </Card>
       </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog open={isDeleteOfficialDialogOpen} onOpenChange={setIsDeleteOfficialDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -587,6 +690,19 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedOfficial(null)} disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemoveOfficial} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Official"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDeleteTransportDialogOpen} onOpenChange={setIsDeleteTransportDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>This will remove the assignment for <strong>{selectedTransport?.vehicleName}</strong> from this match. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedTransport(null)} disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveTransport} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Assignment"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

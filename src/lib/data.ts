@@ -1,4 +1,5 @@
 
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -183,6 +184,15 @@ export interface Vehicle {
   type: 'Bus' | 'Minibus' | 'Van' | 'Car';
   capacity: number;
   registration: string;
+}
+
+export interface TransportAssignment {
+  assignmentId: string;
+  vehicleId: string;
+  vehicleName: string;
+  vehicleType: Vehicle['type'];
+  driverId: string;
+  driverName: string;
 }
 
 export interface MatchForecast {
