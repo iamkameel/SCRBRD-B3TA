@@ -4,8 +4,8 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
-import type { Team, RosterMember, TeamStats } from '@/lib/data';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
+import type { Team, RosterMember, TeamStats, Match } from '@/lib/data';
 import { getPerson } from './players';
 import { getScorecard } from './matches';
 
@@ -281,4 +281,40 @@ export async function deleteTeamAction(teamId: string) {
     revalidatePath('/teams');
     revalidatePath('/matches');
     revalidatePath('/');
+}
+
+export async function getTeamMatches(teamId: string): Promise<Match[]> {
+  if (!userId) return [];
+  if (!await getTeam(teamId)) return [];
+
+  const matchesCollection = collection(db, 'matches');
+  const teamAQuery = query(matchesCollection, where("userId", "==", userId), where("teamAId", "==", teamId));
+  const teamBQuery = query(matchesCollection, where("userId", "==", userId), where("teamBId", "==", teamId));
+
+  try {
+    const [teamAMatchesSnap, teamBMatchesSnap] = await Promise.all([
+      getDocs(teamAQuery),
+      getDocs(teamBQuery),
+    ]);
+
+    const allMatches = [...teamAMatchesSnap.docs, ...teamBMatchesSnap.docs];
+    
+    const uniqueMatchesMap = new Map<string, Match>();
+    allMatches.forEach(doc => {
+      const data = doc.data();
+      const match = {
+        matchId: doc.id,
+        ...data,
+        dateTime: (data.dateTime as Timestamp).toDate(),
+      } as Match;
+      uniqueMatchesMap.set(doc.id, match);
+    });
+
+    const sortedMatches = Array.from(uniqueMatchesMap.values()).sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
+    
+    return sortedMatches;
+  } catch (error) {
+    console.error(`Error fetching matches for team ${teamId}:`, error);
+    return [];
+  }
 }

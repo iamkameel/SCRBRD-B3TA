@@ -8,6 +8,7 @@ import * as z from "zod";
 import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { Team, Person, RosterMember, TeamStats } from "@/lib/data";
+import type { Team, Person, RosterMember, TeamStats, Match } from "@/lib/data";
 import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction } from '@/lib/actions/teams';
 
 const assignmentSchema = z.object({
@@ -165,15 +166,21 @@ interface TeamDetailsClientProps {
   initialRoster: RosterMember[];
   people: Person[];
   teamStats: TeamStats;
+  teamMatches: Match[];
 }
 
-export default function TeamDetailsClient({ team, initialRoster, people, teamStats }: TeamDetailsClientProps) {
+export default function TeamDetailsClient({ team, initialRoster, people, teamStats, teamMatches }: TeamDetailsClientProps) {
   const { toast } = useToast();
+  const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [selectedMember, setSelectedMember] = React.useState<RosterMember | null>(null);
   const [memberToEdit, setMemberToEdit] = React.useState<RosterMember | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleRemove = () => {
     if (!selectedMember) return;
@@ -245,6 +252,54 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
               </TableBody>
             </Table>
           </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Match Schedule & Results</CardTitle>
+                <CardDescription>A list of all scheduled and completed matches for {team.name}.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Opponent</TableHead>
+                            <TableHead>Date & Time</TableHead>
+                            <TableHead>Venue</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {teamMatches.length > 0 ? (
+                            teamMatches.map(match => {
+                                const opponentName = match.teamAId === team.teamId ? match.teamBName : match.teamAName;
+                                return (
+                                    <TableRow key={match.matchId}>
+                                        <TableCell className="font-medium">
+                                            <Link href={`/matches/${match.matchId}`} className="hover:underline">
+                                                vs {opponentName}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                                        <TableCell>{match.fieldName}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
+                                                {match.status}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center">
+                                    No matches scheduled for this team yet.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
         </Card>
 
         <Card>
