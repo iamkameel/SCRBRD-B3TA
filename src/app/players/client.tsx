@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -147,6 +148,7 @@ export default function PlayersClient({ players }: { players: Player[] }) {
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isPlayerDialogOpen, setIsPlayerDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const handleDelete = () => {
     if (!selectedPerson) return;
@@ -163,6 +165,12 @@ export default function PlayersClient({ players }: { players: Player[] }) {
       }
     });
   };
+
+  const filteredPlayers = players.filter(player =>
+    `${player.firstName} ${player.lastName} ${player.email}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
   
   return (
     <>
@@ -173,15 +181,28 @@ export default function PlayersClient({ players }: { players: Player[] }) {
         </header>
 
         <Card>
-          <CardHeader><CardTitle>Person Roster</CardTitle><CardDescription>A list of all people in the system.</CardDescription></CardHeader>
+          <CardHeader>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Person Roster</CardTitle>
+                <CardDescription>A list of all people in the system.</CardDescription>
+              </div>
+              <Input
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+          </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Roles</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
               </TableHeader>
               <TableBody>
-                {players.length > 0 ? (
-                  players.map((player) => (
+                {filteredPlayers.length > 0 ? (
+                  filteredPlayers.map((player) => (
                     <TableRow key={player.personId}>
                       <TableCell className="font-medium flex items-center gap-3">
                         <Avatar><AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} /><AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback></Avatar>
@@ -201,7 +222,7 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={4} className="h-24 text-center">No people found. Get started by adding someone.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="h-24 text-center">{searchQuery ? `No people found matching "${searchQuery}".` : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
