@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, User } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,8 +34,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import type { Vehicle, FullTransportAssignment } from "@/lib/data";
+import type { Vehicle, FullTransportAssignment, Person } from "@/lib/data";
 import { addVehicleAction, updateVehicleAction, deleteVehicleAction } from '@/lib/actions/transport';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const vehicleSchema = z.object({
   name: z.string().min(1, { message: "Vehicle name is required." }),
@@ -109,7 +110,7 @@ function VehicleDialog({ mode, vehicle, open, onOpenChange }: { mode: 'add' | 'e
   );
 }
 
-export default function TransportClient({ vehicles, assignments }: { vehicles: Vehicle[], assignments: FullTransportAssignment[] }) {
+export default function TransportClient({ vehicles, assignments, drivers }: { vehicles: Vehicle[], assignments: FullTransportAssignment[], drivers: Person[] }) {
   const { toast } = useToast();
   const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
@@ -143,13 +144,14 @@ export default function TransportClient({ vehicles, assignments }: { vehicles: V
       <div className="flex flex-col gap-8">
         <header>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Transport</h1>
-          <p className="text-muted-foreground">Manage your fleet of vehicles and view assignments.</p>
+          <p className="text-muted-foreground">Manage your fleet of vehicles, drivers, and view assignments.</p>
         </header>
         
         <Tabs defaultValue="fleet">
             <div className="flex items-center justify-between mb-4">
                 <TabsList>
                     <TabsTrigger value="fleet">Vehicle Fleet</TabsTrigger>
+                    <TabsTrigger value="drivers">Drivers</TabsTrigger>
                     <TabsTrigger value="assignments">Assignments</TabsTrigger>
                 </TabsList>
                 <Button onClick={() => { setDialogMode('add'); setSelectedVehicle(null); setIsVehicleDialogOpen(true); }}><PlusCircle className="mr-2" />Add Vehicle</Button>
@@ -187,6 +189,51 @@ export default function TransportClient({ vehicles, assignments }: { vehicles: V
                 </CardContent>
                 </Card>
             </TabsContent>
+            <TabsContent value="drivers">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Driver Roster</CardTitle>
+                        <CardDescription>A list of all personnel with the "Driver" role.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {drivers.length > 0 ? (
+                                    drivers.map((driver) => (
+                                        <TableRow key={driver.personId}>
+                                            <TableCell className="font-medium flex items-center gap-3">
+                                                <Avatar>
+                                                    <AvatarImage src={driver.profileImageUrl} alt={`${driver.firstName} ${driver.lastName}`} />
+                                                    <AvatarFallback>{driver.firstName?.[0]}{driver.lastName?.[0]}</AvatarFallback>
+                                                </Avatar>
+                                                <span>{driver.firstName} {driver.lastName}</span>
+                                            </TableCell>
+                                            <TableCell>{driver.email}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button asChild variant="outline" size="sm">
+                                                    <Link href={`/players/${driver.personId}`}>
+                                                        <User className="mr-2 h-4 w-4" />
+                                                        View Profile
+                                                    </Link>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow><TableCell colSpan={3} className="h-24 text-center">No drivers found. Assign the 'Driver' role to people on the People page.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
             <TabsContent value="assignments">
                 <Card>
                     <CardHeader>
@@ -201,7 +248,7 @@ export default function TransportClient({ vehicles, assignments }: { vehicles: V
                                     assignments.map((assignment) => (
                                         <TableRow key={assignment.assignmentId}>
                                             <TableCell className="font-medium"><Link href={`/matches/${assignment.matchId}`} className="hover:underline">{assignment.matchName}</Link></TableCell>
-                                            <TableCell>{isClient ? format(assignment.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                                            <TableCell>{isClient ? format(assignment.dateTime, "PPP p") : ' '}</TableCell>
                                             <TableCell>{assignment.vehicleName}</TableCell>
                                             <TableCell>{assignment.driverName}</TableCell>
                                         </TableRow>
