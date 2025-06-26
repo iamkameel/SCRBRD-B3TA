@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, School, Division, Season } from "@/lib/data";
 import { addTeamAction, updateTeamAction, deleteTeamAction } from '@/lib/actions/teams';
@@ -127,6 +129,11 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isTeamDialogOpen, setIsTeamDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [divisionFilter, setDivisionFilter] = React.useState<string>("all");
+  const [seasonFilter, setSeasonFilter] = React.useState<string>("all");
+
 
   const handleDelete = () => {
     if (!selectedTeam) return;
@@ -144,6 +151,16 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
     });
   };
 
+  const filteredTeams = teams.filter(team => {
+    const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDivision = divisionFilter === 'all' || team.divisionId === divisionFilter;
+    const matchesSeason = seasonFilter === 'all' || team.seasonId === seasonFilter;
+    return matchesSearch && matchesDivision && matchesSeason;
+  });
+
+  const filtersApplied = searchQuery || divisionFilter !== 'all' || seasonFilter !== 'all';
+
+
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -153,15 +170,76 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
         </header>
 
         <Card>
-          <CardHeader><CardTitle>Team List</CardTitle><CardDescription>A list of all teams in the system.</CardDescription></CardHeader>
+          <CardHeader>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle>Team List</CardTitle>
+                  <CardDescription>A list of all teams in the system.</CardDescription>
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="icon" className="relative">
+                      <Search className="h-4 w-4" />
+                      <span className="sr-only">Search</span>
+                      {filtersApplied && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Filter Teams</h4>
+                        <p className="text-sm text-muted-foreground">Filter the list of teams by name, division, or season.</p>
+                      </div>
+                      <div className="grid gap-4">
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <Label htmlFor="search-input">Name</Label>
+                          <Input
+                            id="search-input"
+                            placeholder="Team name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="col-span-2 h-8"
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <Label htmlFor="division-filter">Division</Label>
+                          <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+                              <SelectTrigger className="col-span-2 h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Divisions</SelectItem>
+                                {divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <Label htmlFor="season-filter">Season</Label>
+                           <Select value={seasonFilter} onValueChange={setSeasonFilter}>
+                              <SelectTrigger className="col-span-2 h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Seasons</SelectItem>
+                                {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+          </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow><TableHead>Team Name</TableHead><TableHead>School</TableHead><TableHead>Division</TableHead><TableHead>Season</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
               </TableHeader>
               <TableBody>
-                {teams.length > 0 ? (
-                  teams.map((team) => (
+                {filteredTeams.length > 0 ? (
+                  filteredTeams.map((team) => (
                     <TableRow key={team.teamId}>
                       <TableCell className="font-medium"><Link href={`/teams/${team.teamId}`} className="hover:underline">{team.name}</Link></TableCell>
                       <TableCell>{team.schoolName}</TableCell>
@@ -179,7 +257,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={5} className="h-24 text-center">No teams found. Get started by adding a team.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
