@@ -12,5 +12,4 @@ export const navItems = [
     { href: '/user-management', label: 'User Management', icon: UserCog },
     { href: '/data-management', label: 'Data Management', icon: Database },
     { href: '/settings', label: 'Settings', icon: Settings },
-    { href: '/new-match', label: 'New Match', icon: PlusCircle },
 ];
