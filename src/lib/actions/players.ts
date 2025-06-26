@@ -125,8 +125,8 @@ export async function getPersonLinks(personId: string): Promise<{ guardians: Per
     if (!await getPerson(personId)) return { guardians: [], children: [] };
 
     const linksCollection = collection(db, 'familyLinks');
-    const guardiansQuery = query(linksCollection, where("childId", "==", personId));
-    const childrenQuery = query(linksCollection, where("parentId", "==", personId));
+    const guardiansQuery = query(linksCollection, where("childId", "==", personId), where("userId", "==", userId));
+    const childrenQuery = query(linksCollection, where("parentId", "==", personId), where("userId", "==", userId));
 
     try {
         const [guardiansSnapshot, childrenSnapshot] = await Promise.all([getDocs(guardiansQuery), getDocs(childrenQuery)]);
@@ -189,11 +189,11 @@ export async function addPersonLinkAction(currentPersonId: string, linkedPersonI
 
   const { parentId, childId } = relationship === 'guardian' ? { parentId: linkedPersonId, childId: currentPersonId } : { parentId: currentPersonId, childId: linkedPersonId };
   const linksCollection = collection(db, 'familyLinks');
-  const q = query(linksCollection, where("parentId", "==", parentId), where("childId", "==", childId));
+  const q = query(linksCollection, where("parentId", "==", parentId), where("childId", "==", childId), where("userId", "==", userId));
   if (!(await getDocs(q)).empty) throw new Error("This link already exists.");
   
   try {
-    await addDoc(linksCollection, { parentId, childId });
+    await addDoc(linksCollection, { parentId, childId, userId });
   } catch (error) {
     console.error("Error adding family link:", error);
     throw new Error("Could not create the link.");
@@ -218,7 +218,7 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
     
     const { parentId, childId } = relationship === 'guardian' ? { parentId: linkedPersonId, childId: currentPersonId } : { parentId: currentPersonId, childId: linkedPersonId };
     
-    const q = query(collection(db, 'familyLinks'), where("parentId", "==", parentId), where("childId", "==", childId));
+    const q = query(collection(db, 'familyLinks'), where("parentId", "==", parentId), where("childId", "==", childId), where("userId", "==", userId));
     const linkSnapshot = await getDocs(q);
     if (linkSnapshot.empty) throw new Error("Link not found.");
 
@@ -290,8 +290,8 @@ export async function deletePlayerAction(personId: string) {
   }
 
   // 2. Remove family links
-  const parentLinksQuery = query(collection(db, 'familyLinks'), where("parentId", "==", personId));
-  const childLinksQuery = query(collection(db, 'familyLinks'), where("childId", "==", personId));
+  const parentLinksQuery = query(collection(db, 'familyLinks'), where("parentId", "==", personId), where("userId", "==", userId));
+  const childLinksQuery = query(collection(db, 'familyLinks'), where("childId", "==", personId), where("userId", "==", userId));
   const [parentLinks, childLinks] = await Promise.all([getDocs(parentLinksQuery), getDocs(childLinksQuery)]);
   parentLinks.forEach(doc => batch.delete(doc.ref));
   childLinks.forEach(doc => batch.delete(doc.ref));
