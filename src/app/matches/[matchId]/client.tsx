@@ -36,10 +36,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction } from '@/lib/actions/matches';
 import type { Match, Person, Official, Innings, RosterMember } from "@/lib/data";
 import { Scorecard } from "./scorecard";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -257,7 +257,8 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
 function ScorecardPlaceholder() {
   return (
     <div className="text-center text-muted-foreground py-8 px-4">
-        <p>A scorecard will be generated for this match once both teams have at least 11 players on their roster.</p>
+        <p className="font-semibold">No scorecard exists for this match yet.</p>
+        <p>Select 11 players for each team's lineup to enable scorecard generation.</p>
     </div>
   );
 }
@@ -277,6 +278,7 @@ interface MatchDetailsClientProps {
 export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup, innings1, innings2 }: MatchDetailsClientProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [isGenerating, startGenerationTransition] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
@@ -296,8 +298,22 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
 
+  const handleGenerateScorecard = () => {
+    startGenerationTransition(async () => {
+        try {
+            const result = await generateAndSaveScorecardAction(match.matchId);
+            toast({ title: "Success", description: result.message });
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate scorecard.", variant: "destructive" });
+        }
+    });
+  };
+
+
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
+  const canGenerateScorecard = teamALineup.length === 11 && teamBLineup.length === 11;
+
 
   return (
     <>
@@ -324,10 +340,33 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                           <CardTitle>Scorecard</CardTitle>
                           <CardDescription>Detailed match scorecard for both innings.</CardDescription>
                       </div>
-                      <TabsList className="mt-4 md:mt-0">
-                          <TabsTrigger value="team-a-innings">{match.teamAName}</TabsTrigger>
-                          <TabsTrigger value="team-b-innings">{match.teamBName}</TabsTrigger>
-                      </TabsList>
+                      <div className="flex items-center gap-2 mt-4 md:mt-0">
+                          {!innings1 && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="inline-block">
+                                            <Button onClick={handleGenerateScorecard} disabled={!canGenerateScorecard || isGenerating}>
+                                                <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                                                {isGenerating ? "Generating..." : "Generate Scorecard"}
+                                            </Button>
+                                        </div>
+                                    </TooltipTrigger>
+                                    {!canGenerateScorecard && (
+                                        <TooltipContent>
+                                            <p>Select 11 players for each team to enable generation.</p>
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {innings1 && (
+                            <TabsList>
+                                <TabsTrigger value="team-a-innings">{match.teamAName}</TabsTrigger>
+                                <TabsTrigger value="team-b-innings">{match.teamBName}</TabsTrigger>
+                            </TabsList>
+                          )}
+                      </div>
                   </div>
               </CardHeader>
               <CardContent>

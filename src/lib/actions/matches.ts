@@ -9,6 +9,7 @@ import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setD
 import type { Match, Official, Innings } from '@/lib/data';
 import { getPerson } from './players';
 import type { GenerateScorecardOutput } from '@/ai/flows/generate-scorecard-flow';
+import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -304,4 +305,56 @@ export async function saveScorecard(matchId: string, scorecardData: GenerateScor
   revalidatePath(`/matches/${matchId}`);
   revalidatePath('/matches');
   revalidatePath('/');
+}
+
+export async function generateAndSaveScorecardAction(matchId: string) {
+    if (!userId) throw new Error("User not authenticated");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    // Check if scorecard already exists
+    const existingScorecard = await getScorecard(matchId);
+    if (existingScorecard) {
+        throw new Error("A scorecard for this match already exists.");
+    }
+
+    const [teamALineup, teamBLineup] = await Promise.all([
+        getMatchLineup(matchId, match.teamAId),
+        getMatchLineup(matchId, match.teamBId),
+    ]);
+
+    if (teamALineup.length !== 11 || teamBLineup.length !== 11) {
+        throw new Error("Both teams must have exactly 11 players selected in their lineup to generate a scorecard.");
+    }
+    
+    const getPlayerNames = async (playerIds: string[]): Promise<string[]> => {
+        const personPromises = playerIds.map(id => getPerson(id));
+        const people = await Promise.all(personPromises);
+        return people.map(p => {
+            if (!p) throw new Error("A player in the lineup could not be found.");
+            return `${p.firstName} ${p.lastName}`;
+        });
+    };
+
+    const [teamAPlayerNames, teamBPlayerNames] = await Promise.all([
+        getPlayerNames(teamALineup),
+        getPlayerNames(teamBLineup),
+    ]);
+    
+    const generatedData = await generateScorecard({
+        teamAName: match.teamAName,
+        teamAPlayers: teamAPlayerNames,
+        teamBName: match.teamBName,
+        teamBPlayers: teamBPlayerNames,
+    });
+    
+    if (generatedData) {
+        await saveScorecard(matchId, generatedData);
+    } else {
+        throw new Error("AI failed to generate scorecard data.");
+    }
+
+    revalidatePath(`/matches/${matchId}`);
+    return { success: true, message: "Scorecard generated successfully!" };
 }
