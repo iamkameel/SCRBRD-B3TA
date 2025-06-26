@@ -27,6 +27,24 @@ export async function getDivisions(): Promise<Division[]> {
   }
 }
 
+export async function getDivision(divisionId: string): Promise<Division | null> {
+  if (!userId) return null;
+  try {
+    const divisionDocRef = doc(db, 'divisions', divisionId);
+    const divisionSnap = await getDoc(divisionDocRef);
+    if (!divisionSnap.exists() || divisionSnap.data().userId !== userId) {
+      return null;
+    }
+    return {
+      divisionId: divisionSnap.id,
+      name: divisionSnap.data().name,
+    };
+  } catch (error) {
+    console.error(`Error fetching division with ID ${divisionId}:`, error);
+    return null;
+  }
+}
+
 const divisionSchema = z.object({
   name: z.string().min(1, { message: "Division name is required." }),
 });

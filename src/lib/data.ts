@@ -1,5 +1,3 @@
-
-
 // Interfaces
 export interface Person {
   personId: string;
@@ -218,4 +216,17 @@ export interface LeaderboardPlayer extends Person {
 
 export interface StandingTeam extends Team {
     stats: TeamStats;
+}
+
+export interface Competition {
+  competitionId: string;
+  name: string;
+  type: 'League' | 'Knockout' | 'Series';
+  seasonId: string;
+  seasonName: string;
+  divisionId: string;
+  divisionName: string;
+  status: 'Draft' | 'In Progress' | 'Completed';
+  winnerTeamId?: string;
+  winnerTeamName?: string;
 }

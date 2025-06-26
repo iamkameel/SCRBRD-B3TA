@@ -31,6 +31,28 @@ export async function getSeasons(): Promise<Season[]> {
   }
 }
 
+export async function getSeason(seasonId: string): Promise<Season | null> {
+  if (!userId) return null;
+  try {
+    const seasonDocRef = doc(db, 'seasons', seasonId);
+    const seasonSnap = await getDoc(seasonDocRef);
+    if (!seasonSnap.exists() || seasonSnap.data().userId !== userId) {
+      return null;
+    }
+    const data = seasonSnap.data();
+    return {
+      seasonId: seasonSnap.id,
+      name: data.name,
+      startDate: (data.startDate as Timestamp).toDate(),
+      endDate: (data.endDate as Timestamp).toDate(),
+      active: data.active,
+    };
+  } catch (error) {
+    console.error(`Error fetching season with ID ${seasonId}:`, error);
+    return null;
+  }
+}
+
 const baseSeasonSchema = z.object({
   name: z.string().min(1, { message: "Season name is required." }),
   startDate: z.date({ required_error: "A start date is required." }),
