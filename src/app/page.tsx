@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMatches } from "@/lib/actions/matches";
 import { getLeaderboards, getTeamStandings } from "@/lib/actions/dashboard";
 import { format } from "date-fns";
+import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "./dashboard-charts";
 
 export default async function DashboardPage() {
   const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings] = await Promise.all([
@@ -33,7 +34,8 @@ export default async function DashboardPage() {
                     <CardTitle>Team Standings</CardTitle>
                     <CardDescription>Season leaderboard based on wins and Net Run Rate.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
+                    <TeamStandingsChart data={teamStandings} />
                      <Table>
                         <TableHeader>
                             <TableRow>
@@ -84,6 +86,7 @@ export default async function DashboardPage() {
               <CardContent>
                 <TabsContent value="batting">
                    <div className="space-y-4">
+                     <TopRunScorersChart data={topRunScorers} />
                      {topRunScorers.length > 0 ? topRunScorers.map((player) => (
                        <div key={player.personId} className="flex items-center gap-4">
                           <Avatar className="h-10 w-10">
@@ -104,6 +107,7 @@ export default async function DashboardPage() {
                 </TabsContent>
                  <TabsContent value="bowling">
                    <div className="space-y-4">
+                     <TopWicketTakersChart data={topWicketTakers} />
                      {topWicketTakers.length > 0 ? topWicketTakers.map((player) => (
                        <div key={player.personId} className="flex items-center gap-4">
                           <Avatar className="h-10 w-10">
