@@ -37,6 +37,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import type { Person as Player } from "@/lib/data";
 import { addPlayerAction, updatePlayerAction, deletePlayerAction } from '@/lib/actions/players';
 
@@ -260,7 +261,15 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                         <Link href={`/players/${player.personId}`} className="hover:underline">{player.firstName} {player.lastName}</Link>
                       </TableCell>
                       <TableCell>{player.email}</TableCell>
-                      <TableCell>{player.roles.join(', ')}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {player.roles.map((role) => (
+                            <Badge key={role} variant="secondary" className="capitalize">
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
