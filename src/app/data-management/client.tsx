@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Download, Upload, Trash2, ShieldAlert } from "lucide-react";
+import { Download, Upload, Trash2, ShieldAlert, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { deleteDataSubsetAction, deleteAllDataAction } from "@/lib/actions/data-management";
+import { deleteDataSubsetAction, deleteAllDataAction, exportDataSubsetAction } from "@/lib/actions/data-management";
 
 const DATA_SUBSETS = [
   "People",
@@ -41,8 +41,34 @@ const DATA_SUBSETS = [
 
 export default function DataManagementClient() {
   const [subsetToDelete, setSubsetToDelete] = React.useState<string | null>(null);
-  const [isDeleting, startTransition] = React.useTransition();
+  const [isDeleting, startDeleteTransition] = React.useTransition();
+  const [isExporting, startExportTransition] = React.useTransition();
+  const [currentExport, setCurrentExport] = React.useState<string | null>(null);
   const { toast } = useToast();
+
+  const handleExportClick = (subset: string) => {
+    setCurrentExport(subset);
+    startExportTransition(async () => {
+      toast({ title: "Exporting...", description: `Preparing ${subset} data for download.` });
+      const result = await exportDataSubsetAction(subset);
+
+      if (result.success && result.data) {
+        const blob = new Blob([result.data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${subset.toLowerCase().replace(/\s/g, '_')}_export_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast({ title: "Export Complete", description: `Your ${subset} data has been downloaded.` });
+      } else {
+        toast({ title: "Export Failed", description: result.message, variant: "destructive" });
+      }
+      setCurrentExport(null);
+    });
+  };
 
   const handleDeleteClick = (subset: string) => {
     setSubsetToDelete(subset);
@@ -50,7 +76,7 @@ export default function DataManagementClient() {
 
   const handleConfirmDelete = () => {
     if (!subsetToDelete) return;
-    startTransition(async () => {
+    startDeleteTransition(async () => {
         const result = await deleteDataSubsetAction(subsetToDelete);
         if (result.success) {
             toast({ title: "Data Deleted", description: result.message });
@@ -62,7 +88,7 @@ export default function DataManagementClient() {
   }
   
   const handleConfirmDeleteAll = () => {
-    startTransition(async () => {
+    startDeleteTransition(async () => {
         const result = await deleteAllDataAction();
         if (result.success) {
             toast({ title: "All Data Deleted", description: result.message, variant: "destructive" });
@@ -102,8 +128,8 @@ export default function DataManagementClient() {
                         {/* Export Button */}
                         <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => toast({ title: "Export Started", description: `Exporting ${subset} data...` })}>
-                            <Download className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" onClick={() => handleExportClick(subset)} disabled={isDeleting || isExporting}>
+                              {isExporting && currentExport === subset ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent><p>Export {subset}</p></TooltipContent>
@@ -112,7 +138,7 @@ export default function DataManagementClient() {
                         {/* Import Button */}
                         <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => toast({ title: "Import Started", description: `Importing ${subset} data...`})}>
+                            <Button variant="ghost" size="icon" onClick={() => toast({ title: "Import Started", description: `Importing ${subset} data...`})} disabled={isDeleting || isExporting}>
                             <Upload className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -122,7 +148,7 @@ export default function DataManagementClient() {
                         {/* Delete Button */}
                         <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(subset)} disabled={isDeleting}>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(subset)} disabled={isDeleting || isExporting}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                         </TooltipTrigger>
@@ -155,7 +181,7 @@ export default function DataManagementClient() {
                 </div>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isDeleting}>
+                    <Button variant="destructive" disabled={isDeleting || isExporting}>
                         Delete All
                     </Button>
                     </AlertDialogTrigger>

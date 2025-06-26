@@ -82,3 +82,48 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         return { success: false, message };
     }
 }
+
+export async function exportDataSubsetAction(subset: string): Promise<{ success: boolean; message: string; data?: string }> {
+    try {
+        let dataToExport: any[];
+        switch (subset) {
+            case 'People':
+                dataToExport = await getPlayers();
+                break;
+            case 'Teams':
+                dataToExport = await getTeams();
+                break;
+            case 'Matches':
+                dataToExport = await getMatches();
+                break;
+            case 'Schools':
+                dataToExport = await getSchools();
+                break;
+            case 'Divisions':
+                dataToExport = await getDivisions();
+                break;
+            case 'Seasons':
+                dataToExport = await getSeasons();
+                break;
+            case 'Fields':
+                dataToExport = await getFields();
+                break;
+            default:
+                throw new Error(`Invalid data subset for export: ${subset}`);
+        }
+
+        // Convert dates to ISO strings for consistent JSON
+        const jsonData = JSON.stringify(dataToExport, (key, value) => {
+            if (value instanceof Date) {
+                return value.toISOString();
+            }
+            return value;
+        }, 2);
+        
+        return { success: true, message: `Exporting ${subset} data.`, data: jsonData };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : `Failed to export ${subset} data.`;
+        console.error(message);
+        return { success: false, message };
+    }
+}
