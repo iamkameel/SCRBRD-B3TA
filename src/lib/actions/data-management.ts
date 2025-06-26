@@ -73,8 +73,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         for (const collName of independentCollections) {
             // @ts-ignore
             for (const item of sampleData[collName]) {
-                const tempId = item[`${collName.slice(0, -1)}Id`];
-                const { [`${collName.slice(0, -1)}Id`]: _, ...itemData } = item;
+                const idKey = collName === 'people' ? 'personId' : `${collName.slice(0, -1)}Id`;
+                const tempId = item[idKey];
+                const { [idKey]: _, ...itemData } = item;
                 
                 const dataToSave = { ...itemData, userId };
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
@@ -205,7 +206,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
             if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
             if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
 
-            const docRef = doc(collection(db, collection));
+            const docRef = doc(db.collection(collection));
             batch.set(docRef, dataToSave);
             count++;
         }
