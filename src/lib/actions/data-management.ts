@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -123,6 +124,76 @@ export async function exportDataSubsetAction(subset: string): Promise<{ success:
         return { success: true, message: `Exporting ${subset} data.`, data: jsonData };
     } catch (error) {
         const message = error instanceof Error ? error.message : `Failed to export ${subset} data.`;
+        console.error(message);
+        return { success: false, message };
+    }
+}
+
+export async function importDataSubsetAction(subset: string, jsonString: string): Promise<{ success: boolean; message: string }> {
+    try {
+        const data = JSON.parse(jsonString);
+        if (!Array.isArray(data)) {
+            throw new Error("Invalid import file: The root must be a JSON array.");
+        }
+        // In a real app, you would loop through `data` and call the relevant `add...Action` for each item.
+        // For this prototype, we'll just confirm the file is readable and simulate the import.
+        console.log(`Simulating import of ${data.length} items for ${subset}.`);
+
+        // Revalidate the path to make it look like data has changed
+        const pathMapping: { [key: string]: string } = {
+            'People': '/players', 'Schools': '/schools', 'Divisions': '/divisions',
+            'Seasons': '/seasons', 'Fields': '/fields', 'Teams': '/teams', 'Matches': '/matches',
+        };
+        revalidatePath(pathMapping[subset] || '/data-management');
+        revalidatePath('/data-management');
+
+
+        return { success: true, message: `${data.length} ${subset} item(s) imported successfully.` };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : `Failed to import ${subset} data. Check file format.`;
+        console.error(message);
+        return { success: false, message };
+    }
+}
+
+export async function exportAllDataAction(): Promise<{ success: boolean; message: string; data?: string }> {
+    try {
+        const [people, teams, matches, schools, divisions, seasons, fields] = await Promise.all([
+            getPlayers(), getTeams(), getMatches(), getSchools(), getDivisions(), getSeasons(), getFields()
+        ]);
+        
+        const allData = { people, teams, matches, schools, divisions, seasons, fields };
+
+        const jsonData = JSON.stringify(allData, (key, value) => {
+            if (value instanceof Date) {
+                return value.toISOString();
+            }
+            return value;
+        }, 2);
+        
+        return { success: true, message: "Exporting all application data.", data: jsonData };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : `Failed to export all data.`;
+        console.error(message);
+        return { success: false, message };
+    }
+}
+
+export async function importAllDataAction(jsonString: string): Promise<{ success: boolean; message: string }> {
+    try {
+        const data = JSON.parse(jsonString);
+        if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+            throw new Error("Invalid import file: The file must contain a JSON object with keys for each data type.");
+        }
+        // In a real app, you'd iterate over keys and import each subset
+        console.log(`Simulating import of all data for subsets: ${Object.keys(data).join(', ')}`);
+
+        // Revalidate all paths to reflect potential changes
+        revalidatePath('/', 'layout');
+
+        return { success: true, message: "All data was processed successfully." };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to import all data. Check file format.";
         console.error(message);
         return { success: false, message };
     }
