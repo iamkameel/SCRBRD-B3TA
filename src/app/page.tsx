@@ -1,14 +1,19 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMatches } from "@/lib/actions/matches";
+import { getLeaderboards, getTeamStandings } from "@/lib/actions/dashboard";
 import { format } from "date-fns";
 
 export default async function DashboardPage() {
-  const recentMatches = (await getMatches()).slice(0, 5);
+  const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings] = await Promise.all([
+    getMatches().then(matches => matches.slice(0, 5)),
+    getLeaderboards(),
+    getTeamStandings()
+  ]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -17,65 +22,117 @@ export default async function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome to your cricket scoring and management dashboard.
+          Welcome to your cricket league overview.
         </p>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Start a New Match</CardTitle>
-            <CardDescription>
-              Set up teams and get ready to score your next game.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow flex items-end">
-            <Button asChild className="w-full">
-              <Link href="/new-match">
-                <PlusCircle className="mr-2 h-4 w-4" /> New Match
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Team Standings</CardTitle>
+                    <CardDescription>Season leaderboard based on wins and Net Run Rate.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px]">Pos</TableHead>
+                                <TableHead>Team</TableHead>
+                                <TableHead className="text-right">Played</TableHead>
+                                <TableHead className="text-right">Won</TableHead>
+                                <TableHead className="text-right">Lost</TableHead>
+                                <TableHead className="text-right">NRR</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {teamStandings.length > 0 ? (
+                            teamStandings.map((team, index) => (
+                              <TableRow key={team.teamId}>
+                                <TableCell className="font-medium">{index + 1}</TableCell>
+                                <TableCell>
+                                  <Link href={`/teams/${team.teamId}`} className="font-medium hover:underline">{team.name}</Link>
+                                </TableCell>
+                                <TableCell className="text-right">{team.stats.matchesPlayed}</TableCell>
+                                <TableCell className="text-right">{team.stats.matchesWon}</TableCell>
+                                <TableCell className="text-right">{team.stats.matchesLost}</TableCell>
+                                <TableCell className="text-right">{team.stats.netRunRate.toFixed(2)}</TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow><TableCell colSpan={6} className="h-24 text-center">No team stats available. Complete some matches to see standings.</TableCell></TableRow>
+                          )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Manage Teams</CardTitle>
-            <CardDescription>
-              Create, view, and edit your cricket teams.
-            </CardDescription>
-          </CardHeader>
-           <CardContent className="flex-grow flex items-end">
-             <Button asChild variant="secondary" className="w-full">
-              <Link href="/teams">
-                View Teams
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Manage Players</CardTitle>
-            <CardDescription>
-              Manage your player roster and assign players to teams.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow flex items-end">
-             <Button asChild variant="secondary" className="w-full">
-              <Link href="/players">
-                View Players
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-1">
+          <Tabs defaultValue="batting">
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Performers</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardDescription>Season leaders in key categories.</CardDescription>
+                   <TabsList>
+                      <TabsTrigger value="batting">Batting</TabsTrigger>
+                      <TabsTrigger value="bowling">Bowling</TabsTrigger>
+                  </TabsList>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <TabsContent value="batting">
+                   <div className="space-y-4">
+                     {topRunScorers.length > 0 ? topRunScorers.map((player) => (
+                       <div key={player.personId} className="flex items-center gap-4">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={player.profileImageUrl} />
+                            <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <Link href={`/players/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
+                            <p className="text-sm text-muted-foreground">Avg: {player.stats.battingAverage.toFixed(2)} | SR: {player.stats.strikeRate.toFixed(2)}</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="font-bold text-lg">{player.stats.totalRuns}</p>
+                             <p className="text-xs text-muted-foreground">Runs</p>
+                          </div>
+                       </div>
+                     )) : <p className="text-sm text-center text-muted-foreground py-8">No batting stats yet.</p>}
+                   </div>
+                </TabsContent>
+                 <TabsContent value="bowling">
+                   <div className="space-y-4">
+                     {topWicketTakers.length > 0 ? topWicketTakers.map((player) => (
+                       <div key={player.personId} className="flex items-center gap-4">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={player.profileImageUrl} />
+                            <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                             <Link href={`/players/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
+                             <p className="text-sm text-muted-foreground">Avg: {player.stats.bowlingAverage.toFixed(2)} | Econ: {player.stats.economyRate.toFixed(2)}</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="font-bold text-lg">{player.stats.wicketsTaken}</p>
+                              <p className="text-xs text-muted-foreground">Wickets</p>
+                          </div>
+                       </div>
+                     )) : <p className="text-sm text-center text-muted-foreground py-8">No bowling stats yet.</p>}
+                   </div>
+                </TabsContent>
+              </CardContent>
+            </Card>
+          </Tabs>
+        </div>
       </div>
 
        <Card>
         <CardHeader>
-          <CardTitle>Recent Matches</CardTitle>
+          <CardTitle>Recent & Upcoming Matches</CardTitle>
           <CardDescription>
-            A list of your recently played or ongoing matches.
+            A list of your most recent and scheduled matches.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -96,7 +153,7 @@ export default async function DashboardPage() {
                         {match.teamAName} vs {match.teamBName}
                       </Link>
                     </TableCell>
-                    <TableCell>{format(match.dateTime, "PPP")}</TableCell>
+                    <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
                     <TableCell>
                       <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
                         {match.status}
@@ -107,7 +164,7 @@ export default async function DashboardPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="h-24 text-center">
-                    No recent matches found.
+                    No recent matches found. <Link href="/new-match" className="text-primary underline">Create one now</Link>.
                   </TableCell>
                 </TableRow>
               )}
