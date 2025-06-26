@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -31,12 +31,14 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Team, Person, RosterMember, TeamStats } from "@/lib/data";
-import { addPlayerToRosterAction, removeRosterAssignmentAction } from '@/lib/actions/teams';
+import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction } from '@/lib/actions/teams';
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -47,6 +49,10 @@ const assignmentSchema = z.object({
 });
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
+
+const editAssignmentSchema = assignmentSchema.omit({ personId: true });
+type EditAssignmentFormValues = z.infer<typeof editAssignmentSchema>;
+
 
 const ROLES = ["Player", "Coach", "Scorer", "Team Manager"];
 const STATUSES = ["active", "on_trial", "injured", "retired"];
@@ -98,6 +104,62 @@ function AddPlayerToRosterDialog({ teamId, people }: { teamId: string, people: P
   );
 }
 
+function EditAssignmentDialog({ teamId, member, open, onOpenChange }: { teamId: string; member: RosterMember; open: boolean; onOpenChange: (open: boolean) => void; }) {
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+
+  const form = useForm<EditAssignmentFormValues>({
+    resolver: zodResolver(editAssignmentSchema),
+    defaultValues: {
+        role: member.role, status: member.status, isCaptain: member.isCaptain, isViceCaptain: member.isViceCaptain,
+    },
+  });
+
+  React.useEffect(() => {
+    form.reset({
+        role: member.role, status: member.status, isCaptain: member.isCaptain, isViceCaptain: member.isViceCaptain,
+    });
+  }, [member, form]);
+
+  function onSubmit(data: EditAssignmentFormValues) {
+    startTransition(async () => {
+        try {
+            await updateRosterAssignmentAction({ teamId, assignmentId: member.assignmentId, ...data });
+            toast({ title: "Roster Updated", description: `${member.personName}'s assignment has been updated.` });
+            onOpenChange(false);
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not update assignment.", variant: "destructive" });
+        }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+            <DialogHeader><DialogTitle>Edit Assignment for {member.personName}</DialogTitle><DialogDescription>Update the role and status on this team.</DialogDescription></DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div>
+                        <Label>Person</Label>
+                        <Input value={member.personName} disabled />
+                    </div>
+                    <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <div className="flex items-center space-x-4 pt-2">
+                        <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
+                        <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Changes"}</Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+    </Dialog>
+  );
+}
+
 interface TeamDetailsClientProps {
   team: Team;
   initialRoster: RosterMember[];
@@ -109,6 +171,8 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedMember, setSelectedMember] = React.useState<RosterMember | null>(null);
+  const [memberToEdit, setMemberToEdit] = React.useState<RosterMember | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   const handleRemove = () => {
@@ -168,6 +232,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => { setMemberToEdit(member); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -191,6 +256,18 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
           </CardContent>
         </Card>
       </div>
+      
+      {memberToEdit && (
+        <EditAssignmentDialog
+          teamId={team.teamId}
+          member={memberToEdit}
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) setMemberToEdit(null);
+          }}
+        />
+      )}
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

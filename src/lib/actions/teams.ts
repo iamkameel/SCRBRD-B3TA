@@ -148,6 +148,35 @@ export async function removeRosterAssignmentAction(teamId: string, assignmentId:
     revalidatePath(`/teams/${teamId}`);
 }
 
+const updateAssignmentSchema = z.object({
+  teamId: z.string(),
+  assignmentId: z.string(),
+  role: z.string(),
+  status: z.string(),
+  isCaptain: z.boolean(),
+  isViceCaptain: z.boolean(),
+});
+
+export async function updateRosterAssignmentAction(data: z.infer<typeof updateAssignmentSchema>) {
+  if (!userId) throw new Error("User not authenticated");
+  const validated = updateAssignmentSchema.safeParse(data);
+  if (!validated.success) throw new Error('Invalid assignment data.');
+  
+  const { teamId, assignmentId, ...updateData } = validated.data;
+  
+  if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
+
+  try {
+    const assignmentRef = doc(db, 'teams', teamId, 'roster', assignmentId);
+    await updateDoc(assignmentRef, updateData);
+  } catch (error) {
+    console.error("Error updating roster assignment:", error);
+    throw new Error("Could not update roster assignment.");
+  }
+  
+  revalidatePath(`/teams/${teamId}`);
+}
+
 const teamSchema = z.object({
   name: z.string().min(1), schoolId: z.string(), divisionId: z.string(), seasonId: z.string(),
   primaryColor: z.string().optional(), secondaryColor: z.string().optional(),
