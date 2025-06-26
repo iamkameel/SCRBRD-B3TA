@@ -195,21 +195,21 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
     try {
         await deleteSubsetAction(subsetName);
 
-        const collection = collectionNameMap[subsetName];
+        const collectionName = collectionNameMap[subsetName];
         const batch = writeBatch(db);
         let count = 0;
         // @ts-ignore
-        for (const item of sampleData[collection]) {
-            const tempIdKey = `${collection.slice(0, -1)}Id`; // e.g., "schoolId"
+        for (const item of sampleData[collectionName]) {
+            const tempIdKey = `${collectionName.slice(0, -1)}Id`; // e.g., "schoolId"
             const { [tempIdKey]: _, ...itemData } = item;
             
             const dataToSave = { ...itemData, userId };
             if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
             if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
-            if (collection === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
+            if (collectionName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
 
-            const docRef = doc(db.collection(collection));
+            const docRef = doc(collection(db, collectionName));
             batch.set(docRef, dataToSave);
             count++;
         }
