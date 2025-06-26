@@ -28,6 +28,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -341,7 +342,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                           <CardDescription>Detailed match scorecard for both innings.</CardDescription>
                       </div>
                       <div className="flex items-center gap-2 mt-4 md:mt-0">
-                          {!innings1 && (
+                          {!innings1 ? (
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -359,6 +360,32 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                                     )}
                                 </Tooltip>
                             </TooltipProvider>
+                          ) : (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline" disabled={isGenerating}>
+                                        <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                                        {isGenerating ? "Regenerating..." : "Regenerate Scorecard"}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will generate a new scorecard, permanently overwriting the current one. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel disabled={isGenerating}>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleGenerateScorecard}
+                                            disabled={isGenerating}
+                                        >
+                                            {isGenerating ? "Regenerating..." : "Yes, Regenerate"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                           )}
                           {innings1 && (
                             <TabsList>

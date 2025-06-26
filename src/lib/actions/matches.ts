@@ -355,12 +355,6 @@ export async function generateAndSaveScorecardAction(matchId: string) {
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
 
-    // Check if scorecard already exists
-    const existingScorecard = await getScorecard(matchId);
-    if (existingScorecard) {
-        throw new Error("A scorecard for this match already exists.");
-    }
-
     const [teamALineup, teamBLineup] = await Promise.all([
         getMatchLineup(matchId, match.teamAId),
         getMatchLineup(matchId, match.teamBId),
