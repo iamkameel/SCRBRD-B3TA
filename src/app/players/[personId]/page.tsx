@@ -3,16 +3,17 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import PlayerDetailsClient from './client';
-import { getPerson, getPersonLinks, getPlayers, getPlayerStats } from '@/lib/actions/players';
+import { getPerson, getPersonLinks, getPlayers, getPlayerStats, getPersonTeamAssignments } from '@/lib/actions/players';
 import { Button } from '@/components/ui/button';
 
 export default async function PersonDetailsPage({ params }: { params: { personId: string } }) {
   
-  const [person, { guardians, children }, allPeople, playerStats] = await Promise.all([
+  const [person, { guardians, children }, allPeople, playerStats, teamAssignments] = await Promise.all([
     getPerson(params.personId),
     getPersonLinks(params.personId),
     getPlayers(),
     getPlayerStats(params.personId),
+    getPersonTeamAssignments(params.personId),
   ]);
 
   if (!person) {
@@ -42,6 +43,7 @@ export default async function PersonDetailsPage({ params }: { params: { personId
         initialGuardians={guardians} 
         initialChildren={children}
         availablePeople={availablePeople}
+        teamAssignments={teamAssignments}
     />
   );
 }

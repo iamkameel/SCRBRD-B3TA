@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import type { Person, PlayerStats } from "@/lib/data";
+import type { Person, PlayerStats, PlayerTeamAssignment } from "@/lib/data";
 import { removePersonLinkAction } from "@/lib/actions/players";
 import { AddLinkDialog } from "./add-link-dialog";
 
@@ -39,9 +39,10 @@ interface PlayerDetailsClientProps {
     initialGuardians: Person[];
     initialChildren: Person[];
     availablePeople: Person[];
+    teamAssignments: PlayerTeamAssignment[];
 }
 
-export default function PlayerDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople }: PlayerDetailsClientProps) {
+export default function PlayerDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments }: PlayerDetailsClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -81,6 +82,49 @@ export default function PlayerDetailsClient({ person, playerStats, initialGuardi
               </div>
           </div>
         </header>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Team Assignments</CardTitle>
+                <CardDescription>A list of teams {person.firstName} is assigned to.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Team</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {teamAssignments.length > 0 ? (
+                            teamAssignments.map(assignment => (
+                                <TableRow key={assignment.teamId}>
+                                    <TableCell className="font-medium">
+                                        <Link href={`/teams/${assignment.teamId}`} className="hover:underline">
+                                            {assignment.teamName}
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell>{assignment.role}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="secondary" className="capitalize">
+                                            {assignment.status.replace(/_/g, " ")}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                                    Not assigned to any teams.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">

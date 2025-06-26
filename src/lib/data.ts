@@ -159,3 +159,10 @@ export interface TeamStats {
     totalWicketsTaken: number;
     netRunRate: number;
 }
+
+export interface PlayerTeamAssignment {
+  teamId: string;
+  teamName: string;
+  role: string;
+  status: string;
+}
