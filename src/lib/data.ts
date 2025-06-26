@@ -168,6 +168,14 @@ export interface PlayerTeamAssignment {
   status: string;
 }
 
+export interface Vehicle {
+  vehicleId: string;
+  name: string;
+  type: 'Bus' | 'Minibus' | 'Van' | 'Car';
+  capacity: number;
+  registration: string;
+}
+
 export interface MatchForecast {
     summary: string;
     details: {

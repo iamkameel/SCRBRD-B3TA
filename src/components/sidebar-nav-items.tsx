@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, User, PlusCircle, CalendarDays, MapPin, Building, Trophy, ClipboardList, Settings, Database, UserCog } from 'lucide-react';
+import { LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Settings, Database, UserCog } from 'lucide-react';
 
 export const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -9,6 +9,7 @@ export const navItems = [
     { href: '/schools', label: 'Schools', icon: Building },
     { href: '/divisions', label: 'Divisions', icon: Trophy },
     { href: '/fields', label: 'Fields', icon: MapPin },
+    { href: '/transport', label: 'Transport', icon: Bus },
     { href: '/user-management', label: 'User Management', icon: UserCog },
     { href: '/data-management', label: 'Data Management', icon: Database },
     { href: '/settings', label: 'Settings', icon: Settings },
