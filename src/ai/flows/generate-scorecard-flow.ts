@@ -55,7 +55,7 @@ const InningsSchema = z.object({
 });
 
 // Input and Output types for the flow
-export const GenerateScorecardInputSchema = z.object({
+const GenerateScorecardInputSchema = z.object({
   teamAName: z.string(),
   teamAPlayers: z.array(z.string()).min(11).max(11).describe("An array of 11 player names for Team A."),
   teamBName: z.string(),
@@ -63,7 +63,7 @@ export const GenerateScorecardInputSchema = z.object({
 });
 export type GenerateScorecardInput = z.infer<typeof GenerateScorecardInputSchema>;
 
-export const GenerateScorecardOutputSchema = z.object({
+const GenerateScorecardOutputSchema = z.object({
   innings1: InningsSchema,
   innings2: InningsSchema,
 });
