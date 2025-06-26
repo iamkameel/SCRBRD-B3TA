@@ -74,6 +74,9 @@ export async function getTeamStats(teamId: string): Promise<TeamStats> {
     const uniqueMatches = Array.from(new Map(allMatches.map(doc => [doc.id, doc])).values());
 
     let stats = { ...defaultStats };
+    let totalOversFaced = 0;
+    let totalRunsConceded = 0;
+    let totalOversBowled = 0;
 
     for (const matchDoc of uniqueMatches) {
         const scorecard = await getScorecard(matchDoc.id);
@@ -86,8 +89,15 @@ export async function getTeamStats(teamId: string): Promise<TeamStats> {
         const teamInnings = innings1.teamName === team.name ? innings1 : (innings2.teamName === team.name ? innings2 : undefined);
         const opponentInnings = innings1.teamName !== team.name ? innings1 : (innings2.teamName !== team.name ? innings2 : undefined);
         
-        if (teamInnings) stats.totalRunsScored += teamInnings.totalRuns;
-        if (opponentInnings) stats.totalWicketsTaken += opponentInnings.wickets;
+        if (teamInnings) {
+            stats.totalRunsScored += teamInnings.totalRuns;
+            totalOversFaced += teamInnings.overs;
+        }
+        if (opponentInnings) {
+            stats.totalWicketsTaken += opponentInnings.wickets;
+            totalRunsConceded += opponentInnings.totalRuns;
+            totalOversBowled += opponentInnings.overs;
+        }
 
         if (innings2.totalRuns > innings1.totalRuns) {
             if (innings2.teamName === team.name) stats.matchesWon++; else stats.matchesLost++;
@@ -97,6 +107,10 @@ export async function getTeamStats(teamId: string): Promise<TeamStats> {
             stats.matchesDrawn++;
         }
     }
+    
+    const runRateFor = totalOversFaced > 0 ? stats.totalRunsScored / totalOversFaced : 0;
+    const runRateAgainst = totalOversBowled > 0 ? totalRunsConceded / totalOversBowled : 0;
+    stats.netRunRate = runRateFor - runRateAgainst;
 
     return stats;
 }
