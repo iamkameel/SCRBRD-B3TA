@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, writeBatch, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, writeBatch, getDocs, doc } from 'firebase/firestore';
 import { sampleData } from '@/lib/sample-data';
 import { getPlayers, deletePlayerAction } from './players';
 import { getTeams, deleteTeamAction } from './teams';
@@ -15,9 +15,17 @@ import { getFields, deleteFieldAction } from './fields';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
+const collectionNameMap = {
+    'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
+    'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches'
+};
+export type SubsetName = keyof typeof collectionNameMap;
+const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People'];
+
+
+export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
     try {
-        const subsets = ["Matches", "Teams", "People", "Fields", "Seasons", "Divisions", "Schools"];
+        const subsets: SubsetName[] = ["Matches", "Teams", "People", "Fields", "Seasons", "Divisions", "Schools"];
         for (const subset of subsets) {
             const getAction = {
                 'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools, 
@@ -40,6 +48,7 @@ async function deleteAllDataAction(): Promise<{ success: boolean; message: strin
                 await deleteAction(item[idKey]);
             }
         }
+        revalidatePath('/data-management');
         return { success: true, message: "All application data has been deleted." };
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to delete all data.";
@@ -142,6 +151,71 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unexpected error occurred during migration.";
         console.error("Migration Error:", message);
+        return { success: false, message };
+    }
+}
+
+export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
+    try {
+        const getAction = {
+            'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
+            'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields
+        }[subsetName];
+        const deleteAction = {
+            'People': deletePlayerAction, 'Teams': deleteTeamAction, 'Matches': deleteMatchAction, 'Schools': deleteSchoolAction,
+            'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction
+        }[subsetName];
+        const idKey = {
+            'People': 'personId', 'Teams': 'teamId', 'Matches': 'matchId', 'Schools': 'schoolId',
+            'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId'
+        }[subsetName];
+
+        if (!getAction || !deleteAction || !idKey) throw new Error(`Invalid subset name: ${subsetName}`);
+
+        const items = await getAction();
+        for (const item of items) { // @ts-ignore
+            await deleteAction(item[idKey]);
+        }
+        revalidatePath('/data-management');
+        return { success: true, message: `All ${subsetName} data has been deleted.` };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : `Failed to delete ${subsetName} data.`;
+        console.error(message);
+        return { success: false, message };
+    }
+}
+
+export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
+    if (!independentSubsets.includes(subsetName)) {
+        return { success: false, message: `Individual migration for ${subsetName} is not supported due to data dependencies. Please use the full data migration.` };
+    }
+
+    try {
+        await deleteSubsetAction(subsetName);
+
+        const collection = collectionNameMap[subsetName];
+        const batch = writeBatch(db);
+        let count = 0;
+        // @ts-ignore
+        for (const item of sampleData[collection]) {
+            const tempIdKey = `${collection.slice(0, -1)}Id`; // e.g., "schoolId"
+            const { [tempIdKey]: _, ...itemData } = item;
+            
+            const dataToSave = { ...itemData, userId };
+            if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
+            if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
+
+            const docRef = doc(collection(db, collection));
+            batch.set(docRef, dataToSave);
+            count++;
+        }
+        await batch.commit();
+        revalidatePath('/data-management');
+        return { success: true, message: `${count} sample ${subsetName} migrated.` };
+
+    } catch (error) {
+         const message = error instanceof Error ? error.message : `Failed to migrate ${subsetName} data.`;
+        console.error(message);
         return { success: false, message };
     }
 }
