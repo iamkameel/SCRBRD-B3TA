@@ -278,11 +278,16 @@ interface MatchDetailsClientProps {
 
 export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup, innings1, innings2 }: MatchDetailsClientProps) {
   const { toast } = useToast();
+  const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [isGenerating, startGenerationTransition] = React.useTransition();
   const [isGeneratingSummary, startSummaryGeneration] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleRemoveOfficial = () => {
     if (!selectedOfficial) return;
@@ -339,8 +344,8 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName}</h1>
                     <p className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                        <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(match.dateTime, "PPPP")}</span>
-                        <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {format(match.dateTime, "p")}</span>
+                        <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {isClient ? format(match.dateTime, "PPPP") : '\u00A0'}</span>
+                        <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {isClient ? format(match.dateTime, "p") : '\u00A0'}</span>
                         <span>{match.fieldName}</span>
                     </p>
                 </div>

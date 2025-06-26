@@ -140,6 +140,7 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
   // New state
+  const [isClient, setIsClient] = React.useState(false);
   const [view, setView] = React.useState<'list' | 'card' | 'calendar'>('list');
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 8;
@@ -147,6 +148,10 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [seasonFilter, setSeasonFilter] = React.useState("all");
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleDelete = () => {
     if (!matchToDelete) return;
@@ -297,7 +302,7 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
                         paginatedMatches.map((match) => (
                             <TableRow key={match.matchId}>
                             <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
-                            <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
+                            <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
                             <TableCell>{match.fieldName}</TableCell>
                             <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
                             <TableCell className="text-right">

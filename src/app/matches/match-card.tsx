@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { MoreHorizontal, Trash2, Edit, Calendar, Clock } from "lucide-react";
@@ -23,6 +24,12 @@ interface MatchCardProps {
 }
 
 export function MatchCard({ match, onEdit, onDelete }: MatchCardProps) {
+    const [isClient, setIsClient] = React.useState(false);
+    
+    React.useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="flex-grow">
@@ -46,11 +53,11 @@ export function MatchCard({ match, onEdit, onDelete }: MatchCardProps) {
                  <div className="text-sm text-muted-foreground space-y-2">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 flex-shrink-0" />
-                        <span>{format(match.dateTime, "PPP")}</span>
+                        <span>{isClient ? format(match.dateTime, "PPP") : '\u00A0'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{format(match.dateTime, "p")} at {match.fieldName}</span>
+                        <span className="truncate">{isClient ? format(match.dateTime, "p") : '\u00A0'} at {match.fieldName}</span>
                     </div>
                 </div>
             </CardContent>
