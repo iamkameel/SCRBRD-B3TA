@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Field, Person } from "@/lib/data";
 import { addFieldAction, updateFieldAction, deleteFieldAction, assignGroundskeeperToFieldAction, removeGroundskeeperFromFieldAction } from '@/lib/actions/fields';
+import { Label } from "@/components/ui/label";
 
 const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
@@ -260,7 +261,7 @@ export default function FieldsClient({ fields, groundskeepers }: { fields: Field
       </div>
 
       {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
-      {isAssignDialogOpen && selectedField && <AssignDialog field={selectedField} groundskeepers={groundskeeper_list} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
+      {isAssignDialogOpen && selectedField && <AssignDialog field={selectedField} groundskeepers={groundskeepers} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
