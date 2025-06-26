@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Sidebar } from '@/components/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Header } from '@/components/header';
 
 export const metadata: Metadata = {
   title: 'SCRBRD - Cricket Scorer',
@@ -30,12 +31,13 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <div className="flex min-h-screen w-full">
-            <Sidebar />
-            <div className="flex flex-col flex-1 md:pl-64">
-                <main className="flex-1 bg-background p-4 md:p-8">
-                {children}
-                </main>
-            </div>
+                <Sidebar />
+                <div className="flex flex-col flex-1 md:pl-64">
+                    <Header />
+                    <main className="flex-1 bg-background p-4 md:p-8">
+                    {children}
+                    </main>
+                </div>
             </div>
             <Toaster />
         </ThemeProvider>

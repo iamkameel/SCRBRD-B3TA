@@ -2,28 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, User, PlusCircle, CalendarDays, MapPin, Building, Trophy, ClipboardList, Settings, Database, UserCog } from 'lucide-react';
-
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import { cn } from '@/lib/utils';
+import { navItems } from './sidebar-nav-items';
 
 export function Sidebar() {
   const pathname = usePathname();
-
-  const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/matches', label: 'Matches', icon: ClipboardList },
-    { href: '/teams', label: 'Teams', icon: Users },
-    { href: '/players', label: 'Players', icon: User },
-    { href: '/seasons', label: 'Seasons', icon: CalendarDays },
-    { href: '/schools', label: 'Schools', icon: Building },
-    { href: '/divisions', label: 'Divisions', icon: Trophy },
-    { href: '/fields', label: 'Fields', icon: MapPin },
-    { href: '/user-management', label: 'User Management', icon: UserCog },
-    { href: '/data-management', label: 'Data Management', icon: Database },
-    { href: '/settings', label: 'Settings', icon: Settings },
-    { href: '/new-match', label: 'New Match', icon: PlusCircle },
-  ];
 
   return (
     <aside className="w-64 flex-col fixed inset-y-0 z-50 bg-sidebar text-sidebar-foreground border-r border-sidebar-border hidden md:flex">
