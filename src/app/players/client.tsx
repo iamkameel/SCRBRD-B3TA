@@ -43,6 +43,7 @@ const ROLES = [
   { id: "Player", label: "Player" }, { id: "Coach", label: "Coach" },
   { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" },
   { id: "Guardian", label: "Guardian" }, { id: "Sportmaster", label: "Sportmaster" },
+  { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },
 ] as const;
 
 export default function PlayersClient({ players }: { players: Player[] }) {
