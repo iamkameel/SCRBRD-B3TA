@@ -70,3 +70,23 @@ export const GenerateMatchSummaryInputSchema = z.object({
   innings2: InningsSchema,
 });
 export type GenerateMatchSummaryInput = z.infer<typeof GenerateMatchSummaryInputSchema>;
+
+// From get-match-forecast-flow.ts
+export const WeatherForecastInputSchema = z.object({
+    location: z.string().describe("The city or venue name, e.g., 'Lord's Cricket Ground, London'."),
+    date: z.string().describe("The date of the match in ISO 8601 format."),
+});
+export type WeatherForecastInput = z.infer<typeof WeatherForecastInputSchema>;
+
+export const WeatherDetailsSchema = z.object({
+    temperature: z.number().describe("The average temperature in Celsius."),
+    condition: z.enum(["Sunny", "Cloudy", "Rain", "Showers", "Storm"]).describe("The general weather condition."),
+    precipitationChance: z.number().min(0).max(100).describe("The percentage chance of precipitation."),
+    windSpeed: z.number().describe("The average wind speed in km/h."),
+});
+
+export const GetMatchForecastOutputSchema = z.object({
+    summary: z.string().describe("A concise, one-sentence summary of the weather forecast for the match."),
+    details: WeatherDetailsSchema,
+});
+export type GetMatchForecastOutput = z.infer<typeof GetMatchForecastOutputSchema>;

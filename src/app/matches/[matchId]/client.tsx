@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -37,8 +37,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction } from '@/lib/actions/matches';
-import type { Match, Person, Official, Innings, RosterMember } from "@/lib/data";
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction } from '@/lib/actions/matches';
+import type { Match, Person, Official, Innings, RosterMember, MatchForecast } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -282,8 +282,10 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [isPending, startTransition] = React.useTransition();
   const [isGenerating, startGenerationTransition] = React.useTransition();
   const [isGeneratingSummary, startSummaryGeneration] = React.useTransition();
+  const [isFetchingForecast, startForecastTransition] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -327,6 +329,21 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
 
+  const handleGetForecast = () => {
+    startForecastTransition(async () => {
+        try {
+            const result = await getMatchForecastAction(match.matchId);
+            if ('error' in result) {
+                toast({ title: "Error", description: result.error, variant: "destructive" });
+                setForecast(null);
+            } else {
+                setForecast(result);
+            }
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not fetch forecast.", variant: "destructive" });
+        }
+    });
+  };
 
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
@@ -455,6 +472,63 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             </CardContent>
         </Card>
 
+        <Card>
+            <CardHeader>
+                 <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>Weather Forecast</CardTitle>
+                        <CardDescription>AI-generated forecast for the match day and location.</CardDescription>
+                    </div>
+                     <Button onClick={handleGetForecast} disabled={isFetchingForecast}>
+                        {isFetchingForecast ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcw className="mr-2 h-4 w-4" />}
+                        {isFetchingForecast ? "Fetching..." : (forecast ? "Refresh" : "Get Forecast")}
+                     </Button>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {!forecast ? (
+                     <div className="text-center text-muted-foreground py-8">
+                        <p>No weather forecast available.</p>
+                        <p className="text-xs">Click the button above to fetch the forecast.</p>
+                    </div>
+                ) : (
+                    <div>
+                        <p className="text-sm text-foreground/80 mb-4">{forecast.summary}</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                            <div className="flex items-center gap-2 p-3 rounded-md border">
+                                <WeatherIcon condition={forecast.details.condition} className="h-6 w-6 text-primary"/>
+                                <div className="flex flex-col">
+                                    <span className="text-muted-foreground text-xs">Condition</span>
+                                    <span className="font-semibold">{forecast.details.condition}</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 p-3 rounded-md border">
+                                <Thermometer className="h-6 w-6 text-primary"/>
+                                <div className="flex flex-col">
+                                    <span className="text-muted-foreground text-xs">Temperature</span>
+                                    <span className="font-semibold">{forecast.details.temperature}°C</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 p-3 rounded-md border">
+                                <CloudRain className="h-6 w-6 text-primary"/>
+                                <div className="flex flex-col">
+                                    <span className="text-muted-foreground text-xs">Precipitation</span>
+                                    <span className="font-semibold">{forecast.details.precipitationChance}%</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 p-3 rounded-md border">
+                                <Wind className="h-6 w-6 text-primary"/>
+                                <div className="flex flex-col">
+                                    <span className="text-muted-foreground text-xs">Wind</span>
+                                    <span className="font-semibold">{forecast.details.windSpeed} km/h</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
           <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
@@ -518,4 +592,16 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
       </AlertDialog>
     </>
   )
+}
+
+function WeatherIcon({ condition, ...props }: { condition: string } & React.ComponentProps<typeof Sun>) {
+    switch (condition.toLowerCase()) {
+        case "sunny": return <Sun {...props} />;
+        case "cloudy": return <Cloudy {...props} />;
+        case "rain":
+        case "showers":
+        case "storm":
+             return <CloudRain {...props} />;
+        default: return <Cloudy {...props} />;
+    }
 }

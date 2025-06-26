@@ -6,11 +6,12 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc } from 'firebase/firestore';
-import type { Match, Official, Innings } from '@/lib/data';
+import type { Match, Official, Innings, MatchForecast } from '@/lib/data';
 import { getPerson } from './players';
 import type { GenerateScorecardOutput, GenerateMatchSummaryInput } from '@/ai/schemas';
 import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
 import { generateMatchSummary } from '@/ai/flows/generate-match-summary-flow';
+import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -429,4 +430,22 @@ export async function generateMatchSummaryAction(matchId: string) {
 
     revalidatePath(`/matches/${matchId}`);
     return { success: true, message: "Match summary generated successfully!" };
+}
+
+export async function getMatchForecastAction(matchId: string): Promise<MatchForecast | { error: string }> {
+    if (!userId) throw new Error("User not authenticated");
+
+    const match = await getMatch(matchId);
+    if (!match) {
+        return { error: "Match not found or permission denied." };
+    }
+
+    try {
+        const forecast = await getMatchForecast(matchId);
+        return forecast;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+        console.error(`Error getting forecast for match ${matchId}:`, error);
+        return { error: message };
+    }
 }

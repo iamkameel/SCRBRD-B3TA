@@ -115,6 +115,7 @@ export interface Innings {
   teamName: string;
   totalRuns: number;
   wickets: number;
+
   overs: number;
   battingCard: BatsmanStats[];
   bowlingCard: BowlerStats[];
@@ -165,4 +166,14 @@ export interface PlayerTeamAssignment {
   teamName: string;
   role: string;
   status: string;
+}
+
+export interface MatchForecast {
+    summary: string;
+    details: {
+        temperature: number;
+        condition: string;
+        precipitationChance: number;
+        windSpeed: number;
+    }
 }
