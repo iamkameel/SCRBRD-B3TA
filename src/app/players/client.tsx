@@ -41,6 +41,7 @@ const playerSchema = z.object({
   lastName: z.string().min(1, { message: "Last name is required." }),
   email: z.string().email({ message: "Invalid email address." }),
   phone: z.string().optional(),
+  profileImageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
@@ -61,20 +62,20 @@ function PlayerDialog({ mode, player, open, onOpenChange }: { mode: 'add' | 'edi
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerSchema),
     defaultValues: mode === 'edit' && player ? {
-      firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, roles: player.roles,
+      firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, profileImageUrl: player.profileImageUrl, roles: player.roles,
     } : {
-      firstName: "", lastName: "", email: "", phone: "", roles: ["Player"],
+      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"],
     },
   });
   
   React.useEffect(() => {
     if (mode === 'edit' && player) {
       form.reset({
-        firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, roles: player.roles,
+        firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, profileImageUrl: player.profileImageUrl ?? '', roles: player.roles,
       });
     } else {
       form.reset({
-        firstName: "", lastName: "", email: "", phone: "", roles: ["Player"],
+        firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"],
       });
     }
   }, [player, mode, open, form]);
@@ -111,6 +112,7 @@ function PlayerDialog({ mode, player, open, onOpenChange }: { mode: 'add' | 'edi
             </div>
             <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (Optional)</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="profileImageUrl" render={({ field }) => (<FormItem><FormLabel>Profile Image URL (Optional)</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="roles" render={() => (
               <FormItem>
                 <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>

@@ -201,7 +201,9 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
 
 const playerSchema = z.object({
     firstName: z.string().min(1), lastName: z.string().min(1), email: z.string().email(),
-    phone: z.string().optional(), roles: z.array(z.string()).min(1),
+    phone: z.string().optional(),
+    profileImageUrl: z.string().url().optional().or(z.literal('')),
+    roles: z.array(z.string()).min(1),
 });
 export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
   if (!userId) throw new Error("User not authenticated");
