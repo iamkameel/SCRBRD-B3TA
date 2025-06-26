@@ -1,6 +1,9 @@
+
 'use client';
 
 import * as React from "react";
+import Link from "next/link";
+import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,8 +32,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import type { Vehicle } from "@/lib/data";
+import type { Vehicle, FullTransportAssignment } from "@/lib/data";
 import { addVehicleAction, updateVehicleAction, deleteVehicleAction } from '@/lib/actions/transport';
 
 const vehicleSchema = z.object({
@@ -105,13 +109,18 @@ function VehicleDialog({ mode, vehicle, open, onOpenChange }: { mode: 'add' | 'e
   );
 }
 
-export default function TransportClient({ vehicles }: { vehicles: Vehicle[] }) {
+export default function TransportClient({ vehicles, assignments }: { vehicles: Vehicle[], assignments: FullTransportAssignment[] }) {
   const { toast } = useToast();
+  const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [selectedVehicle, setSelectedVehicle] = React.useState<Vehicle | null>(null);
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isVehicleDialogOpen, setIsVehicleDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleDelete = () => {
     if (!selectedVehicle) return;
@@ -132,41 +141,80 @@ export default function TransportClient({ vehicles }: { vehicles: Vehicle[] }) {
   return (
     <>
       <div className="flex flex-col gap-8">
-        <header className="flex items-center justify-between">
-          <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Transport</h1><p className="text-muted-foreground">Manage your fleet of vehicles.</p></div>
-          <Button onClick={() => { setDialogMode('add'); setSelectedVehicle(null); setIsVehicleDialogOpen(true); }}><PlusCircle className="mr-2" />Add Vehicle</Button>
+        <header>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Transport</h1>
+          <p className="text-muted-foreground">Manage your fleet of vehicles and view assignments.</p>
         </header>
-        <Card>
-          <CardHeader><CardTitle>Vehicle Fleet</CardTitle><CardDescription>A list of all vehicles in the system.</CardDescription></CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Capacity</TableHead><TableHead>Registration</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {vehicles.length > 0 ? (
-                  vehicles.map((vehicle) => (
-                    <TableRow key={vehicle.vehicleId}>
-                      <TableCell className="font-medium">{vehicle.name}</TableCell>
-                      <TableCell>{vehicle.type}</TableCell>
-                      <TableCell>{vehicle.capacity}</TableCell>
-                      <TableCell>{vehicle.registration}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setSelectedVehicle(vehicle); setDialogMode('edit'); setIsVehicleDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { setSelectedVehicle(vehicle); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={5} className="h-24 text-center">No vehicles found. Get started by adding a vehicle.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        
+        <Tabs defaultValue="fleet">
+            <div className="flex items-center justify-between mb-4">
+                <TabsList>
+                    <TabsTrigger value="fleet">Vehicle Fleet</TabsTrigger>
+                    <TabsTrigger value="assignments">Assignments</TabsTrigger>
+                </TabsList>
+                <Button onClick={() => { setDialogMode('add'); setSelectedVehicle(null); setIsVehicleDialogOpen(true); }}><PlusCircle className="mr-2" />Add Vehicle</Button>
+            </div>
+            <TabsContent value="fleet">
+                <Card>
+                <CardHeader><CardTitle>Vehicle Fleet</CardTitle><CardDescription>A list of all vehicles in the system.</CardDescription></CardHeader>
+                <CardContent>
+                    <Table>
+                    <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Capacity</TableHead><TableHead>Registration</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                        {vehicles.length > 0 ? (
+                        vehicles.map((vehicle) => (
+                            <TableRow key={vehicle.vehicleId}>
+                            <TableCell className="font-medium">{vehicle.name}</TableCell>
+                            <TableCell>{vehicle.type}</TableCell>
+                            <TableCell>{vehicle.capacity}</TableCell>
+                            <TableCell>{vehicle.registration}</TableCell>
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => { setSelectedVehicle(vehicle); setDialogMode('edit'); setIsVehicleDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => { setSelectedVehicle(vehicle); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                            </TableRow>
+                        ))
+                        ) : (
+                        <TableRow><TableCell colSpan={5} className="h-24 text-center">No vehicles found. Get started by adding a vehicle.</TableCell></TableRow>
+                        )}
+                    </TableBody>
+                    </Table>
+                </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="assignments">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>All Assignments</CardTitle>
+                        <CardDescription>A list of all vehicles assigned to upcoming and past matches.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <Table>
+                            <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Date</TableHead><TableHead>Vehicle</TableHead><TableHead>Driver</TableHead></TableRow></TableHeader>
+                            <TableBody>
+                                {assignments.length > 0 ? (
+                                    assignments.map((assignment) => (
+                                        <TableRow key={assignment.assignmentId}>
+                                            <TableCell className="font-medium"><Link href={`/matches/${assignment.matchId}`} className="hover:underline">{assignment.matchName}</Link></TableCell>
+                                            <TableCell>{isClient ? format(assignment.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                                            <TableCell>{assignment.vehicleName}</TableCell>
+                                            <TableCell>{assignment.driverName}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow><TableCell colSpan={4} className="h-24 text-center">No transport assignments found.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
 
       <VehicleDialog mode={dialogMode} vehicle={selectedVehicle ?? undefined} open={isVehicleDialogOpen} onOpenChange={setIsVehicleDialogOpen} />

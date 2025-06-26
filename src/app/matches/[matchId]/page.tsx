@@ -1,9 +1,9 @@
 
 
-import { getMatch, getMatchOfficials, getMatchLineup, getScorecard, getMatchTransportAssignments } from '@/lib/actions/matches';
+import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
 import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
 import { getTeamRoster } from '@/lib/actions/teams';
-import { getVehicles } from '@/lib/actions/transport';
+import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import MatchDetailsClient from './client';
 import { notFound } from 'next/navigation';
 

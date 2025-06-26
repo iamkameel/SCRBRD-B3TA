@@ -195,6 +195,12 @@ export interface TransportAssignment {
   driverName: string;
 }
 
+export interface FullTransportAssignment extends TransportAssignment {
+  matchId: string;
+  matchName: string;
+  dateTime: Date;
+}
+
 export interface MatchForecast {
     summary: string;
     details: {
