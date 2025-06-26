@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc } from 'firebase/firestore';
-import type { Person } from '@/lib/data';
+import type { Person, PlayerStats } from '@/lib/data';
+import { getScorecard, getMatchLineup } from './matches';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -35,6 +36,88 @@ export async function getPerson(personId: string): Promise<Person | null> {
         return null;
     }
 }
+
+export async function getPlayerStats(personId: string): Promise<PlayerStats> {
+    const defaultStats: PlayerStats = {
+        matchesPlayed: 0, inningsBatted: 0, notOuts: 0, totalRuns: 0, highestScore: 0, highestScoreNotOut: false, ballsFaced: 0, hundreds: 0, fifties: 0, fours: 0, sixes: 0,
+        oversBowled: 0, runsConceded: 0, maidens: 0, wicketsTaken: 0, bestBowlingWickets: 0, bestBowlingRuns: 0,
+        catches: 0, stumpings: 0,
+        battingAverage: 0, strikeRate: 0, bowlingAverage: 0, economyRate: 0, bestBowling: "0/0",
+    };
+
+    const person = await getPerson(personId);
+    if (!person || !person.roles.includes("Player")) {
+        return defaultStats;
+    }
+    const personName = `${person.firstName} ${person.lastName}`;
+
+    const matchesCollection = collection(db, 'matches');
+    const q = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"));
+    const completedMatchesSnapshot = await getDocs(q);
+
+    let stats = { ...defaultStats };
+
+    for (const matchDoc of completedMatchesSnapshot.docs) {
+        const lineupA = await getMatchLineup(matchDoc.id, matchDoc.data().teamAId);
+        const lineupB = await getMatchLineup(matchDoc.id, matchDoc.data().teamBId);
+        const playerIsInMatch = [...lineupA, ...lineupB].includes(personId);
+        
+        if (!playerIsInMatch) continue;
+
+        const scorecard = await getScorecard(matchDoc.id);
+        if (!scorecard) continue;
+
+        stats.matchesPlayed++;
+
+        for (const innings of [scorecard.innings1, scorecard.innings2]) {
+            const battingEntry = innings.battingCard.find(b => b.name === personName);
+            if (battingEntry && battingEntry.balls > 0) { // Only count if they faced a ball
+                stats.inningsBatted++;
+                stats.totalRuns += battingEntry.runs;
+                stats.ballsFaced += battingEntry.balls;
+                const isNotOut = battingEntry.status.toLowerCase().includes('not out');
+                
+                if (battingEntry.runs > stats.highestScore) {
+                    stats.highestScore = battingEntry.runs;
+                    stats.highestScoreNotOut = isNotOut;
+                } else if (battingEntry.runs === stats.highestScore && !stats.highestScoreNotOut && isNotOut) {
+                    stats.highestScoreNotOut = true;
+                }
+
+                if (isNotOut) {
+                    stats.notOuts++;
+                }
+                if (battingEntry.runs >= 100) stats.hundreds++;
+                else if (battingEntry.runs >= 50) stats.fifties++;
+                stats.fours += battingEntry.fours;
+                stats.sixes += battingEntry.sixes;
+            }
+
+            const bowlingEntry = innings.bowlingCard.find(b => b.name === personName);
+            if (bowlingEntry) {
+                stats.oversBowled += bowlingEntry.overs;
+                stats.runsConceded += bowlingEntry.runs;
+                stats.maidens += bowlingEntry.maidens;
+                stats.wicketsTaken += bowlingEntry.wickets;
+
+                if (stats.bestBowlingWickets === 0 || bowlingEntry.wickets > stats.bestBowlingWickets || (bowlingEntry.wickets === stats.bestBowlingWickets && bowlingEntry.runs < stats.bestBowlingRuns)) {
+                    stats.bestBowlingWickets = bowlingEntry.wickets;
+                    stats.bestBowlingRuns = bowlingEntry.runs;
+                }
+            }
+        }
+    }
+    
+    const dismissals = stats.inningsBatted - stats.notOuts;
+    stats.battingAverage = dismissals > 0 ? stats.totalRuns / dismissals : 0;
+    stats.strikeRate = stats.ballsFaced > 0 ? (stats.totalRuns / stats.ballsFaced) * 100 : 0;
+    stats.bowlingAverage = stats.wicketsTaken > 0 ? stats.runsConceded / stats.wicketsTaken : 0;
+    stats.economyRate = stats.oversBowled > 0 ? stats.runsConceded / stats.oversBowled : 0;
+    stats.bestBowling = `${stats.bestBowlingWickets}/${stats.bestBowlingRuns}`;
+
+    return stats;
+}
+
 
 export async function getPersonLinks(personId: string): Promise<{ guardians: Person[], children: Person[] }> {
     if (!userId) return { guardians: [], children: [] };

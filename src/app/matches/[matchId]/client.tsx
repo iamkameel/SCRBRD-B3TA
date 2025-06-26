@@ -254,22 +254,10 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
   );
 }
 
-function ScorecardLoadingSkeleton() {
+function ScorecardPlaceholder() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-64" />
-      </div>
-       <Skeleton className="h-px w-full" />
-       <div>
-        <Skeleton className="h-6 w-32 mb-4" />
-        <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-        </div>
-       </div>
+    <div className="text-center text-muted-foreground py-8 px-4">
+        <p>A scorecard will be generated for this match once both teams have at least 11 players on their roster.</p>
     </div>
   );
 }
@@ -344,10 +332,10 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
               </CardHeader>
               <CardContent>
                   <TabsContent value="team-a-innings">
-                      {firstInnings ? <Scorecard innings={firstInnings} /> : <ScorecardLoadingSkeleton />}
+                      {firstInnings ? <Scorecard innings={firstInnings} /> : <ScorecardPlaceholder />}
                   </TabsContent>
                   <TabsContent value="team-b-innings">
-                      {secondInnings ? <Scorecard innings={secondInnings} /> : <ScorecardLoadingSkeleton />}
+                      {secondInnings ? <Scorecard innings={secondInnings} /> : <ScorecardPlaceholder />}
                   </TabsContent>
               </CardContent>
           </Card>

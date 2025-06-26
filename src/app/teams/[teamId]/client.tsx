@@ -35,7 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { Team, Person, RosterMember } from "@/lib/data";
+import type { Team, Person, RosterMember, TeamStats } from "@/lib/data";
 import { addPlayerToRosterAction, removeRosterAssignmentAction } from '@/lib/actions/teams';
 
 const assignmentSchema = z.object({
@@ -102,7 +102,7 @@ interface TeamDetailsClientProps {
   team: Team;
   initialRoster: RosterMember[];
   people: Person[];
-  teamStats: { matchesPlayed: number; matchesWon: number; matchesLost: number; matchesDrawn: number; totalRunsScored: number; totalWicketsTaken: number; netRunRate: number; };
+  teamStats: TeamStats;
 }
 
 export default function TeamDetailsClient({ team, initialRoster, people, teamStats }: TeamDetailsClientProps) {
@@ -183,7 +183,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Team Statistics</CardTitle><CardDescription>Overall performance for the current season.</CardDescription></CardHeader>
+          <CardHeader><CardTitle>Team Statistics</CardTitle><CardDescription>Overall performance for all completed matches in this season.</CardDescription></CardHeader>
           <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
                   <StatItem label="Played" value={teamStats.matchesPlayed} /><StatItem label="Won" value={teamStats.matchesWon} /><StatItem label="Lost" value={teamStats.matchesLost} /><StatItem label="Drawn" value={teamStats.matchesDrawn} /><StatItem label="Runs Scored" value={teamStats.totalRunsScored} /><StatItem label="Wickets Taken" value={teamStats.totalWicketsTaken} /><StatItem label="Net Run Rate" value={teamStats.netRunRate.toFixed(2)} />

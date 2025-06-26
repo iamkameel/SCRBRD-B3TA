@@ -28,19 +28,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import type { Person } from "@/lib/data";
+import type { Person, PlayerStats } from "@/lib/data";
 import { removePersonLinkAction } from "@/lib/actions/players";
 import { AddLinkDialog } from "./add-link-dialog";
 
 
 interface PlayerDetailsClientProps {
     person: Person;
+    playerStats: PlayerStats;
     initialGuardians: Person[];
     initialChildren: Person[];
     availablePeople: Person[];
 }
 
-export default function PlayerDetailsClient({ person, initialGuardians, initialChildren, availablePeople }: PlayerDetailsClientProps) {
+export default function PlayerDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople }: PlayerDetailsClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -63,16 +64,7 @@ export default function PlayerDetailsClient({ person, initialGuardians, initialC
       }
     });
   }
-
-  const placeholderStats = {
-    matchesPlayed: 0, inningsBatted: 0, totalRuns: 0, highestScore: 0, battingAverage: 0,
-    strikeRate: 0, hundreds: 0, fifties: 0, oversBowled: 0, wicketsTaken: 0,
-    bowlingAverage: 0, economyRate: 0, maidens: 0, bestBowling: "0/0", runsConceded: 0,
-    catches: 0, stumpings: 0,
-  };
   
-  const playerStats = placeholderStats;
-
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -137,12 +129,12 @@ export default function PlayerDetailsClient({ person, initialGuardians, initialC
 
         {person.roles.includes("Player") && (
           <Card>
-              <CardHeader><CardTitle>Player Statistics</CardTitle><CardDescription>Overall career statistics for the current season.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>Player Statistics</CardTitle><CardDescription>Overall career statistics for all completed matches.</CardDescription></CardHeader>
               <CardContent className="space-y-6">
                   <div>
                       <h3 className="text-lg font-medium mb-4 text-primary">Batting</h3>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                          <StatItem label="Matches" value={playerStats.matchesPlayed} /><StatItem label="Innings" value={playerStats.inningsBatted} /><StatItem label="Runs" value={playerStats.totalRuns} /><StatItem label="Highest" value={playerStats.highestScore} /><StatItem label="Average" value={playerStats.battingAverage.toFixed(2)} /><StatItem label="Strike Rate" value={playerStats.strikeRate.toFixed(2)} /><StatItem label="100s" value={playerStats.hundreds} /><StatItem label="50s" value={playerStats.fifties} />
+                          <StatItem label="Matches" value={playerStats.matchesPlayed} /><StatItem label="Innings" value={playerStats.inningsBatted} /><StatItem label="Runs" value={playerStats.totalRuns} /><StatItem label="Highest" value={`${playerStats.highestScore}${playerStats.highestScoreNotOut ? '*' : ''}`} /><StatItem label="Average" value={playerStats.battingAverage.toFixed(2)} /><StatItem label="Strike Rate" value={playerStats.strikeRate.toFixed(2)} /><StatItem label="100s" value={playerStats.hundreds} /><StatItem label="50s" value={playerStats.fifties} />
                       </div>
                   </div>
                   <Separator />

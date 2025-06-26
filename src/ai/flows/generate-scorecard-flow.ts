@@ -57,7 +57,9 @@ const InningsSchema = z.object({
 // Input and Output types for the flow
 export const GenerateScorecardInputSchema = z.object({
   teamAName: z.string(),
+  teamAPlayers: z.array(z.string()).min(11).max(11).describe("An array of 11 player names for Team A."),
   teamBName: z.string(),
+  teamBPlayers: z.array(z.string()).min(11).max(11).describe("An array of 11 player names for Team B."),
 });
 export type GenerateScorecardInput = z.infer<typeof GenerateScorecardInputSchema>;
 
@@ -76,11 +78,16 @@ const prompt = ai.definePrompt({
 
 First, decide which team bats first and which team wins. The scorecard should reflect a plausible match scenario.
 
+The list of 11 players for {{{teamAName}}} is: {{#each teamAPlayers}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+The list of 11 players for {{{teamBName}}} is: {{#each teamBPlayers}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+
+Use ONLY the player names provided for each team when generating the batting and bowling cards.
+
 The first innings should be for one team, and the second innings for the other.
 
 For each innings, provide the following:
-- A full batting card for 11 players. Some can be 'Did not bat'.
-- A realistic bowling card for the opposing team.
+- A full batting card for the 11 players from the provided list. Some can be 'Did not bat'.
+- A realistic bowling card using players from the opposing team's list.
 - A plausible fall of wickets sequence.
 - A summary of extras.
 - Ensure all statistics (runs, balls, strike rates, economy rates, totals) are mathematically correct and consistent with each other.

@@ -120,3 +120,41 @@ export interface Innings {
   fallOfWickets: FallOfWicket[];
   extras: { total: number; details: string };
 }
+
+// Stats related types
+export interface PlayerStats {
+    matchesPlayed: number;
+    inningsBatted: number;
+    notOuts: number;
+    totalRuns: number;
+    highestScore: number;
+    highestScoreNotOut: boolean;
+    ballsFaced: number;
+    battingAverage: number;
+    strikeRate: number;
+    hundreds: number;
+    fifties: number;
+    fours: number;
+    sixes: number;
+    oversBowled: number;
+    runsConceded: number;
+    maidens: number;
+    wicketsTaken: number;
+    bowlingAverage: number;
+    economyRate: number;
+    bestBowling: string;
+    bestBowlingWickets: number;
+    bestBowlingRuns: number;
+    catches: number;
+    stumpings: number;
+}
+
+export interface TeamStats {
+    matchesPlayed: number;
+    matchesWon: number;
+    matchesLost: number;
+    matchesDrawn: number;
+    totalRunsScored: number;
+    totalWicketsTaken: number;
+    netRunRate: number;
+}

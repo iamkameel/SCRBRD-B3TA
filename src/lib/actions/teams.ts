@@ -5,8 +5,9 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
-import type { Team, RosterMember } from '@/lib/data';
+import type { Team, RosterMember, TeamStats } from '@/lib/data';
 import { getPerson } from './players';
+import { getScorecard } from './matches';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -54,6 +55,52 @@ export async function getTeamRoster(teamId: string): Promise<RosterMember[]> {
     return [];
   }
 }
+
+export async function getTeamStats(teamId: string): Promise<TeamStats> {
+    const defaultStats: TeamStats = {
+        matchesPlayed: 0, matchesWon: 0, matchesLost: 0, matchesDrawn: 0,
+        totalRunsScored: 0, totalWicketsTaken: 0, netRunRate: 0.0
+    };
+
+    const team = await getTeam(teamId);
+    if (!team) return defaultStats;
+
+    const matchesCollection = collection(db, 'matches');
+    const teamAQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamAId", "==", teamId));
+    const teamBQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamBId", "==", teamId));
+    
+    const [teamAMatchesSnapshot, teamBMatchesSnapshot] = await Promise.all([getDocs(teamAQuery), getDocs(teamBQuery)]);
+    const allMatches = [...teamAMatchesSnapshot.docs, ...teamBMatchesSnapshot.docs];
+    const uniqueMatches = Array.from(new Map(allMatches.map(doc => [doc.id, doc])).values());
+
+    let stats = { ...defaultStats };
+
+    for (const matchDoc of uniqueMatches) {
+        const scorecard = await getScorecard(matchDoc.id);
+        if (!scorecard) continue;
+
+        stats.matchesPlayed++;
+        
+        const { innings1, innings2 } = scorecard;
+        
+        const teamInnings = innings1.teamName === team.name ? innings1 : (innings2.teamName === team.name ? innings2 : undefined);
+        const opponentInnings = innings1.teamName !== team.name ? innings1 : (innings2.teamName !== team.name ? innings2 : undefined);
+        
+        if (teamInnings) stats.totalRunsScored += teamInnings.totalRuns;
+        if (opponentInnings) stats.totalWicketsTaken += opponentInnings.wickets;
+
+        if (innings2.totalRuns > innings1.totalRuns) {
+            if (innings2.teamName === team.name) stats.matchesWon++; else stats.matchesLost++;
+        } else if (innings1.totalRuns > innings2.totalRuns) {
+            if (innings1.teamName === team.name) stats.matchesWon++; else stats.matchesLost++;
+        } else {
+            stats.matchesDrawn++;
+        }
+    }
+
+    return stats;
+}
+
 
 const assignmentSchema = z.object({
   personId: z.string(), role: z.string(), status: z.string(),

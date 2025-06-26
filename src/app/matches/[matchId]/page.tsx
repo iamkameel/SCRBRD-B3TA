@@ -34,8 +34,18 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
   // Handle scorecard data separately for conditional generation
   let scorecardData: { innings1?: Innings; innings2?: Innings; } | null = await getScorecard(params.matchId);
 
-  if (!scorecardData) {
-    const generatedData = await generateScorecard({ teamAName: match.teamAName, teamBName: match.teamBName });
+  // If no scorecard exists and both teams have enough players, generate and save one.
+  if (!scorecardData && teamARoster.length >= 11 && teamBRoster.length >= 11) {
+    const teamAPlayerNames = teamARoster.slice(0, 11).map(p => p.personName);
+    const teamBPlayerNames = teamBRoster.slice(0, 11).map(p => p.personName);
+
+    const generatedData = await generateScorecard({
+      teamAName: match.teamAName,
+      teamAPlayers: teamAPlayerNames,
+      teamBName: match.teamBName,
+      teamBPlayers: teamBPlayerNames,
+    });
+    
     if (generatedData) {
         scorecardData = generatedData;
         await saveScorecard(params.matchId, generatedData);
