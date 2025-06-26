@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -5,8 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ArrowLeft } from "lucide-react";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -91,6 +93,9 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
   return (
     <div className="flex flex-col gap-8">
       <header>
+        <Link href="/matches" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />Back to Matches
+        </Link>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Create a New Match
         </h1>

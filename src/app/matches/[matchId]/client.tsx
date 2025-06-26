@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -331,19 +331,22 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   return (
     <>
       <div className="flex flex-col gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl">{match.teamAName} vs {match.teamBName}</CardTitle>
-            <CardDescription className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(match.dateTime, "PPPP")}</span>
-              <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {format(match.dateTime, "p")}</span>
-              <span>{match.fieldName}</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-              <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge>
-          </CardContent>
-        </Card>
+        <header>
+            <Link href="/matches" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />Back to Matches
+            </Link>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName}</h1>
+                    <p className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                        <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {format(match.dateTime, "PPPP")}</span>
+                        <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {format(match.dateTime, "p")}</span>
+                        <span>{match.fieldName}</span>
+                    </p>
+                </div>
+                <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize h-fit">{match.status}</Badge>
+            </div>
+        </header>
         
         <Tabs defaultValue="team-a-innings">
           <Card>
