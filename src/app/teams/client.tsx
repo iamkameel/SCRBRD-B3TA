@@ -209,7 +209,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                         <div className="grid grid-cols-3 items-center gap-4">
                           <Label htmlFor="division-filter">Division</Label>
                           <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-                              <SelectTrigger className="col-span-2 h-8"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions" /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="all">All Divisions</SelectItem>
                                 {divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}
@@ -219,7 +219,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                         <div className="grid grid-cols-3 items-center gap-4">
                           <Label htmlFor="season-filter">Season</Label>
                            <Select value={seasonFilter} onValueChange={setSeasonFilter}>
-                              <SelectTrigger className="col-span-2 h-8"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons" /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="all">All Seasons</SelectItem>
                                 {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
