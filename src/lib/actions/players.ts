@@ -242,18 +242,36 @@ export async function deletePlayerAction(personId: string) {
   if (!personSnap.exists() || personSnap.data().userId !== userId) throw new Error("Person not found or you do not have permission.");
   
   const batch = writeBatch(db);
-  batch.delete(personRef);
+  
+  // 1. Remove from all team rosters that belong to the user
+  const teamsQuery = query(collection(db, 'teams'), where("userId", "==", userId));
+  const teamsSnapshot = await getDocs(teamsQuery);
 
+  for (const teamDoc of teamsSnapshot.docs) {
+      const rosterQuery = query(collection(db, 'teams', teamDoc.id, 'roster'), where("personId", "==", personId));
+      const rosterSnapshot = await getDocs(rosterQuery);
+      rosterSnapshot.forEach(rosterDoc => {
+          batch.delete(rosterDoc.ref);
+      });
+  }
+
+  // 2. Remove family links
   const parentLinksQuery = query(collection(db, 'familyLinks'), where("parentId", "==", personId));
   const childLinksQuery = query(collection(db, 'familyLinks'), where("childId", "==", personId));
+  const [parentLinks, childLinks] = await Promise.all([getDocs(parentLinksQuery), getDocs(childLinksQuery)]);
+  parentLinks.forEach(doc => batch.delete(doc.ref));
+  childLinks.forEach(doc => batch.delete(doc.ref));
+
+  // 3. Delete the person document itself
+  batch.delete(personRef);
+
   try {
-    const [parentLinks, childLinks] = await Promise.all([getDocs(parentLinksQuery), getDocs(childLinksQuery)]);
-    parentLinks.forEach(doc => batch.delete(doc.ref));
-    childLinks.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
   } catch (error) {
-    console.error("Error deleting person and links: ", error);
+    console.error("Error deleting person and associated data: ", error);
     throw new Error("Could not delete person.");
   }
-  revalidatePath('/players'); revalidatePath('/teams');
+
+  revalidatePath('/players');
+  revalidatePath('/teams');
 }
