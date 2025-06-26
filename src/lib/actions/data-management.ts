@@ -2,6 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { deletePlayerAction, getPlayers } from './players';
 import { deleteTeamAction, getTeams } from './teams';
 import { deleteMatchAction, getMatches } from './matches';
@@ -9,6 +11,8 @@ import { deleteSchoolAction, getSchools } from './schools';
 import { deleteDivisionAction, getDivisions } from './divisions';
 import { deleteSeasonAction, getSeasons } from './seasons';
 import { deleteFieldAction, getFields } from './fields';
+
+const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
 export async function deleteDataSubsetAction(subset: string): Promise<{ success: boolean; message: string }> {
     try {
@@ -130,25 +134,54 @@ export async function exportDataSubsetAction(subset: string): Promise<{ success:
 }
 
 export async function importDataSubsetAction(subset: string, jsonString: string): Promise<{ success: boolean; message: string }> {
+    if (!userId) throw new Error("User not authenticated");
+    
     try {
         const data = JSON.parse(jsonString);
         if (!Array.isArray(data)) {
             throw new Error("Invalid import file: The root must be a JSON array.");
         }
-        // In a real app, you would loop through `data` and call the relevant `add...Action` for each item.
-        // For this prototype, we'll just confirm the file is readable and simulate the import.
-        console.log(`Simulating import of ${data.length} items for ${subset}.`);
 
-        // Revalidate the path to make it look like data has changed
-        const pathMapping: { [key: string]: string } = {
-            'People': '/players', 'Schools': '/schools', 'Divisions': '/divisions',
-            'Seasons': '/seasons', 'Fields': '/fields', 'Teams': '/teams', 'Matches': '/matches',
+        const mappings: { [key: string]: { collectionName: string, idKey: string, pagePath: string } } = {
+            People: { collectionName: 'people', idKey: 'personId', pagePath: '/players'},
+            Schools: { collectionName: 'schools', idKey: 'schoolId', pagePath: '/schools'},
+            Divisions: { collectionName: 'divisions', idKey: 'divisionId', pagePath: '/divisions'},
+            Seasons: { collectionName: 'seasons', idKey: 'seasonId', pagePath: '/seasons'},
+            Fields: { collectionName: 'fields', idKey: 'fieldId', pagePath: '/fields'},
+            Teams: { collectionName: 'teams', idKey: 'teamId', pagePath: '/teams'},
+            Matches: { collectionName: 'matches', idKey: 'matchId', pagePath: '/matches'},
         };
-        revalidatePath(pathMapping[subset] || '/data-management');
+        const mapping = mappings[subset];
+        if (!mapping) {
+            throw new Error(`Invalid data subset for import: ${subset}`);
+        }
+        
+        const collectionRef = collection(db, mapping.collectionName);
+        let importedCount = 0;
+
+        for (const item of data) {
+            // Remove the ID from the imported item to let Firestore generate a new one
+            const { [mapping.idKey]: idToRemove, ...itemData } = item;
+            
+            const dataToSave = { ...itemData, userId };
+
+            // Handle date conversions from ISO string to Firestore Timestamp
+            if (subset === 'Seasons') {
+                if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
+                if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
+            }
+            if (subset === 'Matches') {
+                if (dataToSave.dateTime) dataToSave.dateTime = Timestamp.fromDate(new Date(dataToSave.dateTime));
+            }
+
+            await addDoc(collectionRef, dataToSave);
+            importedCount++;
+        }
+
+        revalidatePath(mapping.pagePath);
         revalidatePath('/data-management');
 
-
-        return { success: true, message: `${data.length} ${subset} item(s) imported successfully.` };
+        return { success: true, message: `${importedCount} ${subset} item(s) imported successfully.` };
     } catch (error) {
         const message = error instanceof Error ? error.message : `Failed to import ${subset} data. Check file format.`;
         console.error(message);
@@ -180,18 +213,46 @@ export async function exportAllDataAction(): Promise<{ success: boolean; message
 }
 
 export async function importAllDataAction(jsonString: string): Promise<{ success: boolean; message: string }> {
+    if (!userId) throw new Error("User not authenticated");
+
     try {
         const data = JSON.parse(jsonString);
         if (typeof data !== 'object' || data === null || Array.isArray(data)) {
             throw new Error("Invalid import file: The file must contain a JSON object with keys for each data type.");
         }
-        // In a real app, you'd iterate over keys and import each subset
-        console.log(`Simulating import of all data for subsets: ${Object.keys(data).join(', ')}`);
 
-        // Revalidate all paths to reflect potential changes
+        const importOrder = ['schools', 'divisions', 'seasons', 'fields', 'people', 'teams', 'matches'];
+        const idKeyMapping: { [key: string]: string } = {
+            people: 'personId', schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', 
+            fields: 'fieldId', teams: 'teamId', matches: 'matchId',
+        };
+        let totalImported = 0;
+
+        for (const collectionName of importOrder) {
+            if (data[collectionName] && Array.isArray(data[collectionName])) {
+                const collectionRef = collection(db, collectionName);
+                for (const item of data[collectionName]) {
+                    const idKey = idKeyMapping[collectionName];
+                    const { [idKey]: idToRemove, ...itemData } = item;
+                    const dataToSave = { ...itemData, userId };
+
+                    if (collectionName === 'seasons') {
+                        if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
+                        if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
+                    }
+                    if (collectionName === 'matches') {
+                        if (dataToSave.dateTime) dataToSave.dateTime = Timestamp.fromDate(new Date(dataToSave.dateTime));
+                    }
+
+                    await addDoc(collectionRef, dataToSave);
+                    totalImported++;
+                }
+            }
+        }
+
         revalidatePath('/', 'layout');
 
-        return { success: true, message: "All data was processed successfully." };
+        return { success: true, message: `${totalImported} items across all categories were imported successfully.` };
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to import all data. Check file format.";
         console.error(message);
