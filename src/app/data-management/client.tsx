@@ -254,16 +254,16 @@ export default function DataManagementClient() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Bulk Data Operations</CardTitle>
+            <CardTitle>Backup, Restore &amp; Migration</CardTitle>
             <CardDescription>
-              Export or import all your application data at once. This is useful for backups.
+              Perform bulk data operations. Use this for creating backups or migrating data.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <p className="font-bold">Export All Data</p>
-                <p className="text-xs text-muted-foreground">Download a single file containing all app data.</p>
+                <p className="text-xs text-muted-foreground">Create a full backup or prepare for migration.</p>
               </div>
               <Button onClick={handleExportAllClick} disabled={isProcessing}>
                 {isExporting && currentExport === 'all' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
@@ -273,7 +273,7 @@ export default function DataManagementClient() {
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <p className="font-bold">Import All Data</p>
-                <p className="text-xs text-muted-foreground">Upload a file to restore all app data.</p>
+                <p className="text-xs text-muted-foreground">Restore from a backup or migrate data in.</p>
               </div>
                <Button onClick={handleImportAllClick} disabled={isProcessing} variant="outline">
                 {isImporting && currentImport === 'all' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
