@@ -3,19 +3,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import dynamic from 'next/dynamic';
 import { PlusCircle, MoreHorizontal, Trash2, Edit, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -38,112 +31,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import type { Person as Player } from "@/lib/data";
-import { addPlayerAction, updatePlayerAction, deletePlayerAction } from '@/lib/actions/players';
+import { deletePlayerAction } from '@/lib/actions/players';
 
-const playerSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required." }),
-  lastName: z.string().min(1, { message: "Last name is required." }),
-  email: z.string().email({ message: "Invalid email address." }),
-  phone: z.string().optional(),
-  profileImageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  roles: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: "You have to select at least one role.",
-  }),
+const PlayerDialog = dynamic(() => import('./player-dialog').then(mod => mod.PlayerDialog), {
+  ssr: false,
 });
-
-type PlayerFormValues = z.infer<typeof playerSchema>;
 
 const ROLES = [
   { id: "Player", label: "Player" }, { id: "Coach", label: "Coach" },
   { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" },
   { id: "Guardian", label: "Guardian" }, { id: "Sportmaster", label: "Sportmaster" },
 ] as const;
-
-function PlayerDialog({ mode, player, open, onOpenChange }: { mode: 'add' | 'edit', player?: Player, open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = React.useTransition();
-
-  const form = useForm<PlayerFormValues>({
-    resolver: zodResolver(playerSchema),
-    defaultValues: mode === 'edit' && player ? {
-      firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, profileImageUrl: player.profileImageUrl, roles: player.roles,
-    } : {
-      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"],
-    },
-  });
-  
-  React.useEffect(() => {
-    if (mode === 'edit' && player) {
-      form.reset({
-        firstName: player.firstName, lastName: player.lastName, email: player.email, phone: player.phone, profileImageUrl: player.profileImageUrl ?? '', roles: player.roles,
-      });
-    } else {
-      form.reset({
-        firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"],
-      });
-    }
-  }, [player, mode, open, form]);
-
-  function onSubmit(data: PlayerFormValues) {
-    startTransition(async () => {
-      try {
-        if (mode === 'edit' && player) {
-          await updatePlayerAction({ personId: player.personId, ...data });
-          toast({ title: "Person Updated", description: `${data.firstName} ${data.lastName} has been updated.` });
-        } else {
-          await addPlayerAction(data);
-          toast({ title: "Person Added", description: `${data.firstName} ${data.lastName} has been added.` });
-        }
-        onOpenChange(false);
-      } catch (error) {
-        toast({ title: "Error", description: error instanceof Error ? error.message : `Could not ${mode} person.`, variant: "destructive" });
-      }
-    });
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle>{mode === 'edit' ? 'Edit Person' : 'Add New Person'}</DialogTitle>
-          <DialogDescription>Enter the details for the person. Click save when you're done.</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
-            </div>
-            <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (Optional)</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="profileImageUrl" render={({ field }) => (<FormItem><FormLabel>Profile Image URL (Optional)</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="roles" render={() => (
-              <FormItem>
-                <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>
-                <div className="grid grid-cols-2 gap-2">
-                  {ROLES.map((item) => (
-                    <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
-                      <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => (checked ? field.onChange([...field.value, item.id]) : field.onChange(field.value?.filter((v) => v !== item.id)))} disabled={isPending} /></FormControl>
-                        <FormLabel className="font-normal">{item.label}</FormLabel>
-                      </FormItem>
-                    )} />
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Person"}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export default function PlayersClient({ players }: { players: Player[] }) {
   const { toast } = useToast();
@@ -290,7 +190,7 @@ export default function PlayersClient({ players }: { players: Player[] }) {
         </Card>
       </div>
 
-      <PlayerDialog mode={dialogMode} player={selectedPerson ?? undefined} open={isPlayerDialogOpen} onOpenChange={setIsPlayerDialogOpen} />
+      {isPlayerDialogOpen && <PlayerDialog mode={dialogMode} player={selectedPerson ?? undefined} open={isPlayerDialogOpen} onOpenChange={setIsPlayerDialogOpen} />}
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
