@@ -215,3 +215,7 @@ export interface MatchForecast {
 export interface LeaderboardPlayer extends Person {
     stats: PlayerStats;
 }
+
+export interface StandingTeam extends Team {
+    stats: TeamStats;
+}
