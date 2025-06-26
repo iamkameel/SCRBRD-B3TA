@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search, List, LayoutGrid, CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -41,7 +41,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Match, Team, Season, Field } from "@/lib/data";
 import { deleteMatchAction, updateMatchAction } from "@/lib/actions/matches";
-
+import { MatchCard } from "./match-card";
+import { MatchCalendar } from "./match-calendar";
 
 const fixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
@@ -138,6 +139,11 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
+  // New state
+  const [view, setView] = React.useState<'list' | 'card' | 'calendar'>('list');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = view === 'list' ? 10 : 8;
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [seasonFilter, setSeasonFilter] = React.useState("all");
@@ -164,6 +170,12 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
       }
     });
   };
+  
+  // Reset page to 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, seasonFilter, view]);
+
 
   const filteredMatches = matches.filter(match => {
     const matchesSearch = `${match.teamAName} ${match.teamBName}`
@@ -173,6 +185,19 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
     const matchesSeason = seasonFilter === 'all' || match.seasonId === seasonFilter;
     return matchesSearch && matchesStatus && matchesSeason;
   });
+
+  // Pagination logic
+  const paginatedMatches = filteredMatches.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const filtersApplied = searchQuery || statusFilter !== 'all' || seasonFilter !== 'all';
   
@@ -194,105 +219,131 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
                 <CardTitle>Match List</CardTitle>
                 <CardDescription>A list of all matches in the system.</CardDescription>
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="icon" className="relative">
-                    <Search className="h-4 w-4" />
-                    <span className="sr-only">Filter Matches</span>
-                    {filtersApplied && (
-                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                      </span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <h4 className="font-medium leading-none">Filter Matches</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Find matches by team, status, or season.
-                      </p>
-                    </div>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="icon" className="relative">
+                      <Search className="h-4 w-4" />
+                      <span className="sr-only">Filter Matches</span>
+                      {filtersApplied && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
                     <div className="grid gap-4">
-                       <div className="grid grid-cols-3 items-center gap-4">
-                        <Label htmlFor="search-input">Team</Label>
-                        <Input
-                          id="search-input"
-                          placeholder="Team name..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="col-span-2 h-8"
-                        />
+                      <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Filter Matches</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Find matches by team, status, or season.
+                        </p>
                       </div>
-                      <div className="grid grid-cols-3 items-center gap-4">
-                        <Label htmlFor="status-filter">Status</Label>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger className="col-span-2 h-8 capitalize">
-                            <SelectValue placeholder="All Statuses" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            {MATCH_STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid grid-cols-3 items-center gap-4">
-                        <Label htmlFor="season-filter">Season</Label>
-                         <Select value={seasonFilter} onValueChange={setSeasonFilter}>
-                            <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger>
+                      <div className="grid gap-4">
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <Label htmlFor="search-input">Team</Label>
+                          <Input
+                            id="search-input"
+                            placeholder="Team name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="col-span-2 h-8"
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <Label htmlFor="status-filter">Status</Label>
+                          <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="col-span-2 h-8 capitalize">
+                              <SelectValue placeholder="All Statuses" />
+                            </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All Seasons</SelectItem>
-                              {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              {MATCH_STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
                             </SelectContent>
-                        </Select>
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <Label htmlFor="season-filter">Season</Label>
+                          <Select value={seasonFilter} onValueChange={setSeasonFilter}>
+                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Seasons</SelectItem>
+                                {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
+                 <div className="flex items-center rounded-md bg-muted p-1">
+                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
+                    <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
+                    <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('calendar')} className="gap-1"><CalendarDays className="h-4 w-4" /> Calendar</Button>
+                </div>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Match</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Venue</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMatches.length > 0 ? (
-                  filteredMatches.map((match) => (
-                    <TableRow key={match.matchId}>
-                      <TableCell className="font-medium">
-                        <Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link>
-                      </TableCell>
-                      <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
-                      <TableCell>{match.fieldName}</TableCell>
-                      <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setMatchToEdit(match); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { setMatchToDelete(match); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={5} className="h-24 text-center">
-                    {filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}
-                  </TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
+            {view === 'list' && (
+                <Table>
+                    <TableHeader>
+                        <TableRow><TableHead>Match</TableHead><TableHead>Date</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedMatches.length > 0 ? (
+                        paginatedMatches.map((match) => (
+                            <TableRow key={match.matchId}>
+                            <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
+                            <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
+                            <TableCell>{match.fieldName}</TableCell>
+                            <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => { setMatchToEdit(match); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => { setMatchToDelete(match); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                            </TableRow>
+                        ))
+                        ) : (
+                        <TableRow><TableCell colSpan={5} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}</TableCell></TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            )}
+            {view === 'card' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {paginatedMatches.length > 0 ? (
+                        paginatedMatches.map(match => (
+                            <MatchCard 
+                                key={match.matchId} 
+                                match={match} 
+                                onEdit={() => { setMatchToEdit(match); setIsEditDialogOpen(true); }}
+                                onDelete={() => { setMatchToDelete(match); setIsDeleteDialogOpen(true); }}
+                            />
+                        ))
+                    ) : (
+                        <p className="col-span-full h-24 flex items-center justify-center text-muted-foreground">{filtersApplied ? "No matches found matching your filters." : "No matches found."}</p>
+                    )}
+                </div>
+            )}
+            {view === 'calendar' && (
+                <MatchCalendar matches={filteredMatches} />
+            )}
+
+            {view !== 'calendar' && totalPages > 1 && (
+                <div className="flex items-center justify-center pt-8">
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</Button>
+                    <span className="mx-4 text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</Button>
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>
