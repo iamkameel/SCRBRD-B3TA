@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function SettingsClient() {
   return (
@@ -42,11 +43,11 @@ export default function SettingsClient() {
         <CardHeader>
             <CardTitle>Theme</CardTitle>
             <CardDescription>
-                Select your preferred theme. (This is a placeholder for now).
+                Select your preferred theme for the application.
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <Button disabled>Switch to Dark Mode</Button>
+            <ThemeToggle />
         </CardContent>
       </Card>
     </div>
