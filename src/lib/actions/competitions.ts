@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -24,6 +25,24 @@ export async function getCompetitions(): Promise<Competition[]> {
   } catch (error) {
     console.error("Error fetching competitions:", error);
     return [];
+  }
+}
+
+export async function getCompetition(competitionId: string): Promise<Competition | null> {
+  if (!userId) return null;
+  try {
+    const competitionDocRef = doc(db, 'competitions', competitionId);
+    const competitionSnap = await getDoc(competitionDocRef);
+    if (!competitionSnap.exists() || competitionSnap.data().userId !== userId) {
+      return null;
+    }
+    return {
+      competitionId: competitionSnap.id,
+      ...competitionSnap.data(),
+    } as Competition;
+  } catch (error) {
+    console.error(`Error fetching competition with ID ${competitionId}:`, error);
+    return null;
   }
 }
 

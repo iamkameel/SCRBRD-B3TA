@@ -39,7 +39,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { Match, Team, Season, Field } from "@/lib/data";
+import type { Match, Team, Competition, Field } from "@/lib/data";
 import { deleteMatchAction, updateMatchAction } from "@/lib/actions/matches";
 import { MatchCard } from "./match-card";
 import { MatchCalendar } from "./match-calendar";
@@ -47,7 +47,7 @@ import { MatchCalendar } from "./match-calendar";
 const fixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
   teamBId: z.string({ required_error: "Please select the away team." }),
-  seasonId: z.string({ required_error: "Please select a season." }),
+  competitionId: z.string({ required_error: "Please select a competition." }),
   fieldId: z.string({ required_error: "Please select a field." }),
   dateTime: z.date({ required_error: "A date for the match is required." }),
   time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Invalid time format. Please use HH:MM." }),
@@ -58,7 +58,7 @@ const fixtureSchema = z.object({
 
 type FixtureFormValues = z.infer<typeof fixtureSchema>;
 
-function EditMatchDialog({ match, teams, seasons, fields, open, onOpenChange }: { match: Match; teams: Team[]; seasons: Season[]; fields: Field[]; open: boolean; onOpenChange: (open: boolean) => void; }) {
+function EditMatchDialog({ match, teams, competitions, fields, open, onOpenChange }: { match: Match; teams: Team[]; competitions: Competition[]; fields: Field[]; open: boolean; onOpenChange: (open: boolean) => void; }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
@@ -67,7 +67,7 @@ function EditMatchDialog({ match, teams, seasons, fields, open, onOpenChange }: 
     defaultValues: {
       teamAId: match.teamAId,
       teamBId: match.teamBId,
-      seasonId: match.seasonId,
+      competitionId: match.competitionId,
       fieldId: match.fieldId,
       dateTime: match.dateTime,
       time: format(match.dateTime, "HH:mm"),
@@ -77,7 +77,7 @@ function EditMatchDialog({ match, teams, seasons, fields, open, onOpenChange }: 
   React.useEffect(() => {
     if (match) {
         form.reset({
-            teamAId: match.teamAId, teamBId: match.teamBId, seasonId: match.seasonId, fieldId: match.fieldId, dateTime: match.dateTime, time: format(match.dateTime, "HH:mm"),
+            teamAId: match.teamAId, teamBId: match.teamBId, competitionId: match.competitionId, fieldId: match.fieldId, dateTime: match.dateTime, time: format(match.dateTime, "HH:mm"),
         });
     }
   }, [match, form]);
@@ -111,7 +111,7 @@ function EditMatchDialog({ match, teams, seasons, fields, open, onOpenChange }: 
                     <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl><SelectContent>{teams.map((team) => (<SelectItem key={team.teamId} value={team.teamId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl><SelectContent>{teams.map((team) => (<SelectItem key={team.teamId} value={team.teamId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((season) => (<SelectItem key={season.seasonId} value={season.seasonId}>{season.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>Competition</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a competition" /></SelectTrigger></FormControl><SelectContent>{competitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.seasonName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="fieldId" render={({ field }) => (<FormItem><FormLabel>Venue / Field</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger></FormControl><SelectContent>{fields.map((field) => (<SelectItem key={field.fieldId} value={field.fieldId}>{field.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <FormField control={form.control} name="dateTime" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Match Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : (<span>Pick a date</span>)}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
@@ -130,7 +130,7 @@ function EditMatchDialog({ match, teams, seasons, fields, open, onOpenChange }: 
 
 const MATCH_STATUSES = ['scheduled', 'live', 'completed', 'cancelled'];
 
-export default function MatchesClient({ matches, teams, seasons, fields }: { matches: Match[], teams: Team[], seasons: Season[], fields: Field[] }) {
+export default function MatchesClient({ matches, teams, fields, competitions }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[] }) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -147,7 +147,7 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
-  const [seasonFilter, setSeasonFilter] = React.useState("all");
+  const [competitionFilter, setCompetitionFilter] = React.useState("all");
 
   React.useEffect(() => {
     setIsClient(true);
@@ -179,7 +179,7 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
   // Reset page to 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, seasonFilter, view]);
+  }, [searchQuery, statusFilter, competitionFilter, view]);
 
 
   const filteredMatches = matches.filter(match => {
@@ -187,8 +187,8 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || match.status === statusFilter;
-    const matchesSeason = seasonFilter === 'all' || match.seasonId === seasonFilter;
-    return matchesSearch && matchesStatus && matchesSeason;
+    const matchesCompetition = competitionFilter === 'all' || match.competitionId === competitionFilter;
+    return matchesSearch && matchesStatus && matchesCompetition;
   });
 
   // Pagination logic
@@ -204,7 +204,7 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
     }
   };
 
-  const filtersApplied = searchQuery || statusFilter !== 'all' || seasonFilter !== 'all';
+  const filtersApplied = searchQuery || statusFilter !== 'all' || competitionFilter !== 'all';
   
   return (
     <>
@@ -243,7 +243,7 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
                       <div className="space-y-2">
                         <h4 className="font-medium leading-none">Filter Matches</h4>
                         <p className="text-sm text-muted-foreground">
-                          Find matches by team, status, or season.
+                          Find matches by team, status, or competition.
                         </p>
                       </div>
                       <div className="grid gap-4">
@@ -270,12 +270,12 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
                           </Select>
                         </div>
                         <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="season-filter">Season</Label>
-                          <Select value={seasonFilter} onValueChange={setSeasonFilter}>
-                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger>
+                          <Label htmlFor="competition-filter">Competition</Label>
+                          <Select value={competitionFilter} onValueChange={setCompetitionFilter}>
+                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Competitions"/></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="all">All Seasons</SelectItem>
-                                {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
+                                <SelectItem value="all">All Competitions</SelectItem>
+                                {competitions.map(c => <SelectItem key={c.competitionId} value={c.competitionId}>{c.name}</SelectItem>)}
                               </SelectContent>
                           </Select>
                         </div>
@@ -357,7 +357,7 @@ export default function MatchesClient({ matches, teams, seasons, fields }: { mat
         <EditMatchDialog 
             match={matchToEdit} 
             teams={teams} 
-            seasons={seasons} 
+            competitions={competitions} 
             fields={fields} 
             open={isEditDialogOpen} 
             onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setMatchToEdit(null); }}

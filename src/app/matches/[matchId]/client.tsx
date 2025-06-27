@@ -460,6 +460,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName}</h1>
                     <p className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                        {match.competitionName && <span className="font-medium text-foreground/90">{match.competitionName}</span>}
                         <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {isClient ? format(match.dateTime, "PPPP") : '\u00A0'}</span>
                         <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {isClient ? format(match.dateTime, "p") : '\u00A0'}</span>
                         <span>{match.fieldName}</span>

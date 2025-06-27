@@ -2,16 +2,16 @@
 import { getMatches } from '@/lib/actions/matches';
 import MatchesClient from './client';
 import { getTeams } from '@/lib/actions/teams';
-import { getSeasons } from '@/lib/actions/seasons';
 import { getFields } from '@/lib/actions/fields';
+import { getCompetitions } from '@/lib/actions/competitions';
 
 export default async function MatchesPage() {
-  const [matches, teams, seasons, fields] = await Promise.all([
+  const [matches, teams, fields, competitions] = await Promise.all([
     getMatches(),
     getTeams(),
-    getSeasons(),
     getFields(),
+    getCompetitions(),
   ]);
   
-  return <MatchesClient matches={matches} teams={teams} seasons={seasons} fields={fields} />;
+  return <MatchesClient matches={matches} teams={teams} fields={fields} competitions={competitions} />;
 }

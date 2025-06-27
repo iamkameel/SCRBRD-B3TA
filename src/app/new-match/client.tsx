@@ -19,13 +19,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import type { Team, Season, Field } from "@/lib/data";
+import type { Team, Competition, Field } from "@/lib/data";
 import { addMatchAction } from "@/lib/actions/matches";
 
 const baseFixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
   teamBId: z.string({ required_error: "Please select the away team." }),
-  seasonId: z.string({ required_error: "Please select a season." }),
+  competitionId: z.string({ required_error: "Please select a competition." }),
   fieldId: z.string({ required_error: "Please select a field." }),
   dateTime: z.date({
     required_error: "A date for the match is required.",
@@ -44,11 +44,11 @@ type FixtureFormValues = z.infer<typeof fixtureSchema>;
 
 interface NewMatchClientProps {
   teams: Team[];
-  seasons: Season[];
+  competitions: Competition[];
   fields: Field[];
 }
 
-export default function NewMatchClient({ teams, seasons, fields }: NewMatchClientProps) {
+export default function NewMatchClient({ teams, competitions, fields }: NewMatchClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -72,8 +72,6 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
         
         await addMatchAction(finalData);
         
-        // The action handles the redirect, but we can show a toast as a fallback
-        // or for actions that don't redirect. Here, it might not be visible.
         toast({
           title: "Fixture Created",
           description: "Redirecting to the match page..."
@@ -165,20 +163,20 @@ export default function NewMatchClient({ teams, seasons, fields }: NewMatchClien
                 </div>
                 <FormField
                     control={form.control}
-                    name="seasonId"
+                    name="competitionId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Season</FormLabel>
+                        <FormLabel>Competition</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
                             <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a season" />
+                                <SelectValue placeholder="Select a competition" />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {seasons.map((season) => (
-                                <SelectItem key={season.seasonId} value={season.seasonId}>
-                                {season.name}
+                            {competitions.map((comp) => (
+                                <SelectItem key={comp.competitionId} value={comp.competitionId}>
+                                {comp.name} ({comp.seasonName})
                                 </SelectItem>
                             ))}
                             </SelectContent>

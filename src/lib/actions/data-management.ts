@@ -12,12 +12,13 @@ import { getSchools, deleteSchoolAction } from './schools';
 import { getDivisions, deleteDivisionAction } from './divisions';
 import { getSeasons, deleteSeasonAction } from './seasons';
 import { getFields, deleteFieldAction } from './fields';
+import { getCompetitions, deleteCompetitionAction } from './competitions';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
-    'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches'
+    'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches', 'Competitions': 'competitions'
 };
 export type SubsetName = keyof typeof collectionNameMap;
 const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People'];
@@ -25,19 +26,19 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
     try {
-        const subsets: SubsetName[] = ["Matches", "Teams", "People", "Fields", "Seasons", "Divisions", "Schools"];
+        const subsets: SubsetName[] = ["Matches", "Teams", "Competitions", "People", "Fields", "Seasons", "Divisions", "Schools"];
         for (const subset of subsets) {
             const getAction = {
                 'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools, 
-                'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields
+                'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
             }[subset];
             const deleteAction = {
                 'People': deletePlayerAction, 'Teams': deleteTeamAction, 'Matches': deleteMatchAction, 'Schools': deleteSchoolAction, 
-                'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction
+                'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction, 'Competitions': deleteCompetitionAction,
             }[subset];
             const idKey = {
                 'People': 'personId', 'Teams': 'teamId', 'Matches': 'matchId', 'Schools': 'schoolId',
-                'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId'
+                'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId', 'Competitions': 'competitionId',
             }[subset];
             
             // @ts-ignore
@@ -88,6 +89,25 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 itemCount++;
             }
         }
+        
+        // Process Competitions
+        for (const competition of sampleData.competitions) {
+            const { competitionId: tempCompId, ...compData } = competition;
+
+            const newCompData = {
+                ...compData,
+                seasonId: idMap.get(compData.seasonId),
+                divisionId: idMap.get(compData.divisionId),
+                seasonName: sampleData.seasons.find(s => s.seasonId === compData.seasonId)?.name,
+                divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
+                userId
+            };
+
+            const compDocRef = doc(collection(db, 'competitions'));
+            batch.set(compDocRef, newCompData);
+            idMap.set(tempCompId, compDocRef.id);
+            itemCount++;
+        }
 
         // Process Teams and their Rosters
         for (const team of sampleData.teams) {
@@ -123,17 +143,24 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
 
         // Process Matches
         for (const match of sampleData.matches) {
-            const { matchId: tempMatchId, ...matchData } = match;
-            
+            const { matchId: tempMatchId, competitionId: tempCompId, ...matchData } = match;
+
+            const competition = sampleData.competitions.find(c => c.competitionId === tempCompId);
+            if (!competition) continue;
+
             const newMatchData = {
                 ...matchData,
                 teamAId: idMap.get(matchData.teamAId),
                 teamBId: idMap.get(matchData.teamBId),
-                seasonId: idMap.get(matchData.seasonId),
+                competitionId: idMap.get(tempCompId),
+                competitionName: competition.name,
+                seasonId: idMap.get(competition.seasonId),
+                seasonName: sampleData.seasons.find(s => s.seasonId === competition.seasonId)?.name,
+                divisionId: idMap.get(competition.divisionId),
+                divisionName: sampleData.divisions.find(d => d.divisionId === competition.divisionId)?.name,
                 fieldId: idMap.get(matchData.fieldId),
                 teamAName: sampleData.teams.find(t => t.teamId === matchData.teamAId)?.name,
                 teamBName: sampleData.teams.find(t => t.teamId === matchData.teamBId)?.name,
-                seasonName: sampleData.seasons.find(s => s.seasonId === matchData.seasonId)?.name,
                 fieldName: sampleData.fields.find(f => f.fieldId === matchData.fieldId)?.name,
                 dateTime: Timestamp.fromDate(new Date(matchData.dateTime)),
                 userId
@@ -161,15 +188,15 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
     try {
         const getAction = {
             'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
-            'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields
+            'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions
         }[subsetName];
         const deleteAction = {
             'People': deletePlayerAction, 'Teams': deleteTeamAction, 'Matches': deleteMatchAction, 'Schools': deleteSchoolAction,
-            'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction
+            'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction, 'Competitions': deleteCompetitionAction
         }[subsetName];
         const idKey = {
             'People': 'personId', 'Teams': 'teamId', 'Matches': 'matchId', 'Schools': 'schoolId',
-            'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId'
+            'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId', 'Competitions': 'competitionId'
         }[subsetName];
 
         if (!getAction || !deleteAction || !idKey) throw new Error(`Invalid subset name: ${subsetName}`);

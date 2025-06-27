@@ -63,6 +63,9 @@ export const sampleData = {
         { personId: 'p_25', firstName: 'Robert', lastName: 'Baker', email: 'robert.b@example.com', roles: ['Umpire', 'Grounds-Keeper'] },
         { personId: 'p_26', firstName: 'Patricia', lastName: 'Adams', email: 'patricia.a@example.com', roles: ['Umpire', 'Scorer'] },
     ],
+    competitions: [
+        { competitionId: 'temp_comp_1', name: 'U19 Varsity League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' }
+    ],
     teams: [
         { 
             teamId: 'temp_team_1', name: 'Greenwood Gators', schoolId: 'temp_school_1', divisionId: 'temp_div_1', seasonId: 'temp_season_1', 
@@ -106,7 +109,7 @@ export const sampleData = {
             matchId: 'temp_match_1', 
             teamAId: 'temp_team_1', 
             teamBId: 'temp_team_2', 
-            seasonId: 'temp_season_1', 
+            competitionId: 'temp_comp_1',
             fieldId: 'temp_field_1', 
             dateTime: futureDate(7), 
             status: 'scheduled' 

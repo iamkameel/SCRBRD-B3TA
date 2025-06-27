@@ -1,3 +1,4 @@
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -75,8 +76,12 @@ export interface Match {
   teamAName: string;
   teamBId: string;
   teamBName: string;
+  competitionId: string;
+  competitionName: string;
   seasonId: string;
   seasonName: string;
+  divisionId: string;
+  divisionName: string;
   fieldId: string;
   fieldName: string;
   dateTime: Date;

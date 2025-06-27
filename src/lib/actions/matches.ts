@@ -14,6 +14,7 @@ import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
 import { generateMatchSummary } from '@/ai/flows/generate-match-summary-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
+import { getCompetition } from './competitions';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -62,7 +63,11 @@ export async function getMatch(matchId: string): Promise<Match | null> {
 }
 
 const fixtureSchema = z.object({
-  teamAId: z.string(), teamBId: z.string(), seasonId: z.string(), fieldId: z.string(), dateTime: z.date(),
+  teamAId: z.string(),
+  teamBId: z.string(),
+  competitionId: z.string(),
+  fieldId: z.string(),
+  dateTime: z.date(),
 });
 
 type FixtureFormValues = z.infer<typeof fixtureSchema>;
@@ -75,21 +80,38 @@ export async function addMatchAction(data: FixtureFormValues) {
     throw new Error('Invalid match data.');
   }
 
-  const { teamAId, teamBId, seasonId, fieldId, dateTime } = validatedFields.data;
+  const { teamAId, teamBId, competitionId, fieldId, dateTime } = validatedFields.data;
 
-  const [teamASnap, teamBSnap, seasonSnap, fieldSnap] = await Promise.all([
-    getDoc(doc(db, 'teams', teamAId)), getDoc(doc(db, 'teams', teamBId)),
-    getDoc(doc(db, 'seasons', seasonId)), getDoc(doc(db, 'fields', fieldId)),
+  const [teamASnap, teamBSnap, competition, fieldSnap] = await Promise.all([
+    getDoc(doc(db, 'teams', teamAId)),
+    getDoc(doc(db, 'teams', teamBId)),
+    getCompetition(competitionId),
+    getDoc(doc(db, 'fields', fieldId)),
   ]);
 
-  if (!teamASnap.exists() || teamASnap.data().userId !== userId || !teamBSnap.exists() || teamBSnap.data().userId !== userId || !seasonSnap.exists() || seasonSnap.data().userId !== userId || !fieldSnap.exists() || fieldSnap.data().userId !== userId) {
+  if (!teamASnap.exists() || teamASnap.data().userId !== userId ||
+      !teamBSnap.exists() || teamBSnap.data().userId !== userId ||
+      !competition ||
+      !fieldSnap.exists() || fieldSnap.data().userId !== userId) {
     throw new Error("Invalid reference for one of the match entities. Ensure they belong to you.");
   }
   
   const newMatchData = {
-    teamAId, teamAName: teamASnap.data().name, teamBId, teamBName: teamBSnap.data().name,
-    seasonId, seasonName: seasonSnap.data().name, fieldId, fieldName: fieldSnap.data().name,
-    dateTime: Timestamp.fromDate(dateTime), status: 'scheduled', userId: userId,
+    teamAId,
+    teamAName: teamASnap.data().name,
+    teamBId,
+    teamBName: teamBSnap.data().name,
+    competitionId: competition.competitionId,
+    competitionName: competition.name,
+    seasonId: competition.seasonId,
+    seasonName: competition.seasonName,
+    divisionId: competition.divisionId,
+    divisionName: competition.divisionName,
+    fieldId,
+    fieldName: fieldSnap.data().name,
+    dateTime: Timestamp.fromDate(dateTime),
+    status: 'scheduled',
+    userId: userId,
     summary: '',
     preview: '',
   };
@@ -123,20 +145,32 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
       throw new Error("Match not found or you do not have permission to edit it.");
   }
 
-  const { teamAId, teamBId, seasonId, fieldId, dateTime } = validatedFields.data;
+  const { teamAId, teamBId, competitionId, fieldId, dateTime } = validatedFields.data;
 
-  const [teamASnap, teamBSnap, seasonSnap, fieldSnap] = await Promise.all([
-    getDoc(doc(db, 'teams', teamAId)), getDoc(doc(db, 'teams', teamBId)),
-    getDoc(doc(db, 'seasons', seasonId)), getDoc(doc(db, 'fields', fieldId)),
+  const [teamASnap, teamBSnap, competition, fieldSnap] = await Promise.all([
+    getDoc(doc(db, 'teams', teamAId)),
+    getDoc(doc(db, 'teams', teamBId)),
+    getCompetition(competitionId),
+    getDoc(doc(db, 'fields', fieldId)),
   ]);
 
-  if (!teamASnap.exists() || !teamBSnap.exists() || !seasonSnap.exists() || !fieldSnap.exists()) {
+  if (!teamASnap.exists() || !teamBSnap.exists() || !competition || !fieldSnap.exists()) {
       throw new Error("Invalid reference for one of the match entities.");
   }
 
   const updatedMatchData = {
-    teamAId, teamAName: teamASnap.data().name, teamBId, teamBName: teamBSnap.data().name,
-    seasonId, seasonName: seasonSnap.data().name, fieldId, fieldName: fieldSnap.data().name,
+    teamAId,
+    teamAName: teamASnap.data().name,
+    teamBId,
+    teamBName: teamBSnap.data().name,
+    competitionId: competition.competitionId,
+    competitionName: competition.name,
+    seasonId: competition.seasonId,
+    seasonName: competition.seasonName,
+    divisionId: competition.divisionId,
+    divisionName: competition.divisionName,
+    fieldId,
+    fieldName: fieldSnap.data().name,
     dateTime: Timestamp.fromDate(dateTime),
   };
 
