@@ -30,10 +30,14 @@ type PersonFormValues = z.infer<typeof personSchema>;
 
 const ROLES = [
   { id: "Player", label: "Player" }, { id: "Coach", label: "Coach" },
+  { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Team Manager", label: "Team Manager" },
+  { id: "Trainer", label: "Trainer" }, { id: "Physio", label: "Physio" },
+  { id: "Doctor", label: "Doctor" }, { id: "First Aid", label: "First Aid" },
   { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" },
   { id: "Guardian", label: "Guardian" }, { id: "Sportmaster", label: "Sportmaster" },
   { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },
 ] as const;
+
 
 export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add' | 'edit', person?: Person, open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -81,7 +85,7 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === 'edit' ? 'Edit Person' : 'Add New Person'}</DialogTitle>
           <DialogDescription>Enter the details for the person. Click save when you're done.</DialogDescription>
@@ -113,7 +117,7 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
             <FormField control={form.control} name="roles" render={() => (
               <FormItem>
                 <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {ROLES.map((item) => (
                     <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
                       <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">

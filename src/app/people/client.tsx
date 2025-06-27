@@ -42,6 +42,9 @@ const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.Per
 
 const ROLES = [
   { id: "Player", label: "Player" }, { id: "Coach", label: "Coach" },
+  { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Team Manager", label: "Team Manager" },
+  { id: "Trainer", label: "Trainer" }, { id: "Physio", label: "Physio" },
+  { id: "Doctor", label: "Doctor" }, { id: "First Aid", label: "First Aid" },
   { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" },
   { id: "Guardian", label: "Guardian" }, { id: "Sportmaster", label: "Sportmaster" },
   { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },

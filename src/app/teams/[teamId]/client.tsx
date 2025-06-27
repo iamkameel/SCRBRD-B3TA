@@ -55,50 +55,67 @@ type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 const editAssignmentSchema = assignmentSchema.omit({ personId: true });
 type EditAssignmentFormValues = z.infer<typeof editAssignmentSchema>;
 
-
-const ROLES = ["Player", "Coach", "Scorer", "Team Manager"];
+const PLAYER_ROLES = ["Player"];
+const STAFF_ROLES = ["Coach", "Assistant Coach", "Team Manager", "Trainer", "Physio", "Scorer"];
+const TEAM_ASSIGNABLE_ROLES = [...PLAYER_ROLES, ...STAFF_ROLES];
 const STATUSES = ["active", "on_trial", "injured", "retired"];
 
-function AddPlayerToRosterDialog({ teamId, people }: { teamId: string, people: Person[] }) {
-  const [open, setOpen] = React.useState(false);
+function AddAssignmentDialog({ teamId, people, assignableRoles, open, onOpenChange, title, description }: { teamId: string, people: Person[], assignableRoles: string[], open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
-    defaultValues: { isCaptain: false, isViceCaptain: false, status: "active", role: "Player" },
+    defaultValues: { isCaptain: false, isViceCaptain: false, status: "active", role: assignableRoles[0] },
   });
+  
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        isCaptain: false,
+        isViceCaptain: false,
+        status: "active",
+        role: assignableRoles[0],
+        personId: undefined
+      });
+    }
+  }, [open, assignableRoles, form]);
 
   function onSubmit(data: AssignmentFormValues) {
     startTransition(async () => {
         try {
             await addPlayerToRosterAction(teamId, data);
-            toast({ title: "Player Added to Roster", description: `The person has been added to the team.` });
-            setOpen(false);
-            form.reset();
+            toast({ title: "Person Added to Roster", description: `The person has been added to the team.` });
+            onOpenChange(false);
         } catch (error) {
-            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not add player to roster.", variant: "destructive" });
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not add person to roster.", variant: "destructive" });
         }
     });
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button disabled={isPending}><PlusCircle className="mr-2" />Add to Roster</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Assign Person to Team</DialogTitle><DialogDescription>Select a person and assign their role and status on this team.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>{description}</DialogDescription></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="personId" render={({ field }) => (<FormItem><FormLabel>Person</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl><SelectContent>{people.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="Player" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+            
+            {assignableRoles.length > 1 ? (
+              <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{assignableRoles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+            ) : (
+              <div><Label>Role</Label><Input value={assignableRoles[0]} disabled /></div>
+            )}
+            
             <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="active" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <div className="flex items-center space-x-4 pt-2">
-               <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
-               <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
-            </div>
-            <DialogFooter><Button type="submit" disabled={isPending}>{isPending ? "Adding..." : "Add to Roster"}</Button></DialogFooter>
+            
+            {assignableRoles.includes("Player") && (
+                <div className="flex items-center space-x-4 pt-2">
+                <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
+                <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
+                </div>
+            )}
+            <DialogFooter><Button type="submit" disabled={isPending}>{isPending ? "Adding..." : "Add to Team"}</Button></DialogFooter>
           </form>
         </Form>
       </DialogContent>
@@ -134,6 +151,8 @@ function EditAssignmentDialog({ teamId, member, open, onOpenChange }: { teamId: 
         }
     });
   }
+  
+  const isPlayer = member.role === 'Player';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -145,12 +164,15 @@ function EditAssignmentDialog({ teamId, member, open, onOpenChange }: { teamId: 
                         <Label>Person</Label>
                         <Input value={member.personName} disabled />
                     </div>
-                    <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{TEAM_ASSIGNABLE_ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <div className="flex items-center space-x-4 pt-2">
-                        <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
-                        <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
-                    </div>
+                    
+                    {isPlayer && (
+                        <div className="flex items-center space-x-4 pt-2">
+                            <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
+                            <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
+                        </div>
+                    )}
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                         <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Changes"}</Button>
@@ -176,8 +198,14 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
   const [isPending, startTransition] = React.useTransition();
   const [selectedMember, setSelectedMember] = React.useState<RosterMember | null>(null);
   const [memberToEdit, setMemberToEdit] = React.useState<RosterMember | null>(null);
+  
+  const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = React.useState(false);
+  const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  
+  const playerRoster = initialRoster.filter(m => m.role === 'Player');
+  const staffRoster = initialRoster.filter(m => m.role !== 'Player');
 
   React.useEffect(() => {
     setIsClient(true);
@@ -188,11 +216,11 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
     startTransition(async () => {
       try {
         await removeRosterAssignmentAction(team.teamId, selectedMember.assignmentId);
-        toast({ title: "Player Removed", description: `${selectedMember.personName} has been removed from the roster.` });
+        toast({ title: "Member Removed", description: `${selectedMember.personName} has been removed from the roster.` });
         setIsDeleteDialogOpen(false);
         setSelectedMember(null);
       } catch (error) {
-        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not remove player from roster.", variant: "destructive" });
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not remove member from roster.", variant: "destructive" });
         setIsDeleteDialogOpen(false);
         setSelectedMember(null);
       }
@@ -217,24 +245,23 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <div><CardTitle>Player Roster</CardTitle><CardDescription>Manage the players and staff assigned to this team.</CardDescription></div>
-            <AddPlayerToRosterDialog teamId={team.teamId} people={people} />
+            <div><CardTitle>Player Roster</CardTitle><CardDescription>The main squad of players for the team.</CardDescription></div>
+            <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Player</Button>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                <TableRow><TableHead>Name</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
               </TableHeader>
               <TableBody>
-                {initialRoster.length > 0 ? (
-                  initialRoster.map(member => (
+                {playerRoster.length > 0 ? (
+                  playerRoster.map(member => (
                     <TableRow key={member.assignmentId}>
                       <TableCell className="font-medium flex items-center gap-2">
                         <Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link>
                         {member.isCaptain && <Badge variant="outline" className="ml-2">C</Badge>}
                         {member.isViceCaptain && <Badge variant="outline" className="ml-2">VC</Badge>}
                       </TableCell>
-                      <TableCell>{member.role}</TableCell>
                       <TableCell><Badge variant="secondary" className="capitalize">{member.status.replace(/_/g, " ")}</Badge></TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -248,7 +275,42 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={4} className="h-24 text-center">No players assigned to this roster yet.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="h-24 text-center">No players assigned to this roster yet.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div><CardTitle>Team Staff</CardTitle><CardDescription>Manage the coaches and support staff for this team.</CardDescription></div>
+            <Button onClick={() => setIsAddStaffDialogOpen(true)}><PlusCircle className="mr-2" />Add Staff</Button>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+              </TableHeader>
+              <TableBody>
+                {staffRoster.length > 0 ? (
+                  staffRoster.map(member => (
+                    <TableRow key={member.assignmentId}>
+                      <TableCell className="font-medium"><Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link></TableCell>
+                      <TableCell>{member.role}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => { setMemberToEdit(member); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={3} className="h-24 text-center">No staff assigned to this team yet.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -313,6 +375,25 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         </Card>
       </div>
       
+      <AddAssignmentDialog 
+        teamId={team.teamId} 
+        people={people} 
+        assignableRoles={PLAYER_ROLES} 
+        open={isAddPlayerDialogOpen} 
+        onOpenChange={setIsAddPlayerDialogOpen} 
+        title="Add Player to Roster" 
+        description="Assign a new player to the team." 
+      />
+      <AddAssignmentDialog 
+        teamId={team.teamId} 
+        people={people} 
+        assignableRoles={STAFF_ROLES} 
+        open={isAddStaffDialogOpen} 
+        onOpenChange={setIsAddStaffDialogOpen}
+        title="Add Staff to Team"
+        description="Assign a new staff member to the team."
+      />
+
       {memberToEdit && (
         <EditAssignmentDialog
           teamId={team.teamId}
@@ -330,7 +411,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
           <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will remove <strong>{selectedMember?.personName}</strong> from the team. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedMember(null)} disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemove} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Player"}</AlertDialogAction>
+            <AlertDialogAction onClick={handleRemove} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Member"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
