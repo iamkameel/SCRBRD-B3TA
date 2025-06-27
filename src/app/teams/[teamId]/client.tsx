@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -229,7 +230,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                   initialRoster.map(member => (
                     <TableRow key={member.assignmentId}>
                       <TableCell className="font-medium flex items-center gap-2">
-                        <Link href={`/players/${member.personId}`} className="hover:underline">{member.personName}</Link>
+                        <Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link>
                         {member.isCaptain && <Badge variant="outline" className="ml-2">C</Badge>}
                         {member.isViceCaptain && <Badge variant="outline" className="ml-2">VC</Badge>}
                       </TableCell>
