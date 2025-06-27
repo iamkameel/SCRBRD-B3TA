@@ -39,7 +39,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Match, Team, Competition, Field } from "@/lib/data";
-import { deleteMatchAction, updateMatchAction } from "@/lib/actions/matches";
+import { deleteMatchAction, updateMatchAction } from '@/lib/actions/matches';
 import { MatchCard } from "./match-card";
 import { MatchCalendar } from "./match-calendar";
 
