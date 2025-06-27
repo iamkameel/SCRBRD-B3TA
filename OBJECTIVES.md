@@ -14,6 +14,7 @@ This document outlines the major features and refinements implemented in this ap
     -   Roster management to assign people to teams with specific roles.
     -   Team-specific dashboards showing stats and match schedules.
 -   **Competitions Dashboard**: A centralized hub to create and administer leagues, cups, series, and tournaments.
+-   **User Profile Management**: A settings page where the current user can view and update their personal information.
 
 ## 2. Match & Scoring Engine
 

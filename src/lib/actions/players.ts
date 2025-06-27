@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -49,6 +50,21 @@ export async function getPerson(personId: string): Promise<Person | null> {
         return { personId: personSnap.id, ...personSnap.data() } as Person;
     } catch (error) {
         console.error(`Error fetching person with ID ${personId}:`, error);
+        return null;
+    }
+}
+
+export async function getPersonByEmail(email: string): Promise<Person | null> {
+    if (!userId) return null;
+    try {
+        const peopleCollection = collection(db, 'people');
+        const q = query(peopleCollection, where("userId", "==", userId), where("email", "==", email));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return null;
+        const doc = snapshot.docs[0];
+        return { personId: doc.id, ...doc.data() } as Person;
+    } catch (error) {
+        console.error(`Error fetching person with email ${email}:`, error);
         return null;
     }
 }
@@ -263,7 +279,7 @@ export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
     console.error("Error adding document: ", error);
     throw new Error("Could not add person.");
   }
-  revalidatePath('/players'); revalidatePath('/teams'); revalidatePath('/new-match');
+  revalidatePath('/people'); revalidatePath('/teams'); revalidatePath('/new-match');
 }
 
 const updatePlayerSchema = playerSchema.extend({ personId: z.string() });
@@ -281,7 +297,8 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
     console.error("Error updating person:", error);
     throw new Error("Could not update person.");
   }
-  revalidatePath('/players'); revalidatePath(`/players/${personId}`);
+  revalidatePath('/people'); revalidatePath(`/people/${personId}`);
+  revalidatePath('/settings');
 }
 
 export async function deletePlayerAction(personId: string) {
@@ -321,6 +338,6 @@ export async function deletePlayerAction(personId: string) {
     throw new Error("Could not delete person.");
   }
 
-  revalidatePath('/players');
+  revalidatePath('/people');
   revalidatePath('/teams');
 }
