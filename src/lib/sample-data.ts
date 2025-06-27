@@ -31,6 +31,11 @@ export const sampleData = {
         { fieldId: 'temp_field_1', name: 'Main Oval', surfaceType: 'Grass', facilities: 'Pavilion, Toilets, Nets', status: 'Available' },
         { fieldId: 'temp_field_2', name: 'North Field', surfaceType: 'Turf', facilities: 'Nets, Canteen', status: 'Maintenance' },
     ],
+    vehicles: [
+        { vehicleId: 'temp_vehicle_1', name: 'Minibus 1', type: 'Minibus', capacity: 16, registration: 'GHS-01' },
+        { vehicleId: 'temp_vehicle_2', name: 'Van', type: 'Van', capacity: 8, registration: 'OAKS-01' },
+        { vehicleId: 'temp_vehicle_3', name: 'Main Bus', type: 'Bus', capacity: 40, registration: 'GHS-02' }
+    ],
     people: [
         // Greenwood Gators (12 people)
         { personId: 'p_1', firstName: 'Liam', lastName: 'Smith', email: 'liam.smith@example.com', roles: ['Player', 'Captain'], notificationPreferences: { email: true, push: false } },
@@ -67,7 +72,8 @@ export const sampleData = {
         { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin'], notificationPreferences: { email: true, push: false } },
     ],
     competitions: [
-        { competitionId: 'temp_comp_1', name: 'U19 Varsity League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' }
+        { competitionId: 'temp_comp_1', name: 'U19 Varsity League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' },
+        { competitionId: 'temp_comp_2', name: 'Pre-Season Knockout', type: 'Knockout', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'Completed', winnerTeamId: 'temp_team_1' }
     ],
     teams: [
         { 
@@ -116,6 +122,15 @@ export const sampleData = {
             fieldId: 'temp_field_1', 
             dateTime: futureDate(7), 
             status: 'scheduled' 
+        },
+         { 
+            matchId: 'temp_match_2', 
+            teamAId: 'temp_team_2', 
+            teamBId: 'temp_team_1', 
+            competitionId: 'temp_comp_2',
+            fieldId: 'temp_field_2', 
+            dateTime: pastDate(14), 
+            status: 'completed' 
         },
     ],
 };
