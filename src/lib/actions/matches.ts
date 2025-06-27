@@ -15,6 +15,7 @@ import { generateMatchSummary } from '@/ai/flows/generate-match-summary-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
 import { getCompetition } from './competitions';
+import { getTeams } from './teams';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -24,13 +25,25 @@ export async function getMatches(): Promise<Match[]> {
   try {
     const matchesCollection = collection(db, 'matches');
     const q = query(matchesCollection, where("userId", "==", userId));
-    const matchSnapshot = await getDocs(q);
+    
+    const [teams, matchSnapshot] = await Promise.all([
+      getTeams(),
+      getDocs(q),
+    ]);
+    
+    const teamColorMap = new Map<string, { primary?: string; secondary?: string }>();
+    teams.forEach(team => {
+      teamColorMap.set(team.teamId, team.teamColors || {});
+    });
+
     const matchesList = matchSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         matchId: doc.id,
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
+        teamAColor: teamColorMap.get(data.teamAId)?.primary,
+        teamBColor: teamColorMap.get(data.teamBId)?.primary,
       } as Match;
     });
     return matchesList.sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());

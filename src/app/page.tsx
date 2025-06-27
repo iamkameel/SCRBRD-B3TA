@@ -153,8 +153,16 @@ export default async function DashboardPage() {
                 recentMatches.map((match) => (
                   <TableRow key={match.matchId}>
                     <TableCell className="font-medium">
-                      <Link href={`/matches/${match.matchId}`} className="hover:underline">
-                        {match.teamAName} vs {match.teamBName}
+                      <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
+                              <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+                              <span>{match.teamAName}</span>
+                          </div>
+                          <span className="text-muted-foreground text-xs">vs</span>
+                          <div className="flex items-center gap-1.5">
+                              <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />
+                              <span>{match.teamBName}</span>
+                          </div>
                       </Link>
                     </TableCell>
                     <TableCell>{format(match.dateTime, "PPP p")}</TableCell>

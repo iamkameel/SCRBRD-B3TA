@@ -37,7 +37,17 @@ export function MatchCard({ match, onEdit, onDelete }: MatchCardProps) {
                     <div className="flex-1 mr-2">
                         <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize mb-2">{match.status}</Badge>
                         <CardTitle className="text-lg">
-                             <Link href={`/matches/${match.matchId}`} className="hover:underline leading-tight">{match.teamAName} vs {match.teamBName}</Link>
+                             <Link href={`/matches/${match.matchId}`} className="hover:underline leading-tight">
+                                <div className="flex items-center gap-2">
+                                    <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+                                    <span>{match.teamAName}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground font-normal pl-4 my-0.5">vs</div>
+                                <div className="flex items-center gap-2">
+                                    <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />
+                                    <span>{match.teamBName}</span>
+                                </div>
+                             </Link>
                         </CardTitle>
                     </div>
                     <DropdownMenu>

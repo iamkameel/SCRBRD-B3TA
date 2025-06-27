@@ -88,6 +88,8 @@ export interface Match {
   status: MatchStatus;
   summary?: string;
   preview?: string;
+  teamAColor?: string;
+  teamBColor?: string;
 }
 
 export interface Official {

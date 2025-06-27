@@ -301,7 +301,19 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
                         {paginatedMatches.length > 0 ? (
                         paginatedMatches.map((match) => (
                             <TableRow key={match.matchId}>
-                            <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
+                            <TableCell className="font-medium">
+                                <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+                                        <span>{match.teamAName}</span>
+                                    </div>
+                                    <span className="text-muted-foreground text-xs">vs</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />
+                                        <span>{match.teamBName}</span>
+                                    </div>
+                                </Link>
+                            </TableCell>
                             <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
                             <TableCell>{match.fieldName}</TableCell>
                             <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
