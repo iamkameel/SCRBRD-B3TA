@@ -1,9 +1,10 @@
+
 'use client';
 
 import * as React from "react";
 import Link from 'next/link';
 import { format } from "date-fns";
-import { ArrowLeft, Users, ClipboardList, BarChart, Trophy } from "lucide-react";
+import { ArrowLeft, Users, ClipboardList, BarChart, Trophy, GitMerge } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -28,6 +29,7 @@ export default function CompetitionDetailsClient({ competition, standings, match
     React.useEffect(() => { setIsClient(true); }, []);
     
     const { topRunScorers, topWicketTakers } = leaderboards;
+    const isLeague = competition.type === 'League';
 
     return (
         <div className="flex flex-col gap-8">
@@ -52,53 +54,74 @@ export default function CompetitionDetailsClient({ competition, standings, match
                 )}
             </header>
 
-            <Tabs defaultValue="standings">
+            <Tabs defaultValue={isLeague ? "standings" : "bracket"}>
                 <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="standings"><Trophy />Standings</TabsTrigger>
-                    <TabsTrigger value="matches"><ClipboardList />Matches</TabsTrigger>
-                    <TabsTrigger value="players"><Users />Players</TabsTrigger>
+                    {isLeague ? (
+                        <TabsTrigger value="standings"><Trophy className="mr-2 h-4 w-4"/>Standings</TabsTrigger>
+                    ) : (
+                        <TabsTrigger value="bracket"><GitMerge className="mr-2 h-4 w-4"/>Bracket</TabsTrigger>
+                    )}
+                    <TabsTrigger value="matches"><ClipboardList className="mr-2 h-4 w-4"/>Matches</TabsTrigger>
+                    <TabsTrigger value="players"><Users className="mr-2 h-4 w-4"/>Players</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="standings" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Team Standings</CardTitle>
-                            <CardDescription>Current leaderboard for the {competition.name}.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px]">Pos</TableHead>
-                                        <TableHead>Team</TableHead>
-                                        <TableHead className="text-right">Played</TableHead>
-                                        <TableHead className="text-right">Won</TableHead>
-                                        <TableHead className="text-right">Lost</TableHead>
-                                        <TableHead className="text-right">NRR</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                {standings.length > 0 ? (
-                                    standings.map((team, index) => (
-                                    <TableRow key={team.teamId}>
-                                        <TableCell className="font-medium">{index + 1}</TableCell>
-                                        <TableCell>
-                                            <Link href={`/teams/${team.teamId}`} className="font-medium hover:underline">{team.name}</Link>
-                                        </TableCell>
-                                        <TableCell className="text-right">{team.stats.matchesPlayed}</TableCell>
-                                        <TableCell className="text-right">{team.stats.matchesWon}</TableCell>
-                                        <TableCell className="text-right">{team.stats.matchesLost}</TableCell>
-                                        <TableCell className="text-right">{team.stats.netRunRate.toFixed(2)}</TableCell>
-                                    </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow><TableCell colSpan={6} className="h-24 text-center">No team stats available yet.</TableCell></TableRow>
-                                )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                {isLeague && (
+                    <TabsContent value="standings" className="mt-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Team Standings</CardTitle>
+                                <CardDescription>Current leaderboard for the {competition.name}.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                 <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[50px]">Pos</TableHead>
+                                            <TableHead>Team</TableHead>
+                                            <TableHead className="text-right">Played</TableHead>
+                                            <TableHead className="text-right">Won</TableHead>
+                                            <TableHead className="text-right">Lost</TableHead>
+                                            <TableHead className="text-right">NRR</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {standings.length > 0 ? (
+                                        standings.map((team, index) => (
+                                        <TableRow key={team.teamId}>
+                                            <TableCell className="font-medium">{index + 1}</TableCell>
+                                            <TableCell>
+                                                <Link href={`/teams/${team.teamId}`} className="font-medium hover:underline">{team.name}</Link>
+                                            </TableCell>
+                                            <TableCell className="text-right">{team.stats.matchesPlayed}</TableCell>
+                                            <TableCell className="text-right">{team.stats.matchesWon}</TableCell>
+                                            <TableCell className="text-right">{team.stats.matchesLost}</TableCell>
+                                            <TableCell className="text-right">{team.stats.netRunRate.toFixed(2)}</TableCell>
+                                        </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow><TableCell colSpan={6} className="h-24 text-center">No team stats available yet.</TableCell></TableRow>
+                                    )}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
+                {!isLeague && (
+                     <TabsContent value="bracket" className="mt-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Tournament Bracket</CardTitle>
+                                <CardDescription>Visual bracket for the {competition.name}.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">Tournament bracket view coming soon!</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
                 <TabsContent value="matches" className="mt-4">
                     <Card>
                         <CardHeader>
