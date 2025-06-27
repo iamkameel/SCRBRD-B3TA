@@ -1,26 +1,51 @@
+
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu } from 'lucide-react';
+import { Menu, Settings, LogOut } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { navItems } from './sidebar-nav-items';
 import { cn } from '@/lib/utils';
 import { CricketIcon } from '@/components/icons/cricket-icon';
+import { getPersonByEmail } from '@/lib/actions/players';
+import type { Person } from '@/lib/data';
 
 export function Header() {
     const pathname = usePathname();
+    const [user, setUser] = React.useState<Person | null>(null);
+
+    React.useEffect(() => {
+        async function fetchUser() {
+            // In a real app, you'd get the current user's identity
+            // For this demo, we'll fetch the hardcoded admin user
+            const userProfile = await getPersonByEmail('admin@scrbrd.app');
+            setUser(userProfile);
+        }
+        fetchUser();
+    }, []);
+
     return (
-        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 md:hidden">
+        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="shrink-0">
+                    <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Toggle navigation menu</span>
                     </Button>
@@ -53,6 +78,36 @@ export function Header() {
                     </nav>
                 </SheetContent>
             </Sheet>
+
+            <div className="w-full flex-1" />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.profileImageUrl} alt={user?.firstName} />
+                    <AvatarFallback>{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user ? `${user.firstName} ${user.lastName}` : 'Loading...'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/settings"><Settings className="mr-2"/>Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <LogOut className="mr-2"/>Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </header>
     );
 }
