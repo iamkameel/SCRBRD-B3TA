@@ -30,9 +30,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import type { Person, PlayerStats, PlayerTeamAssignment } from "@/lib/data";
+import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance } from "@/lib/data";
 import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from "@/lib/actions/players";
 import { AddLinkDialog } from "./add-link-dialog";
+import { PlayerFormChart } from "./player-form-chart";
 
 
 interface PersonDetailsClientProps {
@@ -42,9 +43,10 @@ interface PersonDetailsClientProps {
     initialChildren: Person[];
     availablePeople: Person[];
     teamAssignments: PlayerTeamAssignment[];
+    matchHistory: PlayerMatchPerformance[];
 }
 
-export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments }: PersonDetailsClientProps) {
+export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, matchHistory }: PersonDetailsClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -232,6 +234,13 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
                           <StatItem label="Catches" value={playerStats.catches} /><StatItem label="Stumpings" value={playerStats.stumpings} />
                       </div>
+                  </div>
+                  <Separator />
+                  <div>
+                      <h3 className="text-lg font-medium mb-4 text-primary">Recent Form (Batting)</h3>
+                        <div className="h-[200px] w-full">
+                           <PlayerFormChart data={matchHistory} />
+                        </div>
                   </div>
               </CardContent>
           </Card>

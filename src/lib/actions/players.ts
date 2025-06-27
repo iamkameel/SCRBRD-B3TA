@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import type { Person, PlayerStats, PlayerTeamAssignment } from '@/lib/data';
 import { getScorecard, getMatchLineup } from './matches';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
@@ -149,6 +149,48 @@ export async function getPlayerStats(personId: string): Promise<PlayerStats> {
     stats.bestBowling = `${stats.bestBowlingWickets}/${stats.bestBowlingRuns}`;
 
     return stats;
+}
+
+export async function getPlayerMatchHistory(personId: string): Promise<{ opponent: string; runs: number; date: Date; matchId: string }[]> {
+    const person = await getPerson(personId);
+    if (!person || !person.roles.includes("Player")) {
+        return [];
+    }
+    const personName = `${person.firstName} ${person.lastName}`;
+
+    const matchesCollection = collection(db, 'matches');
+    const q = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"));
+    const completedMatchesSnapshot = await getDocs(q);
+
+    const playerMatchPerformances = [];
+
+    for (const matchDoc of completedMatchesSnapshot.docs) {
+        const matchData = matchDoc.data();
+        const lineupA = await getMatchLineup(matchDoc.id, matchData.teamAId);
+        const lineupB = await getMatchLineup(matchDoc.id, matchData.teamBId);
+        
+        const playerTeamId = lineupA.includes(personId) ? matchData.teamAId : lineupB.includes(personId) ? matchData.teamBId : null;
+        if (!playerTeamId) continue;
+        
+        const opponentName = playerTeamId === matchData.teamAId ? matchData.teamBName : matchData.teamAName;
+
+        const scorecard = await getScorecard(matchDoc.id);
+        if (!scorecard) continue;
+
+        const innings = scorecard.innings1.battingCard.find(b => b.name === personName) || scorecard.innings2.battingCard.find(b => b.name === personName);
+
+        playerMatchPerformances.push({
+            opponent: `vs ${opponentName}`,
+            runs: innings ? innings.runs : 0,
+            date: (matchData.dateTime as Timestamp).toDate(),
+            matchId: matchDoc.id,
+        });
+    }
+
+    return playerMatchPerformances
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
+        .slice(0, 5) // Get the 5 most recent matches
+        .reverse(); // reverse so the chart shows oldest to newest
 }
 
 
