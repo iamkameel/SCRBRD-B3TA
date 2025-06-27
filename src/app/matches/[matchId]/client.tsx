@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -37,7 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction } from '@/lib/actions/matches';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
@@ -217,6 +217,7 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
+  const [isAutoSelecting, startAutoSelectTransition] = React.useTransition();
 
   const form = useForm<LineupFormValues>({
     resolver: zodResolver(lineupSchema),
@@ -238,6 +239,26 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : "Could not save lineup.",
+          variant: "destructive",
+        });
+      }
+    });
+  }
+  
+  function handleAutoSelect() {
+    startAutoSelectTransition(async () => {
+      try {
+        const { playerIds, justification } = await autoSelectLineupAction(matchId, teamId);
+        form.setValue('playerIds', playerIds, { shouldValidate: true, shouldDirty: true });
+        toast({ 
+          title: "AI Lineup Suggested", 
+          description: justification,
+          duration: 10000, 
+        });
+      } catch (error) {
+        toast({
+          title: "Error Auto-Selecting Team",
+          description: error instanceof Error ? error.message : "An unexpected error occurred.",
           variant: "destructive",
         });
       }
@@ -277,7 +298,7 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
                                       ? field.onChange([...field.value, member.personId])
                                       : field.onChange(field.value?.filter((id) => id !== member.personId));
                                   }}
-                                  disabled={isPending}
+                                  disabled={isPending || isAutoSelecting}
                                 />
                               </FormControl>
                               <FormLabel className="font-normal flex flex-col">
@@ -293,9 +314,15 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : `Save ${teamName} Lineup`}
-              </Button>
+              <div className="flex items-center gap-2">
+                  <Button type="submit" disabled={isPending || isAutoSelecting}>
+                      {isPending ? "Saving..." : `Save ${teamName} Lineup`}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleAutoSelect} disabled={isPending || isAutoSelecting}>
+                      <Wand2 className={`mr-2 h-4 w-4 ${isAutoSelecting ? 'animate-spin' : ''}`} />
+                      {isAutoSelecting ? 'Selecting...' : 'Auto-Select'}
+                  </Button>
+              </div>
             </form>
           </Form>
         ) : (

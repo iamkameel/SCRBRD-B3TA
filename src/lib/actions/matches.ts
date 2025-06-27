@@ -18,6 +18,7 @@ import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-matc
 import { generateMatchCommentary } from '@/ai/flows/generate-match-commentary-flow';
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
+import { selectLineup } from '@/ai/flows/select-lineup-flow';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -598,4 +599,24 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
     console.error(`Error fetching matches for competition ${competitionId}:`, error);
     return [];
   }
+}
+
+export async function autoSelectLineupAction(matchId: string, teamId: string): Promise<{ playerIds: string[], justification: string }> {
+    if (!userId) throw new Error("User not authenticated");
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    try {
+        const { playerIds, justification } = await selectLineup({ matchId, teamId });
+        
+        // This action does not save the lineup, it just returns the suggestion.
+        // The user will review and click "Save Lineup".
+        // The justification will be shown in a toast.
+
+        return { playerIds, justification };
+    } catch (error) {
+        console.error("Error auto-selecting lineup:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("Could not auto-select lineup.");
+    }
 }

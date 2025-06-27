@@ -125,3 +125,32 @@ export const DreamTeamOutputSchema = z.object({
   team: z.array(SelectedPlayerSchema).length(11, { message: "The team must have exactly 11 players." }),
 });
 export type DreamTeamOutput = z.infer<typeof DreamTeamOutputSchema>;
+
+
+// From select-lineup-flow.ts
+export const RosterPlayerSchema = z.object({
+  personId: z.string(),
+  name: z.string(),
+  roles: z.array(z.string()),
+  stats: SimplifiedPlayerStatsSchema,
+});
+
+export const MatchContextSchema = z.object({
+  matchId: z.string(),
+  competitionName: z.string(),
+  opponentName: z.string(),
+  venueName: z.string(),
+  isHomeMatch: z.boolean(),
+});
+
+export const SelectLineupPromptInputSchema = z.object({
+  rosterWithStats: z.array(RosterPlayerSchema),
+  matchContext: MatchContextSchema,
+  weatherForecast: GetMatchForecastOutputSchema,
+});
+
+export const SelectLineupOutputSchema = z.object({
+  playerIds: z.array(z.string()).length(11, { message: "The lineup must have exactly 11 players." }),
+  justification: z.string().describe("A brief, one-paragraph summary explaining the key decisions for the team selection, considering balance, form, and conditions."),
+});
+export type SelectLineupOutput = z.infer<typeof SelectLineupOutputSchema>;
