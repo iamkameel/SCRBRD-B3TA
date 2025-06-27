@@ -1,4 +1,5 @@
 
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -8,6 +9,10 @@ export interface Person {
   phone?: string;
   profileImageUrl?: string;
   roles: string[];
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+  };
 }
 
 export interface School {

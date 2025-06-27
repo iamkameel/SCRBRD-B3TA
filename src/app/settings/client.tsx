@@ -15,7 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { Person } from '@/lib/data';
-import { updatePlayerAction } from '@/lib/actions/players';
+import { updatePlayerAction, updateNotificationPreferencesAction } from '@/lib/actions/players';
 
 const profileSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -29,6 +29,9 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export default function SettingsClient({ userProfile }: { userProfile: Person | null }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [isNotificationPending, startNotificationTransition] = React.useTransition();
+
+  const [emailNotifications, setEmailNotifications] = React.useState(userProfile?.notificationPreferences?.email ?? false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -59,6 +62,23 @@ export default function SettingsClient({ userProfile }: { userProfile: Person | 
       }
     });
   }
+
+  const handleEmailNotificationChange = (value: boolean) => {
+    if (!userProfile) return;
+
+    setEmailNotifications(value);
+    
+    startNotificationTransition(async () => {
+      try {
+        await updateNotificationPreferencesAction(userProfile.personId, { email: value });
+        toast({ title: "Settings Saved", description: "Your email notification preferences have been updated." });
+      } catch (error) {
+        setEmailNotifications(!value);
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not update preferences.", variant: "destructive" });
+      }
+    });
+  };
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -112,7 +132,12 @@ export default function SettingsClient({ userProfile }: { userProfile: Person | 
                     <Label htmlFor="email-notifications" className="font-medium">Email Notifications</Label>
                     <p className="text-sm text-muted-foreground">Receive updates about match changes and summaries via email.</p>
                 </div>
-                <Switch id="email-notifications" defaultChecked />
+                <Switch 
+                  id="email-notifications"
+                  checked={emailNotifications}
+                  onCheckedChange={handleEmailNotificationChange}
+                  disabled={isNotificationPending || !userProfile}
+                />
             </div>
             <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>

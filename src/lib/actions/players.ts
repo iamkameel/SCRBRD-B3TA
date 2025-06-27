@@ -371,3 +371,34 @@ export async function generateAndSavePlayerPortraitAction(personId: string) {
         throw new Error("Could not generate or save portrait.");
     }
 }
+
+export async function updateNotificationPreferencesAction(personId: string, preferences: { email?: boolean; push?: boolean }) {
+  if (!userId) throw new Error("User not authenticated");
+  const personRef = doc(db, 'people', personId);
+  
+  const personSnap = await getDoc(personRef);
+  if (!personSnap.exists() || personSnap.data().userId !== userId) {
+    throw new Error("Person not found or you do not have permission.");
+  }
+  
+  const updates: { [key: string]: boolean } = {};
+  if (preferences.email !== undefined) {
+    updates['notificationPreferences.email'] = preferences.email;
+  }
+  if (preferences.push !== undefined) {
+    updates['notificationPreferences.push'] = preferences.push;
+  }
+  
+  if (Object.keys(updates).length === 0) {
+    return;
+  }
+
+  try {
+    await updateDoc(personRef, updates);
+  } catch (error) {
+    console.error("Error updating notification preferences:", error);
+    throw new Error("Could not update notification preferences.");
+  }
+
+  revalidatePath('/settings');
+}
