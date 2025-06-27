@@ -24,6 +24,7 @@ This document outlines the major features and refinements implemented in this ap
 
 -   **AI Match Summaries**: The AI can generate concise, journalistic summaries of completed matches using the scorecard data. These summaries are available for download.
 -   **AI Match Previews**: For scheduled matches, the AI analyzes team stats, key players, and weather to produce an analytical preview.
+-   **AI Player of the Match Selection**: After a match is completed, the AI analyzes the scorecard to determine the most valuable player and provides a justification for its choice.
 -   **AI Weather Forecasts**: Utilizes a Genkit Tool to fetch and display a relevant weather forecast for the match day and location.
 
 ## 4. Logistics & Transport
