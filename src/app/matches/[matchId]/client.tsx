@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -37,7 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction, generateMatchPreviewAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction } from '@/lib/actions/matches';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
@@ -351,6 +351,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [isGenerating, startGenerationTransition] = React.useTransition();
   const [isGeneratingSummary, startSummaryGeneration] = React.useTransition();
   const [isGeneratingPreview, startPreviewGeneration] = React.useTransition();
+  const [isGeneratingCommentary, startCommentaryGeneration] = React.useTransition();
   const [isFetchingForecast, startForecastTransition] = React.useTransition();
   const [selectedOfficial, setSelectedOfficial] = React.useState<Official | null>(null);
   const [selectedTransport, setSelectedTransport] = React.useState<TransportAssignment | null>(null);
@@ -412,6 +413,17 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             toast({ title: "Success", description: result.message });
         } catch (error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate summary.", variant: "destructive" });
+        }
+    });
+  };
+
+  const handleGenerateCommentary = () => {
+    startCommentaryGeneration(async () => {
+        try {
+            const result = await generateMatchCommentaryAction(match.matchId);
+            toast({ title: "Success", description: result.message });
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate commentary.", variant: "destructive" });
         }
     });
   };
@@ -621,6 +633,36 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <div className="flex items-center justify-between"><div><CardTitle>Weather Forecast</CardTitle><CardDescription>AI-generated forecast for the match day and location.</CardDescription></div><Button onClick={handleGetForecast} disabled={isFetchingForecast}>{isFetchingForecast ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcw className="mr-2 h-4 w-4" />}{isFetchingForecast ? "Fetching..." : (forecast ? "Refresh" : "Get Forecast")}</Button></div>
                     </CardHeader>
                     <CardContent>{!forecast ? (<div className="text-center text-muted-foreground py-8"><p>No weather forecast available.</p><p className="text-xs">Click the button above to fetch the forecast.</p></div>) : (<div><p className="text-sm text-foreground/80 mb-4">{forecast.summary}</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm"><div className="flex items-center gap-2 p-3 rounded-md border"><WeatherIcon condition={forecast.details.condition} className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Condition</span><span className="font-semibold">{forecast.details.condition}</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><Thermometer className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Temperature</span><span className="font-semibold">{forecast.details.temperature}°C</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><CloudRain className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Precipitation</span><span className="font-semibold">{forecast.details.precipitationChance}%</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><Wind className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Wind</span><span className="font-semibold">{forecast.details.windSpeed} km/h</span></div></div></div></div>)}</CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Audio Commentary</CardTitle>
+                                <CardDescription>An AI-generated audio highlight reel of the match.</CardDescription>
+                            </div>
+                            {match.status === 'completed' && innings1 && (
+                                <Button onClick={handleGenerateCommentary} disabled={isGeneratingCommentary}>
+                                    <PlayCircle className={`mr-2 h-4 w-4 ${isGeneratingCommentary ? 'animate-spin' : ''}`} />
+                                    {isGeneratingCommentary ? "Generating..." : (match.audioCommentaryUrl ? "Regenerate" : "Generate")}
+                                </Button>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {match.audioCommentaryUrl ? (
+                            <audio controls className="w-full">
+                                <source src={match.audioCommentaryUrl} type="audio/wav" />
+                                Your browser does not support the audio element.
+                            </audio>
+                        ) : (
+                            <div className="text-center text-muted-foreground py-8">
+                                <p>No audio commentary has been generated yet.</p>
+                                {match.status === 'completed' && innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}
+                                {match.status !== 'completed' && <p className="text-xs">Commentary can be generated for completed matches.</p>}
+                            </div>
+                        )}
+                    </CardContent>
                 </Card>
             </TabsContent>
 

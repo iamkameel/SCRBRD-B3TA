@@ -102,6 +102,7 @@ export interface Match {
   teamAColor?: string;
   teamBColor?: string;
   playerOfTheMatch?: PlayerOfTheMatch;
+  audioCommentaryUrl?: string;
 }
 
 export interface Official {

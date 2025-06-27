@@ -15,6 +15,7 @@ import { generateMatchSummary } from '@/ai/flows/generate-match-summary-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
 import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-match-flow';
+import { generateMatchCommentary } from '@/ai/flows/generate-match-commentary-flow';
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
 
@@ -128,6 +129,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     userId: userId,
     summary: '',
     preview: '',
+    audioCommentaryUrl: '',
   };
 
   let newMatchId: string;
@@ -529,4 +531,36 @@ export async function generateMatchPreviewAction(matchId: string) {
 
     revalidatePath(`/matches/${matchId}`);
     return { success: true, message: "Match preview generated successfully!" };
+}
+
+export async function generateMatchCommentaryAction(matchId: string) {
+    if (!userId) throw new Error("User not authenticated");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    const scorecard = await getScorecard(matchId);
+    if (!scorecard) throw new Error("A complete scorecard is required to generate commentary.");
+    
+    try {
+        const { audioUrl } = await generateMatchCommentary({
+            innings1: scorecard.innings1,
+            innings2: scorecard.innings2,
+        });
+
+        if (!audioUrl) {
+            throw new Error("AI failed to generate audio commentary.");
+        }
+
+        const matchRef = doc(db, 'matches', matchId);
+        await updateDoc(matchRef, { audioCommentaryUrl: audioUrl });
+
+        revalidatePath(`/matches/${matchId}`);
+        return { success: true, message: "Audio commentary generated successfully!" };
+
+    } catch (error) {
+        console.error(`Error generating commentary for match ${matchId}:`, error);
+        if (error instanceof Error) throw error;
+        throw new Error("Could not generate audio commentary.");
+    }
 }
