@@ -4,6 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Link from 'next/link';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy, List, LayoutGrid } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -284,7 +285,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                         paginatedCompetitions.map((comp) => (
                         <TableRow key={comp.competitionId}>
                             <TableCell className="font-medium">
-                                {comp.name}
+                                <Link href={`/competitions/${comp.competitionId}`} className="hover:underline">{comp.name}</Link>
                                 {comp.winnerTeamName && (
                                     <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
                                         <Trophy className="h-3 w-3 text-accent" />

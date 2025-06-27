@@ -5,9 +5,12 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { Competition } from '@/lib/data';
+import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
+import { getMatchesByCompetition } from './matches';
+import { getTeam, getTeamStats } from './teams';
+import { getPlayerStats, getPerson, getMatchLineup } from './players';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -177,4 +180,88 @@ export async function deleteCompetitionAction(competitionId: string) {
   }
 
   revalidatePath('/competitions');
+}
+
+
+export async function getCompetitionStandings(competitionId: string): Promise<StandingTeam[]> {
+    const competition = await getCompetition(competitionId);
+    if (!competition) return [];
+
+    const matches = await getMatchesByCompetition(competitionId);
+    if (matches.length === 0) return [];
+    
+    // Get unique team IDs from the matches
+    const teamIds = new Set<string>();
+    matches.forEach(match => {
+        teamIds.add(match.teamAId);
+        teamIds.add(match.teamBId);
+    });
+
+    const teams: Team[] = [];
+    for (const teamId of teamIds) {
+        const team = await getTeam(teamId);
+        if (team) teams.push(team);
+    }
+    
+    const teamsWithStats: StandingTeam[] = await Promise.all(
+        teams.map(async (team) => {
+            // Note: This re-uses the global getTeamStats. For a large-scale app, we might
+            // want a getTeamStatsForCompetition function that only considers matches from this competition.
+            // For this demo, using the season-wide stats is acceptable.
+            const stats = await getTeamStats(team.teamId);
+            return { ...team, stats };
+        })
+    );
+
+    return teamsWithStats.sort((a, b) => {
+        if (b.stats.matchesWon !== a.stats.matchesWon) {
+            return b.stats.matchesWon - a.stats.matchesWon;
+        }
+        return b.stats.netRunRate - a.stats.netRunRate;
+    });
+}
+
+
+export async function getCompetitionLeaderboards(competitionId: string): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
+    const matches = await getMatchesByCompetition(competitionId);
+    if (matches.length === 0) return { topRunScorers: [], topWicketTakers: [] };
+
+    const playerIds = new Set<string>();
+    for (const match of matches) {
+        const [lineupA, lineupB] = await Promise.all([
+            getMatchLineup(match.matchId, match.teamAId),
+            getMatchLineup(match.matchId, match.teamBId),
+        ]);
+        lineupA.forEach(id => playerIds.add(id));
+        lineupB.forEach(id => playerIds.add(id));
+    }
+    
+    // Note: This is a simplification for the demo.
+    // A real-world app would calculate these stats based only on the matches in this competition.
+    // Here we are showing the players from this competition, but with their overall season stats.
+
+    const allPlayersInCompetition: Person[] = [];
+    for (const playerId of playerIds) {
+        const player = await getPerson(playerId);
+        if (player) allPlayersInCompetition.push(player);
+    }
+
+    const playersWithStats: LeaderboardPlayer[] = await Promise.all(
+        allPlayersInCompetition.map(async (player) => {
+            const stats = await getPlayerStats(player.personId); // Re-using global stats
+            return { ...player, stats };
+        })
+    );
+
+    const topRunScorers = [...playersWithStats]
+        .filter(p => p.stats.totalRuns > 0)
+        .sort((a, b) => b.stats.totalRuns - a.stats.totalRuns)
+        .slice(0, 5);
+
+    const topWicketTakers = [...playersWithStats]
+        .filter(p => p.stats.wicketsTaken > 0)
+        .sort((a, b) => b.stats.wicketsTaken - a.stats.wicketsTaken || a.stats.bowlingAverage - b.stats.bowlingAverage)
+        .slice(0, 5);
+        
+    return { topRunScorers, topWicketTakers };
 }

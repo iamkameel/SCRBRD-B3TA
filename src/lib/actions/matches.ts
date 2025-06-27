@@ -564,3 +564,38 @@ export async function generateMatchCommentaryAction(matchId: string) {
         throw new Error("Could not generate audio commentary.");
     }
 }
+
+
+export async function getMatchesByCompetition(competitionId: string): Promise<Match[]> {
+  if (!userId) return [];
+  if (!competitionId) return [];
+  try {
+    const matchesCollection = collection(db, 'matches');
+    const q = query(matchesCollection, where("userId", "==", userId), where("competitionId", "==", competitionId));
+    
+    const [teams, matchSnapshot] = await Promise.all([
+      getTeams(),
+      getDocs(q),
+    ]);
+    
+    const teamColorMap = new Map<string, { primary?: string; secondary?: string }>();
+    teams.forEach(team => {
+      teamColorMap.set(team.teamId, team.teamColors || {});
+    });
+
+    const matchesList = matchSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        matchId: doc.id,
+        ...data,
+        dateTime: (data.dateTime as Timestamp).toDate(),
+        teamAColor: teamColorMap.get(data.teamAId)?.primary,
+        teamBColor: teamColorMap.get(data.teamBId)?.primary,
+      } as Match;
+    });
+    return matchesList.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+  } catch (error) {
+    console.error(`Error fetching matches for competition ${competitionId}:`, error);
+    return [];
+  }
+}

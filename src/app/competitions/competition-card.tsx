@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from "react";
+import Link from 'next/link';
 import { MoreHorizontal, Trash2, Edit, Trophy } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,10 +28,9 @@ export function CompetitionCard({ competition, onEdit, onDelete }: CompetitionCa
                 <div className="flex justify-between items-start">
                     <div className="flex-1 mr-2">
                         <CardTitle className="text-lg">
-                            {/* Placeholder Link - competition details page doesn't exist yet */}
-                            <span className="cursor-pointer hover:underline">
+                            <Link href={`/competitions/${competition.competitionId}`} className="hover:underline">
                                 {competition.name}
-                            </span>
+                            </Link>
                         </CardTitle>
                         <CardDescription>{competition.type}</CardDescription>
                     </div>
