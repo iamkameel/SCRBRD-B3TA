@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, School, Division, Season } from "@/lib/data";
 import { addTeamAction, updateTeamAction, deleteTeamAction } from '@/lib/actions/teams';
+import { TeamCard } from './team-card';
 
 const teamSchema = z.object({
   name: z.string().min(1, { message: "Team name is required." }),
@@ -130,10 +131,14 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
   const [isTeamDialogOpen, setIsTeamDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   
+  // View and Pagination state
+  const [view, setView] = React.useState<'list' | 'card'>('list');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = view === 'list' ? 10 : 12;
+  
   const [searchQuery, setSearchQuery] = React.useState("");
   const [divisionFilter, setDivisionFilter] = React.useState<string>("all");
   const [seasonFilter, setSeasonFilter] = React.useState<string>("all");
-
 
   const handleDelete = () => {
     if (!selectedTeam) return;
@@ -160,6 +165,24 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
 
   const filtersApplied = searchQuery || divisionFilter !== 'all' || seasonFilter !== 'all';
 
+  // Reset page to 1 when filters or view change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, divisionFilter, seasonFilter, view]);
+
+  // Pagination logic
+  const paginatedTeams = filteredTeams.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  const totalPages = Math.ceil(filteredTeams.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
 
   return (
     <>
@@ -176,91 +199,122 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                   <CardTitle>Team List</CardTitle>
                   <CardDescription>A list of all teams in the system.</CardDescription>
                 </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="icon" className="relative">
-                      <Search className="h-4 w-4" />
-                      <span className="sr-only">Search</span>
-                      {filtersApplied && (
-                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                        </span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="grid gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">Filter Teams</h4>
-                        <p className="text-sm text-muted-foreground">Filter the list of teams by name, division, or season.</p>
-                      </div>
-                      <div className="grid gap-4">
-                        <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="search-input">Name</Label>
-                          <Input
-                            id="search-input"
-                            placeholder="Team name..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="col-span-2 h-8"
-                          />
+                <div className="flex items-center gap-2">
+                    <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon" className="relative">
+                        <Search className="h-4 w-4" />
+                        <span className="sr-only">Search</span>
+                        {filtersApplied && (
+                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                            </span>
+                        )}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                        <div className="grid gap-4">
+                        <div className="space-y-2">
+                            <h4 className="font-medium leading-none">Filter Teams</h4>
+                            <p className="text-sm text-muted-foreground">Filter the list of teams by name, division, or season.</p>
                         </div>
-                        <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="division-filter">Division</Label>
-                          <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All Divisions</SelectItem>
-                                {divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}
-                              </SelectContent>
-                          </Select>
+                        <div className="grid gap-4">
+                            <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="search-input">Name</Label>
+                            <Input
+                                id="search-input"
+                                placeholder="Team name..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="col-span-2 h-8"
+                            />
+                            </div>
+                            <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="division-filter">Division</Label>
+                            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+                                <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Divisions</SelectItem>
+                                    {divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            </div>
+                            <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="season-filter">Season</Label>
+                            <Select value={seasonFilter} onValueChange={setSeasonFilter}>
+                                <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Seasons</SelectItem>
+                                    {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="season-filter">Season</Label>
-                           <Select value={seasonFilter} onValueChange={setSeasonFilter}>
-                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All Seasons</SelectItem>
-                                {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
-                              </SelectContent>
-                          </Select>
                         </div>
-                      </div>
+                    </PopoverContent>
+                    </Popover>
+                    <div className="flex items-center rounded-md bg-muted p-1">
+                        <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
+                        <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
                     </div>
-                  </PopoverContent>
-                </Popover>
+                </div>
               </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow><TableHead>Team Name</TableHead><TableHead>School</TableHead><TableHead>Division</TableHead><TableHead>Season</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTeams.length > 0 ? (
-                  filteredTeams.map((team) => (
-                    <TableRow key={team.teamId}>
-                      <TableCell className="font-medium"><Link href={`/teams/${team.teamId}`} className="hover:underline">{team.name}</Link></TableCell>
-                      <TableCell>{team.schoolName}</TableCell>
-                      <TableCell>{team.divisionName}</TableCell>
-                      <TableCell>{team.seasonName}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setSelectedTeam(team); setDialogMode('edit'); setIsTeamDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { setSelectedTeam(team); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={5} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
+            {view === 'list' && (
+                <Table>
+                <TableHeader>
+                    <TableRow><TableHead>Team Name</TableHead><TableHead>School</TableHead><TableHead>Division</TableHead><TableHead>Season</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                </TableHeader>
+                <TableBody>
+                    {paginatedTeams.length > 0 ? (
+                    paginatedTeams.map((team) => (
+                        <TableRow key={team.teamId}>
+                        <TableCell className="font-medium"><Link href={`/teams/${team.teamId}`} className="hover:underline">{team.name}</Link></TableCell>
+                        <TableCell>{team.schoolName}</TableCell>
+                        <TableCell>{team.divisionName}</TableCell>
+                        <TableCell>{team.seasonName}</TableCell>
+                        <TableCell className="text-right">
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => { setSelectedTeam(team); setDialogMode('edit'); setIsTeamDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => { setSelectedTeam(team); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
+                    )}
+                </TableBody>
+                </Table>
+            )}
+            {view === 'card' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {paginatedTeams.length > 0 ? (
+                        paginatedTeams.map(team => (
+                            <TeamCard 
+                                key={team.teamId} 
+                                team={team} 
+                                onEdit={() => { setSelectedTeam(team); setDialogMode('edit'); setIsTeamDialogOpen(true); }}
+                                onDelete={() => { setSelectedTeam(team); setIsDeleteDialogOpen(true); }}
+                            />
+                        ))
+                    ) : (
+                        <p className="col-span-full h-24 flex items-center justify-center text-muted-foreground">{filtersApplied ? "No teams found matching your filters." : "No teams found."}</p>
+                    )}
+                </div>
+            )}
+             {totalPages > 1 && (
+                <div className="flex items-center justify-center pt-8">
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</Button>
+                    <span className="mx-4 text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</Button>
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>
