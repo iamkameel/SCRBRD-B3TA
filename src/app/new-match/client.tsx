@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -59,6 +58,9 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
       time: "10:00",
     },
   });
+
+  const teamAId = form.watch('teamAId');
+  const teamBId = form.watch('teamBId');
 
   function onSubmit(data: FixtureFormValues) {
     startTransition(async () => {
@@ -126,7 +128,7 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
                                 </FormControl>
                                 <SelectContent>
                                 {teams.map((team) => (
-                                    <SelectItem key={team.teamId} value={team.teamId}>
+                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>
                                     {team.name}
                                     </SelectItem>
                                 ))}
@@ -150,7 +152,7 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
                                 </FormControl>
                                 <SelectContent>
                                 {teams.map((team) => (
-                                    <SelectItem key={team.teamId} value={team.teamId}>
+                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>
                                     {team.name}
                                     </SelectItem>
                                 ))}
