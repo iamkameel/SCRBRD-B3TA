@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { Competition, Season, Division } from "@/lib/data";
+import type { Competition, Season, Division, Team } from "@/lib/data";
 import { addCompetitionAction, updateCompetitionAction, deleteCompetitionAction } from '@/lib/actions/competitions';
 
 const competitionSchema = z.object({
@@ -42,12 +42,13 @@ const competitionSchema = z.object({
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
+  winnerTeamId: z.string().optional(),
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
 const COMPETITION_TYPES = ['League', 'Knockout', 'Series'] as const;
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 
-function CompetitionDialog({ mode, competition, seasons, divisions, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], open: boolean, onOpenChange: (open: boolean) => void }) {
+function CompetitionDialog({ mode, competition, seasons, divisions, teams, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
@@ -59,20 +60,37 @@ function CompetitionDialog({ mode, competition, seasons, divisions, open, onOpen
       seasonId: competition.seasonId,
       divisionId: competition.divisionId,
       status: competition.status,
+      winnerTeamId: competition.winnerTeamId || "",
     } : {
-      name: "", type: "League", status: "Draft"
+      name: "", type: "League", status: "Draft", winnerTeamId: "",
     },
   });
+  
+  const status = form.watch('status');
+  const divisionId = form.watch('divisionId');
+  const seasonId = form.watch('seasonId');
+  
+  const eligibleTeams = React.useMemo(() => {
+    if (!divisionId || !seasonId) return [];
+    return teams.filter(team => team.divisionId === divisionId && team.seasonId === seasonId);
+  }, [teams, divisionId, seasonId]);
 
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && competition) {
-        form.reset({ ...competition });
+        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "" });
       } else {
-        form.reset({ name: "", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined });
+        form.reset({ name: "", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "" });
       }
     }
   }, [competition, mode, open, form]);
+  
+  React.useEffect(() => {
+    // When status changes away from 'Completed', reset the winner field
+    if (form.getValues('status') !== 'Completed') {
+      form.setValue('winnerTeamId', '');
+    }
+  }, [form.getValues('status'), form]);
 
   function onSubmit(data: CompetitionFormValues) {
     startTransition(async () => {
@@ -105,6 +123,27 @@ function CompetitionDialog({ mode, competition, seasons, divisions, open, onOpen
             <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Draft" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+            {status === 'Completed' && (
+              <FormField control={form.control} name="winnerTeamId" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Winner (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending || eligibleTeams.length === 0}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={eligibleTeams.length === 0 ? "No eligible teams" : "Select a winning team"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">-- No Winner --</SelectItem>
+                      {eligibleTeams.map((team) => (
+                        <SelectItem key={team.teamId} value={team.teamId}>{team.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
             <DialogFooter><Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Competition"}</Button></DialogFooter>
           </form>
         </Form>
@@ -113,7 +152,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, open, onOpen
   );
 }
 
-export default function CompetitionsClient({ competitions, seasons, divisions }: { competitions: Competition[], seasons: Season[], divisions: Division[] }) {
+export default function CompetitionsClient({ competitions, seasons, divisions, teams }: { competitions: Competition[], seasons: Season[], divisions: Division[], teams: Team[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedCompetition, setSelectedCompetition] = React.useState<Competition | null>(null);
@@ -213,7 +252,15 @@ export default function CompetitionsClient({ competitions, seasons, divisions }:
                 {filteredCompetitions.length > 0 ? (
                     filteredCompetitions.map((comp) => (
                     <TableRow key={comp.competitionId}>
-                        <TableCell className="font-medium">{comp.name}</TableCell>
+                        <TableCell className="font-medium">
+                            {comp.name}
+                            {comp.winnerTeamName && (
+                                <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
+                                    <Trophy className="h-3 w-3 text-accent" />
+                                    <span>Winner: {comp.winnerTeamName}</span>
+                                </div>
+                            )}
+                        </TableCell>
                         <TableCell>{comp.type}</TableCell>
                         <TableCell>{comp.seasonName}</TableCell>
                         <TableCell>{comp.divisionName}</TableCell>
@@ -240,7 +287,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions }:
         </Card>
       </div>
       
-      <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />
+      <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
