@@ -98,3 +98,30 @@ export const PlayerOfTheMatchSchema = z.object({
     justification: z.string().describe("A short paragraph explaining why this player was chosen, citing their key stats (runs, balls, wickets, economy etc)."),
 });
 export type PlayerOfTheMatchOutput = z.infer<typeof PlayerOfTheMatchSchema>;
+
+// From generate-dream-team-flow.ts
+export const SimplifiedPlayerStatsSchema = z.object({
+  matchesPlayed: z.number(),
+  totalRuns: z.number(),
+  battingAverage: z.number(),
+  strikeRate: z.number(),
+  wicketsTaken: z.number(),
+  bowlingAverage: z.number(),
+  economyRate: z.number(),
+});
+
+export const DreamTeamPlayerInputSchema = z.object({
+  personId: z.string(),
+  name: z.string(),
+  roles: z.array(z.string()),
+  stats: SimplifiedPlayerStatsSchema,
+});
+
+export const SelectedPlayerSchema = z.object({
+  name: z.string().describe("The full name of the selected player."),
+  justification: z.string().describe("A brief justification for why this player was selected for the team, citing their key stats."),
+});
+export const DreamTeamOutputSchema = z.object({
+  team: z.array(SelectedPlayerSchema).length(11, { message: "The team must have exactly 11 players." }),
+});
+export type DreamTeamOutput = z.infer<typeof DreamTeamOutputSchema>;

@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "./dashboard-charts";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { DreamTeamCard } from "./dream-team-card";
 
 export default async function DashboardPage() {
   const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings] = await Promise.all([
@@ -141,6 +142,8 @@ export default async function DashboardPage() {
           </Tabs>
         </div>
       </div>
+
+       <DreamTeamCard />
 
        <Card>
         <CardHeader>
