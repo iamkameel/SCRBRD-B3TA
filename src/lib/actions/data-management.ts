@@ -4,7 +4,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, writeBatch, getDocs, doc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, writeBatch, getDocs, doc, query, where } from 'firebase/firestore';
 import { sampleData } from '@/lib/sample-data';
 import { getPlayers, deletePlayerAction } from './players';
 import { getTeams, deleteTeamAction } from './teams';
@@ -26,38 +26,54 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
+    if (!userId) {
+        return { success: false, message: "User not authenticated." };
+    }
+    
     try {
-        const subsets: SubsetName[] = ["Matches", "Teams", "Competitions", "People", "Fields", "Seasons", "Divisions", "Schools"];
-        
-        const getActions = {
-            'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools, 
-            'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
-        };
-        const deleteActions = {
-            'People': deletePlayerAction, 'Teams': deleteTeamAction, 'Matches': deleteMatchAction, 'Schools': deleteSchoolAction, 
-            'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction, 'Competitions': deleteCompetitionAction,
-        };
-        const idKeys = {
-            'People': 'personId', 'Teams': 'teamId', 'Matches': 'matchId', 'Schools': 'schoolId',
-            'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId', 'Competitions': 'competitionId',
-        } as const;
-        
-        for (const subset of subsets) {
-            const getAction = getActions[subset];
-            const deleteAction = deleteActions[subset];
-            const idKey = idKeys[subset];
+        const batch = writeBatch(db);
+        let deletedCount = 0;
+
+        const collectionsToClear = [
+            'schools', 'divisions', 'seasons', 'fields', 'people', 
+            'competitions', 'teams', 'matches', 'vehicles', 'familyLinks'
+        ];
+
+        for (const collName of collectionsToClear) {
+            const q = query(collection(db, collName), where("userId", "==", userId));
+            const snapshot = await getDocs(q);
             
-            const items = await getAction();
-            for (const item of items) {
-                // @ts-ignore - This is tricky to type perfectly without a larger refactor
-                await deleteAction(item[idKey]);
+            for (const docSnapshot of snapshot.docs) {
+                // Handle subcollections before deleting the parent document
+                if (collName === 'teams') {
+                    const rosterSnapshot = await getDocs(collection(db, docSnapshot.ref.path, 'roster'));
+                    rosterSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
+                }
+                if (collName === 'matches') {
+                    const subcollections = ['lineups', 'officials', 'scorecards', 'transportAssignments'];
+                    for (const sub of subcollections) {
+                         const subSnapshot = await getDocs(collection(db, docSnapshot.ref.path, sub));
+                         subSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
+                    }
+                }
+                if (collName === 'fields') {
+                    const assignmentsSnapshot = await getDocs(collection(db, docSnapshot.ref.path, 'assignments'));
+                    assignmentsSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
+                }
+                
+                // Delete the main document
+                batch.delete(docSnapshot.ref);
+                deletedCount++;
             }
         }
+        
+        await batch.commit();
+
         revalidatePath('/data-management');
         return { success: true, message: "All application data has been deleted." };
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to delete all data.";
-        console.error(message);
+        console.error("Deletion Error:", message);
         return { success: false, message };
     }
 }
@@ -74,7 +90,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         let itemCount = 0;
 
         // Process items with no dependencies first
-        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people'];
+        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people', 'vehicles'];
         for (const collName of independentCollections) {
             for (const item of sampleData[collName]) {
                 const idKey = collName === 'people' ? 'personId' : `${collName.slice(0, -1)}Id`;
@@ -96,8 +112,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         // Process Competitions
         for (const competition of sampleData.competitions) {
             const { competitionId: tempCompId, ...compData } = competition;
+            const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
+            const winnerTeamName = winnerTeamId ? sampleData.teams.find(t => t.teamId === compData.winnerTeamId)?.name : undefined;
 
-            const newCompData = {
+
+            const newCompData: any = {
                 ...compData,
                 seasonId: idMap.get(compData.seasonId),
                 divisionId: idMap.get(compData.divisionId),
@@ -105,6 +124,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
                 userId
             };
+
+            if (winnerTeamId && winnerTeamName) {
+                newCompData.winnerTeamId = winnerTeamId;
+                newCompData.winnerTeamName = winnerTeamName;
+            }
 
             const compDocRef = doc(collection(db, 'competitions'));
             batch.set(compDocRef, newCompData);
