@@ -261,7 +261,7 @@ export default function FieldsClient({ fields, groundskeepers }: { fields: Field
       </div>
 
       {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
-      {isAssignDialogOpen && selectedField && <AssignDialog field={selectedField} groundskeepers={groundskeepers} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
+      {isAssignDialogOpen && selectedField && <AssignDialog field={selectedField} groundskeepers={groundspeople} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

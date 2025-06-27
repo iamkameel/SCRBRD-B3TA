@@ -9,5 +9,5 @@ export default async function FieldsPage() {
     getPeopleByRole('Grounds-Keeper'),
   ]);
   
-  return <FieldsClient fields={fields} groundskeepers={groundskeepers} />;
+  return <FieldsClient fields={fields} groundskeepers={groundspeople} />;
 }

@@ -143,7 +143,6 @@ export interface Innings {
   teamName: string;
   totalRuns: number;
   wickets: number;
-
   overs: number;
   battingCard: BatsmanStats[];
   bowlingCard: BowlerStats[];
