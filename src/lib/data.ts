@@ -70,6 +70,12 @@ export interface RosterMember {
 
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
 
+export interface PlayerOfTheMatch {
+  name: string;
+  teamName: string;
+  justification: string;
+}
+
 export interface Match {
   matchId: string;
   teamAId: string;
@@ -90,6 +96,7 @@ export interface Match {
   preview?: string;
   teamAColor?: string;
   teamBColor?: string;
+  playerOfTheMatch?: PlayerOfTheMatch;
 }
 
 export interface Official {

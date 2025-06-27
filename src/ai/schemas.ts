@@ -90,3 +90,11 @@ export const GetMatchForecastOutputSchema = z.object({
     details: WeatherDetailsSchema,
 });
 export type GetMatchForecastOutput = z.infer<typeof GetMatchForecastOutputSchema>;
+
+// From generate-player-of-the-match-flow.ts
+export const PlayerOfTheMatchSchema = z.object({
+    name: z.string().describe("The full name of the player of the match."),
+    teamName: z.string().describe("The name of the player's team."),
+    justification: z.string().describe("A short paragraph explaining why this player was chosen, citing their key stats (runs, balls, wickets, economy etc)."),
+});
+export type PlayerOfTheMatchOutput = z.infer<typeof PlayerOfTheMatchSchema>;

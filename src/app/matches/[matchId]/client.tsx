@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -584,6 +584,24 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                             </div>
                         </CardHeader>
                         <CardContent>{match.summary ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.summary}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No summary has been generated for this match yet.</p>{innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}{!innings1 && <p className="text-xs">A summary can be generated once a scorecard exists.</p>}</div>)}</CardContent>
+                    </Card>
+                )}
+                {match.playerOfTheMatch && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Player of the Match</CardTitle>
+                            <CardDescription>AI-selected most valuable player for this match.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center gap-4">
+                                <Award className="h-10 w-10 text-accent flex-shrink-0" />
+                                <div>
+                                    <p className="text-xl font-bold">{match.playerOfTheMatch.name}</p>
+                                    <p className="text-sm text-muted-foreground">{match.playerOfTheMatch.teamName}</p>
+                                </div>
+                            </div>
+                            <p className="mt-4 text-sm text-foreground/80 whitespace-pre-wrap">{match.playerOfTheMatch.justification}</p>
+                        </CardContent>
                     </Card>
                 )}
                 <Card>

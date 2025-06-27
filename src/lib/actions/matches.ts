@@ -7,13 +7,14 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc } from 'firebase/firestore';
-import type { Match, Official, Innings, MatchForecast } from '@/lib/data';
+import type { Match, Official, Innings, MatchForecast, PlayerOfTheMatch } from '@/lib/data';
 import { getPerson } from './players';
-import type { GenerateScorecardOutput, GenerateMatchSummaryInput } from '@/ai/schemas';
+import type { GenerateScorecardOutput, GenerateMatchSummaryInput, PlayerOfTheMatchOutput } from '@/ai/schemas';
 import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
 import { generateMatchSummary } from '@/ai/flows/generate-match-summary-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
+import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-match-flow';
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
 
@@ -374,7 +375,7 @@ export async function getScorecard(matchId: string): Promise<{ innings1: Innings
   }
 }
 
-export async function saveScorecard(matchId: string, scorecardData: GenerateScorecardOutput) {
+export async function saveScorecard(matchId: string, scorecardData: GenerateScorecardOutput, potmData: PlayerOfTheMatchOutput) {
   if (!userId) throw new Error("User not authenticated");
   const match = await getMatch(matchId);
   if (!match) throw new Error("Match not found or permission denied.");
@@ -388,7 +389,7 @@ export async function saveScorecard(matchId: string, scorecardData: GenerateScor
   batch.set(innings2Ref, scorecardData.innings2);
   
   const matchRef = doc(db, 'matches', matchId);
-  batch.update(matchRef, { status: 'completed' });
+  batch.update(matchRef, { status: 'completed', playerOfTheMatch: potmData });
 
   try {
     await batch.commit();
@@ -431,18 +432,24 @@ export async function generateAndSaveScorecardAction(matchId: string) {
         getPlayerNames(teamBLineup),
     ]);
     
-    const generatedData = await generateScorecard({
+    const scorecardData = await generateScorecard({
         teamAName: match.teamAName,
         teamAPlayers: teamAPlayerNames,
         teamBName: match.teamBName,
         teamBPlayers: teamBPlayerNames,
     });
     
-    if (generatedData) {
-        await saveScorecard(matchId, generatedData);
-    } else {
+    if (!scorecardData) {
         throw new Error("AI failed to generate scorecard data.");
     }
+    
+    const potmData = await generatePlayerOfTheMatch(scorecardData);
+
+    if (!potmData) {
+        throw new Error("AI failed to generate Player of the Match data.");
+    }
+    
+    await saveScorecard(matchId, scorecardData, potmData);
 
     revalidatePath(`/matches/${matchId}`);
     return { success: true, message: "Scorecard generated successfully!" };
