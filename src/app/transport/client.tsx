@@ -131,7 +131,7 @@ export default function TransportClient({ vehicles, assignments, drivers }: { ve
         toast({ title: "Vehicle Deleted", description: `${selectedVehicle.name} has been deleted.` });
         setIsDeleteDialogOpen(false);
         setSelectedVehicle(null);
-      } catch (error) {
+      } catch (error) => {
         toast({ title: "Error", description: error instanceof Error ? error.message : "Could not delete vehicle.", variant: "destructive" });
         setIsDeleteDialogOpen(false);
         setSelectedVehicle(null);
