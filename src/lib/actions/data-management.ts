@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp, writeBatch, getDocs, doc, query, where } from 'firebase/firestore';
-import { sampleData } from '@/lib/sample-data';
+import { sampleData, sampleScorecardData } from '@/lib/sample-data';
 import { getPlayers, deletePlayerAction } from './players';
 import { getTeams, deleteTeamAction } from './teams';
 import { getMatches, deleteMatchAction } from './matches';
@@ -171,9 +171,10 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         // Process Matches
         for (const match of sampleData.matches) {
             const { matchId: tempMatchId, competitionId: tempCompId, ...matchData } = match;
-
             const competition = sampleData.competitions.find(c => c.competitionId === tempCompId);
             if (!competition) continue;
+
+            const scorecardData = sampleScorecardData[tempMatchId as keyof typeof sampleScorecardData];
 
             const newMatchData = {
                 ...matchData,
@@ -190,12 +191,25 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 teamBName: sampleData.teams.find(t => t.teamId === matchData.teamBId)?.name,
                 fieldName: sampleData.fields.find(f => f.fieldId === matchData.fieldId)?.name,
                 dateTime: Timestamp.fromDate(new Date(matchData.dateTime)),
-                userId
+                userId,
+                playerOfTheMatch: scorecardData ? scorecardData.playerOfTheMatch : null,
+                summary: '',
+                preview: '',
             };
             const matchDocRef = doc(collection(db, 'matches'));
             batch.set(matchDocRef, newMatchData);
             idMap.set(tempMatchId, matchDocRef.id);
             itemCount++;
+
+            if (scorecardData) {
+                const innings1Ref = doc(collection(db, matchDocRef.path, 'scorecards'), 'innings1');
+                batch.set(innings1Ref, scorecardData.innings1);
+                itemCount++;
+
+                const innings2Ref = doc(collection(db, matchDocRef.path, 'scorecards'), 'innings2');
+                batch.set(innings2Ref, scorecardData.innings2);
+                itemCount++;
+            }
         }
 
         await batch.commit();

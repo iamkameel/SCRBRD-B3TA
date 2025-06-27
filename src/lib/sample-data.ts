@@ -134,3 +134,79 @@ export const sampleData = {
         },
     ],
 };
+
+export const sampleScorecardData = {
+    "temp_match_2": {
+        playerOfTheMatch: {
+            name: "Evelyn Lewis",
+            teamName: "Oakridge Oaks",
+            justification: "For a match-winning, unbeaten 75 runs off just 50 balls, anchoring the innings and leading the Oakridge Oaks to a defendable total with a blistering strike rate.",
+        },
+        innings1: {
+            teamName: "Oakridge Oaks",
+            totalRuns: 164, wickets: 5, overs: 20,
+            battingCard: [
+                { name: "Charlotte Harris", status: "c. Smith b. Jones", runs: 25, balls: 15, fours: 4, sixes: 1, strikeRate: 166.67 },
+                { name: "Amelia Clark", status: "b. Anderson", runs: 10, balls: 8, fours: 2, sixes: 0, strikeRate: 125.00 },
+                { name: "Evelyn Lewis", status: "not out", runs: 75, balls: 50, fours: 6, sixes: 3, strikeRate: 150.00 },
+                { name: "Abigail Walker", status: "run out (Wilson)", runs: 12, balls: 15, fours: 1, sixes: 0, strikeRate: 80.00 },
+                { name: "Harper Hall", status: "lbw b. Taylor", runs: 5, balls: 7, fours: 0, sixes: 0, strikeRate: 71.43 },
+                { name: "Sophia Allen", status: "c. Davis b. Jones", runs: 18, balls: 13, fours: 2, sixes: 1, strikeRate: 138.46 },
+                { name: "Isabella Young", status: "not out", runs: 8, balls: 12, fours: 1, sixes: 0, strikeRate: 66.67 },
+                { name: "Mia King", status: "did not bat", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 },
+                { name: "Ava Wright", status: "did not bat", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 },
+                { name: "Olivia Scott", status: "did not bat", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 },
+                { name: "Emma Green", status: "did not bat", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 },
+            ],
+            bowlingCard: [
+                { name: "Noah Jones", overs: 4, maidens: 0, runs: 28, wickets: 2, economy: 7.00 },
+                { name: "Mason Anderson", overs: 4, maidens: 0, runs: 35, wickets: 1, economy: 8.75 },
+                { name: "Benjamin Miller", overs: 4, maidens: 0, runs: 30, wickets: 0, economy: 7.50 },
+                { name: "Alexander Taylor", overs: 4, maidens: 0, runs: 25, wickets: 1, economy: 6.25 },
+                { name: "Michael Thomas", overs: 4, maidens: 0, runs: 40, wickets: 0, economy: 10.00 },
+            ],
+            fallOfWickets: [
+                { runs: 28, wicket: 1, batsmanName: "Amelia Clark", over: 3.2 },
+                { runs: 55, wicket: 2, batsmanName: "Charlotte Harris", over: 6.1 },
+                { runs: 80, wicket: 3, batsmanName: "Abigail Walker", over: 10.5 },
+                { runs: 95, wicket: 4, batsmanName: "Harper Hall", over: 13.2 },
+                { runs: 120, wicket: 5, batsmanName: "Sophia Allen", over: 16.4 },
+            ],
+            extras: { total: 11, details: "(w 5, nb 1, b 4, lb 1)" },
+        },
+        innings2: {
+            teamName: "Greenwood Gators",
+            totalRuns: 152, wickets: 7, overs: 20,
+            battingCard: [
+                { name: "Liam Smith", status: "c. Clark b. Scott", runs: 45, balls: 30, fours: 5, sixes: 2, strikeRate: 150.00 },
+                { name: "Noah Jones", status: "b. Green", runs: 2, balls: 5, fours: 0, sixes: 0, strikeRate: 40.00 },
+                { name: "Oliver Williams", status: "b. Wright", runs: 33, balls: 28, fours: 3, sixes: 1, strikeRate: 117.86 },
+                { name: "Elijah Brown", status: "st King b. Scott", runs: 15, balls: 15, fours: 1, sixes: 0, strikeRate: 100.00 },
+                { name: "James Davis", status: "run out (Harris)", runs: 8, balls: 10, fours: 0, sixes: 0, strikeRate: 80.00 },
+                { name: "Benjamin Miller", status: "c & b Wright", runs: 22, balls: 18, fours: 2, sixes: 0, strikeRate: 122.22 },
+                { name: "Lucas Wilson", status: "not out", runs: 10, balls: 9, fours: 1, sixes: 0, strikeRate: 111.11 },
+                { name: "Henry Moore", status: "b. Green", runs: 1, balls: 3, fours: 0, sixes: 0, strikeRate: 33.33 },
+                { name: "Alexander Taylor", status: "not out", runs: 5, balls: 2, fours: 1, sixes: 0, strikeRate: 250.00 },
+                { name: "Mason Anderson", status: "did not bat", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 },
+                { name: "Michael Thomas", status: "did not bat", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0 },
+            ],
+            bowlingCard: [
+                { name: "Ava Wright", overs: 4, maidens: 0, runs: 25, wickets: 2, economy: 6.25 },
+                { name: "Olivia Scott", overs: 4, maidens: 0, runs: 30, wickets: 2, economy: 7.50 },
+                { name: "Emma Green", overs: 4, maidens: 0, runs: 28, wickets: 2, economy: 7.00 },
+                { name: "Isabella Young", overs: 4, maidens: 0, runs: 40, wickets: 0, economy: 10.00 },
+                { name: "Mia King", overs: 4, maidens: 0, runs: 24, wickets: 0, economy: 6.00 },
+            ],
+            fallOfWickets: [
+                { runs: 10, wicket: 1, batsmanName: "Noah Jones", over: 2.1 },
+                { runs: 65, wicket: 2, batsmanName: "Liam Smith", over: 8.3 },
+                { runs: 90, wicket: 3, batsmanName: "Elijah Brown", over: 12.4 },
+                { runs: 105, wicket: 4, batsmanName: "James Davis", over: 15.1 },
+                { runs: 130, wicket: 5, batsmanName: "Oliver Williams", over: 17.2 },
+                { runs: 140, wicket: 6, batsmanName: "Benjamin Miller", over: 18.5 },
+                { runs: 142, wicket: 7, batsmanName: "Henry Moore", over: 19.2 },
+            ],
+            extras: { total: 11, details: "(w 6, nb 2, b 2, lb 1)" },
+        },
+    }
+};
