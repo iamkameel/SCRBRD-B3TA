@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Competition, Season, Division } from "@/lib/data";
@@ -119,6 +121,24 @@ export default function CompetitionsClient({ competitions, seasons, divisions }:
   const [isCompetitionDialogOpen, setIsCompetitionDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
+  // Filtering state
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [typeFilter, setTypeFilter] = React.useState("all");
+  const [seasonFilter, setSeasonFilter] = React.useState("all");
+  const [divisionFilter, setDivisionFilter] = React.useState("all");
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  
+  const filteredCompetitions = competitions.filter(comp => {
+    const matchesSearch = comp.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === 'all' || comp.type === typeFilter;
+    const matchesSeason = seasonFilter === 'all' || comp.seasonId === seasonFilter;
+    const matchesDivision = divisionFilter === 'all' || comp.divisionId === divisionFilter;
+    const matchesStatus = statusFilter === 'all' || comp.status === statusFilter;
+    return matchesSearch && matchesType && matchesSeason && matchesDivision && matchesStatus;
+  });
+
+  const filtersApplied = searchQuery || typeFilter !== 'all' || seasonFilter !== 'all' || divisionFilter !== 'all' || statusFilter !== 'all';
+
   const handleDelete = () => {
     if (!selectedCompetition) return;
     startTransition(async () => {
@@ -143,7 +163,40 @@ export default function CompetitionsClient({ competitions, seasons, divisions }:
           <Button onClick={() => { setDialogMode('add'); setSelectedCompetition(null); setIsCompetitionDialogOpen(true); }}><PlusCircle className="mr-2"/>Add Competition</Button>
         </header>
         <Card>
-            <CardHeader><CardTitle>Competition List</CardTitle><CardDescription>A list of all competitions in the system.</CardDescription></CardHeader>
+            <CardHeader>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <CardTitle>Competition List</CardTitle>
+                        <CardDescription>A list of all competitions in the system.</CardDescription>
+                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="icon" className="relative">
+                                <Search className="h-4 w-4" />
+                                <span className="sr-only">Filter Competitions</span>
+                                {filtersApplied && (
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                    </span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <div className="grid gap-4">
+                                <div className="space-y-2"><h4 className="font-medium leading-none">Filter Competitions</h4><p className="text-sm text-muted-foreground">Find competitions by name, type, or status.</p></div>
+                                <div className="grid gap-4">
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="search-input">Name</Label><Input id="search-input" placeholder="Competition name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="col-span-2 h-8"/></div>
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="type-filter">Type</Label><Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Types" /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{COMPETITION_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="season-filter">Season</Label><Select value={seasonFilter} onValueChange={setSeasonFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger><SelectContent><SelectItem value="all">All Seasons</SelectItem>{seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="division-filter">Division</Label><Select value={divisionFilter} onValueChange={setDivisionFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions"/></SelectTrigger><SelectContent><SelectItem value="all">All Divisions</SelectItem>{divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="status-filter">Status</Label><Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Statuses" /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </CardHeader>
             <CardContent>
             <Table>
                 <TableHeader>
@@ -157,8 +210,8 @@ export default function CompetitionsClient({ competitions, seasons, divisions }:
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {competitions.length > 0 ? (
-                    competitions.map((comp) => (
+                {filteredCompetitions.length > 0 ? (
+                    filteredCompetitions.map((comp) => (
                     <TableRow key={comp.competitionId}>
                         <TableCell className="font-medium">{comp.name}</TableCell>
                         <TableCell>{comp.type}</TableCell>
@@ -178,7 +231,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions }:
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">No competitions found. Get started by adding one.</TableCell>
+                    <TableCell colSpan={6} className="h-24 text-center">{filtersApplied ? "No competitions found matching your filters." : "No competitions found. Get started by adding one."}</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
