@@ -230,8 +230,8 @@ export async function addPersonLinkAction(currentPersonId: string, linkedPersonI
     console.error("Error adding family link:", error);
     throw new Error("Could not create the link.");
   }
-  revalidatePath(`/players/${currentPersonId}`);
-  revalidatePath(`/players/${linkedPersonId}`);
+  revalidatePath(`/people/${currentPersonId}`);
+  revalidatePath(`/people/${linkedPersonId}`);
 }
 
 const removeLinkSchema = z.object({
@@ -260,8 +260,8 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
         console.error("Error removing family link:", error);
         throw new Error("Could not remove link.");
     }
-    revalidatePath(`/players/${currentPersonId}`);
-    revalidatePath(`/players/${linkedPersonId}`);
+    revalidatePath(`/people/${currentPersonId}`);
+    revalidatePath(`/people/${linkedPersonId}`);
 }
 
 
