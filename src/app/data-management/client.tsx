@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -32,6 +33,7 @@ const SUBSETS: { name: SubsetName, dependencies: boolean }[] = [
     { name: 'Seasons', dependencies: false },
     { name: 'Fields', dependencies: false },
     { name: 'People', dependencies: false },
+    { name: 'Competitions', dependencies: true },
     { name: 'Teams', dependencies: true },
     { name: 'Matches', dependencies: true },
 ];
