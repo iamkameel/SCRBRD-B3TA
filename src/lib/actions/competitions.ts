@@ -8,9 +8,9 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
-import { getMatchesByCompetition } from './matches';
+import { getMatchesByCompetition, getMatchLineup } from './matches';
 import { getTeam, getTeamStats } from './teams';
-import { getPlayerStats, getPerson, getMatchLineup } from './players';
+import { getPlayerStats, getPerson } from './players';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
