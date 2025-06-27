@@ -181,6 +181,16 @@ export interface PlayerStats {
     stumpings: number;
 }
 
+export interface TeamStats {
+    matchesPlayed: number;
+    matchesWon: number;
+    matchesLost: number;
+    matchesDrawn: number;
+    totalRunsScored: number;
+    totalWicketsTaken: number;
+    netRunRate: number;
+}
+
 export interface PlayerTeamAssignment {
   teamId: string;
   teamName: string;
