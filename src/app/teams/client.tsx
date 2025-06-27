@@ -43,6 +43,7 @@ const teamSchema = z.object({
   schoolId: z.string({ required_error: "Please select a school." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   seasonId: z.string({ required_error: "Please select a season." }),
+  teamClass: z.string().optional(),
   primaryColor: z.string().optional(),
   secondaryColor: z.string().optional(),
 });
@@ -56,24 +57,26 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamSchema),
     defaultValues: mode === 'edit' && team ? {
-      name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId,
+      name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass || '',
       primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
     } : {
-      name: "", primaryColor: "#000000", secondaryColor: "#ffffff",
+      name: "", teamClass: "", primaryColor: "#000000", secondaryColor: "#ffffff",
     },
   });
 
   React.useEffect(() => {
-    if (mode === 'edit' && team) {
-      form.reset({
-        name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId,
-        primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
-      });
-    } else {
-      form.reset({
-        name: "", schoolId: undefined, divisionId: undefined, seasonId: undefined,
-        primaryColor: "#000000", secondaryColor: "#ffffff",
-      });
+    if (open) {
+      if (mode === 'edit' && team) {
+        form.reset({
+          name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass || '',
+          primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
+        });
+      } else {
+        form.reset({
+          name: "", schoolId: undefined, divisionId: undefined, seasonId: undefined, teamClass: '',
+          primaryColor: "#000000", secondaryColor: "#ffffff",
+        });
+      }
     }
   }, [team, mode, open, form]);
 
@@ -103,7 +106,8 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Team Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood Gators" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Team Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood Gators 1st XI" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="teamClass" render={({ field }) => (<FormItem><FormLabel>Class / Level (Optional)</FormLabel><FormControl><Input placeholder="e.g. A, B, 1st XI" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>School</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a school" /></SelectTrigger></FormControl><SelectContent>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -265,7 +269,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
             {view === 'list' && (
                 <Table>
                 <TableHeader>
-                    <TableRow><TableHead>Team Name</TableHead><TableHead>School</TableHead><TableHead>Division</TableHead><TableHead>Season</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                    <TableRow><TableHead>Team Name</TableHead><TableHead>School</TableHead><TableHead>Division</TableHead><TableHead>Season</TableHead><TableHead>Class</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
                     {paginatedTeams.length > 0 ? (
@@ -275,6 +279,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                         <TableCell>{team.schoolName}</TableCell>
                         <TableCell>{team.divisionName}</TableCell>
                         <TableCell>{team.seasonName}</TableCell>
+                        <TableCell>{team.teamClass}</TableCell>
                         <TableCell className="text-right">
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
@@ -287,7 +292,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                         </TableRow>
                     ))
                     ) : (
-                    <TableRow><TableCell colSpan={5} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
                     )}
                 </TableBody>
                 </Table>

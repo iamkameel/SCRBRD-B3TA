@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -20,6 +21,7 @@ export async function getSchools(): Promise<School[]> {
     const schoolsList = schoolSnapshot.docs.map(doc => ({
       schoolId: doc.id,
       name: doc.data().name,
+      abbreviation: doc.data().abbreviation,
     }));
     return schoolsList;
   } catch (error) {
@@ -31,6 +33,7 @@ export async function getSchools(): Promise<School[]> {
 
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
+  abbreviation: z.string().optional(),
 });
 
 type SchoolFormValues = z.infer<typeof schoolSchema>;
@@ -45,11 +48,12 @@ export async function addSchoolAction(data: SchoolFormValues) {
     throw new Error('Invalid school name.');
   }
 
-  const { name } = validatedFields.data;
+  const { name, abbreviation } = validatedFields.data;
 
   try {
     await addDoc(collection(db, 'schools'), {
-      name: name,
+      name,
+      abbreviation: abbreviation || '',
       userId: userId,
     });
   } catch (error) {
@@ -67,6 +71,7 @@ export async function addSchoolAction(data: SchoolFormValues) {
 const updateSchoolSchema = z.object({
   schoolId: z.string(),
   name: z.string().min(1, { message: "School name is required." }),
+  abbreviation: z.string().optional(),
 });
 
 export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema>) {
@@ -77,7 +82,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
         throw new Error('Invalid school data.');
     }
     
-    const { schoolId, name } = validatedFields.data;
+    const { schoolId, name, abbreviation } = validatedFields.data;
     const schoolDocRef = doc(db, 'schools', schoolId);
 
     // Verify ownership
@@ -87,7 +92,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
     }
 
     try {
-        await updateDoc(schoolDocRef, { name });
+        await updateDoc(schoolDocRef, { name, abbreviation: abbreviation || '' });
     } catch (error) {
         console.error("Error updating school:", error);
         throw new Error("Could not update school.");

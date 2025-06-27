@@ -36,6 +36,7 @@ import { addSchoolAction, updateSchoolAction, deleteSchoolAction } from '@/lib/a
 // Schema based on competitions.schools
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
+  abbreviation: z.string().optional(),
 });
 
 type SchoolFormValues = z.infer<typeof schoolSchema>;
@@ -47,9 +48,7 @@ function AddSchoolDialog() {
 
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolSchema),
-    defaultValues: {
-      name: "",
-    },
+    defaultValues: { name: "", abbreviation: "" },
   });
 
   function onSubmit(data: SchoolFormValues) {
@@ -89,19 +88,8 @@ function AddSchoolDialog() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>School Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <DialogFooter>
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Saving..." : "Save School"}
@@ -120,14 +108,12 @@ function EditSchoolDialog({ school, open, onOpenChange }: { school: School, open
 
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolSchema),
-    defaultValues: {
-      name: school.name,
-    },
+    defaultValues: { name: school.name, abbreviation: school.abbreviation },
   });
 
   React.useEffect(() => {
     if (school) {
-      form.reset({ name: school.name });
+      form.reset({ name: school.name, abbreviation: school.abbreviation });
     }
   }, [school, form]);
 
@@ -162,19 +148,8 @@ function EditSchoolDialog({ school, open, onOpenChange }: { school: School, open
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>School Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancel</Button>
               <Button type="submit" disabled={isPending}>
@@ -244,6 +219,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Abbreviation</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -252,6 +228,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
                   schools.map((school) => (
                     <TableRow key={school.schoolId}>
                       <TableCell className="font-medium">{school.name}</TableCell>
+                      <TableCell>{school.abbreviation}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -286,7 +263,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center">
+                    <TableCell colSpan={3} className="h-24 text-center">
                       No schools found. Get started by adding a school.
                     </TableCell>
                   </TableRow>

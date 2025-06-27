@@ -51,6 +51,7 @@ export function TeamCard({ team, onEdit, onDelete }: TeamCardProps) {
                 <div className="text-sm text-muted-foreground space-y-1">
                     <p><strong>Division:</strong> {team.divisionName}</p>
                     <p><strong>Season:</strong> {team.seasonName}</p>
+                    {team.teamClass && <p><strong>Class:</strong> {team.teamClass}</p>}
                 </div>
             </CardContent>
         </Card>

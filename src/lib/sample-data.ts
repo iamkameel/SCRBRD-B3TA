@@ -17,8 +17,8 @@ const pastDate = (days: number) => {
 
 export const sampleData = {
     schools: [
-        { schoolId: 'temp_school_1', name: 'Greenwood High' },
-        { schoolId: 'temp_school_2', name: 'Oakridge Academy' },
+        { schoolId: 'temp_school_1', name: 'Greenwood High', abbreviation: 'GHS' },
+        { schoolId: 'temp_school_2', name: 'Oakridge Academy', abbreviation: 'OAKS' },
     ],
     divisions: [
         { divisionId: 'temp_div_1', name: 'U19 Varsity' },
@@ -77,7 +77,7 @@ export const sampleData = {
     ],
     teams: [
         { 
-            teamId: 'temp_team_1', name: 'Greenwood Gators', schoolId: 'temp_school_1', divisionId: 'temp_div_1', seasonId: 'temp_season_1', 
+            teamId: 'temp_team_1', name: 'Greenwood Gators 1st XI', schoolId: 'temp_school_1', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#0A7A42', secondary: '#FFC72C' },
             roster: [
                 { personId: 'p_1', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false },
@@ -95,7 +95,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_2', name: 'Oakridge Oaks', schoolId: 'temp_school_2', divisionId: 'temp_div_1', seasonId: 'temp_season_1', 
+            teamId: 'temp_team_2', name: 'Oakridge Oaks 1st XI', schoolId: 'temp_school_2', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#5D3A00', secondary: '#E0E0E0' },
             roster: [
                 { personId: 'p_13', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false },

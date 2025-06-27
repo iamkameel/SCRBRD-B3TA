@@ -18,6 +18,7 @@ export interface Person {
 export interface School {
   schoolId: string;
   name: string;
+  abbreviation?: string;
 }
 
 export interface Division {
@@ -57,6 +58,7 @@ export interface Team {
   divisionName: string;
   seasonId: string;
   seasonName: string;
+  teamClass?: string;
   teamColors?: {
     primary?: string;
     secondary?: string;
