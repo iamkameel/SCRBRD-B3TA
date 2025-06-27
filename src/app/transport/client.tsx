@@ -218,7 +218,7 @@ export default function TransportClient({ vehicles, assignments, drivers }: { ve
                                             <TableCell>{driver.email}</TableCell>
                                             <TableCell className="text-right">
                                                 <Button asChild variant="outline" size="sm">
-                                                    <Link href={`/players/${driver.personId}`}>
+                                                    <Link href={`/people/${driver.personId}`}>
                                                         <User className="mr-2 h-4 w-4" />
                                                         View Profile
                                                     </Link>

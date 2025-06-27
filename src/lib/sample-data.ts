@@ -42,7 +42,7 @@ export const sampleData = {
         { personId: 'p_8', firstName: 'Henry', lastName: 'Moore', email: 'henry.moore@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
         { personId: 'p_9', firstName: 'Alexander', lastName: 'Taylor', email: 'alex.t@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
         { personId: 'p_10', firstName: 'Mason', lastName: 'Anderson', email: 'mason.a@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
-        { personId: 'p_11', firstName: 'Michael', lastName: 'Thomas', email: 'michael.t@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
+        { personId: 'p_11', firstName: 'Michael', lastName: 'Thomas', email: 'michael.t@example.com', roles: ['Player', 'Driver'], profileImageUrl: 'https://placehold.co/100x100.png' },
         { personId: 'p_12', firstName: 'David', lastName: 'Robinson', email: 'david.r@example.com', roles: ['Coach'], profileImageUrl: 'https://placehold.co/100x100.png' },
         
         // Oakridge Oaks (12 people)
@@ -57,7 +57,7 @@ export const sampleData = {
         { personId: 'p_21', firstName: 'Ava', lastName: 'Wright', email: 'ava.w@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
         { personId: 'p_22', firstName: 'Olivia', lastName: 'Scott', email: 'olivia.s@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
         { personId: 'p_23', firstName: 'Emma', lastName: 'Green', email: 'emma.g@example.com', roles: ['Player'], profileImageUrl: 'https://placehold.co/100x100.png' },
-        { personId: 'p_24', firstName: 'Susan', lastName: 'Hill', email: 'susan.h@example.com', roles: ['Coach'], profileImageUrl: 'https://placehold.co/100x100.png' },
+        { personId: 'p_24', firstName: 'Susan', lastName: 'Hill', email: 'susan.h@example.com', roles: ['Coach', 'Driver'], profileImageUrl: 'https://placehold.co/100x100.png' },
 
         // Officials & Staff
         { personId: 'p_25', firstName: 'Robert', lastName: 'Baker', email: 'robert.b@example.com', roles: ['Umpire', 'Grounds-Keeper'] },
