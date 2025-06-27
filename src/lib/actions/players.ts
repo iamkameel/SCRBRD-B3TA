@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc } from 'firebase/firestore';
 import type { Person, PlayerStats, PlayerTeamAssignment } from '@/lib/data';
 import { getScorecard, getMatchLineup } from './matches';
+import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -340,4 +341,33 @@ export async function deletePlayerAction(personId: string) {
 
   revalidatePath('/people');
   revalidatePath('/teams');
+}
+
+export async function generateAndSavePlayerPortraitAction(personId: string) {
+    if (!userId) throw new Error("User not authenticated");
+    const person = await getPerson(personId);
+    if (!person) throw new Error("Person not found or permission denied.");
+
+    try {
+        const { imageUrl } = await generatePlayerPortrait({
+            firstName: person.firstName,
+            lastName: person.lastName,
+        });
+
+        if (!imageUrl) {
+            throw new Error("AI failed to generate a portrait.");
+        }
+
+        const personRef = doc(db, 'people', personId);
+        await updateDoc(personRef, { profileImageUrl: imageUrl });
+
+        revalidatePath(`/players/${personId}`);
+        revalidatePath('/people');
+
+        return { success: true, message: "AI Portrait generated and saved successfully!" };
+    } catch (error) {
+        console.error("Error generating portrait:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("Could not generate or save portrait.");
+    }
 }

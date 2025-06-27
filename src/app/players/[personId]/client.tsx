@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from "react";
-import { ArrowLeft, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Trash2, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import type { Person, PlayerStats, PlayerTeamAssignment } from "@/lib/data";
-import { removePersonLinkAction } from "@/lib/actions/players";
+import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from "@/lib/actions/players";
 import { AddLinkDialog } from "./add-link-dialog";
 
 
@@ -46,6 +46,7 @@ export default function PlayerDetailsClient({ person, playerStats, initialGuardi
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
+  const [isGeneratingPortrait, startPortraitGeneration] = React.useTransition();
   const [selectedLink, setSelectedLink] = React.useState<{linkedPerson: Person, relationship: 'guardian' | 'child'} | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   
@@ -65,6 +66,17 @@ export default function PlayerDetailsClient({ person, playerStats, initialGuardi
       }
     });
   }
+
+  const handleGeneratePortrait = () => {
+    startPortraitGeneration(async () => {
+        try {
+            await generateAndSavePlayerPortraitAction(person.personId);
+            toast({ title: "Portrait Generated", description: "The new AI portrait has been saved."});
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate portrait.", variant: "destructive" });
+        }
+    });
+  }
   
   return (
     <>
@@ -74,7 +86,31 @@ export default function PlayerDetailsClient({ person, playerStats, initialGuardi
             <ArrowLeft className="mr-2 h-4 w-4" />Back to People
           </Link>
           <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20"><AvatarImage src={person.profileImageUrl} /><AvatarFallback className="text-3xl">{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback></Avatar>
+              <div className="relative">
+                <Avatar className="h-20 w-20">
+                    <AvatarImage src={person.profileImageUrl} />
+                    <AvatarFallback className="text-3xl">{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback>
+                </Avatar>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                size="icon" 
+                                variant="outline"
+                                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full border-2 border-background"
+                                onClick={handleGeneratePortrait}
+                                disabled={isGeneratingPortrait}
+                            >
+                                <Wand2 className={`h-4 w-4 ${isGeneratingPortrait ? 'animate-spin' : ''}`} />
+                                <span className="sr-only">Generate AI Portrait</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Generate AI Portrait</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+              </div>
               <div>
                   <h1 className="text-3xl font-bold tracking-tight text-foreground">{person.firstName} {person.lastName}</h1>
                   <p className="text-muted-foreground">{person.email}</p>

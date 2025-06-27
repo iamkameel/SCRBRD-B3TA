@@ -94,7 +94,22 @@ export function PlayerDialog({ mode, player, open, onOpenChange }: { mode: 'add'
             </div>
             <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (Optional)</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="profileImageUrl" render={({ field }) => (<FormItem><FormLabel>Profile Image URL (Optional)</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
+            <FormField
+              control={form.control}
+              name="profileImageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Profile Image URL (Optional)</FormLabel>
+                   <FormDescription>
+                    Provide a URL or leave blank. You can generate an AI portrait later on the person's profile page.
+                  </FormDescription>
+                  <FormControl>
+                    <Input placeholder="https://..." {...field} disabled={isPending} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField control={form.control} name="roles" render={() => (
               <FormItem>
                 <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>
