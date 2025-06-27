@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy, List, LayoutGrid } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Competition, Season, Division, Team } from "@/lib/data";
 import { addCompetitionAction, updateCompetitionAction, deleteCompetitionAction } from '@/lib/actions/competitions';
+import { CompetitionCard } from "./competition-card";
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
@@ -160,13 +161,18 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
   const [isCompetitionDialogOpen, setIsCompetitionDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
+  // View and Pagination state
+  const [view, setView] = React.useState<'list' | 'card'>('list');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = view === 'list' ? 10 : 9;
+
   // Filtering state
   const [searchQuery, setSearchQuery] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState("all");
   const [seasonFilter, setSeasonFilter] = React.useState("all");
   const [divisionFilter, setDivisionFilter] = React.useState("all");
   const [statusFilter, setStatusFilter] = React.useState("all");
-  
+
   const filteredCompetitions = competitions.filter(comp => {
     const matchesSearch = comp.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === 'all' || comp.type === typeFilter;
@@ -177,6 +183,24 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
   });
 
   const filtersApplied = searchQuery || typeFilter !== 'all' || seasonFilter !== 'all' || divisionFilter !== 'all' || statusFilter !== 'all';
+  
+  // Reset page on filter/view change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, typeFilter, seasonFilter, divisionFilter, statusFilter, view]);
+
+  // Pagination logic
+  const paginatedCompetitions = filteredCompetitions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  const totalPages = Math.ceil(filteredCompetitions.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const handleDelete = () => {
     if (!selectedCompetition) return;
@@ -208,81 +232,112 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                         <CardTitle>Competition List</CardTitle>
                         <CardDescription>A list of all competitions in the system.</CardDescription>
                     </div>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" size="icon" className="relative">
-                                <Search className="h-4 w-4" />
-                                <span className="sr-only">Filter Competitions</span>
-                                {filtersApplied && (
-                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                                    </span>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
-                            <div className="grid gap-4">
-                                <div className="space-y-2"><h4 className="font-medium leading-none">Filter Competitions</h4><p className="text-sm text-muted-foreground">Find competitions by name, type, or status.</p></div>
+                    <div className="flex items-center gap-2">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" size="icon" className="relative">
+                                    <Search className="h-4 w-4" />
+                                    <span className="sr-only">Filter Competitions</span>
+                                    {filtersApplied && (
+                                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                        </span>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
                                 <div className="grid gap-4">
-                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="search-input">Name</Label><Input id="search-input" placeholder="Competition name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="col-span-2 h-8"/></div>
-                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="type-filter">Type</Label><Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Types" /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{COMPETITION_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
-                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="season-filter">Season</Label><Select value={seasonFilter} onValueChange={setSeasonFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger><SelectContent><SelectItem value="all">All Seasons</SelectItem>{seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}</SelectContent></Select></div>
-                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="division-filter">Division</Label><Select value={divisionFilter} onValueChange={setDivisionFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions"/></SelectTrigger><SelectContent><SelectItem value="all">All Divisions</SelectItem>{divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                                    <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="status-filter">Status</Label><Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Statuses" /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                                    <div className="space-y-2"><h4 className="font-medium leading-none">Filter Competitions</h4><p className="text-sm text-muted-foreground">Find competitions by name, type, or status.</p></div>
+                                    <div className="grid gap-4">
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="search-input">Name</Label><Input id="search-input" placeholder="Competition name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="col-span-2 h-8"/></div>
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="type-filter">Type</Label><Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Types" /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{COMPETITION_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="season-filter">Season</Label><Select value={seasonFilter} onValueChange={setSeasonFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger><SelectContent><SelectItem value="all">All Seasons</SelectItem>{seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="division-filter">Division</Label><Select value={divisionFilter} onValueChange={setDivisionFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions"/></SelectTrigger><SelectContent><SelectItem value="all">All Divisions</SelectItem>{divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="status-filter">Status</Label><Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Statuses" /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                                    </div>
                                 </div>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                            </PopoverContent>
+                        </Popover>
+                        <div className="flex items-center rounded-md bg-muted p-1">
+                            <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
+                            <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
+                        </div>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
-            <Table>
-                <TableHeader>
-                <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Season</TableHead>
-                    <TableHead>Division</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {filteredCompetitions.length > 0 ? (
-                    filteredCompetitions.map((comp) => (
-                    <TableRow key={comp.competitionId}>
-                        <TableCell className="font-medium">
-                            {comp.name}
-                            {comp.winnerTeamName && (
-                                <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
-                                    <Trophy className="h-3 w-3 text-accent" />
-                                    <span>Winner: {comp.winnerTeamName}</span>
-                                </div>
-                            )}
-                        </TableCell>
-                        <TableCell>{comp.type}</TableCell>
-                        <TableCell>{comp.seasonName}</TableCell>
-                        <TableCell>{comp.divisionName}</TableCell>
-                        <TableCell><Badge variant={comp.status === 'Completed' ? 'secondary' : (comp.status === 'In Progress' ? 'default' : 'outline')}>{comp.status}</Badge></TableCell>
-                        <TableCell className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                    ))
-                ) : (
-                    <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">{filtersApplied ? "No competitions found matching your filters." : "No competitions found. Get started by adding one."}</TableCell>
-                    </TableRow>
-                )}
-                </TableBody>
-            </Table>
+             {view === 'list' && (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Season</TableHead>
+                            <TableHead>Division</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {paginatedCompetitions.length > 0 ? (
+                        paginatedCompetitions.map((comp) => (
+                        <TableRow key={comp.competitionId}>
+                            <TableCell className="font-medium">
+                                {comp.name}
+                                {comp.winnerTeamName && (
+                                    <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
+                                        <Trophy className="h-3 w-3 text-accent" />
+                                        <span>Winner: {comp.winnerTeamName}</span>
+                                    </div>
+                                )}
+                            </TableCell>
+                            <TableCell>{comp.type}</TableCell>
+                            <TableCell>{comp.seasonName}</TableCell>
+                            <TableCell>{comp.divisionName}</TableCell>
+                            <TableCell><Badge variant={comp.status === 'Completed' ? 'secondary' : (comp.status === 'In Progress' ? 'default' : 'outline')}>{comp.status}</Badge></TableCell>
+                            <TableCell className="text-right">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">{filtersApplied ? "No competitions found matching your filters." : "No competitions found. Get started by adding one."}</TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+             )}
+             {view === 'card' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paginatedCompetitions.length > 0 ? (
+                        paginatedCompetitions.map(comp => (
+                            <CompetitionCard 
+                                key={comp.competitionId} 
+                                competition={comp} 
+                                onEdit={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}
+                                onDelete={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }}
+                            />
+                        ))
+                    ) : (
+                        <p className="col-span-full h-24 flex items-center justify-center text-muted-foreground">{filtersApplied ? "No competitions found matching your filters." : "No competitions found."}</p>
+                    )}
+                </div>
+            )}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center pt-8">
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</Button>
+                    <span className="mx-4 text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</Button>
+                </div>
+            )}
             </CardContent>
         </Card>
       </div>

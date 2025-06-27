@@ -1,0 +1,63 @@
+'use client';
+
+import * as React from "react";
+import { MoreHorizontal, Trash2, Edit, Trophy } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import type { Competition } from "@/lib/data";
+
+interface CompetitionCardProps {
+    competition: Competition;
+    onEdit: () => void;
+    onDelete: () => void;
+}
+
+export function CompetitionCard({ competition, onEdit, onDelete }: CompetitionCardProps) {
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div className="flex-1 mr-2">
+                        <CardTitle className="text-lg">
+                            {/* Placeholder Link - competition details page doesn't exist yet */}
+                            <span className="cursor-pointer hover:underline">
+                                {competition.name}
+                            </span>
+                        </CardTitle>
+                        <CardDescription>{competition.type}</CardDescription>
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 -mr-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="text-sm text-muted-foreground space-y-1">
+                    <p><strong>Season:</strong> {competition.seasonName}</p>
+                    <p><strong>Division:</strong> {competition.divisionName}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                     <Badge variant={competition.status === 'Completed' ? 'secondary' : (competition.status === 'In Progress' ? 'default' : 'outline')}>{competition.status}</Badge>
+                     {competition.winnerTeamName && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <Trophy className="h-3 w-3 text-accent" />
+                            <span>{competition.winnerTeamName}</span>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
