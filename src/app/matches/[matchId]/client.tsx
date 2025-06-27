@@ -5,11 +5,12 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -521,12 +522,34 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             </div>
         </header>
 
-        <Tabs defaultValue="scorecard">
-            <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue={match.status === 'live' ? 'scoring' : 'scorecard'}>
+            <TabsList className={cn(
+                "grid w-full",
+                match.status === 'live' ? "grid-cols-4" : "grid-cols-3"
+            )}>
+                {match.status === 'live' && (
+                    <TabsTrigger value="scoring"><RadioTower />Live Scoring</TabsTrigger>
+                )}
                 <TabsTrigger value="scorecard"><ClipboardList />Scorecard</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart />Analysis</TabsTrigger>
                 <TabsTrigger value="logistics"><Settings />Logistics</TabsTrigger>
             </TabsList>
+
+            {match.status === 'live' && (
+                <TabsContent value="scoring" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Live Scoring Interface</CardTitle>
+                            <CardDescription>This is where the live scoring controls for the match will appear.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">Live scoring feature coming soon!</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            )}
 
             <TabsContent value="scorecard" className="mt-4">
                 <Card>
