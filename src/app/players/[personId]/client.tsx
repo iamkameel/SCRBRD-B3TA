@@ -70,7 +70,7 @@ export default function PlayerDetailsClient({ person, playerStats, initialGuardi
     <>
       <div className="flex flex-col gap-8">
         <header>
-          <Link href="/players" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
+          <Link href="/people" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />Back to People
           </Link>
           <div className="flex items-center gap-4">
@@ -138,7 +138,7 @@ export default function PlayerDetailsClient({ person, playerStats, initialGuardi
                       <TableBody>
                           {initialGuardians.length > 0 ? initialGuardians.map(g => (
                               <TableRow key={g.personId}>
-                                  <TableCell><Link href={`/players/${g.personId}`} className="hover:underline">{g.firstName} {g.lastName}</Link></TableCell>
+                                  <TableCell><Link href={`/people/${g.personId}`} className="hover:underline">{g.firstName} {g.lastName}</Link></TableCell>
                                   <TableCell className="text-right">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger>
@@ -156,7 +156,7 @@ export default function PlayerDetailsClient({ person, playerStats, initialGuardi
                       <TableBody>
                           {initialChildren.length > 0 ? initialChildren.map(c => (
                               <TableRow key={c.personId}>
-                                  <TableCell><Link href={`/players/${c.personId}`} className="hover:underline">{c.firstName} {c.lastName}</Link></TableCell>
+                                  <TableCell><Link href={`/people/${c.personId}`} className="hover:underline">{c.firstName} {c.lastName}</Link></TableCell>
                                   <TableCell className="text-right">
                                      <DropdownMenu>
                                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger>

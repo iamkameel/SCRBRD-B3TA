@@ -8,6 +8,8 @@ import { getMatches } from "@/lib/actions/matches";
 import { getLeaderboards, getTeamStandings } from "@/lib/actions/dashboard";
 import { format } from "date-fns";
 import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "./dashboard-charts";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 export default async function DashboardPage() {
   const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings] = await Promise.all([
@@ -18,13 +20,21 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Welcome to your cricket league overview.
-        </p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Welcome to your cricket league overview.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/new-match">
+            <PlusCircle className="mr-2"/>
+            Create New Match
+          </Link>
+        </Button>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -94,7 +104,7 @@ export default async function DashboardPage() {
                             <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <Link href={`/players/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
+                            <Link href={`/people/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
                             <p className="text-sm text-muted-foreground">Avg: {player.stats.battingAverage.toFixed(2)} | SR: {player.stats.strikeRate.toFixed(2)}</p>
                           </div>
                           <div className="text-right">
@@ -115,7 +125,7 @@ export default async function DashboardPage() {
                             <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                             <Link href={`/players/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
+                             <Link href={`/people/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
                              <p className="text-sm text-muted-foreground">Avg: {player.stats.bowlingAverage.toFixed(2)} | Econ: {player.stats.economyRate.toFixed(2)}</p>
                           </div>
                           <div className="text-right">

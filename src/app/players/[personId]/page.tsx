@@ -22,7 +22,7 @@ export default async function PersonDetailsPage({ params }: { params: { personId
         <h2 className="text-2xl font-bold">Person not found</h2>
         <p className="text-muted-foreground">The person you are looking for does not exist.</p>
         <Button asChild className="mt-4">
-          <Link href="/players"><ArrowLeft className="mr-2" /> Back to People</Link>
+          <Link href="/people"><ArrowLeft className="mr-2" /> Back to People</Link>
         </Button>
       </div>
     );

@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search, List, LayoutGrid, CalendarDays } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search, List, LayoutGrid, CalendarDays, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -214,7 +214,12 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Matches</h1>
             <p className="text-muted-foreground">View all scheduled, live, and completed matches.</p>
           </div>
-          <Button asChild><Link href="/new-match">Create New Match</Link></Button>
+          <Button asChild>
+            <Link href="/new-match">
+              <PlusCircle className="mr-2" />
+              Create New Match
+            </Link>
+          </Button>
         </header>
 
         <Card>
