@@ -20,7 +20,7 @@ const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
     'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches', 'Competitions': 'competitions'
-};
+} as const;
 export type SubsetName = keyof typeof collectionNameMap;
 const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People'];
 
@@ -28,25 +28,28 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
     try {
         const subsets: SubsetName[] = ["Matches", "Teams", "Competitions", "People", "Fields", "Seasons", "Divisions", "Schools"];
+        
+        const getActions = {
+            'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools, 
+            'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
+        };
+        const deleteActions = {
+            'People': deletePlayerAction, 'Teams': deleteTeamAction, 'Matches': deleteMatchAction, 'Schools': deleteSchoolAction, 
+            'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction, 'Competitions': deleteCompetitionAction,
+        };
+        const idKeys = {
+            'People': 'personId', 'Teams': 'teamId', 'Matches': 'matchId', 'Schools': 'schoolId',
+            'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId', 'Competitions': 'competitionId',
+        } as const;
+        
         for (const subset of subsets) {
-            const getAction = {
-                'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools, 
-                'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
-            }[subset];
-            const deleteAction = {
-                'People': deletePlayerAction, 'Teams': deleteTeamAction, 'Matches': deleteMatchAction, 'Schools': deleteSchoolAction, 
-                'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction, 'Competitions': deleteCompetitionAction,
-            }[subset];
-            const idKey = {
-                'People': 'personId', 'Teams': 'teamId', 'Matches': 'matchId', 'Schools': 'schoolId',
-                'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId', 'Competitions': 'competitionId',
-            }[subset];
+            const getAction = getActions[subset];
+            const deleteAction = deleteActions[subset];
+            const idKey = idKeys[subset];
             
-            // @ts-ignore
             const items = await getAction();
-            // @ts-ignore
             for (const item of items) {
-                // @ts-ignore
+                // @ts-ignore - This is tricky to type perfectly without a larger refactor
                 await deleteAction(item[idKey]);
             }
         }
@@ -71,15 +74,14 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         let itemCount = 0;
 
         // Process items with no dependencies first
-        const independentCollections = ['schools', 'divisions', 'seasons', 'fields', 'people'];
+        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people'];
         for (const collName of independentCollections) {
-            // @ts-ignore
             for (const item of sampleData[collName]) {
                 const idKey = collName === 'people' ? 'personId' : `${collName.slice(0, -1)}Id`;
-                const tempId = item[idKey];
+                const tempId = item[idKey as keyof typeof item];
                 const { [idKey]: _, ...itemData } = item;
                 
-                const dataToSave = { ...itemData, userId };
+                const dataToSave: { [key: string]: any } = { ...itemData, userId };
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
                 if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
                 if (collName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
@@ -223,15 +225,15 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
     try {
         await deleteSubsetAction(subsetName);
 
-        const collectionName = collectionNameMap[subsetName];
+        const collectionName = collectionNameMap[subsetName] as keyof typeof sampleData;
         const batch = writeBatch(db);
         let count = 0;
-        // @ts-ignore
+        
         for (const item of sampleData[collectionName]) {
             const tempIdKey = `${collectionName.slice(0, -1)}Id`; // e.g., "schoolId"
-            const { [tempIdKey]: _, ...itemData } = item;
+            const { [tempIdKey]: _, ...itemData } = item as any;
             
-            const dataToSave = { ...itemData, userId };
+            const dataToSave: {[key: string]: any} = { ...itemData, userId };
             if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
             if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
             if (collectionName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';

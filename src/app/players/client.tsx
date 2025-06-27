@@ -159,7 +159,7 @@ export default function PlayersClient({ players }: { players: Player[] }) {
                     <TableRow key={player.personId}>
                       <TableCell className="font-medium flex items-center gap-3">
                         <Avatar><AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} /><AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback></Avatar>
-                        <Link href={`/players/${player.personId}`} className="hover:underline">{player.firstName} {player.lastName}</Link>
+                        <Link href={`/people/${player.personId}`} className="hover:underline">{player.firstName} {player.lastName}</Link>
                       </TableCell>
                       <TableCell>{player.email}</TableCell>
                       <TableCell>

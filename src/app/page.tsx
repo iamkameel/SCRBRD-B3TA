@@ -100,7 +100,7 @@ export default async function DashboardPage() {
                      {topRunScorers.length > 0 ? topRunScorers.map((player) => (
                        <div key={player.personId} className="flex items-center gap-4">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={player.profileImageUrl} />
+                            <AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} />
                             <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
                      {topWicketTakers.length > 0 ? topWicketTakers.map((player) => (
                        <div key={player.personId} className="flex items-center gap-4">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={player.profileImageUrl} />
+                            <AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} />
                             <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1">

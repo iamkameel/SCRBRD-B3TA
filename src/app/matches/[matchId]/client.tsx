@@ -317,6 +317,18 @@ function ScorecardPlaceholder() {
   );
 }
 
+function WeatherIcon({ condition, ...props }: { condition: string } & React.ComponentProps<typeof Sun>) {
+    switch (condition.toLowerCase()) {
+        case "sunny": return <Sun {...props} />;
+        case "cloudy": return <Cloudy {...props} />;
+        case "rain":
+        case "showers":
+        case "storm":
+             return <CloudRain {...props} />;
+        default: return <Cloudy {...props} />;
+    }
+}
+
 interface MatchDetailsClientProps {
   match: Match;
   initialOfficials: Official[];
@@ -661,16 +673,4 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
       </AlertDialog>
     </>
   )
-}
-
-function WeatherIcon({ condition, ...props }: { condition: string } & React.ComponentProps<typeof Sun>) {
-    switch (condition.toLowerCase()) {
-        case "sunny": return <Sun {...props} />;
-        case "cloudy": return <Cloudy {...props} />;
-        case "rain":
-        case "showers":
-        case "storm":
-             return <CloudRain {...props} />;
-        default: return <Cloudy {...props} />;
-    }
 }
