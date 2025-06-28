@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from 'next/link';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -172,18 +175,18 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
 
   // Filtering and Sorting state
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [typeFilter, setTypeFilter] = React.useState("all");
-  const [seasonFilter, setSeasonFilter] = React.useState("all");
-  const [divisionFilter, setDivisionFilter] = React.useState("all");
-  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [typeFilter, setTypeFilter] = React.useState<string[]>([]);
+  const [seasonFilter, setSeasonFilter] = React.useState<string[]>([]);
+  const [divisionFilter, setDivisionFilter] = React.useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
 
   const filteredCompetitions = competitions.filter(comp => {
     const matchesSearch = comp.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === 'all' || comp.type === typeFilter;
-    const matchesSeason = seasonFilter === 'all' || comp.seasonId === seasonFilter;
-    const matchesDivision = divisionFilter === 'all' || comp.divisionId === divisionFilter;
-    const matchesStatus = statusFilter === 'all' || comp.status === statusFilter;
+    const matchesType = typeFilter.length === 0 || typeFilter.includes(comp.type);
+    const matchesSeason = seasonFilter.length === 0 || seasonFilter.includes(comp.seasonId);
+    const matchesDivision = divisionFilter.length === 0 || divisionFilter.includes(comp.divisionId);
+    const matchesStatus = statusFilter.length === 0 || statusFilter.includes(comp.status);
     return matchesSearch && matchesType && matchesSeason && matchesDivision && matchesStatus;
   });
 
@@ -199,7 +202,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
     return sortableItems;
   }, [filteredCompetitions, sortConfig]);
 
-  const filtersApplied = searchQuery || typeFilter !== 'all' || seasonFilter !== 'all' || divisionFilter !== 'all' || statusFilter !== 'all';
+  const filtersApplied = searchQuery || typeFilter.length > 0 || seasonFilter.length > 0 || divisionFilter.length > 0 || statusFilter.length > 0;
   
   // Reset page on filter/view/sort change
   React.useEffect(() => {
@@ -291,10 +294,66 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                     <div className="space-y-2"><h4 className="font-medium leading-none">Filter Competitions</h4><p className="text-sm text-muted-foreground">Find competitions by name, type, or status.</p></div>
                                     <div className="grid gap-4">
                                         <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="search-input">Name</Label><Input id="search-input" placeholder="Competition name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="col-span-2 h-8"/></div>
-                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="type-filter">Type</Label><Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Types" /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{COMPETITION_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
-                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="season-filter">Season</Label><Select value={seasonFilter} onValueChange={setSeasonFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons"/></SelectTrigger><SelectContent><SelectItem value="all">All Seasons</SelectItem>{seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}</SelectContent></Select></div>
-                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="division-filter">Division</Label><Select value={divisionFilter} onValueChange={setDivisionFilter}><SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions"/></SelectTrigger><SelectContent><SelectItem value="all">All Divisions</SelectItem>{divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="status-filter">Status</Label><Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="col-span-2 h-8 capitalize"><SelectValue placeholder="All Statuses" /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                                        
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label>Type</Label>
+                                            <DropdownMenu><DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">
+                                                    {typeFilter.length === 0 && "Select types..."}
+                                                    {typeFilter.length === 1 && typeFilter[0]}
+                                                    {typeFilter.length > 1 && `${typeFilter.length} types selected`}
+                                                </span><ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                            </DropdownMenuTrigger><DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Type</DropdownMenuLabel><DropdownMenuSeparator />
+                                                {COMPETITION_TYPES.map(type => (<DropdownMenuCheckboxItem key={type} checked={typeFilter.includes(type)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => {
+                                                    const newFilters = checked ? [...typeFilter, type] : typeFilter.filter(id => id !== type); setTypeFilter(newFilters);
+                                                }}>{type}</DropdownMenuCheckboxItem>))}
+                                                {typeFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setTypeFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
+                                            </DropdownMenuContent></DropdownMenu>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label>Season</Label>
+                                            <DropdownMenu><DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">
+                                                    {seasonFilter.length === 0 && "Select seasons..."}
+                                                    {seasonFilter.length === 1 && seasons.find(s => s.seasonId === seasonFilter[0])?.name}
+                                                    {seasonFilter.length > 1 && `${seasonFilter.length} seasons selected`}
+                                                </span><ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                            </DropdownMenuTrigger><DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Season</DropdownMenuLabel><DropdownMenuSeparator />
+                                                {seasons.map(season => (<DropdownMenuCheckboxItem key={season.seasonId} checked={seasonFilter.includes(season.seasonId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => {
+                                                    const newFilters = checked ? [...seasonFilter, season.seasonId] : seasonFilter.filter(id => id !== season.seasonId); setSeasonFilter(newFilters);
+                                                }}>{season.name}</DropdownMenuCheckboxItem>))}
+                                                {seasonFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setSeasonFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
+                                            </DropdownMenuContent></DropdownMenu>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label>Division</Label>
+                                            <DropdownMenu><DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">
+                                                    {divisionFilter.length === 0 && "Select divisions..."}
+                                                    {divisionFilter.length === 1 && divisions.find(d => d.divisionId === divisionFilter[0])?.name}
+                                                    {divisionFilter.length > 1 && `${divisionFilter.length} divisions selected`}
+                                                </span><ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                            </DropdownMenuTrigger><DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Division</DropdownMenuLabel><DropdownMenuSeparator />
+                                                {divisions.map(division => (<DropdownMenuCheckboxItem key={division.divisionId} checked={divisionFilter.includes(division.divisionId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => {
+                                                    const newFilters = checked ? [...divisionFilter, division.divisionId] : divisionFilter.filter(id => id !== division.divisionId); setDivisionFilter(newFilters);
+                                                }}>{division.name}</DropdownMenuCheckboxItem>))}
+                                                {divisionFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setDivisionFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
+                                            </DropdownMenuContent></DropdownMenu>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 items-center gap-4"><Label>Status</Label>
+                                            <DropdownMenu><DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">
+                                                    {statusFilter.length === 0 && "Select statuses..."}
+                                                    {statusFilter.length === 1 && statusFilter[0]}
+                                                    {statusFilter.length > 1 && `${statusFilter.length} statuses selected`}
+                                                </span><ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                            </DropdownMenuTrigger><DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Status</DropdownMenuLabel><DropdownMenuSeparator />
+                                                {COMPETITION_STATUSES.map(status => (<DropdownMenuCheckboxItem key={status} checked={statusFilter.includes(status)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => {
+                                                    const newFilters = checked ? [...statusFilter, status] : statusFilter.filter(id => id !== status); setStatusFilter(newFilters);
+                                                }}>{status}</DropdownMenuCheckboxItem>))}
+                                                {statusFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setStatusFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
+                                            </DropdownMenuContent></DropdownMenu>
+                                        </div>
                                     </div>
                                 </div>
                             </PopoverContent>

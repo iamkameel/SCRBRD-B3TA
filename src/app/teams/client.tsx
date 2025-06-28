@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -144,8 +147,8 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
   
   // Filtering and Sorting state
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [divisionFilter, setDivisionFilter] = React.useState<string>("all");
-  const [seasonFilter, setSeasonFilter] = React.useState<string>("all");
+  const [divisionFilter, setDivisionFilter] = React.useState<string[]>([]);
+  const [seasonFilter, setSeasonFilter] = React.useState<string[]>([]);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
 
   const handleDelete = () => {
@@ -166,8 +169,8 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
 
   const filteredTeams = teams.filter(team => {
     const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDivision = divisionFilter === 'all' || team.divisionId === divisionFilter;
-    const matchesSeason = seasonFilter === 'all' || team.seasonId === seasonFilter;
+    const matchesDivision = divisionFilter.length === 0 || divisionFilter.includes(team.divisionId);
+    const matchesSeason = seasonFilter.length === 0 || seasonFilter.includes(team.seasonId);
     return matchesSearch && matchesDivision && matchesSeason;
   });
 
@@ -183,7 +186,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
     return sortableItems;
   }, [filteredTeams, sortConfig]);
 
-  const filtersApplied = searchQuery || divisionFilter !== 'all' || seasonFilter !== 'all';
+  const filtersApplied = searchQuery || divisionFilter.length > 0 || seasonFilter.length > 0;
 
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
@@ -274,24 +277,94 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                             />
                             </div>
                             <div className="grid grid-cols-3 items-center gap-4">
-                            <Label htmlFor="division-filter">Division</Label>
-                            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-                                <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Divisions" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Divisions</SelectItem>
-                                    {divisions.map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                                <Label>Division</Label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
+                                            <span className="truncate">
+                                                {divisionFilter.length === 0 && "Select divisions..."}
+                                                {divisionFilter.length === 1 && divisions.find(d => d.divisionId === divisionFilter[0])?.name}
+                                                {divisionFilter.length > 1 && `${divisionFilter.length} divisions selected`}
+                                            </span>
+                                            <ChevronDown className="h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-56">
+                                        <DropdownMenuLabel>Filter by Division</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {divisions.map(division => (
+                                        <DropdownMenuCheckboxItem
+                                            key={division.divisionId}
+                                            checked={divisionFilter.includes(division.divisionId)}
+                                            onSelect={(e) => e.preventDefault()}
+                                            onCheckedChange={checked => {
+                                                const newFilters = checked
+                                                    ? [...divisionFilter, division.divisionId]
+                                                    : divisionFilter.filter(id => id !== division.divisionId);
+                                                setDivisionFilter(newFilters);
+                                            }}
+                                        >
+                                            {division.name}
+                                        </DropdownMenuCheckboxItem>
+                                        ))}
+                                        {divisionFilter.length > 0 && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                            onSelect={() => setDivisionFilter([])}
+                                            className="justify-center text-sm"
+                                            >
+                                            Clear filter
+                                            </DropdownMenuItem>
+                                        </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                             <div className="grid grid-cols-3 items-center gap-4">
-                            <Label htmlFor="season-filter">Season</Label>
-                            <Select value={seasonFilter} onValueChange={setSeasonFilter}>
-                                <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Seasons" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Seasons</SelectItem>
-                                    {seasons.map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                                <Label>Season</Label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
+                                            <span className="truncate">
+                                                {seasonFilter.length === 0 && "Select seasons..."}
+                                                {seasonFilter.length === 1 && seasons.find(s => s.seasonId === seasonFilter[0])?.name}
+                                                {seasonFilter.length > 1 && `${seasonFilter.length} seasons selected`}
+                                            </span>
+                                            <ChevronDown className="h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-56">
+                                        <DropdownMenuLabel>Filter by Season</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {seasons.map(season => (
+                                        <DropdownMenuCheckboxItem
+                                            key={season.seasonId}
+                                            checked={seasonFilter.includes(season.seasonId)}
+                                            onSelect={(e) => e.preventDefault()}
+                                            onCheckedChange={checked => {
+                                                const newFilters = checked
+                                                    ? [...seasonFilter, season.seasonId]
+                                                    : seasonFilter.filter(id => id !== season.seasonId);
+                                                setSeasonFilter(newFilters);
+                                            }}
+                                        >
+                                            {season.name}
+                                        </DropdownMenuCheckboxItem>
+                                        ))}
+                                        {seasonFilter.length > 0 && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                            onSelect={() => setSeasonFilter([])}
+                                            className="justify-center text-sm"
+                                            >
+                                            Clear filter
+                                            </DropdownMenuItem>
+                                        </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
                         </div>
