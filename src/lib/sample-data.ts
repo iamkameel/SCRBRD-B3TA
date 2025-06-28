@@ -41,20 +41,20 @@ export const sampleData = {
     ],
     fields: [
         // School-owned fields
-        { fieldId: 'field_1', schoolId: 'school_1', name: 'John Medlicott Oval', surfaceType: 'Grass', facilities: 'Pavilion, Toilets, Nets', status: 'Available' },
-        { fieldId: 'field_2', schoolId: 'school_2', name: 'Hart-Davis Oval', surfaceType: 'Grass', facilities: 'Pavilion, Scoreboard', status: 'Available' },
-        { fieldId: 'field_3', schoolId: 'school_3', name: 'Goldstones', surfaceType: 'Grass', facilities: 'Grandstand, Nets', status: 'Available' },
-        { fieldId: 'field_4', schoolId: 'school_4', name: 'The Horse-Shoe', surfaceType: 'Grass', facilities: 'Pavilion', status: 'Available' },
-        { fieldId: 'field_5', schoolId: 'school_5', name: 'Dixons', surfaceType: 'Grass', facilities: 'Basic Pavilion', status: 'Available' },
-        { fieldId: 'field_6', schoolId: 'school_6', name: 'Bowdens', surfaceType: 'Grass', facilities: 'Nets, Toilets', status: 'Available' },
-        { fieldId: 'field_7', schoolId: 'school_7', name: 'AH Smith Oval', surfaceType: 'Grass', facilities: 'Pavilion, Indoor Nets', status: 'Available' },
-        { fieldId: 'field_8', schoolId: 'school_8', name: 'St Charles Oval', surfaceType: 'Grass', facilities: 'Pavilion', status: 'Maintenance' },
-        { fieldId: 'field_9', schoolId: 'school_9', name: 'Northwood Oval', surfaceType: 'Grass', facilities: 'Scoreboard, Nets', status: 'Available' },
-        { fieldId: 'field_10', schoolId: 'school_10', name: 'Clifton Oval', surfaceType: 'Grass', facilities: 'Pavilion', status: 'Available' },
+        { fieldId: 'field_1', schoolId: 'school_1', name: 'John Medlicott Oval', location: 'Michaelhouse, Balgowan', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'toilets', 'nets'], amenities: ['seating', 'changing_rooms'], status: 'Available' },
+        { fieldId: 'field_2', schoolId: 'school_2', name: 'Hart-Davis Oval', location: 'Hilton College, Hilton', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'scoreboard'], amenities: ['seating', 'parking'], status: 'Available' },
+        { fieldId: 'field_3', schoolId: 'school_3', name: 'Goldstones', location: 'Maritzburg College, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['nets'], amenities: ['seating', 'food_drink'], status: 'Available' },
+        { fieldId: 'field_4', schoolId: 'school_4', name: 'The Horse-Shoe', location: 'DHS, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Available' },
+        { fieldId: 'field_5', schoolId: 'school_5', name: 'Dixons', location: 'Glenwood High, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Available' },
+        { fieldId: 'field_6', schoolId: 'school_6', name: 'Bowdens', location: 'WBHS, Westville', size: 'Full Size', surfaceType: 'Grass', facilities: ['nets', 'toilets'], amenities: ['parking'], status: 'Available' },
+        { fieldId: 'field_7', schoolId: 'school_7', name: 'AH Smith Oval', location: 'Kearsney College, Botha\'s Hill', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'nets'], amenities: ['seating'], status: 'Available' },
+        { fieldId: 'field_8', schoolId: 'school_8', name: 'St Charles Oval', location: 'St Charles College, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Maintenance' },
+        { fieldId: 'field_9', schoolId: 'school_9', name: 'Northwood Oval', location: 'Northwood School, Durban North', size: 'Full Size', surfaceType: 'Grass', facilities: ['scoreboard', 'nets'], amenities: [], status: 'Available' },
+        { fieldId: 'field_10', schoolId: 'school_10', name: 'Clifton Oval', location: 'Clifton School, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Available' },
         // Independent fields
-        { fieldId: 'field_11', name: 'Pietermaritzburg Oval', surfaceType: 'Grass', facilities: 'International Standard, Floodlights', status: 'Available' },
-        { fieldId: 'field_12', name: 'Kingsmead Cricket Ground', surfaceType: 'Grass', facilities: 'International Standard, Floodlights, Restaurant', status: 'Available' },
-        { fieldId: 'field_13', name: 'Chatsworth Oval', surfaceType: 'Grass', facilities: 'Public Stand, Basic facilities', status: 'Available' }
+        { fieldId: 'field_11', name: 'Pietermaritzburg Oval', location: 'Alexandra Park, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['floodlights'], amenities: ['seating', 'changing_rooms', 'food_drink'], status: 'Available' },
+        { fieldId: 'field_12', name: 'Kingsmead Cricket Ground', location: 'Kingsmead, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['floodlights', 'scoreboard'], amenities: ['seating', 'parking', 'food_drink', 'changing_rooms'], status: 'Available' },
+        { fieldId: 'field_13', name: 'Chatsworth Oval', location: 'Chatsworth, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: [], amenities: ['seating'], status: 'Available' }
     ],
     fieldAssignments: [
         { assignmentId: 'fa_1', fieldId: 'field_1', personId: 'staff_3' }, // Mark Taylor -> John Medlicott Oval
@@ -78,6 +78,11 @@ export const sampleData = {
     ],
     equipmentAssignments: [
         { assignmentId: 'assign_1', itemId: 'equip_2', personId: 'p_1', assignedDate: pastDate(10) },
+    ],
+    sponsors: [
+      { sponsorId: 'sponsor_1', name: 'SuperSport', logoUrl: 'https://placehold.co/200x100.png', website: 'https://supersport.com/' },
+      { sponsorId: 'sponsor_2', name: 'Coca-Cola', logoUrl: 'https://placehold.co/200x100.png', website: 'https://www.coca-cola.com/' },
+      { sponsorId: 'sponsor_3', name: 'Standard Bank', logoUrl: 'https://placehold.co/200x100.png', website: 'https://www.standardbank.co.za/' },
     ],
     people: [
         // Admin & Staff
@@ -309,7 +314,3 @@ export const sampleScorecardData = {
         },
     }
 };
-
-
-
-

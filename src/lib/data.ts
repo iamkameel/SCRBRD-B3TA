@@ -49,6 +49,9 @@ export interface Field {
   facilities?: string[];
   status: 'Available' | 'Maintenance' | 'Closed';
   assignments?: FieldAssignment[];
+  location?: string;
+  size?: string;
+  amenities?: string[];
 }
 
 export interface Team {

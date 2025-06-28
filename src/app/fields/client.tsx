@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -47,19 +48,29 @@ const fieldSchema = z.object({
   surfaceType: z.string().optional(),
   facilities: z.array(z.string()).optional(),
   assignments: z.array(z.string()).optional(),
+  location: z.string().optional(),
+  size: z.string().optional(),
+  amenities: z.array(z.string()).optional(),
 });
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
 const FIELD_STATUSES = ['Available', 'Maintenance', 'Closed'] as const;
 const SURFACE_TYPES = ['Grass', 'Artificial Turf', 'Matting'] as const;
+const FIELD_SIZES = ['Full Size', 'Youth', 'Training Area'] as const;
 const FACILITIES = [
     { id: 'pavilion', label: 'Pavilion' },
     { id: 'toilets', label: 'Toilets' },
     { id: 'nets', label: 'Nets' },
     { id: 'scoreboard', label: 'Scoreboard' },
     { id: 'floodlights', label: 'Floodlights' },
+] as const;
+const AMENITIES = [
+    { id: 'parking', label: 'Parking' },
+    { id: 'seating', label: 'Seating' },
+    { id: 'food_drink', label: 'Food & Drink' },
     { id: 'changing_rooms', label: 'Changing Rooms' },
 ] as const;
+
 
 function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange }: { mode: 'add' | 'edit', field?: Field, schools: School[], groundskeepers: Person[], open: boolean, onOpenChange: (open: boolean) => void; }) {
   const { toast } = useToast();
@@ -68,16 +79,16 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
   const form = useForm<FieldFormValues>({
     resolver: zodResolver(fieldSchema),
     defaultValues: mode === 'edit' && field ? 
-        { name: field.name, schoolId: field.schoolId || ' ', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] } : 
-        { name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] },
+        { ...field, schoolId: field.schoolId || ' ', assignments: field.assignments?.map(a => a.personId) || [] } : 
+        { name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], amenities: [], assignments: [] },
   });
 
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && field) {
-        form.reset({ name: field.name, schoolId: field.schoolId || ' ', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] });
+        form.reset({ ...field, schoolId: field.schoolId || ' ', assignments: field.assignments?.map(a => a.personId) || [] });
       } else {
-        form.reset({ name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] });
+        form.reset({ name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], amenities: [], assignments: [] });
       }
     }
   }, [field, mode, open, form]);
@@ -85,11 +96,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
   function onSubmit(data: FieldFormValues) {
     startTransition(async () => {
       try {
-        const payload = {
-          ...data,
-          schoolId: data.schoolId?.trim(),
-        };
-
+        const payload = { ...data, schoolId: data.schoolId?.trim() };
         if (mode === 'edit' && field) {
           await updateFieldAction({ fieldId: field.fieldId, ...payload });
           toast({ title: "Field Updated", description: `${data.name} has been updated.` });
@@ -106,7 +113,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{mode === 'edit' ? 'Edit Field' : 'Add New Field'}</DialogTitle><DialogDescription>Enter the details for the field or venue.</DialogDescription></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -114,25 +121,30 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                 <h3 className="text-base font-semibold text-foreground">Field Details</h3>
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address (Optional)</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             </div>
             <Separator />
             <div className="space-y-4">
                  <h3 className="text-base font-semibold text-foreground">Specifications</h3>
-                <FormField control={form.control} name="surfaceType" render={({ field }) => (<FormItem><FormLabel>Surface Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{SURFACE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="facilities" render={() => (
-                    <FormItem>
-                        <FormLabel>Facilities</FormLabel>
-                        <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
-                        {FACILITIES.map((item) => (
-                            <FormField key={item.id} control={form.control} name="facilities"
-                            render={({ field }) => { return (<FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))}} disabled={isPending}/></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)}}
-                            />
-                        ))}
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                )}/>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="surfaceType" render={({ field }) => (<FormItem><FormLabel>Surface Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{SURFACE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="size" render={({ field }) => (<FormItem><FormLabel>Field Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger></FormControl><SelectContent>{FIELD_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                </div>
+                <div className="grid grid-cols-2 gap-8">
+                    <FormField control={form.control} name="facilities" render={() => (
+                        <FormItem><FormLabel>Facilities</FormLabel><div className="space-y-2 rounded-lg border p-4">
+                        {FACILITIES.map((item) => (<FormField key={item.id} control={form.control} name="facilities" render={({ field }) => { return (<FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))}} disabled={isPending}/></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)}}/>))}
+                        </div><FormMessage />
+                        </FormItem>
+                    )}/>
+                     <FormField control={form.control} name="amenities" render={() => (
+                        <FormItem><FormLabel>Amenities</FormLabel><div className="space-y-2 rounded-lg border p-4">
+                        {AMENITIES.map((item) => (<FormField key={item.id} control={form.control} name="amenities" render={({ field }) => { return (<FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))}} disabled={isPending}/></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)}}/>))}
+                        </div><FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
             </div>
             <Separator />
             <div className="space-y-4">
@@ -142,8 +154,8 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                         <FormLabel>Assigned Grounds-Keepers</FormLabel>
                         <FormDescription>Select the staff responsible for this field.</FormDescription>
                         <ScrollArea className="h-40 w-full rounded-lg border p-4">
-                        {groundkeepers.length > 0 ? (
-                            groundkeepers.map((person) => (
+                        {groundskeepers.length > 0 ? (
+                            groundskeepers.map((person) => (
                                 <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
                             ))
                         ) : (
@@ -343,7 +355,7 @@ export default function FieldsClient({ fields, schools, groundskeepers }: { fiel
         </Card>
       </div>
 
-      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundkeepers} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
+      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundskeeper} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

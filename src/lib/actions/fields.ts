@@ -28,6 +28,9 @@ export async function getFields(): Promise<Field[]> {
         facilities: data.facilities,
         status: data.status,
         assignments: [],
+        location: data.location,
+        size: data.size,
+        amenities: data.amenities,
       };
 
       const assignmentsCol = collection(db, 'fields', docSnapshot.id, 'assignments');
@@ -79,6 +82,9 @@ export async function getField(fieldId: string): Promise<Field | null> {
       facilities: data.facilities,
       status: data.status,
       assignments: [],
+      location: data.location,
+      size: data.size,
+      amenities: data.amenities,
     };
 
     const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
@@ -112,10 +118,13 @@ export async function getField(fieldId: string): Promise<Field | null> {
 const fieldActionSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
   schoolId: z.string().optional(),
+  status: z.enum(['Available', 'Maintenance', 'Closed']).default('Available'),
   surfaceType: z.string().optional(),
   facilities: z.array(z.string()).optional(),
-  status: z.enum(['Available', 'Maintenance', 'Closed']).default('Available'),
   assignments: z.array(z.string()).optional(),
+  location: z.string().optional(),
+  size: z.string().optional(),
+  amenities: z.array(z.string()).optional(),
 });
 
 type FieldFormValues = z.infer<typeof fieldActionSchema>;
@@ -162,6 +171,7 @@ export async function addFieldAction(data: FieldFormValues) {
 
   batch.set(newFieldRef, {
       ...fieldData,
+      schoolId: fieldData.schoolId === ' ' ? '' : fieldData.schoolId,
       schoolName: schoolName || null,
       userId: userId,
   });
@@ -198,7 +208,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
     }
     
     let schoolName = '';
-    if (updateData.schoolId) {
+    if (updateData.schoolId && updateData.schoolId !== ' ') {
         const schoolSnap = await getDoc(doc(db, 'schools', updateData.schoolId));
         if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) throw new Error("Selected school not found.");
         schoolName = schoolSnap.data().name;
@@ -207,6 +217,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
     const batch = writeBatch(db);
     batch.update(fieldDocRef, {
         ...updateData,
+        schoolId: updateData.schoolId === ' ' ? '' : updateData.schoolId,
         schoolName: schoolName || null,
     });
 
@@ -297,4 +308,3 @@ export async function removeGroundskeeperFromFieldAction(fieldId: string, assign
 
     revalidatePath(`/fields/${fieldId}`);
 }
-
