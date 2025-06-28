@@ -21,6 +21,12 @@ export const sampleData = {
         { schoolId: 'temp_school_2', name: 'Oakridge Academy', abbreviation: 'OAKS' },
         { schoolId: 'temp_school_3', name: 'Riverside Secondary', abbreviation: 'RSS' },
         { schoolId: 'temp_school_4', name: 'Mountain View Prep', abbreviation: 'MVP' },
+        { schoolId: 'temp_school_5', name: 'Cedar Ridge Institute', abbreviation: 'CRI' },
+        { schoolId: 'temp_school_6', name: 'Pinecrest Collegiate', abbreviation: 'PCS' },
+        { schoolId: 'temp_school_7', name: 'Bayview Academy', abbreviation: 'BVA' },
+        { schoolId: 'temp_school_8', name: 'Summit School', abbreviation: 'SUM' },
+        { schoolId: 'temp_school_9', name: 'Northwood International', abbreviation: 'NIS' },
+        { schoolId: 'temp_school_10', name: 'Westfield Grammar', abbreviation: 'WGS' },
     ],
     divisions: [
         { divisionId: 'temp_div_1', name: 'U19 Varsity' },
@@ -87,10 +93,9 @@ export const sampleData = {
         // Officials & Staff
         { personId: 'p_25', firstName: 'Robert', lastName: 'Baker', email: 'robert.b@example.com', roles: ['Umpire', 'Grounds-Keeper'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_26', firstName: 'Patricia', lastName: 'Adams', email: 'patricia.a@example.com', roles: ['Umpire', 'Scorer'], notificationPreferences: { email: true, push: false } },
-        // Admin User for settings page
         { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin'], notificationPreferences: { email: true, push: false } },
         
-        // Riverside Rangers (11 players, 1 coach)
+        // Riverside Rangers (12 people)
         { personId: 'p_27', firstName: 'Ethan', lastName: 'Carter', email: 'ethan.c@example.com', roles: ['Player', 'Captain'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_28', firstName: 'Aiden', lastName: 'Mitchell', email: 'aiden.m@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_29', firstName: 'Logan', lastName: 'Perez', email: 'logan.p@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
@@ -104,7 +109,7 @@ export const sampleData = {
         { personId: 'p_37', firstName: 'Daniel', lastName: 'Collins', email: 'daniel.c@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_38', firstName: 'Sarah', lastName: 'Morgan', email: 'sarah.m@example.com', roles: ['Coach'], notificationPreferences: { email: true, push: false } },
         
-        // Mountain View Mavericks (11 players, 1 coach)
+        // Mountain View Mavericks (12 people)
         { personId: 'p_39', firstName: 'Lily', lastName: 'Stewart', email: 'lily.s@example.com', roles: ['Player', 'Captain'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_40', firstName: 'Grace', lastName: 'Sanchez', email: 'grace.s@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_41', firstName: 'Chloe', lastName: 'Morris', email: 'chloe.m@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
@@ -118,6 +123,33 @@ export const sampleData = {
         { personId: 'p_49', firstName: 'Ellie', lastName: 'Rivera', email: 'ellie.r@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_50', firstName: 'Chris', lastName: 'Peterson', email: 'chris.p@example.com', roles: ['Coach'], notificationPreferences: { email: true, push: false } },
 
+        // Cedar Ridge Centurions (12 people)
+        { personId: 'p_51', firstName: 'Leo', lastName: 'Garcia', email: 'leo.g@example.com', roles: ['Player', 'Captain'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_52', firstName: 'Mateo', lastName: 'Martinez', email: 'mateo.m@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_53', firstName: 'Julian', lastName: 'Rodriguez', email: 'julian.r@example.com', roles: ['Player', 'Vice-Captain'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_54', firstName: 'Wyatt', lastName: 'Hernandez', email: 'wyatt.h@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_55', firstName: 'Isaiah', lastName: 'Lopez', email: 'isaiah.l@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_56', firstName: 'Eli', lastName: 'Gonzalez', email: 'eli.g@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_57', firstName: 'Josiah', lastName: 'Perez', email: 'josiah.p@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_58', firstName: 'Hudson', lastName: 'Gomez', email: 'hudson.g@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_59', firstName: 'Christian', lastName: 'Reyes', email: 'christian.r@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_60', firstName: 'Asher', lastName: 'Diaz', email: 'asher.d@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_61', firstName: 'Ezra', lastName: 'Cruz', email: 'ezra.c@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_62', firstName: 'Maria', lastName: 'Flores', email: 'maria.f@example.com', roles: ['Coach'], notificationPreferences: { email: true, push: false } },
+        
+        // Pinecrest Pythons (12 people)
+        { personId: 'p_63', firstName: 'Aurora', lastName: 'Ramirez', email: 'aurora.r@example.com', roles: ['Player', 'Captain'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_64', firstName: 'Willow', lastName: 'Torres', email: 'willow.t@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_65', firstName: 'Nova', lastName: 'Gutierrez', email: 'nova.g@example.com', roles: ['Player', 'Vice-Captain'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_66', firstName: 'Luna', lastName: 'Jimenez', email: 'luna.j@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_67', firstName: 'Penelope', lastName: 'Mendoza', email: 'penelope.m@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_68', firstName: 'Stella', lastName: 'Alvarez', email: 'stella.a@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_69', firstName: 'Paisley', lastName: 'Castillo', email: 'paisley.c@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_70', firstName: 'Everly', lastName: 'Ortiz', email: 'everly.o@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_71', firstName: 'Naomi', lastName: 'Sandoval', email: 'naomi.s@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_72', firstName: 'Elena', lastName: 'Rojas', email: 'elena.r@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_73', firstName: 'Hazel', lastName: 'Vargas', email: 'hazel.v@example.com', roles: ['Player'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_74', firstName: 'John', lastName: 'Kim', email: 'john.k@example.com', roles: ['Coach'], notificationPreferences: { email: true, push: false } },
     ],
     competitions: [
         { competitionId: 'temp_comp_1', name: 'U19 Varsity League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' },
@@ -196,6 +228,42 @@ export const sampleData = {
                 { personId: 'p_48', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
                 { personId: 'p_49', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
                 { personId: 'p_50', role: 'Coach', status: 'active', isCaptain: false, isViceCaptain: false },
+            ]
+        },
+        { 
+            teamId: 'temp_team_5', name: 'Cedar Ridge Centurions', schoolId: 'temp_school_5', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamColors: { primary: '#8d0801', secondary: '#f4a259' },
+            roster: [
+                { personId: 'p_51', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false },
+                { personId: 'p_52', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_53', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: true },
+                { personId: 'p_54', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_55', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_56', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_57', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_58', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_59', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_60', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_61', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_62', role: 'Coach', status: 'active', isCaptain: false, isViceCaptain: false },
+            ]
+        },
+        { 
+            teamId: 'temp_team_6', name: 'Pinecrest Pythons', schoolId: 'temp_school_6', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamColors: { primary: '#003049', secondary: '#d62828' },
+            roster: [
+                { personId: 'p_63', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false },
+                { personId: 'p_64', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_65', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: true },
+                { personId: 'p_66', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_67', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_68', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_69', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_70', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_71', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_72', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_73', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_74', role: 'Coach', status: 'active', isCaptain: false, isViceCaptain: false },
             ]
         },
     ],
