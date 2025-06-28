@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,8 @@ const ROLES = [
   { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },
 ] as const;
 
+type SortableColumn = 'name' | 'email';
+
 export default function PeopleClient({ people }: { people: Person[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
@@ -60,13 +62,14 @@ export default function PeopleClient({ people }: { people: Person[] }) {
   const [isPersonDialogOpen, setIsPersonDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
-  // View and Pagination state
+  // View, Pagination, Filtering, and Sorting state
   const [view, setView] = React.useState<'list' | 'card'>('list');
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 12;
   
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
+  const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
 
   const filteredPeople = people.filter(person => {
     const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
@@ -76,19 +79,38 @@ export default function PeopleClient({ people }: { people: Person[] }) {
     return matchesSearch && matchesRole;
   });
 
+  const sortedPeople = React.useMemo(() => {
+    let sortableItems = [...filteredPeople];
+    sortableItems.sort((a, b) => {
+        let aValue: string;
+        let bValue: string;
+        if (sortConfig.key === 'name') {
+            aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
+            bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
+        } else {
+            aValue = a[sortConfig.key]?.toLowerCase() ?? '';
+            bValue = b[sortConfig.key]?.toLowerCase() ?? '';
+        }
+        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+    });
+    return sortableItems;
+  }, [filteredPeople, sortConfig]);
+
   const filtersApplied = searchQuery || roleFilters.length > 0;
 
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, roleFilters, view]);
+  }, [searchQuery, roleFilters, view, sortConfig]);
 
   // Pagination logic
-  const paginatedPeople = filteredPeople.slice(
+  const paginatedPeople = sortedPeople.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-  const totalPages = Math.ceil(filteredPeople.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedPeople.length / ITEMS_PER_PAGE);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -111,6 +133,29 @@ export default function PeopleClient({ people }: { people: Person[] }) {
       }
     });
   };
+
+  const requestSort = (key: SortableColumn) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (column: SortableColumn) => {
+    if (sortConfig.key !== column) return null;
+    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
+    return <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ column, children }: { column: SortableColumn, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(column)} className="px-0 hover:bg-transparent">
+            {children}
+            {getSortIcon(column)}
+        </Button>
+    </TableHead>
+  );
 
   return (
     <>
@@ -220,7 +265,12 @@ export default function PeopleClient({ people }: { people: Person[] }) {
             {view === 'list' && (
               <Table>
                 <TableHeader>
-                  <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Roles</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                  <TableRow>
+                    <SortableHeader column="name">Name</SortableHeader>
+                    <SortableHeader column="email">Email</SortableHeader>
+                    <TableHead>Roles</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedPeople.length > 0 ? (

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -5,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from 'next/link';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy, List, LayoutGrid } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,8 @@ type CompetitionFormValues = z.infer<typeof competitionSchema>;
 const COMPETITION_TYPES = ['League', 'Knockout', 'Series'] as const;
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 
+type SortableColumn = 'name' | 'type' | 'seasonName' | 'divisionName' | 'status';
+
 function CompetitionDialog({ mode, competition, seasons, divisions, teams, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
@@ -92,7 +95,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
     if (form.getValues('status') !== 'Completed') {
       form.setValue('winnerTeamId', '');
     }
-  }, [form.getValues('status'), form]);
+  }, [status, form]);
 
   function onSubmit(data: CompetitionFormValues) {
     startTransition(async () => {
@@ -167,12 +170,13 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 9;
 
-  // Filtering state
+  // Filtering and Sorting state
   const [searchQuery, setSearchQuery] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState("all");
   const [seasonFilter, setSeasonFilter] = React.useState("all");
   const [divisionFilter, setDivisionFilter] = React.useState("all");
   const [statusFilter, setStatusFilter] = React.useState("all");
+  const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
 
   const filteredCompetitions = competitions.filter(comp => {
     const matchesSearch = comp.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -183,24 +187,50 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
     return matchesSearch && matchesType && matchesSeason && matchesDivision && matchesStatus;
   });
 
+  const sortedCompetitions = React.useMemo(() => {
+    let sortableItems = [...filteredCompetitions];
+    sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key] ?? '';
+        const bValue = b[sortConfig.key] ?? '';
+        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+    });
+    return sortableItems;
+  }, [filteredCompetitions, sortConfig]);
+
   const filtersApplied = searchQuery || typeFilter !== 'all' || seasonFilter !== 'all' || divisionFilter !== 'all' || statusFilter !== 'all';
   
-  // Reset page on filter/view change
+  // Reset page on filter/view/sort change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, typeFilter, seasonFilter, divisionFilter, statusFilter, view]);
+  }, [searchQuery, typeFilter, seasonFilter, divisionFilter, statusFilter, view, sortConfig]);
 
   // Pagination logic
-  const paginatedCompetitions = filteredCompetitions.slice(
+  const paginatedCompetitions = sortedCompetitions.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-  const totalPages = Math.ceil(filteredCompetitions.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedCompetitions.length / ITEMS_PER_PAGE);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const requestSort = (key: SortableColumn) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (column: SortableColumn) => {
+    if (sortConfig.key !== column) return null;
+    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
+    return <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
   const handleDelete = () => {
@@ -218,6 +248,15 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
       }
     });
   };
+
+  const SortableHeader = ({ column, children }: { column: SortableColumn, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(column)} className="px-0 hover:bg-transparent">
+            {children}
+            {getSortIcon(column)}
+        </Button>
+    </TableHead>
+  );
 
   return (
     <>
@@ -272,11 +311,11 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Season</TableHead>
-                            <TableHead>Division</TableHead>
-                            <TableHead>Status</TableHead>
+                            <SortableHeader column="name">Name</SortableHeader>
+                            <SortableHeader column="type">Type</SortableHeader>
+                            <SortableHeader column="seasonName">Season</SortableHeader>
+                            <SortableHeader column="divisionName">Division</SortableHeader>
+                            <SortableHeader column="status">Status</SortableHeader>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>

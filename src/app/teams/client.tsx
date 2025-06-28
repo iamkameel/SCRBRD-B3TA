@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +49,8 @@ const teamSchema = z.object({
 });
 
 type TeamFormValues = z.infer<typeof teamSchema>;
+
+type SortableColumn = 'name' | 'schoolName' | 'divisionName' | 'seasonName' | 'teamClass';
 
 function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChange }: { mode: 'add' | 'edit', team?: Team, schools: School[], divisions: Division[], seasons: Season[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -140,9 +142,11 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 12;
   
+  // Filtering and Sorting state
   const [searchQuery, setSearchQuery] = React.useState("");
   const [divisionFilter, setDivisionFilter] = React.useState<string>("all");
   const [seasonFilter, setSeasonFilter] = React.useState<string>("all");
+  const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
 
   const handleDelete = () => {
     if (!selectedTeam) return;
@@ -167,25 +171,60 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
     return matchesSearch && matchesDivision && matchesSeason;
   });
 
+  const sortedTeams = React.useMemo(() => {
+    let sortableItems = [...filteredTeams];
+    sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key] ?? '';
+        const bValue = b[sortConfig.key] ?? '';
+        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+    });
+    return sortableItems;
+  }, [filteredTeams, sortConfig]);
+
   const filtersApplied = searchQuery || divisionFilter !== 'all' || seasonFilter !== 'all';
 
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, divisionFilter, seasonFilter, view]);
+  }, [searchQuery, divisionFilter, seasonFilter, view, sortConfig]);
 
   // Pagination logic
-  const paginatedTeams = filteredTeams.slice(
+  const paginatedTeams = sortedTeams.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-  const totalPages = Math.ceil(filteredTeams.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedTeams.length / ITEMS_PER_PAGE);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
+
+  const requestSort = (key: SortableColumn) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (column: SortableColumn) => {
+    if (sortConfig.key !== column) return null;
+    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
+    return <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ column, children }: { column: SortableColumn, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(column)} className="px-0 hover:bg-transparent">
+            {children}
+            {getSortIcon(column)}
+        </Button>
+    </TableHead>
+  );
 
 
   return (
@@ -269,7 +308,14 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
             {view === 'list' && (
                 <Table>
                 <TableHeader>
-                    <TableRow><TableHead>Team Name</TableHead><TableHead>School</TableHead><TableHead>Division</TableHead><TableHead>Season</TableHead><TableHead>Class</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                    <TableRow>
+                        <SortableHeader column="name">Team Name</SortableHeader>
+                        <SortableHeader column="schoolName">School</SortableHeader>
+                        <SortableHeader column="divisionName">Division</SortableHeader>
+                        <SortableHeader column="seasonName">Season</SortableHeader>
+                        <SortableHeader column="teamClass">Class</SortableHeader>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
                 </TableHeader>
                 <TableBody>
                     {paginatedTeams.length > 0 ? (
