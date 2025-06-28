@@ -54,6 +54,7 @@ export interface Field {
 export interface Team {
   teamId: string;
   name: string;
+  alias?: string;
   schoolId: string;
   schoolName: string;
   divisionId: string;

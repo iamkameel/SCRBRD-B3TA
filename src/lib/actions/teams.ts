@@ -197,9 +197,14 @@ export async function updateRosterAssignmentAction(data: z.infer<typeof updateAs
 }
 
 const teamSchema = z.object({
-  name: z.string().min(1), schoolId: z.string(), divisionId: z.string(), seasonId: z.string(),
-  teamClass: z.string().optional(),
-  primaryColor: z.string().optional(), secondaryColor: z.string().optional(),
+  name: z.string().min(1),
+  alias: z.string().optional(),
+  schoolId: z.string(),
+  divisionId: z.string(),
+  seasonId: z.string(),
+  teamClass: z.string(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
 });
 
 async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: string) {
@@ -215,12 +220,14 @@ export async function addTeamAction(data: z.infer<typeof teamSchema>) {
   if (!userId) throw new Error("User not authenticated");
   const validated = teamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
-  const { name, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
+  const { name, alias, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
   const [schoolName, divisionName, seasonName] = await validateTeamRefs(schoolId, divisionId, seasonId);
   try {
     await addDoc(collection(db, 'teams'), {
-        name, schoolId, schoolName, divisionId, divisionName, seasonId, seasonName,
-        teamClass: teamClass || '',
+        name,
+        alias: alias || '',
+        schoolId, schoolName, divisionId, divisionName, seasonId, seasonName,
+        teamClass,
         teamColors: { primary: primaryColor || '#000000', secondary: secondaryColor || '#ffffff' },
         userId,
     });
@@ -236,13 +243,15 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
   if (!userId) throw new Error("User not authenticated");
   const validated = updateTeamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
-  const { teamId, name, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
+  const { teamId, name, alias, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
   if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
   const [schoolName, divisionName, seasonName] = await validateTeamRefs(schoolId, divisionId, seasonId);
   try {
     await updateDoc(doc(db, 'teams', teamId), {
-        name, schoolId, schoolName, divisionId, divisionName, seasonId, seasonName,
-        teamClass: teamClass || '',
+        name,
+        alias: alias || '',
+        schoolId, schoolName, divisionId, divisionName, seasonId, seasonName,
+        teamClass,
         teamColors: { primary: primaryColor, secondary: secondaryColor },
     });
   } catch (error) {

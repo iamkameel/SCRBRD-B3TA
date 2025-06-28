@@ -45,6 +45,7 @@ import { Separator } from "@/components/ui/separator";
 
 const teamSchema = z.object({
   name: z.string().min(1, { message: "Team name is required." }),
+  alias: z.string().optional(),
   schoolId: z.string({ required_error: "Please select a school." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   seasonId: z.string({ required_error: "Please select a season." }),
@@ -55,7 +56,7 @@ const teamSchema = z.object({
 
 type TeamFormValues = z.infer<typeof teamSchema>;
 
-type SortableColumn = 'name' | 'schoolName' | 'divisionName' | 'seasonName' | 'teamClass';
+type SortableColumn = 'name' | 'alias' | 'schoolName' | 'divisionName' | 'seasonName' | 'teamClass';
 
 const CLASS_DIVISION_MAP: { [key: string]: string[] } = {
     'Open': ['1st XI', '2nd XI', '3rd XI', '4th XI'],
@@ -72,10 +73,10 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamSchema),
     defaultValues: mode === 'edit' && team ? {
-      name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
+      name: team.name, alias: team.alias, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
       primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
     } : {
-      name: "", primaryColor: "#000000", secondaryColor: "#ffffff",
+      name: "", alias: "", primaryColor: "#000000", secondaryColor: "#ffffff",
     },
   });
   
@@ -107,7 +108,7 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
     if (open) {
       if (mode === 'edit' && team) {
         form.reset({
-          name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
+          name: team.name, alias: team.alias, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
           primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
         });
       } else {
@@ -116,7 +117,7 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
             return s.active && now >= s.startDate && now <= s.endDate;
         });
         form.reset({
-          name: "", schoolId: undefined, divisionId: undefined, seasonId: activeSeason?.seasonId, teamClass: undefined,
+          name: "", alias: "", schoolId: undefined, divisionId: undefined, seasonId: activeSeason?.seasonId, teamClass: undefined,
           primaryColor: "#000000", secondaryColor: "#ffffff",
         });
       }
@@ -151,6 +152,7 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
               <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Team Name (Auto-generated)</FormLabel><FormControl><Input placeholder="Auto-generated from selections..." {...field} disabled /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="alias" render={({ field }) => (<FormItem><FormLabel>Team Alias (Optional)</FormLabel><FormControl><Input placeholder="e.g. MHS 1sts" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <Separator />
             <div className="space-y-4">
@@ -431,6 +433,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                 <TableHeader>
                     <TableRow>
                         <SortableHeader column="name">Team Name</SortableHeader>
+                        <SortableHeader column="alias">Alias</SortableHeader>
                         <SortableHeader column="schoolName">School</SortableHeader>
                         <SortableHeader column="divisionName">Division</SortableHeader>
                         <SortableHeader column="seasonName">Season</SortableHeader>
@@ -443,6 +446,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                     paginatedTeams.map((team) => (
                         <TableRow key={team.teamId}>
                         <TableCell className="font-medium"><Link href={`/teams/${team.teamId}`} className="hover:underline">{team.name}</Link></TableCell>
+                        <TableCell>{team.alias || '-'}</TableCell>
                         <TableCell>{team.schoolName}</TableCell>
                         <TableCell>{team.divisionName}</TableCell>
                         <TableCell>{team.seasonName}</TableCell>
@@ -459,7 +463,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
                         </TableRow>
                     ))
                     ) : (
-                    <TableRow><TableCell colSpan={6} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
                     )}
                 </TableBody>
                 </Table>

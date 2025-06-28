@@ -36,7 +36,10 @@ export function TeamCard({ team, onEdit, onDelete }: TeamCardProps) {
                                 {team.name}
                             </Link>
                          </CardTitle>
-                         <CardDescription>{team.schoolName}</CardDescription>
+                         <CardDescription>
+                            {team.alias && <span className="font-medium text-foreground">{team.alias} &bull; </span>}
+                            {team.schoolName}
+                        </CardDescription>
                     </div>
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>

@@ -233,7 +233,13 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         <Link href="/teams" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back to Teams</Link>
         <Card>
           <CardHeader className="flex flex-row items-start justify-between">
-              <div><CardTitle>{team.name}</CardTitle><CardDescription>{team.divisionName} &bull; {team.schoolName} &bull; {team.seasonName}</CardDescription></div>
+              <div>
+                <CardTitle>{team.name}</CardTitle>
+                <CardDescription>
+                  {team.alias && <span className="font-semibold text-foreground">{team.alias} &bull; </span>}
+                  {team.divisionName} &bull; {team.schoolName} &bull; {team.seasonName}
+                </CardDescription>
+              </div>
               {team.teamColors && (
               <div className="flex items-center gap-2">
                   {team.teamColors.primary && (<TooltipProvider><Tooltip><TooltipTrigger asChild><div className="h-8 w-8 rounded-full border" style={{ backgroundColor: team.teamColors.primary }} /></TooltipTrigger><TooltipContent><p>Primary: {team.teamColors.primary}</p></TooltipContent></Tooltip></TooltipProvider>)}
