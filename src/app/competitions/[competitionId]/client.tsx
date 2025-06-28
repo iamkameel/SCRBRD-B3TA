@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Competition, Match, StandingTeam, LeaderboardPlayer } from "@/lib/data";
 import { TopRunScorersChart, TopWicketTakersChart } from './competition-charts';
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface CompetitionDetailsClientProps {
     competition: Competition;
@@ -24,12 +26,66 @@ interface CompetitionDetailsClientProps {
     };
 }
 
+function MatchupCard({ match }: { match: Match }) {
+  const [isClient, setIsClient] = React.useState(false);
+  React.useEffect(() => { setIsClient(true); }, []);
+
+  const teamAStyles = match.winnerTeamId === match.teamAId ? 'font-bold bg-background shadow-sm' : '';
+  const teamBStyles = match.winnerTeamId === match.teamBId ? 'font-bold bg-background shadow-sm' : '';
+
+  return (
+    <div className="border p-4 rounded-lg bg-muted/50">
+      <div className="flex justify-between items-center">
+        <div className="space-y-2 flex-1">
+          <div className={cn("p-2 rounded text-sm flex items-center gap-2", teamAStyles)}>
+            <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+            {match.teamAName}
+          </div>
+          <div className={cn("p-2 rounded text-sm flex items-center gap-2", teamBStyles)}>
+            {match.teamBId ? (<span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />) : (<div className="h-2 w-2" />) }
+            {match.teamBName || 'TBD'}
+          </div>
+        </div>
+        <div className="text-right pl-4">
+          {match.status === 'completed' && match.result ? (
+            <Link href={`/matches/${match.matchId}`} className="text-sm text-primary hover:underline">View Result</Link>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              {isClient && <p>{format(match.dateTime, "dd MMM")}</p>}
+              {isClient && <p>{format(match.dateTime, "p")}</p>}
+            </div>
+          )}
+        </div>
+      </div>
+      {match.status === 'completed' && match.result && (
+        <p className="text-xs text-center text-muted-foreground pt-2 mt-2 border-t">{match.result}</p>
+      )}
+    </div>
+  );
+}
+
+
 export default function CompetitionDetailsClient({ competition, standings, matches, leaderboards }: CompetitionDetailsClientProps) {
     const [isClient, setIsClient] = React.useState(false);
     React.useEffect(() => { setIsClient(true); }, []);
     
     const { topRunScorers, topWicketTakers } = leaderboards;
     const isLeague = competition.type === 'League';
+
+    const bracketRounds = React.useMemo(() => {
+        const grouped: { [key: number]: Match[] } = {};
+        matches.forEach(match => {
+            const round = match.round || 1;
+            if (!grouped[round]) {
+                grouped[round] = [];
+            }
+            grouped[round].push(match);
+        });
+        return Object.entries(grouped).map(([round, matchesInRound]) => ({
+            round: parseInt(round, 10),
+            matches: matchesInRound.sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime()),
+        })).sort((a, b) => a.round - b.round);
+    }, [matches]);
 
     return (
         <div className="flex flex-col gap-8">
@@ -115,32 +171,24 @@ export default function CompetitionDetailsClient({ competition, standings, match
                                 <CardDescription>A visual overview of the tournament matchups.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {matches.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {matches.map(match => (
-                                            <div key={match.matchId} className="border p-4 rounded-lg bg-muted/50">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="space-y-2 flex-1">
-                                                        <p className={`p-2 rounded text-sm ${match.winnerTeamId === match.teamAId ? 'bg-background shadow-sm font-bold' : ''}`}>{match.teamAName}</p>
-                                                        <p className={`p-2 rounded text-sm ${match.winnerTeamId === match.teamBId ? 'bg-background shadow-sm font-bold' : ''}`}>{match.teamBName}</p>
-                                                    </div>
-                                                    <div className="text-right pl-4">
-                                                        {match.status === 'completed' && match.result ? (
-                                                            <Link href={`/matches/${match.matchId}`} className="text-sm text-primary hover:underline">View Result</Link>
-                                                        ) : (
-                                                            <div className="text-sm text-muted-foreground">
-                                                                {isClient && <p>{format(match.dateTime, "dd MMM, yyyy")}</p>}
-                                                                {isClient && <p>{format(match.dateTime, "p")}</p>}
-                                                            </div>
-                                                        )}
+                                {bracketRounds.length > 0 ? (
+                                    <ScrollArea>
+                                        <div className="flex gap-8 p-4">
+                                            {bracketRounds.map(round => (
+                                                <div key={round.round} className="flex-shrink-0 w-80">
+                                                    <h3 className="text-lg font-bold mb-4 text-center">
+                                                        {round.matches.length === 1 ? 'Final' : `Round ${round.round}`}
+                                                    </h3>
+                                                    <div className="space-y-4">
+                                                        {round.matches.map(match => (
+                                                            <MatchupCard key={match.matchId} match={match} />
+                                                        ))}
                                                     </div>
                                                 </div>
-                                                {match.status === 'completed' && match.result && (
-                                                    <p className="text-xs text-center text-muted-foreground pt-2 mt-2 border-t">{match.result}</p>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
+                                        </div>
+                                        <ScrollBar orientation="horizontal" />
+                                    </ScrollArea>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                                         <p className="text-muted-foreground">No matches scheduled for this competition yet.</p>
@@ -173,8 +221,8 @@ export default function CompetitionDetailsClient({ competition, standings, match
                                                 </div>
                                                 <span className="text-muted-foreground text-xs">vs</span>
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />
-                                                    <span>{match.teamBName}</span>
+                                                     {match.teamBId ? (<span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />) : (<div className="h-2 w-2" />) }
+                                                    <span>{match.teamBName || 'TBD'}</span>
                                                 </div>
                                             </Link>
                                         </TableCell>

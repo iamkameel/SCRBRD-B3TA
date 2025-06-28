@@ -98,6 +98,7 @@ export interface Match {
   fieldName: string;
   dateTime: Date;
   status: MatchStatus;
+  round?: number;
   report?: string;
   preview?: string;
   teamAColor?: string;

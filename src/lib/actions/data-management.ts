@@ -176,7 +176,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
 
             const scorecardData = sampleScorecardData[tempMatchId as keyof typeof sampleScorecardData];
 
-            const newMatchData = {
+            const newMatchData: { [key: string]: any } = {
                 ...matchData,
                 teamAId: idMap.get(matchData.teamAId),
                 teamBId: idMap.get(matchData.teamBId),
@@ -188,7 +188,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 divisionName: sampleData.divisions.find(d => d.divisionId === competition.divisionId)?.name,
                 fieldId: idMap.get(matchData.fieldId),
                 teamAName: sampleData.teams.find(t => t.teamId === matchData.teamAId)?.name,
-                teamBName: sampleData.teams.find(t => t.teamId === matchData.teamBId)?.name,
+                teamBName: matchData.teamBId ? sampleData.teams.find(t => t.teamId === matchData.teamBId)?.name : 'TBD',
                 fieldName: sampleData.fields.find(f => f.fieldId === matchData.fieldId)?.name,
                 dateTime: Timestamp.fromDate(new Date(matchData.dateTime)),
                 userId,
@@ -196,6 +196,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 report: '',
                 preview: '',
             };
+
+            if (match.round) {
+                newMatchData.round = match.round;
+            }
+
             const matchDocRef = doc(collection(db, 'matches'));
             batch.set(matchDocRef, newMatchData);
             idMap.set(tempMatchId, matchDocRef.id);
