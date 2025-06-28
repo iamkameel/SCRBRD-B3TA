@@ -23,20 +23,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName } from "@/lib/actions/data-management";
 
-const SUBSETS: { name: SubsetName, dependencies: boolean }[] = [
-    { name: 'Schools', dependencies: false },
-    { name: 'Divisions', dependencies: false },
-    { name: 'Seasons', dependencies: false },
-    { name: 'Fields', dependencies: false },
-    { name: 'People', dependencies: false },
-    { name: 'Competitions', dependencies: true },
-    { name: 'Teams', dependencies: true },
-    { name: 'Matches', dependencies: true },
+const SUBSETS: { name: SubsetName }[] = [
+    { name: 'Schools' },
+    { name: 'Divisions' },
+    { name: 'Seasons' },
+    { name: 'Fields' },
+    { name: 'People' },
+    { name: 'Competitions' },
+    { name: 'Teams' },
+    { name: 'Matches' },
+    { name: 'Financials' },
+    { name: 'Equipment' },
 ];
 
 export default function DataManagementClient() {
@@ -163,24 +164,15 @@ export default function DataManagementClient() {
                                 </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                {SUBSETS.map(({name, dependencies}) => (
+                                {SUBSETS.map(({name}) => (
                                     <TableRow key={name}>
                                     <TableCell className="font-medium">{name}</TableCell>
                                     <TableCell className="flex justify-end gap-2">
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <div className="inline-block">
-                                                        <Button size="sm" variant="outline" onClick={() => handleMigrateSubset(name)} disabled={dependencies || isProcessing}>
-                                                            <DatabaseZap /> Migrate
-                                                        </Button>
-                                                    </div>
-                                                </TooltipTrigger>
-                                                {dependencies && <TooltipContent><p>Migrate all data to populate this subset.</p></TooltipContent>}
-                                            </Tooltip>
-                                        </TooltipProvider>
+                                        <Button size="sm" variant="outline" onClick={() => handleMigrateSubset(name)} disabled={isProcessing}>
+                                            <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
+                                        </Button>
                                         <Button size="sm" variant="destructive" onClick={() => { setActionToConfirm(name); setDialogOpen(true); }} disabled={isProcessing}>
-                                            <Trash2 /> Delete
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
                                         </Button>
                                     </TableCell>
                                     </TableRow>
