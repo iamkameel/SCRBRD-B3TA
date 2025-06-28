@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,8 +171,8 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                         <FormLabel>Assigned Grounds-Keepers</FormLabel>
                         <FormDescription>Select the staff responsible for this field.</FormDescription>
                         <ScrollArea className="h-40 w-full rounded-lg border p-4">
-                        {groundskeeper.length > 0 ? (
-                            groundskeeper.map((person) => (
+                        {groundkeepers.length > 0 ? (
+                            groundkeepers.map((person) => (
                                 <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
                             ))
                         ) : (
