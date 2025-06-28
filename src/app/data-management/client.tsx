@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName } from "@/lib/actions/data-management";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SUBSETS: { name: SubsetName }[] = [
     { name: 'Schools' },
@@ -38,6 +39,10 @@ const SUBSETS: { name: SubsetName }[] = [
     { name: 'Matches' },
     { name: 'Financials' },
     { name: 'Equipment' },
+];
+
+const INDEPENDENT_SUBSETS: SubsetName[] = [
+    'Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment'
 ];
 
 export default function DataManagementClient() {
@@ -164,19 +169,39 @@ export default function DataManagementClient() {
                                 </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                {SUBSETS.map(({name}) => (
+                                {SUBSETS.map(({name}) => {
+                                  const isIndependent = INDEPENDENT_SUBSETS.includes(name);
+                                  return (
                                     <TableRow key={name}>
-                                    <TableCell className="font-medium">{name}</TableCell>
-                                    <TableCell className="flex justify-end gap-2">
-                                        <Button size="sm" variant="outline" onClick={() => handleMigrateSubset(name)} disabled={isProcessing}>
-                                            <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
-                                        </Button>
-                                        <Button size="sm" variant="destructive" onClick={() => { setActionToConfirm(name); setDialogOpen(true); }} disabled={isProcessing}>
-                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                        </Button>
-                                    </TableCell>
+                                      <TableCell className="font-medium">{name}</TableCell>
+                                      <TableCell className="flex justify-end gap-2">
+                                          {isIndependent ? (
+                                              <Button size="sm" variant="outline" onClick={() => handleMigrateSubset(name)} disabled={isProcessing}>
+                                                  <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
+                                              </Button>
+                                          ) : (
+                                              <TooltipProvider>
+                                                  <Tooltip>
+                                                      <TooltipTrigger asChild>
+                                                          <span tabIndex={0}> {/* Wrapper for disabled button */}
+                                                              <Button size="sm" variant="outline" disabled>
+                                                                  <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
+                                                              </Button>
+                                                          </span>
+                                                      </TooltipTrigger>
+                                                      <TooltipContent>
+                                                          <p>Migration depends on other data. Use 'Migrate All'.</p>
+                                                      </TooltipContent>
+                                                  </Tooltip>
+                                              </TooltipProvider>
+                                          )}
+                                          <Button size="sm" variant="destructive" onClick={() => { setActionToConfirm(name); setDialogOpen(true); }} disabled={isProcessing}>
+                                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                          </Button>
+                                      </TableCell>
                                     </TableRow>
-                                ))}
+                                  )
+                                })}
                                 </TableBody>
                             </Table>
                             </CardContent>
