@@ -326,7 +326,11 @@ export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
   if (!userId) throw new Error("User not authenticated");
   if (!playerSchema.safeParse(data).success) throw new Error('Invalid person data.');
   try {
-    await addDoc(collection(db, 'people'), { ...data, userId });
+    await addDoc(collection(db, 'people'), { 
+      ...data, 
+      userId,
+      notificationPreferences: { email: true, push: false },
+    });
   } catch (error) {
     console.error("Error adding document: ", error);
     throw new Error("Could not add person.");
