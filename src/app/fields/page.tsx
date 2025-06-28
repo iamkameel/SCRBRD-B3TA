@@ -5,11 +5,11 @@ import { getSchools } from '@/lib/actions/schools';
 import FieldsClient from './client';
 
 export default async function FieldsPage() {
-  const [fields, groundskeepers, schools] = await Promise.all([
+  const [fields, groundkeepers, schools] = await Promise.all([
     getFields(),
     getPeopleByRole('Grounds-Keeper'),
     getSchools(),
   ]);
   
-  return <FieldsClient fields={fields} groundskeepers={groundkeepers} schools={schools} />;
+  return <FieldsClient fields={fields} groundkeepers={groundkeepers} schools={schools} />;
 }
