@@ -100,12 +100,13 @@ const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 function CompetitionDialog({ mode, competition, seasons, divisions, teams, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [schoolFilters, setSchoolFilters] = React.useState<string[]>([]);
 
   const form = useForm<CompetitionFormValues>({
     resolver: zodResolver(competitionSchema),
     defaultValues: mode === 'edit' && competition ? {
       name: competition.name,
-      competitionClass: competition.competitionClass || ' ',
+      competitionClass: competition.competitionClass || " ",
       type: competition.type,
       seasonId: competition.seasonId,
       divisionId: competition.divisionId,
@@ -126,6 +127,21 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
     return teams.filter(team => team.divisionId === divisionId && team.seasonId === seasonId);
   }, [teams, divisionId, seasonId]);
 
+  const eligibleSchools = React.useMemo(() => {
+      const schoolMap = new Map<string, { schoolId: string, schoolName: string }>();
+      eligibleTeams.forEach(team => {
+          if (team.schoolId && team.schoolName && !schoolMap.has(team.schoolId)) {
+              schoolMap.set(team.schoolId, { schoolId: team.schoolId, schoolName: team.schoolName });
+          }
+      });
+      return Array.from(schoolMap.values()).sort((a,b) => a.schoolName.localeCompare(b.schoolName));
+  }, [eligibleTeams]);
+  
+  const filteredTeams = React.useMemo(() => {
+    if (schoolFilters.length === 0) return eligibleTeams;
+    return eligibleTeams.filter(team => schoolFilters.includes(team.schoolId));
+  }, [eligibleTeams, schoolFilters]);
+
   const eligibleClasses = React.useMemo(() => {
     if (!divisionId) return [];
     const selectedDivision = divisions.find(d => d.divisionId === divisionId);
@@ -140,16 +156,16 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
       } else {
         form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "", teamIds: [] });
       }
+      setSchoolFilters([]);
     }
   }, [competition, mode, open, form]);
   
   React.useEffect(() => {
-    // When division changes, reset the class selection.
     form.resetField('competitionClass');
+    setSchoolFilters([]);
   }, [divisionId, form]);
 
   React.useEffect(() => {
-    // When status changes away from 'Completed', reset the winner field
     if (form.getValues('status') !== 'Completed') {
       form.setValue('winnerTeamId', '');
     }
@@ -193,7 +209,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
              <FormField control={form.control} name="competitionClass" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Class / Level (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending || !divisionId}>
+                  <Select onValueChange={field.onChange} value={field.value || " "} disabled={isPending || !divisionId}>
                     <FormControl><SelectTrigger><SelectValue placeholder={!divisionId ? "Select a division first" : "Select a class"} /></SelectTrigger></FormControl>
                     <SelectContent>
                       <SelectItem value=" ">-- No Class --</SelectItem>
@@ -247,10 +263,52 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
                   <FormDescription>
                     Select the teams that will participate in this competition. Teams are filtered by the selected season and division.
                   </FormDescription>
+                  {eligibleTeams.length > 0 && (
+                    <div className="mb-4">
+                        <Label>Filter by School</Label>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between font-normal">
+                                    <span className="truncate">
+                                        {schoolFilters.length === 0 && "Select schools to filter..."}
+                                        {schoolFilters.length === 1 && eligibleSchools.find(s => s.schoolId === schoolFilters[0])?.schoolName}
+                                        {schoolFilters.length > 1 && `${schoolFilters.length} schools selected`}
+                                    </span>
+                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-[300px]">
+                                <DropdownMenuLabel>Filter by School</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {eligibleSchools.map(school => (
+                                <DropdownMenuCheckboxItem
+                                    key={school.schoolId}
+                                    checked={schoolFilters.includes(school.schoolId)}
+                                    onSelect={(e) => e.preventDefault()}
+                                    onCheckedChange={checked => {
+                                        const newFilters = checked
+                                            ? [...schoolFilters, school.schoolId]
+                                            : schoolFilters.filter(id => id !== school.schoolId);
+                                        setSchoolFilters(newFilters);
+                                    }}
+                                >
+                                    {school.schoolName}
+                                </DropdownMenuCheckboxItem>
+                                ))}
+                                {schoolFilters.length > 0 && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onSelect={() => setSchoolFilters([])} className="justify-center text-sm">Clear filters</DropdownMenuItem>
+                                </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                  )}
                   <ScrollArea className="h-48 rounded-md border">
                     <div className="p-4">
-                      {eligibleTeams.length > 0 ? (
-                        eligibleTeams.map((team) => (
+                      {filteredTeams.length > 0 ? (
+                        filteredTeams.map((team) => (
                           <FormField
                             key={team.teamId}
                             control={form.control}
@@ -285,7 +343,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
                         ))
                       ) : (
                         <p className="text-sm text-muted-foreground text-center pt-4">
-                          No teams available for the selected division and season.
+                          {eligibleTeams.length === 0 ? "No teams available for the selected division and season." : "No teams found for the selected school filter."}
                         </p>
                       )}
                     </div>
