@@ -466,5 +466,5 @@ export default function TeamsClient({ teams, schools, divisions, seasons }: { te
         </AlertDialogContent>
       </AlertDialog>
     </>
-
-    
+  );
+}
