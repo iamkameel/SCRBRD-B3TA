@@ -10,6 +10,8 @@ import {
   SheetContent,
   SheetTrigger,
   SheetClose,
+  SheetTitle,
+  SheetDescription,
 } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -51,6 +53,8 @@ export function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col p-0">
+                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                    <SheetDescription className="sr-only">A list of pages to navigate through the application.</SheetDescription>
                     <div className="flex h-16 items-center px-6 border-b">
                         <Link href="/" className="flex items-center gap-2 font-bold">
                           <CricketIcon className="h-6 w-6 text-primary" />
