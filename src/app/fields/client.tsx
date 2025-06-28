@@ -68,8 +68,8 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
   const form = useForm<FieldFormValues>({
     resolver: zodResolver(fieldSchema),
     defaultValues: mode === 'edit' && field ? 
-        { name: field.name, schoolId: field.schoolId || '', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] } : 
-        { name: "", schoolId: '', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] },
+        { name: field.name, schoolId: field.schoolId || ' ', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] } : 
+        { name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] },
   });
 
   React.useEffect(() => {
@@ -142,8 +142,8 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                         <FormLabel>Assigned Grounds-Keepers</FormLabel>
                         <FormDescription>Select the staff responsible for this field.</FormDescription>
                         <ScrollArea className="h-40 w-full rounded-lg border p-4">
-                        {groundskeeper.length > 0 ? (
-                            groundskeeper.map((person) => (
+                        {groundkeepers.length > 0 ? (
+                            groundkeepers.map((person) => (
                                 <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
                             ))
                         ) : (

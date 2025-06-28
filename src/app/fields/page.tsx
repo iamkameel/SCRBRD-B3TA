@@ -13,4 +13,3 @@ export default async function FieldsPage() {
   
   return <FieldsClient fields={fields} schools={schools} groundskeepers={groundkeepers} />;
 }
-
