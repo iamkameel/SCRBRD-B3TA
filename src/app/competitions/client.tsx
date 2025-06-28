@@ -55,12 +55,13 @@ const competitionSchema = z.object({
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
 
-const COMPETITION_CLASSES = [
-    '1st XI', '2nd XI', '3rd XI', '4th XI',
-    'U16A', 'U16B', 'U16C',
-    'U15A', 'U15B', 'U15C',
-    'U14A', 'U14B', 'U14C',
-];
+const CLASS_DIVISION_MAP: { [key: string]: string[] } = {
+    'Open': ['1st XI', '2nd XI', '3rd XI', '4th XI'],
+    'u16': ['U16A', 'U16B', 'U16C'],
+    'u15': ['U15A', 'U15B', 'U15C'],
+    'u14': ['U14A', 'U14B', 'U14C'],
+    'u13': ['U13A', 'U13B'],
+};
 
 const COMPETITION_TYPE_DEFINITIONS = [
     {
@@ -96,14 +97,14 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
     resolver: zodResolver(competitionSchema),
     defaultValues: mode === 'edit' && competition ? {
       name: competition.name,
-      competitionClass: competition.competitionClass || '',
+      competitionClass: competition.competitionClass || ' ',
       type: competition.type,
       seasonId: competition.seasonId,
       divisionId: competition.divisionId,
       status: competition.status,
       winnerTeamId: competition.winnerTeamId || "",
     } : {
-      name: "", competitionClass: "", type: "League", status: "Draft", winnerTeamId: "",
+      name: "", competitionClass: " ", type: "League", status: "Draft", winnerTeamId: "",
     },
   });
   
@@ -116,16 +117,28 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
     return teams.filter(team => team.divisionId === divisionId && team.seasonId === seasonId);
   }, [teams, divisionId, seasonId]);
 
+  const eligibleClasses = React.useMemo(() => {
+    if (!divisionId) return [];
+    const selectedDivision = divisions.find(d => d.divisionId === divisionId);
+    if (!selectedDivision) return [];
+    return CLASS_DIVISION_MAP[selectedDivision.name] || [];
+  }, [divisionId, divisions]);
+
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && competition) {
-        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || "" });
+        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || " " });
       } else {
-        form.reset({ name: "", competitionClass: "", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "" });
+        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "" });
       }
     }
   }, [competition, mode, open, form]);
   
+  React.useEffect(() => {
+    // When division changes, reset the class selection.
+    form.resetField('competitionClass');
+  }, [divisionId, form]);
+
   React.useEffect(() => {
     // When status changes away from 'Completed', reset the winner field
     if (form.getValues('status') !== 'Completed') {
@@ -166,20 +179,21 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Competition Name</FormLabel><FormControl><Input placeholder="e.g. U19 Varsity League" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="competitionClass" render={({ field }) => (
+               <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+            </div>
+             <FormField control={form.control} name="competitionClass" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Class / Level (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger></FormControl>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending || !divisionId}>
+                    <FormControl><SelectTrigger><SelectValue placeholder={!divisionId ? "Select a division first" : "Select a class"} /></SelectTrigger></FormControl>
                     <SelectContent>
                       <SelectItem value=" ">-- No Class --</SelectItem>
-                      {COMPETITION_CLASSES.map((cls) => (<SelectItem key={cls} value={cls}>{cls}</SelectItem>))}
+                      {eligibleClasses.map((cls) => (<SelectItem key={cls} value={cls}>{cls}</SelectItem>))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )} />
-            </div>
              <FormField
                 control={form.control}
                 name="type"
@@ -212,9 +226,8 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+               <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Draft" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             </div>
-            <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Draft" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             {status === 'Completed' && (
               <FormField control={form.control} name="winnerTeamId" render={({ field }) => (
                 <FormItem>
