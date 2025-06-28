@@ -256,7 +256,12 @@ export interface Competition {
 
 export interface PlayerMatchPerformance {
   opponent: string;
-  runs: number;
   date: Date;
   matchId: string;
+  runsScored?: number;
+  ballsFaced?: number;
+  battingStatus?: string;
+  oversBowled?: number;
+  runsConceded?: number;
+  wicketsTaken?: number;
 }

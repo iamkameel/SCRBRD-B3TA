@@ -5,6 +5,7 @@ import * as React from "react";
 import { ArrowLeft, MoreHorizontal, Trash2, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { format } from 'date-fns';
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +34,6 @@ import { Separator } from "@/components/ui/separator";
 import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance } from "@/lib/data";
 import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from "@/lib/actions/players";
 import { AddLinkDialog } from "./add-link-dialog";
-import { PlayerFormChart } from "./player-form-chart";
 import { PlayerDevelopmentCard } from "./player-development-card";
 
 
@@ -236,14 +236,57 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                           <StatItem label="Catches" value={playerStats.catches} /><StatItem label="Stumpings" value={playerStats.stumpings} />
                       </div>
                   </div>
-                  <Separator />
-                  <div>
-                      <h3 className="text-lg font-medium mb-4 text-primary">Recent Form (Batting)</h3>
-                        <div className="h-[200px] w-full">
-                           <PlayerFormChart data={matchHistory} />
-                        </div>
-                  </div>
               </CardContent>
+          </Card>
+        )}
+
+        {person.roles.includes("Player") && matchHistory.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Match History</CardTitle>
+              <CardDescription>A summary of the last 5 match performances.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Opponent</TableHead>
+                    <TableHead>Batting</TableHead>
+                    <TableHead>Bowling</TableHead>
+                    <TableHead className="text-right">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {matchHistory.map((perf) => (
+                    <TableRow key={perf.matchId}>
+                      <TableCell className="font-medium">
+                        <Link href={`/matches/${perf.matchId}`} className="hover:underline">{perf.opponent}</Link>
+                      </TableCell>
+                      <TableCell>
+                        {typeof perf.runsScored === 'number' ? (
+                          <div>
+                            <p className="font-semibold">{perf.runsScored} ({perf.ballsFaced})</p>
+                            <p className="text-xs text-muted-foreground">{perf.battingStatus}</p>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {typeof perf.wicketsTaken === 'number' && typeof perf.runsConceded === 'number' && typeof perf.oversBowled === 'number' ? (
+                           <p className="font-semibold">{perf.wicketsTaken}/{perf.runsConceded} ({perf.oversBowled})</p>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {format(perf.date, 'dd MMM yyyy')}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
           </Card>
         )}
 

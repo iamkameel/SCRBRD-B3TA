@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import type { Person, PlayerStats, PlayerTeamAssignment } from '@/lib/data';
+import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance } from '@/lib/data';
 import { getScorecard, getMatchLineup } from './matches';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlan } from '@/ai/flows/generate-player-development-plan-flow';
@@ -153,7 +153,7 @@ export async function getPlayerStats(personId: string): Promise<PlayerStats> {
     return stats;
 }
 
-export async function getPlayerMatchHistory(personId: string): Promise<{ opponent: string; runs: number; date: Date; matchId: string }[]> {
+export async function getPlayerMatchHistory(personId: string): Promise<PlayerMatchPerformance[]> {
     const person = await getPerson(personId);
     if (!person || !person.roles.includes("Player")) {
         return [];
@@ -164,7 +164,7 @@ export async function getPlayerMatchHistory(personId: string): Promise<{ opponen
     const q = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"));
     const completedMatchesSnapshot = await getDocs(q);
 
-    const playerMatchPerformances = [];
+    const playerMatchPerformances: PlayerMatchPerformance[] = [];
 
     for (const matchDoc of completedMatchesSnapshot.docs) {
         const matchData = matchDoc.data();
@@ -179,20 +179,27 @@ export async function getPlayerMatchHistory(personId: string): Promise<{ opponen
         const scorecard = await getScorecard(matchDoc.id);
         if (!scorecard) continue;
 
-        const innings = scorecard.innings1.battingCard.find(b => b.name === personName) || scorecard.innings2.battingCard.find(b => b.name === personName);
+        const battingInnings = scorecard.innings1.battingCard.find(b => b.name === personName) || scorecard.innings2.battingCard.find(b => b.name === personName);
+        const bowlingInnings = scorecard.innings1.bowlingCard.find(b => b.name === personName) || scorecard.innings2.bowlingCard.find(b => b.name === personName);
+
+        if (!battingInnings && !bowlingInnings) continue; // Player might be in lineup but not bat or bowl
 
         playerMatchPerformances.push({
             opponent: `vs ${opponentName}`,
-            runs: innings ? innings.runs : 0,
             date: (matchData.dateTime as Timestamp).toDate(),
             matchId: matchDoc.id,
+            runsScored: battingInnings?.runs,
+            ballsFaced: battingInnings?.balls,
+            battingStatus: battingInnings?.status,
+            oversBowled: bowlingInnings?.overs,
+            runsConceded: bowlingInnings?.runs,
+            wicketsTaken: bowlingInnings?.wickets,
         });
     }
 
     return playerMatchPerformances
         .sort((a, b) => b.date.getTime() - a.date.getTime())
-        .slice(0, 5) // Get the 5 most recent matches
-        .reverse(); // reverse so the chart shows oldest to newest
+        .slice(0, 5);
 }
 
 
