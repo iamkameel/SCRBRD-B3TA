@@ -64,7 +64,7 @@ const generatePlayerDevelopmentPlanFlow = ai.defineFlow(
 
         const recentPerformances = history.map(h => ({
             opponent: h.opponent,
-            runs: h.runs,
+            runs: h.runsScored ?? 0,
         }));
         
         const promptInput = {
