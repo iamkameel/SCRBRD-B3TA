@@ -19,10 +19,11 @@ const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
-    'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches', 'Competitions': 'competitions'
+    'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches', 'Competitions': 'competitions',
+    'Financials': 'financials',
 } as const;
 export type SubsetName = keyof typeof collectionNameMap;
-const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People'];
+const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials'];
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
@@ -36,7 +37,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
-            'competitions', 'teams', 'matches', 'vehicles', 'familyLinks'
+            'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials'
         ];
 
         for (const collName of collectionsToClear) {
@@ -90,16 +91,17 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         let itemCount = 0;
 
         // Process items with no dependencies first
-        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people', 'vehicles'];
+        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people', 'vehicles', 'financials'];
         for (const collName of independentCollections) {
             for (const item of sampleData[collName]) {
-                const idKey = collName === 'people' ? 'personId' : `${collName.slice(0, -1)}Id`;
+                const idKey = ['people', 'financials'].includes(collName) ? `${collName.slice(0, -1)}Id` : `${collName.slice(0, -1)}Id`;
                 const tempId = item[idKey as keyof typeof item];
                 const { [idKey]: _, ...itemData } = item;
                 
                 const dataToSave: { [key: string]: any } = { ...itemData, userId };
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
                 if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
+                if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
                 if (collName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
                 const docRef = doc(collection(db, collName));
@@ -236,16 +238,40 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
             'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
             'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions
         }[subsetName];
-        const deleteAction = {
-            'People': deletePlayerAction, 'Teams': deleteTeamAction, 'Matches': deleteMatchAction, 'Schools': deleteSchoolAction,
-            'Divisions': deleteDivisionAction, 'Seasons': deleteSeasonAction, 'Fields': deleteFieldAction, 'Competitions': deleteCompetitionAction
-        }[subsetName];
-        const idKey = {
-            'People': 'personId', 'Teams': 'teamId', 'Matches': 'matchId', 'Schools': 'schoolId',
-            'Divisions': 'divisionId', 'Seasons': 'seasonId', 'Fields': 'fieldId', 'Competitions': 'competitionId'
-        }[subsetName];
+        
+        let deleteAction: ((id: string) => Promise<any>) | undefined;
+        if (subsetName === 'People') deleteAction = deletePlayerAction;
+        else if (subsetName === 'Teams') deleteAction = deleteTeamAction;
+        else if (subsetName === 'Matches') deleteAction = deleteMatchAction;
+        else if (subsetName === 'Schools') deleteAction = deleteSchoolAction;
+        else if (subsetName === 'Divisions') deleteAction = deleteDivisionAction;
+        else if (subsetName === 'Seasons') deleteAction = deleteSeasonAction;
+        else if (subsetName === 'Fields') deleteAction = deleteFieldAction;
+        else if (subsetName === 'Competitions') deleteAction = deleteCompetitionAction;
 
-        if (!getAction || !deleteAction || !idKey) throw new Error(`Invalid subset name: ${subsetName}`);
+        let idKey: string | undefined;
+        if (subsetName === 'People') idKey = 'personId';
+        else if (subsetName === 'Teams') idKey = 'teamId';
+        else if (subsetName === 'Matches') idKey = 'matchId';
+        else if (subsetName === 'Schools') idKey = 'schoolId';
+        else if (subsetName === 'Divisions') idKey = 'divisionId';
+        else if (subsetName === 'Seasons') idKey = 'seasonId';
+        else if (subsetName === 'Fields') idKey = 'fieldId';
+        else if (subsetName === 'Competitions') idKey = 'competitionId';
+
+
+        if (!getAction || !deleteAction || !idKey) {
+            // This is a temporary fix until we have a get for financials
+            if (subsetName === 'Financials') {
+                 const q = query(collection(db, 'financials'), where("userId", "==", userId));
+                 const snapshot = await getDocs(q);
+                 const batch = writeBatch(db);
+                 snapshot.forEach(doc => batch.delete(doc.ref));
+                 await batch.commit();
+                 return { success: true, message: `All ${subsetName} data has been deleted.` };
+            }
+            throw new Error(`Invalid subset name: ${subsetName}`);
+        }
 
         const items = await getAction();
         for (const item of items) { // @ts-ignore
@@ -273,12 +299,13 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
         let count = 0;
         
         for (const item of sampleData[collectionName]) {
-            const tempIdKey = `${collectionName.slice(0, -1)}Id`; // e.g., "schoolId"
+            const tempIdKey = collectionName === 'financials' ? 'transactionId' : `${collectionName.slice(0, -1)}Id`;
             const { [tempIdKey]: _, ...itemData } = item as any;
             
             const dataToSave: {[key: string]: any} = { ...itemData, userId };
             if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
             if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
+             if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
             if (collectionName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
 

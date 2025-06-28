@@ -1,4 +1,5 @@
 
+
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -36,6 +37,13 @@ export const sampleData = {
         { vehicleId: 'temp_vehicle_1', name: 'Minibus 1', type: 'Minibus', capacity: 16, registration: 'GHS-01' },
         { vehicleId: 'temp_vehicle_2', name: 'Van', type: 'Van', capacity: 8, registration: 'OAKS-01' },
         { vehicleId: 'temp_vehicle_3', name: 'Main Bus', type: 'Bus', capacity: 40, registration: 'GHS-02' }
+    ],
+    financials: [
+        { transactionId: 'temp_trans_1', description: 'U19 Varsity League Registration Fees', amount: 1500, type: 'Income', category: 'Registration Fee', date: pastDate(25) },
+        { transactionId: 'temp_trans_2', description: 'Awesome Inc. Sponsorship', amount: 5000, type: 'Income', category: 'Sponsorship', date: pastDate(20) },
+        { transactionId: 'temp_trans_3', description: 'Main Oval Hire for Pre-Season Series', amount: 750, type: 'Expense', category: 'Venue Hire', date: pastDate(15) },
+        { transactionId: 'temp_trans_4', description: 'Purchase of 12 new cricket balls', amount: 300, type: 'Expense', category: 'Equipment', date: pastDate(10) },
+        { transactionId: 'temp_trans_5', description: 'Umpire payment for Match #2', amount: 100, type: 'Expense', category: 'Umpire Fees', date: pastDate(14) },
     ],
     people: [
         // Greenwood Gators (12 people)

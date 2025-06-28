@@ -1,4 +1,5 @@
 
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -272,4 +273,13 @@ export interface Sponsor {
   name: string;
   logoUrl: string;
   website?: string;
+}
+
+export interface Transaction {
+  transactionId: string;
+  description: string;
+  amount: number;
+  type: 'Income' | 'Expense';
+  category: 'Registration Fee' | 'Sponsorship' | 'Venue Hire' | 'Equipment' | 'Umpire Fees' | 'Other';
+  date: Date;
 }
