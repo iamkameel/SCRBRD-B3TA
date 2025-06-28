@@ -1,5 +1,4 @@
 
-
 import { getFields } from '@/lib/actions/fields';
 import { getPeopleByRole } from '@/lib/actions/players';
 import { getSchools } from '@/lib/actions/schools';
@@ -12,5 +11,5 @@ export default async function FieldsPage() {
     getSchools(),
   ]);
   
-  return <FieldsClient fields={fields} groundskeepers={groundspeople} schools={schools} />;
+  return <FieldsClient fields={fields} groundskeepers={groundkeepers} schools={schools} />;
 }

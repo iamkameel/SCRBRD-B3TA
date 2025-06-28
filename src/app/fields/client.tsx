@@ -35,7 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import type { Field, Person, School } from "@/lib/data";
+import type { Field, FieldAssignment, Person, School } from "@/lib/data";
 import { addFieldAction, updateFieldAction, deleteFieldAction, assignGroundskeeperToFieldAction, removeGroundskeeperFromFieldAction } from '@/lib/actions/fields';
 import { Label } from "@/components/ui/label";
 
@@ -270,7 +270,7 @@ export default function FieldsClient({ fields, groundskeepers, schools }: { fiel
       </div>
 
       {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
-      {isAssignDialogOpen && selectedField && <AssignDialog field={selectedField} groundskeepers={groundspeople} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
+      {isAssignDialogOpen && selectedField && <AssignDialog field={selectedField} groundskeepers={groundskeepeers} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
