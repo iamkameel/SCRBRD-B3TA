@@ -96,6 +96,9 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
         });
 
       } catch (error) {
+        if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+          throw error;
+        }
         toast({
           title: "Error Creating Match",
           description: error instanceof Error ? error.message : "An unexpected error occurred.",
