@@ -246,7 +246,7 @@ export interface StandingTeam extends Team {
 export interface Competition {
   competitionId: string;
   name: string;
-  type: 'League' | 'Knockout' | 'Series';
+  type: 'League' | 'Knockout' | 'Series' | 'Festival';
   seasonId: string;
   seasonName: string;
   divisionId: string;

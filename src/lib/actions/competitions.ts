@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -51,7 +52,7 @@ export async function getCompetition(competitionId: string): Promise<Competition
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
-  type: z.enum(['League', 'Knockout', 'Series']),
+  type: z.enum(['League', 'Knockout', 'Series', 'Festival']),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),

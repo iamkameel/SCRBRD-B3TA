@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -44,14 +45,14 @@ import { CompetitionCard } from "./competition-card";
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
-  type: z.enum(['League', 'Knockout', 'Series'], { required_error: "Type is required." }),
+  type: z.enum(['League', 'Knockout', 'Series', 'Festival'], { required_error: "Type is required." }),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
   winnerTeamId: z.string().optional(),
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
-const COMPETITION_TYPES = ['League', 'Knockout', 'Series'] as const;
+const COMPETITION_TYPES = ['League', 'Knockout', 'Series', 'Festival'] as const;
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 
 type SortableColumn = 'name' | 'type' | 'seasonName' | 'divisionName' | 'status';
