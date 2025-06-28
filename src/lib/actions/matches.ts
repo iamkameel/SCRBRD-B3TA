@@ -99,6 +99,50 @@ export async function addMatchAction(data: FixtureFormValues) {
 
   const { teamAId, teamBId, competitionId, fieldId, dateTime } = validatedFields.data;
 
+  // --- Clash Detection Logic ---
+  const MATCH_DURATION_HOURS = 4;
+  const newMatchStartTime = dateTime.getTime();
+  const newMatchEndTime = new Date(newMatchStartTime).setHours(dateTime.getHours() + MATCH_DURATION_HOURS);
+
+  const startOfDay = new Date(dateTime);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(dateTime);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const matchesRef = collection(db, 'matches');
+  const clashQuery = query(
+    matchesRef,
+    where("userId", "==", userId),
+    where("dateTime", ">=", Timestamp.fromDate(startOfDay)),
+    where("dateTime", "<=", Timestamp.fromDate(endOfDay))
+  );
+  const conflictingMatchesSnapshot = await getDocs(clashQuery);
+  const teamANameTemp = (await getDoc(doc(db, 'teams', teamAId))).data()?.name || 'Team A';
+  const teamBNameTemp = (await getDoc(doc(db, 'teams', teamBId))).data()?.name || 'Team B';
+  const fieldNameTemp = (await getDoc(doc(db, 'fields', fieldId))).data()?.name || 'The selected field';
+
+
+  for (const matchDoc of conflictingMatchesSnapshot.docs) {
+      const existingMatch = matchDoc.data();
+      const existingMatchStartTime = (existingMatch.dateTime as Timestamp).toMillis();
+      const existingMatchEndTime = new Date(existingMatchStartTime).setHours(new Date(existingMatchStartTime).getHours() + MATCH_DURATION_HOURS);
+      
+      const timesOverlap = (newMatchStartTime < existingMatchEndTime) && (newMatchEndTime > existingMatchStartTime);
+
+      if (timesOverlap) {
+          if (existingMatch.teamAId === teamAId || existingMatch.teamBId === teamAId) {
+              throw new Error(`Clash detected: ${teamANameTemp} is already scheduled for a match around this time.`);
+          }
+          if (existingMatch.teamAId === teamBId || existingMatch.teamBId === teamBId) {
+              throw new Error(`Clash detected: ${teamBNameTemp} is already scheduled for a match around this time.`);
+          }
+          if (existingMatch.fieldId === fieldId) {
+              throw new Error(`Clash detected: ${fieldNameTemp} is already booked around this time.`);
+          }
+      }
+  }
+  // --- End of Clash Detection ---
+
   const [teamASnap, teamBSnap, competition, fieldSnap] = await Promise.all([
     getDoc(doc(db, 'teams', teamAId)),
     getDoc(doc(db, 'teams', teamBId)),
@@ -675,3 +719,4 @@ export async function generateOppositionAnalysisAction(matchId: string, opponent
     revalidatePath(`/matches/${matchId}`);
     return { success: true, message: "Opposition analysis generated successfully!" };
 }
+
