@@ -266,3 +266,10 @@ export interface PlayerMatchPerformance {
   runsConceded?: number;
   wicketsTaken?: number;
 }
+
+export interface Sponsor {
+  sponsorId: string;
+  name: string;
+  logoUrl: string;
+  website?: string;
+}
