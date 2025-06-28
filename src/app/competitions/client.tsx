@@ -136,11 +136,16 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
   function onSubmit(data: CompetitionFormValues) {
     startTransition(async () => {
       try {
+        const payload = {
+          ...data,
+          competitionClass: data.competitionClass?.trim(),
+        };
+
         if (mode === 'edit' && competition) {
-          await updateCompetitionAction({ competitionId: competition.competitionId, ...data });
+          await updateCompetitionAction({ competitionId: competition.competitionId, ...payload });
           toast({ title: "Competition Updated", description: `${data.name} has been updated.` });
         } else {
-          await addCompetitionAction(data);
+          await addCompetitionAction(payload);
           toast({ title: "Competition Added", description: `${data.name} has been created.` });
         }
         onOpenChange(false);
@@ -167,7 +172,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
                   <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="">-- No Class --</SelectItem>
+                      <SelectItem value=" ">-- No Class --</SelectItem>
                       {COMPETITION_CLASSES.map((cls) => (<SelectItem key={cls} value={cls}>{cls}</SelectItem>))}
                     </SelectContent>
                   </Select>
@@ -221,7 +226,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">-- No Winner --</SelectItem>
+                      <SelectItem value=" ">-- No Winner --</SelectItem>
                       {eligibleTeams.map((team) => (
                         <SelectItem key={team.teamId} value={team.teamId}>{team.name}</SelectItem>
                       ))}
