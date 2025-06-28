@@ -193,7 +193,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 dateTime: Timestamp.fromDate(new Date(matchData.dateTime)),
                 userId,
                 playerOfTheMatch: scorecardData ? scorecardData.playerOfTheMatch : null,
-                summary: '',
+                report: '',
                 preview: '',
             };
             const matchDocRef = doc(collection(db, 'matches'));

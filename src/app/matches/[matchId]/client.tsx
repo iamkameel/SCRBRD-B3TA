@@ -38,7 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchSummaryAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction } from '@/lib/actions/matches';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
@@ -377,7 +377,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [isGenerating, startGenerationTransition] = React.useTransition();
-  const [isGeneratingSummary, startSummaryGeneration] = React.useTransition();
+  const [isGeneratingReport, startReportGeneration] = React.useTransition();
   const [isGeneratingPreview, startPreviewGeneration] = React.useTransition();
   const [isGeneratingCommentary, startCommentaryGeneration] = React.useTransition();
   const [isFetchingForecast, startForecastTransition] = React.useTransition();
@@ -434,13 +434,13 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
   
-  const handleGenerateSummary = () => {
-    startSummaryGeneration(async () => {
+  const handleGenerateReport = () => {
+    startReportGeneration(async () => {
         try {
-            const result = await generateMatchSummaryAction(match.matchId);
+            const result = await generateMatchReportAction(match.matchId);
             toast({ title: "Success", description: result.message });
         } catch (error) {
-            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate summary.", variant: "destructive" });
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate report.", variant: "destructive" });
         }
     });
   };
@@ -483,13 +483,13 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
 
-  const handleDownloadSummary = () => {
-    if (!match.summary) return;
-    const blob = new Blob([match.summary], { type: 'text/plain' });
+  const handleDownloadReport = () => {
+    if (!match.report) return;
+    const blob = new Blob([match.report], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `match-summary-${match.teamAName}-vs-${match.teamBName}.txt`;
+    link.download = `match-report-${match.teamAName}-vs-${match.teamBName}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -645,19 +645,19 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
-                                <div><CardTitle>Match Summary</CardTitle><CardDescription>A journalistic summary of the match highlights.</CardDescription></div>
+                                <div><CardTitle>Match Report</CardTitle><CardDescription>A detailed, journalistic report of the match highlights.</CardDescription></div>
                                 <div className="flex items-center gap-2">
-                                    {match.summary && (
-                                        <Button variant="outline" onClick={handleDownloadSummary}>
+                                    {match.report && (
+                                        <Button variant="outline" onClick={handleDownloadReport}>
                                             <Download className="mr-2 h-4 w-4" />
                                             Download
                                         </Button>
                                     )}
-                                    {innings1 && (<Button onClick={handleGenerateSummary} disabled={isGeneratingSummary}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingSummary ? 'animate-spin' : ''}`} />{isGeneratingSummary ? "Generating..." : (match.summary ? "Regenerate" : "Generate")}</Button>)}
+                                    {innings1 && (<Button onClick={handleGenerateReport} disabled={isGeneratingReport}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingReport ? 'animate-spin' : ''}`} />{isGeneratingReport ? "Generating..." : (match.report ? "Regenerate" : "Generate")}</Button>)}
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent>{match.summary ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.summary}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No summary has been generated for this match yet.</p>{innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}{!innings1 && <p className="text-xs">A summary can be generated once a scorecard exists.</p>}</div>)}</CardContent>
+                        <CardContent>{match.report ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.report}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No report has been generated for this match yet.</p>{innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}{!innings1 && <p className="text-xs">A report can be generated once a scorecard exists.</p>}</div>)}</CardContent>
                     </Card>
                 )}
                 {match.playerOfTheMatch && (

@@ -62,14 +62,14 @@ export const GenerateScorecardOutputSchema = z.object({
 export type GenerateScorecardOutput = z.infer<typeof GenerateScorecardOutputSchema>;
 
 
-// From generate-match-summary-flow.ts
-export const GenerateMatchSummaryInputSchema = z.object({
+// From generate-match-report-flow.ts
+export const GenerateMatchReportInputSchema = z.object({
   teamAName: z.string(),
   teamBName: z.string(),
   innings1: InningsSchema,
   innings2: InningsSchema,
 });
-export type GenerateMatchSummaryInput = z.infer<typeof GenerateMatchSummaryInputSchema>;
+export type GenerateMatchReportInput = z.infer<typeof GenerateMatchReportInputSchema>;
 
 // From get-match-forecast-flow.ts
 export const WeatherForecastInputSchema = z.object({

@@ -9,9 +9,9 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc } from 'firebase/firestore';
 import type { Match, Official, Innings, MatchForecast, PlayerOfTheMatch } from '@/lib/data';
 import { getPerson } from './players';
-import type { GenerateScorecardOutput, GenerateMatchSummaryInput, PlayerOfTheMatchOutput } from '@/ai/schemas';
+import type { GenerateScorecardOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput } from '@/ai/schemas';
 import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
-import { generateMatchSummary } from '@/ai/flows/generate-match-summary-flow';
+import { generateMatchReport } from '@/ai/flows/generate-match-summary-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
 import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-match-flow';
@@ -128,7 +128,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     dateTime: Timestamp.fromDate(dateTime),
     status: 'scheduled',
     userId: userId,
-    summary: '',
+    report: '',
     preview: '',
     audioCommentaryUrl: '',
   };
@@ -458,38 +458,38 @@ export async function generateAndSaveScorecardAction(matchId: string) {
     return { success: true, message: "Scorecard generated successfully!" };
 }
 
-export async function generateMatchSummaryAction(matchId: string) {
+export async function generateMatchReportAction(matchId: string) {
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
 
     const scorecard = await getScorecard(matchId);
-    if (!scorecard) throw new Error("A complete scorecard is required to generate a summary.");
+    if (!scorecard) throw new Error("A complete scorecard is required to generate a report.");
 
-    const summaryInput: GenerateMatchSummaryInput = {
+    const reportInput: GenerateMatchReportInput = {
         teamAName: match.teamAName,
         teamBName: match.teamBName,
         innings1: scorecard.innings1,
         innings2: scorecard.innings2,
     };
 
-    const summaryText = await generateMatchSummary(summaryInput);
+    const reportText = await generateMatchReport(reportInput);
 
-    if (!summaryText) {
-        throw new Error("AI failed to generate a match summary.");
+    if (!reportText) {
+        throw new Error("AI failed to generate a match report.");
     }
 
     try {
         const matchRef = doc(db, 'matches', matchId);
-        await updateDoc(matchRef, { summary: summaryText });
+        await updateDoc(matchRef, { report: reportText });
     } catch (error) {
-        console.error(`Error saving summary for match ${matchId}:`, error);
-        throw new Error("Could not save match summary.");
+        console.error(`Error saving report for match ${matchId}:`, error);
+        throw new Error("Could not save match report.");
     }
 
     revalidatePath(`/matches/${matchId}`);
-    return { success: true, message: "Match summary generated successfully!" };
+    return { success: true, message: "Match report generated successfully!" };
 }
 
 export async function getMatchForecastAction(matchId: string): Promise<MatchForecast | { error: string }> {
