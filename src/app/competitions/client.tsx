@@ -55,6 +55,13 @@ const competitionSchema = z.object({
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
 
+const COMPETITION_CLASSES = [
+    '1st XI', '2nd XI', '3rd XI', '4th XI',
+    'U16A', 'U16B', 'U16C',
+    'U15A', 'U15B', 'U15C',
+    'U14A', 'U14B', 'U14C',
+];
+
 const COMPETITION_TYPE_DEFINITIONS = [
     {
         id: 'League',
@@ -154,7 +161,19 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Competition Name</FormLabel><FormControl><Input placeholder="e.g. U19 Varsity League" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="competitionClass" render={({ field }) => (<FormItem><FormLabel>Class / Level (Optional)</FormLabel><FormControl><Input placeholder="e.g. 1st XI" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="competitionClass" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Class / Level (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select a class" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="">-- No Class --</SelectItem>
+                      {COMPETITION_CLASSES.map((cls) => (<SelectItem key={cls} value={cls}>{cls}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
             </div>
              <FormField
                 control={form.control}
