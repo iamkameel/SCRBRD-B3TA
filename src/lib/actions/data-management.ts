@@ -179,7 +179,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             const newMatchData: { [key: string]: any } = {
                 ...matchData,
                 teamAId: idMap.get(matchData.teamAId),
-                teamBId: idMap.get(matchData.teamBId),
+                teamBId: matchData.teamBId ? idMap.get(matchData.teamBId) : '',
                 competitionId: idMap.get(tempCompId),
                 competitionName: competition.name,
                 seasonId: idMap.get(competition.seasonId),

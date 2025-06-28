@@ -527,7 +527,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             </Link>
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName || 'TBD'}</h1>
                     <p className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                         {match.competitionName && <span className="font-medium text-foreground/90">{match.competitionName}</span>}
                         <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {isClient ? format(match.dateTime, "PPPP") : '\u00A0'}</span>
@@ -652,7 +652,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div><CardTitle>Match Preview</CardTitle><CardDescription>An AI-generated preview of the upcoming match.</CardDescription></div>
-                                <Button onClick={handleGeneratePreview} disabled={isGeneratingPreview}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingPreview ? 'animate-spin' : ''}`} />{isGeneratingPreview ? "Generating..." : (match.preview ? "Regenerate" : "Generate")}</Button>
+                                <Button onClick={handleGeneratePreview} disabled={isGeneratingPreview || !match.teamBId}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingPreview ? 'animate-spin' : ''}`} />{isGeneratingPreview ? "Generating..." : (match.preview ? "Regenerate" : "Generate")}</Button>
                             </div>
                         </CardHeader>
                         <CardContent>{match.preview ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.preview}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No preview has been generated for this match yet.</p><p className="text-xs">Click the button above to generate one with AI.</p></div>)}</CardContent>
@@ -683,7 +683,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <CardDescription>Generate a strategic scouting report on either team.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {(match.status === 'scheduled') &&
+                        {(match.status === 'scheduled' && match.teamBId) &&
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Button 
                                     onClick={() => handleGenerateAnalysis(match.teamBId)} 
@@ -719,7 +719,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                             {Object.keys(match.analysisReports || {}).length === 0 && (
                                 <div className="text-center text-muted-foreground py-8">
                                     <p>No analysis has been generated yet.</p>
-                                    {match.status === 'scheduled' && <p className="text-xs">Click a button above to generate a scouting report.</p>}
+                                    {match.status === 'scheduled' && match.teamBId && <p className="text-xs">Click a button above to generate a scouting report.</p>}
                                 </div>
                             )}
                         </div>
@@ -787,7 +787,10 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <CardHeader><CardTitle>Lineups</CardTitle><CardDescription>Select the 11 players who will participate in this match.</CardDescription></CardHeader>
                         <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
-                            <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
+                            {match.teamBId ?
+                                <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
+                                : <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
+                            }
                         </CardContent>
                     </Card>
                 )}

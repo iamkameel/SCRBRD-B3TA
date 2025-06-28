@@ -30,9 +30,9 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getMatchOfficials(params.matchId),
     getPlayers(), // To populate the assignment dialog
     getTeamRoster(match.teamAId),
-    getTeamRoster(match.teamBId),
+    match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
     getMatchLineup(params.matchId, match.teamAId),
-    getMatchLineup(params.matchId, match.teamBId),
+    match.teamBId ? getMatchLineup(params.matchId, match.teamBId) : Promise.resolve([]),
     getScorecard(params.matchId),
     getMatchTransportAssignments(params.matchId),
     getVehicles(),

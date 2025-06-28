@@ -537,7 +537,7 @@ export async function generateMatchPreviewAction(matchId: string) {
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
-    if (!match) throw new Error("Match not found or permission denied.");
+    if (!match || !match.teamBId) throw new Error("Match not found or opponent is not set.");
 
     const previewText = await generateMatchPreview(matchId);
 
