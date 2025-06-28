@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -78,13 +79,17 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
           primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
         });
       } else {
+        const activeSeason = seasons.find(s => {
+            const now = new Date();
+            return s.active && now >= s.startDate && now <= s.endDate;
+        });
         form.reset({
-          name: "", schoolId: undefined, divisionId: undefined, seasonId: undefined, teamClass: '',
+          name: "", schoolId: undefined, divisionId: undefined, seasonId: activeSeason?.seasonId, teamClass: '',
           primaryColor: "#000000", secondaryColor: "#ffffff",
         });
       }
     }
-  }, [team, mode, open, form]);
+  }, [team, mode, open, form, seasons]);
 
   function onSubmit(data: TeamFormValues) {
     startTransition(async () => {

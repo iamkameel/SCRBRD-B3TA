@@ -155,25 +155,29 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
       if (mode === 'edit' && competition) {
         form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || " ", teamIds: competition.teamIds || [] });
       } else {
-        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "", teamIds: [] });
+        const activeSeason = seasons.find(s => {
+            const now = new Date();
+            return s.active && now >= s.startDate && now <= s.endDate;
+        });
+        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: activeSeason?.seasonId, divisionId: undefined, winnerTeamId: "", teamIds: [] });
       }
       setSchoolFilters([]);
     }
-  }, [competition, mode, open, form]);
+  }, [competition, mode, open, form, seasons]);
   
   // When season changes, reset division, class, and teams
   React.useEffect(() => {
     form.resetField('divisionId');
     form.resetField('competitionClass');
     form.resetField('teamIds');
-  }, [seasonId, form.resetField]);
+  }, [seasonId, form]);
 
   // When division changes, reset class and teams
   React.useEffect(() => {
     form.resetField('competitionClass');
     form.resetField('teamIds');
     setSchoolFilters([]);
-  }, [divisionId, form.resetField]);
+  }, [divisionId, form]);
 
 
   React.useEffect(() => {
