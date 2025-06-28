@@ -64,7 +64,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                     <h4 className="font-semibold flex items-center gap-2 mb-2"><Wind className="h-4 w-4 text-muted-foreground" /> Facilities</h4>
                                     {field.facilities && field.facilities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.facilities.map(f => <ListItem key={f}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.facilities.map((f, index) => <ListItem key={`facility-${index}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No facilities listed.</p>)}
                                 </div>
@@ -72,7 +72,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                      <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Amenities</h4>
                                     {field.amenities && field.amenities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.amenities.map(a => <ListItem key={a}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.amenities.map((a, index) => <ListItem key={`amenity-${index}`}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No amenities listed.</p>)}
                                 </div>
