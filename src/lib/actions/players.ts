@@ -6,10 +6,11 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import type { Person, PlayerTeamAssignment } from '@/lib/data';
+import type { Person, PlayerTeamAssignment, PlayerDevelopmentPlanOutput, PlayerMatchPerformance } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
-import { generatePlayerDevelopmentPlan } from '@/ai/flows/generate-player-development-plan-flow';
-import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
+import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
+import { getPlayerStats, getPlayerMatchHistory } from './stats';
+import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -329,11 +330,40 @@ export async function updateNotificationPreferencesAction(personId: string, pref
 
 export async function generatePlayerDevelopmentPlanAction(personId: string): Promise<PlayerDevelopmentPlanOutput> {
     if (!userId) throw new Error("User not authenticated");
+    
     const person = await getPerson(personId);
-    if (!person) throw new Error("Person not found or permission denied.");
+    if (!person) {
+        throw new Error('Player not found.');
+    }
+
+    const [stats, history] = await Promise.all([
+        getPlayerStats(personId),
+        getPlayerMatchHistory(personId)
+    ]);
+    
+    const simplifiedStats: z.infer<typeof SimplifiedPlayerStatsSchema> = {
+        matchesPlayed: stats.matchesPlayed,
+        totalRuns: stats.totalRuns,
+        battingAverage: parseFloat(stats.battingAverage.toFixed(2)),
+        strikeRate: parseFloat(stats.strikeRate.toFixed(2)),
+        wicketsTaken: stats.wicketsTaken,
+        bowlingAverage: parseFloat(stats.bowlingAverage.toFixed(2)),
+        economyRate: parseFloat(stats.economyRate.toFixed(2)),
+    };
+
+    const recentPerformances = history.map(h => ({
+        opponent: h.opponent,
+        runs: h.runsScored ?? 0,
+    }));
+    
+    const promptInput = {
+        playerName: `${person.firstName} ${person.lastName}`,
+        playerStats: simplifiedStats,
+        recentPerformances,
+    };
 
     try {
-        const plan = await generatePlayerDevelopmentPlan(personId);
+        const plan = await generatePlayerDevelopmentPlanFlow(promptInput);
         return plan;
     } catch (error) {
         console.error("Error generating development plan:", error);

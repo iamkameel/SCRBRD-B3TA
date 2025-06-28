@@ -1,16 +1,15 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to generate a player development plan.
  *
- * - generatePlayerDevelopmentPlan - A function that analyzes a player's stats and recent form to create a development plan.
+ * - generatePlayerDevelopmentPlanFlow - A function that analyzes a player's stats and recent form to create a development plan.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getPerson } from '@/lib/actions/players';
-import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
-import { PlayerDevelopmentPlanPromptInputSchema, PlayerDevelopmentPlanSchema, SimplifiedPlayerStatsSchema } from '@/ai/schemas';
+import { PlayerDevelopmentPlanPromptInputSchema, PlayerDevelopmentPlanSchema } from '@/ai/schemas';
 
 const generatePlanPrompt = ai.definePrompt({
     name: 'generatePlayerDevelopmentPlanPrompt',
@@ -36,49 +35,14 @@ Based on this data, provide your analysis in the specified JSON format. The reco
 `,
 });
 
-const generatePlayerDevelopmentPlanFlow = ai.defineFlow(
+export const generatePlayerDevelopmentPlanFlow = ai.defineFlow(
     {
         name: 'generatePlayerDevelopmentPlanFlow',
-        inputSchema: z.string(), // personId
+        inputSchema: PlayerDevelopmentPlanPromptInputSchema,
         outputSchema: PlayerDevelopmentPlanSchema,
     },
-    async (personId) => {
-        const person = await getPerson(personId);
-        if (!person) {
-            throw new Error('Player not found.');
-        }
-
-        const [stats, history] = await Promise.all([
-            getPlayerStats(personId),
-            getPlayerMatchHistory(personId)
-        ]);
-        
-        const simplifiedStats: z.infer<typeof SimplifiedPlayerStatsSchema> = {
-            matchesPlayed: stats.matchesPlayed,
-            totalRuns: stats.totalRuns,
-            battingAverage: parseFloat(stats.battingAverage.toFixed(2)),
-            strikeRate: parseFloat(stats.strikeRate.toFixed(2)),
-            wicketsTaken: stats.wicketsTaken,
-            bowlingAverage: parseFloat(stats.bowlingAverage.toFixed(2)),
-            economyRate: parseFloat(stats.economyRate.toFixed(2)),
-        };
-
-        const recentPerformances = history.map(h => ({
-            opponent: h.opponent,
-            runs: h.runsScored ?? 0,
-        }));
-        
-        const promptInput = {
-            playerName: `${person.firstName} ${person.lastName}`,
-            playerStats: simplifiedStats,
-            recentPerformances,
-        };
-
-        const { output } = await generatePlanPrompt(promptInput);
+    async (input) => {
+        const { output } = await generatePlanPrompt(input);
         return output!;
     }
 );
-
-export async function generatePlayerDevelopmentPlan(personId: string): Promise<PlayerDevelopmentPlanOutput> {
-    return generatePlayerDevelopmentPlanFlow(personId);
-}
