@@ -1,3 +1,4 @@
+
 import { getSponsors } from '@/lib/actions/sponsors';
 import SponsorsClient from './client';
 

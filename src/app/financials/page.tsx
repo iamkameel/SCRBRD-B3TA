@@ -1,3 +1,4 @@
+
 import FinancialsClient from './client';
 import { getTransactions } from '@/lib/actions/financials';
 

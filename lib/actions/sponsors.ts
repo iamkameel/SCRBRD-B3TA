@@ -1,0 +1,109 @@
+
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import type { Sponsor } from '@/lib/data';
+
+const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+
+export async function getSponsors(): Promise<Sponsor[]> {
+  if (!userId) return [];
+  try {
+    const sponsorsCollection = collection(db, 'sponsors');
+    const q = query(sponsorsCollection, where("userId", "==", userId));
+    const sponsorSnapshot = await getDocs(q);
+    const sponsorsList = sponsorSnapshot.docs.map(doc => ({
+      sponsorId: doc.id,
+      ...doc.data(),
+    } as Sponsor));
+    return sponsorsList;
+  } catch (error) {
+    console.error("Error fetching sponsors:", error);
+    return [];
+  }
+}
+
+const sponsorSchema = z.object({
+  name: z.string().min(1, { message: "Sponsor name is required." }),
+  logoUrl: z.string().url({ message: "A valid logo URL is required." }).or(z.literal('')),
+  website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+});
+
+export async function addSponsorAction(data: z.infer<typeof sponsorSchema>) {
+  if (!userId) throw new Error("User not authenticated");
+  const validatedFields = sponsorSchema.safeParse(data);
+
+  if (!validatedFields.success) {
+    throw new Error('Invalid sponsor data.');
+  }
+
+  try {
+    await addDoc(collection(db, 'sponsors'), {
+      ...validatedFields.data,
+      userId: userId,
+    });
+  } catch (error) {
+    console.error("Error adding sponsor: ", error);
+    throw new Error("Could not add sponsor.");
+  }
+  
+  revalidatePath('/sponsors');
+}
+
+const updateSponsorSchema = sponsorSchema.extend({
+  sponsorId: z.string(),
+});
+
+export async function updateSponsorAction(data: z.infer<typeof updateSponsorSchema>) {
+    if (!userId) throw new Error("User not authenticated");
+    const validatedFields = updateSponsorSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+        throw new Error('Invalid sponsor data.');
+    }
+
+    const { sponsorId, ...updateData } = validatedFields.data;
+    const sponsorDocRef = doc(db, 'sponsors', sponsorId);
+
+    const sponsorSnap = await getDoc(sponsorDocRef);
+    if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
+        throw new Error("Sponsor not found or you do not have permission to edit it.");
+    }
+
+    try {
+        await updateDoc(sponsorDocRef, updateData);
+    } catch (error) {
+        console.error("Error updating sponsor:", error);
+        throw new Error("Could not update sponsor.");
+    }
+
+    revalidatePath('/sponsors');
+}
+
+export async function deleteSponsorAction(sponsorId: string) {
+  if (!userId) throw new Error("User not authenticated");
+  
+  if (!sponsorId) {
+    throw new Error("Sponsor ID is required.");
+  }
+  
+  const sponsorDocRef = doc(db, 'sponsors', sponsorId);
+  const sponsorSnap = await getDoc(sponsorDocRef);
+  if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
+    throw new Error("Sponsor not found or you do not have permission to delete it.");
+  }
+  
+  // In a real app, you would also delete related sponsorship assignments.
+  
+  try {
+    await deleteDoc(sponsorDocRef);
+  } catch (error) {
+    console.error("Error deleting sponsor:", error);
+    throw new Error("Could not delete sponsor.");
+  }
+
+  revalidatePath('/sponsors');
+}
