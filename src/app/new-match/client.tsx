@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Team, Competition, Field, Season, Division } from "@/lib/data";
 import { addMatchAction } from "@/lib/actions/matches";
 
-const baseFixtureSchema = z.object({
+const fixtureSchema = z.object({
   competitionId: z.string({ required_error: "Please select a competition." }),
   teamAId: z.string({ required_error: "Please select the home team." }),
   teamBId: z.string({ required_error: "Please select the away team." }),
@@ -33,18 +33,13 @@ const baseFixtureSchema = z.object({
   time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
     message: "Invalid time format. Please use HH:MM.",
   }),
-});
-
-// A more specific schema for the form UI to handle cascading filters
-const fixtureFormSchema = baseFixtureSchema.extend({
-    divisionId: z.string({ required_error: "Please select a division." }),
 }).refine(data => data.teamAId !== data.teamBId, {
   message: "Home and away teams cannot be the same.",
   path: ["teamBId"],
 });
 
 
-type FixtureFormValues = z.infer<typeof fixtureFormSchema>;
+type FixtureFormValues = z.infer<typeof fixtureSchema>;
 
 interface NewMatchClientProps {
   teams: Team[];
@@ -59,16 +54,17 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [autoSelectedSeason, setAutoSelectedSeason] = React.useState<Season | null>(null);
+  const [autoSelectedDivisionName, setAutoSelectedDivisionName] = React.useState<string | null>(null);
 
   const form = useForm<FixtureFormValues>({
-    resolver: zodResolver(fixtureFormSchema),
+    resolver: zodResolver(fixtureSchema),
     defaultValues: {
       time: "10:00",
     },
   });
   
   const selectedDate = form.watch('dateTime');
-  const selectedDivisionId = form.watch('divisionId');
+  const selectedCompetitionId = form.watch('competitionId');
   const teamAId = form.watch('teamAId');
   const teamBId = form.watch('teamBId');
   
@@ -81,30 +77,35 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
     } else {
         setAutoSelectedSeason(null);
     }
-  }, [selectedDate, seasons]);
+    form.resetField('competitionId');
+    form.resetField('teamAId');
+    form.resetField('teamBId');
+    setAutoSelectedDivisionName(null);
+  }, [selectedDate, seasons, form]);
+
+  React.useEffect(() => {
+    if (selectedCompetitionId) {
+        const competition = competitions.find(c => c.competitionId === selectedCompetitionId);
+        setAutoSelectedDivisionName(competition ? competition.divisionName : null);
+    } else {
+        setAutoSelectedDivisionName(null);
+    }
+    form.resetField('teamAId');
+    form.resetField('teamBId');
+  }, [selectedCompetitionId, competitions, form]);
 
   const availableCompetitions = React.useMemo(() => {
-    if (!autoSelectedSeason || !selectedDivisionId) return [];
-    return competitions.filter(c => c.seasonId === autoSelectedSeason.seasonId && c.divisionId === selectedDivisionId);
-  }, [autoSelectedSeason, selectedDivisionId, competitions]);
+    if (!autoSelectedSeason) return [];
+    return competitions.filter(c => c.seasonId === autoSelectedSeason.seasonId);
+  }, [autoSelectedSeason, competitions]);
 
   const eligibleTeams = React.useMemo(() => {
-    if (!autoSelectedSeason || !selectedDivisionId) return [];
-    return teams.filter(t => t.seasonId === autoSelectedSeason.seasonId && t.divisionId === selectedDivisionId);
-  }, [autoSelectedSeason, selectedDivisionId, teams]);
-  
-  React.useEffect(() => {
-    form.resetField('divisionId');
-    form.resetField('competitionId');
-    form.resetField('teamAId');
-    form.resetField('teamBId');
-  }, [autoSelectedSeason, form]);
-
-  React.useEffect(() => {
-    form.resetField('competitionId');
-    form.resetField('teamAId');
-    form.resetField('teamBId');
-  }, [selectedDivisionId, form]);
+    if (!selectedCompetitionId) return [];
+    const competition = competitions.find(c => c.competitionId === selectedCompetitionId);
+    const teamIdsInCompetition = competition?.teamIds || [];
+    if (teamIdsInCompetition.length === 0) return [];
+    return teams.filter(t => teamIdsInCompetition.includes(t.teamId));
+  }, [selectedCompetitionId, competitions, teams]);
 
   function onSubmit(data: FixtureFormValues) {
     startTransition(async () => {
@@ -152,14 +153,14 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
           Create a New Match
         </h1>
         <p className="text-muted-foreground">
-          Set up the details for your next fixture by refining your choices.
+          Follow the steps below to schedule a new fixture.
         </p>
       </header>
       <Card>
         <CardHeader>
-          <CardTitle>Match Setup</CardTitle>
+          <CardTitle>Match Details</CardTitle>
           <CardDescription>
-            Begin by selecting a date to automatically determine the season, then continue to select the division, competition, and teams.
+            Begin by selecting a date to filter the available competitions and teams for that season.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -170,26 +171,25 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
                     <FormField control={form.control} name="time" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>2. Match Time</FormLabel><FormControl><Input type="time" className="w-full" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
                 
-                 <div className="space-y-2">
-                    <FormLabel>Auto-Selected Season</FormLabel>
-                    <div className={cn(
-                        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted px-3 py-2 text-sm",
-                        !autoSelectedSeason && "text-muted-foreground"
-                    )}>
-                        {autoSelectedSeason ? autoSelectedSeason.name : "Select a date to determine active season"}
-                    </div>
-                </div>
+                 <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>3. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !autoSelectedSeason}><FormControl><SelectTrigger><SelectValue placeholder={!autoSelectedSeason ? "Select a date first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.divisionName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
 
-                <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>3. Division</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !autoSelectedSeason}><FormControl><SelectTrigger><SelectValue placeholder={!autoSelectedSeason ? "Waiting for season..." : "Select a division"}/></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                
-                <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>4. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDivisionId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDivisionId ? "Select division first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.type})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <FormLabel>Auto-Selected Season</FormLabel>
+                      <div className={cn("flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted px-3 py-2 text-sm",!autoSelectedSeason && "text-muted-foreground")}>{autoSelectedSeason ? autoSelectedSeason.name : "Waiting for date..."}</div>
+                  </div>
+                   <div className="space-y-2">
+                      <FormLabel>Auto-Selected Division</FormLabel>
+                      <div className={cn("flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted px-3 py-2 text-sm", !autoSelectedDivisionName && "text-muted-foreground")}>{autoSelectedDivisionName || "Waiting for competition..."}</div>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>5. Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDivisionId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDivisionId ? "Select division first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>6. Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDivisionId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDivisionId ? "Select division first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>4. Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>5. Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
 
-                 <FormField control={form.control} name="fieldId" render={({ field }) => (<FormItem><FormLabel>7. Venue / Field</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger></FormControl><SelectContent>{fields.map((field) => (<SelectItem key={field.fieldId} value={field.fieldId}>{field.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="fieldId" render={({ field }) => (<FormItem><FormLabel>6. Venue / Field</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger></FormControl><SelectContent>{fields.map((field) => (<SelectItem key={field.fieldId} value={field.fieldId}>{field.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
 
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Creating Match..." : "Create Fixture & Start Scoring"}
