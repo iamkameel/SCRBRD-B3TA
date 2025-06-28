@@ -137,14 +137,32 @@ export default function DataManagementClient() {
                             </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col sm:flex-row gap-4">
-                            <Button onClick={() => { setActionToConfirm('migrateAll'); setDialogOpen(true); }} disabled={isProcessing}>
-                                {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DatabaseZap className="mr-2 h-4 w-4" />}
-                                Migrate All Sample Data
-                            </Button>
-                            <Button variant="destructive" onClick={() => { setActionToConfirm('deleteAll'); setDialogOpen(true); }} disabled={isProcessing}>
-                                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TriangleAlert className="mr-2 h-4 w-4" />}
-                                Delete All Data
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button onClick={() => { setActionToConfirm('migrateAll'); setDialogOpen(true); }} disabled={isProcessing}>
+                                            {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DatabaseZap className="mr-2 h-4 w-4" />}
+                                            Migrate All Sample Data
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Replaces all current data with the complete sample dataset.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="destructive" onClick={() => { setActionToConfirm('deleteAll'); setDialogOpen(true); }} disabled={isProcessing}>
+                                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TriangleAlert className="mr-2 h-4 w-4" />}
+                                            Delete All Data
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Permanently deletes all data from all collections in the database.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             </CardContent>
                         </Card>
                         </AccordionContent>
@@ -175,29 +193,42 @@ export default function DataManagementClient() {
                                     <TableRow key={name}>
                                       <TableCell className="font-medium">{name}</TableCell>
                                       <TableCell className="flex justify-end gap-2">
-                                          {isIndependent ? (
-                                              <Button size="sm" variant="outline" onClick={() => handleMigrateSubset(name)} disabled={isProcessing}>
-                                                  <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
-                                              </Button>
-                                          ) : (
-                                              <TooltipProvider>
-                                                  <Tooltip>
-                                                      <TooltipTrigger asChild>
-                                                          <span tabIndex={0}> {/* Wrapper for disabled button */}
-                                                              <Button size="sm" variant="outline" disabled>
-                                                                  <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
-                                                              </Button>
-                                                          </span>
-                                                      </TooltipTrigger>
-                                                      <TooltipContent>
-                                                          <p>Migration depends on other data. Use 'Migrate All'.</p>
-                                                      </TooltipContent>
-                                                  </Tooltip>
-                                              </TooltipProvider>
-                                          )}
-                                          <Button size="sm" variant="destructive" onClick={() => { setActionToConfirm(name); setDialogOpen(true); }} disabled={isProcessing}>
-                                              <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                          </Button>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <span tabIndex={!isIndependent ? 0 : -1}>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => handleMigrateSubset(name)}
+                                                                disabled={isProcessing || !isIndependent}
+                                                            >
+                                                                <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
+                                                            </Button>
+                                                        </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{isIndependent ? `Replaces all existing ${name} data with the sample set.` : `Migration for ${name} depends on other data. Use 'Migrate All' instead.`}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            onClick={() => { setActionToConfirm(name); setDialogOpen(true); }}
+                                                            disabled={isProcessing}
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Permanently deletes all {name} data from the database.</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                       </TableCell>
                                     </TableRow>
                                   )
@@ -223,7 +254,18 @@ export default function DataManagementClient() {
                              <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
                                 <Upload className="h-8 w-8 text-muted-foreground mb-2"/>
                                 <p className="text-muted-foreground mb-4">Drag & drop your file here or</p>
-                                <Button disabled>Choose File</Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span tabIndex={0}>
+                                                <Button disabled>Choose File</Button>
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This feature is coming soon.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                         </CardContent>
                     </Card>
@@ -238,7 +280,18 @@ export default function DataManagementClient() {
                             <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
                                 <Download className="h-8 w-8 text-muted-foreground mb-2"/>
                                 <p className="text-muted-foreground mb-4">Export will generate a zip file of CSVs.</p>
-                                <Button disabled>Export All Data</Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span tabIndex={0}>
+                                                <Button disabled>Export All Data</Button>
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This feature is coming soon.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                         </CardContent>
                     </Card>
