@@ -1,11 +1,12 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { Field, FieldAssignment, Person } from '@/lib/data';
+import type { Field, FieldAssignment, Person, School } from '@/lib/data';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -21,6 +22,8 @@ export async function getFields(): Promise<Field[]> {
       const field: Field = {
         fieldId: docSnapshot.id,
         name: data.name,
+        schoolId: data.schoolId,
+        schoolName: data.schoolName,
         surfaceType: data.surfaceType,
         facilities: data.facilities,
         status: data.status,
@@ -58,6 +61,7 @@ export async function getFields(): Promise<Field[]> {
 
 const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
+  schoolId: z.string().optional(),
   surfaceType: z.string().optional(),
   facilities: z.string().optional(),
   status: z.enum(['Available', 'Maintenance', 'Closed']).default('Available'),
@@ -73,11 +77,20 @@ export async function addFieldAction(data: FieldFormValues) {
     throw new Error('Invalid field data.');
   }
 
-  const { name, surfaceType, facilities, status } = validatedFields.data;
+  const { name, schoolId, surfaceType, facilities, status } = validatedFields.data;
+  
+  let schoolName = '';
+  if (schoolId) {
+      const schoolSnap = await getDoc(doc(db, 'schools', schoolId));
+      if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) throw new Error("Selected school not found.");
+      schoolName = schoolSnap.data().name;
+  }
 
   try {
     await addDoc(collection(db, 'fields'), {
       name,
+      schoolId: schoolId || null,
+      schoolName: schoolName || null,
       surfaceType: surfaceType || "",
       facilities: facilities || "",
       status,
@@ -111,9 +124,20 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
     if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) {
         throw new Error("Field not found or you do not have permission to edit it.");
     }
+    
+    let schoolName = '';
+    if (updateData.schoolId) {
+        const schoolSnap = await getDoc(doc(db, 'schools', updateData.schoolId));
+        if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) throw new Error("Selected school not found.");
+        schoolName = schoolSnap.data().name;
+    }
 
     try {
-        await updateDoc(fieldDocRef, updateData);
+        await updateDoc(fieldDocRef, {
+            ...updateData,
+            schoolId: updateData.schoolId || null,
+            schoolName: schoolName || null,
+        });
     } catch (error) {
         console.error("Error updating field:", error);
         throw new Error("Could not update field.");

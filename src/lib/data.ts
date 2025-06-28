@@ -43,6 +43,8 @@ export interface FieldAssignment {
 export interface Field {
   fieldId: string;
   name: string;
+  schoolId?: string;
+  schoolName?: string;
   surfaceType?: string;
   facilities?: string;
   status: 'Available' | 'Maintenance' | 'Closed';

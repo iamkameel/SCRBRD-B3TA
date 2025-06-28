@@ -33,16 +33,28 @@ export const sampleData = {
         { divisionId: 'div_u16', name: 'u16' },
         { divisionId: 'div_u15', name: 'u15' },
         { divisionId: 'div_u14', name: 'u14' },
+        { divisionId: 'div_u13', name: 'u13' },
     ],
     seasons: [
         { seasonId: 'season_1', name: '2024/25 Season', startDate: pastDate(30), endDate: futureDate(90), active: true },
         { seasonId: 'season_2', name: '2023/24 Season', startDate: pastDate(395), endDate: pastDate(275), active: false },
     ],
     fields: [
-        { fieldId: 'field_1', name: 'John Medlicott Oval', surfaceType: 'Grass', facilities: 'Pavilion, Toilets, Nets', status: 'Available' }, // Michaelhouse
-        { fieldId: 'field_2', name: 'Hart-Davis Oval', surfaceType: 'Grass', facilities: 'Pavilion, Scoreboard', status: 'Available' }, // Hilton
-        { fieldId: 'field_3', name: 'Goldstones', surfaceType: 'Grass', facilities: 'Grandstand, Nets', status: 'Available' }, // Maritzburg College
-        { fieldId: 'field_4', name: 'The Horse-Shoe', surfaceType: 'Grass', facilities: 'Pavilion', status: 'Available' }, // DHS
+        // School-owned fields
+        { fieldId: 'field_1', schoolId: 'school_1', name: 'John Medlicott Oval', surfaceType: 'Grass', facilities: 'Pavilion, Toilets, Nets', status: 'Available' },
+        { fieldId: 'field_2', schoolId: 'school_2', name: 'Hart-Davis Oval', surfaceType: 'Grass', facilities: 'Pavilion, Scoreboard', status: 'Available' },
+        { fieldId: 'field_3', schoolId: 'school_3', name: 'Goldstones', surfaceType: 'Grass', facilities: 'Grandstand, Nets', status: 'Available' },
+        { fieldId: 'field_4', schoolId: 'school_4', name: 'The Horse-Shoe', surfaceType: 'Grass', facilities: 'Pavilion', status: 'Available' },
+        { fieldId: 'field_5', schoolId: 'school_5', name: 'Dixons', surfaceType: 'Grass', facilities: 'Basic Pavilion', status: 'Available' },
+        { fieldId: 'field_6', schoolId: 'school_6', name: 'Bowdens', surfaceType: 'Grass', facilities: 'Nets, Toilets', status: 'Available' },
+        { fieldId: 'field_7', schoolId: 'school_7', name: 'AH Smith Oval', surfaceType: 'Grass', facilities: 'Pavilion, Indoor Nets', status: 'Available' },
+        { fieldId: 'field_8', schoolId: 'school_8', name: 'St Charles Oval', surfaceType: 'Grass', facilities: 'Pavilion', status: 'Maintenance' },
+        { fieldId: 'field_9', schoolId: 'school_9', name: 'Northwood Oval', surfaceType: 'Grass', facilities: 'Scoreboard, Nets', status: 'Available' },
+        { fieldId: 'field_10', schoolId: 'school_10', name: 'Clifton Oval', surfaceType: 'Grass', facilities: 'Pavilion', status: 'Available' },
+        // Independent fields
+        { fieldId: 'field_11', name: 'Pietermaritzburg Oval', surfaceType: 'Grass', facilities: 'International Standard, Floodlights', status: 'Available' },
+        { fieldId: 'field_12', name: 'Kingsmead Cricket Ground', surfaceType: 'Grass', facilities: 'International Standard, Floodlights, Restaurant', status: 'Available' },
+        { fieldId: 'field_13', name: 'Chatsworth Oval', surfaceType: 'Grass', facilities: 'Public Stand, Basic facilities', status: 'Available' }
     ],
     vehicles: [
         { vehicleId: 'vehicle_1', name: 'MHS Minibus 1', type: 'Minibus', capacity: 16, registration: 'MHS-01-ZN' },
@@ -291,4 +303,5 @@ export const sampleScorecardData = {
         },
     }
 };
+
 

@@ -24,7 +24,7 @@ const collectionNameMap = {
     'Financials': 'financials', 'Equipment': 'equipment',
 } as const;
 export type SubsetName = keyof typeof collectionNameMap;
-const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Teams', 'Matches', 'Competitions'];
+const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment'];
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
@@ -93,25 +93,20 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         let itemCount = 0;
 
         const idKeyMap: { [key: string]: string } = {
-            schools: 'schoolId',
-            divisions: 'divisionId',
-            seasons: 'seasonId',
-            fields: 'fieldId',
-            people: 'personId',
-            vehicles: 'vehicleId',
-            financials: 'transactionId',
-            equipment: 'itemId',
-            sponsors: 'sponsorId',
+            schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', fields: 'fieldId',
+            people: 'personId', vehicles: 'vehicleId', financials: 'transactionId', equipment: 'itemId',
+            sponsors: 'sponsorId', competitions: 'competitionId',
         };
 
-        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people', 'vehicles', 'financials', 'equipment', 'sponsors'];
+        const collectionsInOrder: (keyof typeof sampleData)[] = [
+            'schools', 'divisions', 'seasons', 'people', 'vehicles', 
+            'financials', 'equipment', 'sponsors'
+        ];
         
-        for (const collName of independentCollections) {
+        for (const collName of collectionsInOrder) {
             for (const item of sampleData[collName]) {
                 const idKey = idKeyMap[collName];
-                if (!idKey) {
-                    throw new Error(`No idKey mapping found for collection: ${collName}`);
-                }
+                if (!idKey) throw new Error(`No idKey mapping for collection: ${collName}`);
                 
                 const tempId = item[idKey as keyof typeof item];
                 const { [idKey]: _, ...itemData } = item;
@@ -127,6 +122,24 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 if (tempId) idMap.set(tempId, docRef.id);
                 itemCount++;
             }
+        }
+        
+        // Process Fields (now that schools exist)
+        for (const item of sampleData.fields) {
+            const { fieldId: tempId, ...itemData } = item;
+            const newFieldData: { [key: string]: any } = { ...itemData, userId };
+            if (item.schoolId) {
+                const newSchoolId = idMap.get(item.schoolId);
+                if (newSchoolId) {
+                    newFieldData.schoolId = newSchoolId;
+                    newFieldData.schoolName = sampleData.schools.find(s => s.schoolId === item.schoolId)?.name;
+                }
+            }
+             if (!newFieldData.status) newFieldData.status = 'Available';
+            const docRef = doc(collection(db, 'fields'));
+            batch.set(docRef, newFieldData);
+            idMap.set(tempId, docRef.id);
+            itemCount++;
         }
         
         // Process Equipment Assignments
@@ -154,7 +167,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             const { competitionId: tempCompId, ...compData } = competition;
             const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
             const winnerTeamName = winnerTeamId ? sampleData.teams.find(t => t.teamId === compData.winnerTeamId)?.name : undefined;
-
 
             const newCompData: any = {
                 ...compData,
@@ -347,6 +359,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
             else if (subsetName === 'Financials') idKey = 'transactionId';
             else if (subsetName === 'Equipment') idKey = 'itemId';
             else if (subsetName === 'Sponsors') idKey = 'sponsorId';
+            else if (subsetName === 'Fields') idKey = 'fieldId';
             else idKey = `${collectionName.slice(0, -1)}Id`;
             
             const { [idKey]: _, ...itemData } = item as any;
