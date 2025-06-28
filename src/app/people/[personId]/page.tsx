@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import PersonDetailsClient from './client';
-import { getPerson, getPersonLinks, getPlayers, getPlayerStats, getPersonTeamAssignments, getPlayerMatchHistory } from '@/lib/actions/players';
+import { getPerson, getPersonLinks, getPlayers, getPersonTeamAssignments } from '@/lib/actions/players';
+import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import { Button } from '@/components/ui/button';
 
 export default async function PersonDetailsPage({ params }: { params: { personId: string } }) {

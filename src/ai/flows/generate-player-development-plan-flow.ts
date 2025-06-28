@@ -7,7 +7,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getPerson, getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/players';
+import { getPerson } from '@/lib/actions/players';
+import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import { PlayerDevelopmentPlanPromptInputSchema, PlayerDevelopmentPlanSchema, SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 

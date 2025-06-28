@@ -8,7 +8,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getTeamStats, getTeamRoster } from '@/lib/actions/teams';
-import { getPlayerStats } from '@/lib/actions/players';
+import { getPlayerStats } from '@/lib/actions/stats';
 import type { RosterMember } from '@/lib/data';
 import { OppositionAnalysisInputSchema } from '@/ai/schemas';
 

@@ -7,7 +7,8 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getPlayers, getPlayerStats } from '@/lib/actions/players';
+import { getPlayers } from '@/lib/actions/players';
+import { getPlayerStats } from '@/lib/actions/stats';
 import { DreamTeamOutputSchema, SimplifiedPlayerStatsSchema, DreamTeamPlayerInputSchema, type DreamTeamOutput } from '@/ai/schemas';
 
 const PromptInputSchema = z.object({

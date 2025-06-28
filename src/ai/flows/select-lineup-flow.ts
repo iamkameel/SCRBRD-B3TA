@@ -8,7 +8,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getMatch } from '@/lib/actions/matches';
 import { getTeamRoster, getTeam } from '@/lib/actions/teams';
-import { getPlayerStats } from '@/lib/actions/players';
+import { getPlayerStats } from '@/lib/actions/stats';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import { RosterPlayerSchema, MatchContextSchema, SelectLineupPromptInputSchema, SelectLineupOutputSchema, type SelectLineupOutput } from '@/ai/schemas';
 

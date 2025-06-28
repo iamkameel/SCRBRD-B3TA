@@ -9,7 +9,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getMatch } from '@/lib/actions/matches';
 import { getTeamStats, getTeamRoster } from '@/lib/actions/teams';
-import { getPlayerStats } from '@/lib/actions/players';
+import { getPlayerStats } from '@/lib/actions/stats';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import type { RosterMember } from '@/lib/data';
 

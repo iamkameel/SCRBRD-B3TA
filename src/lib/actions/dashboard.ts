@@ -1,8 +1,9 @@
 'use server';
 
 import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam } from '@/lib/data';
-import { getPlayers, getPlayerStats } from './players';
+import { getPlayers } from './players';
 import { getTeams, getTeamStats } from './teams';
+import { getPlayerStats } from './stats';
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
     const players = await getPlayers();
