@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -468,4 +469,29 @@ export async function saveScorecard(matchId: string, scorecardData: { innings1: 
   revalidatePath(`/matches/${matchId}`);
   revalidatePath('/matches');
   revalidatePath('/');
+}
+
+export async function getMatchesByField(fieldId: string): Promise<Match[]> {
+  if (!userId) return [];
+  if (!fieldId) return [];
+
+  try {
+    const matchesCollection = collection(db, 'matches');
+    const q = query(matchesCollection, where("userId", "==", userId), where("fieldId", "==", fieldId));
+    const matchSnapshot = await getDocs(q);
+
+    const matchesList = matchSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        matchId: doc.id,
+        ...data,
+        dateTime: (data.dateTime as Timestamp).toDate(),
+      } as Match;
+    });
+
+    return matchesList.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+  } catch (error) {
+    console.error(`Error fetching matches for field ${fieldId}:`, error);
+    return [];
+  }
 }

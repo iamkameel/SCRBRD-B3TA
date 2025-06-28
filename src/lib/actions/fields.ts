@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { Field, FieldAssignment, Person, School } from '@/lib/data';
+import type { Field, FieldAssignment, Person } from '@/lib/data';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -58,6 +58,56 @@ export async function getFields(): Promise<Field[]> {
     return [];
   }
 }
+
+export async function getField(fieldId: string): Promise<Field | null> {
+  if (!userId) return null;
+  try {
+    const fieldDocRef = doc(db, 'fields', fieldId);
+    const fieldSnap = await getDoc(fieldDocRef);
+
+    if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) {
+      return null;
+    }
+
+    const data = fieldSnap.data();
+    const field: Field = {
+      fieldId: fieldSnap.id,
+      name: data.name,
+      schoolId: data.schoolId,
+      schoolName: data.schoolName,
+      surfaceType: data.surfaceType,
+      facilities: data.facilities,
+      status: data.status,
+      assignments: [],
+    };
+
+    const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
+    const assignmentsSnapshot = await getDocs(assignmentsCol);
+
+    const assignmentsPromises = assignmentsSnapshot.docs.map(async (assignDoc) => {
+      const assignData = assignDoc.data();
+      const personSnap = await getDoc(doc(db, 'people', assignData.personId));
+      if (personSnap.exists()) {
+        const personData = personSnap.data() as Omit<Person, 'personId'>;
+        return {
+          assignmentId: assignDoc.id,
+          personId: assignData.personId,
+          personName: `${personData.firstName} ${personData.lastName}`,
+        };
+      }
+      return null;
+    });
+    
+    field.assignments = (await Promise.all(assignmentsPromises)).filter((a): a is FieldAssignment => a !== null);
+    
+    return field;
+
+  } catch (error) {
+    console.error(`Error fetching field with ID ${fieldId}:`, error);
+    return null;
+  }
+}
+
 
 const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
@@ -145,6 +195,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
 
     revalidatePath('/fields');
     revalidatePath('/new-match');
+    revalidatePath(`/fields/${fieldId}`);
 }
 
 export async function deleteFieldAction(fieldId: string) {
@@ -194,7 +245,7 @@ export async function assignGroundskeeperToFieldAction(fieldId: string, personId
         throw new Error("Could not assign grounds-keeper.");
     }
 
-    revalidatePath('/fields');
+    revalidatePath(`/fields/${fieldId}`);
 }
 
 export async function removeGroundskeeperFromFieldAction(fieldId: string, assignmentId: string) {
@@ -212,5 +263,5 @@ export async function removeGroundskeeperFromFieldAction(fieldId: string, assign
         throw new Error("Could not remove assignment.");
     }
 
-    revalidatePath('/fields');
+    revalidatePath(`/fields/${fieldId}`);
 }

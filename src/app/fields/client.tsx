@@ -2,10 +2,11 @@
 'use client';
 
 import * as React from "react";
+import Link from 'next/link';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, UserPlus, Building } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,18 +26,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import type { Field, FieldAssignment, Person, School } from "@/lib/data";
-import { addFieldAction, updateFieldAction, deleteFieldAction, assignGroundskeeperToFieldAction, removeGroundskeeperFromFieldAction } from '@/lib/actions/fields';
-import { Label } from "@/components/ui/label";
+import type { Field, School } from "@/lib/data";
+import { addFieldAction, updateFieldAction, deleteFieldAction } from '@/lib/actions/fields';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FieldCard } from "./field-card";
 
 const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
@@ -106,61 +106,68 @@ function FieldDialog({ mode, field, schools, open, onOpenChange }: { mode: 'add'
   );
 }
 
-function AssignDialog({ field, groundskeepers, open, onOpenChange }: { field: Field, groundskeepers: Person[], open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = React.useTransition();
-  const [selectedPersonId, setSelectedPersonId] = React.useState<string | null>(null);
-
-  const availableKeepers = groundskeepers.filter(gk => !field.assignments?.some(a => a.personId === gk.personId));
-
-  const handleAssign = () => {
-    if (!selectedPersonId) return;
-    startTransition(async () => {
-      try {
-        await assignGroundskeeperToFieldAction(field.fieldId, selectedPersonId);
-        toast({ title: "Grounds-Keeper Assigned", description: "The person has been assigned to this field." });
-        onOpenChange(false);
-      } catch (error) {
-        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not assign person.", variant: "destructive" });
-      }
-    });
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader><DialogTitle>Assign Grounds-Keeper</DialogTitle><DialogDescription>Assign a grounds-keeper to manage {field.name}.</DialogDescription></DialogHeader>
-        <div className="space-y-4 py-4">
-          <Select onValueChange={setSelectedPersonId} disabled={isPending}>
-            <SelectTrigger><SelectValue placeholder="Select a grounds-keeper" /></SelectTrigger>
-            <SelectContent>
-              {availableKeepers.length > 0 ? (
-                availableKeepers.map(gk => <SelectItem key={gk.personId} value={gk.personId}>{gk.firstName} {gk.lastName}</SelectItem>)
-              ) : (
-                <div className="p-4 text-center text-sm text-muted-foreground">No available grounds-keepers found.</div>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancel</Button>
-          <Button onClick={handleAssign} disabled={isPending || !selectedPersonId}>
-            {isPending ? "Assigning..." : "Assign to Field"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export default function FieldsClient({ fields, groundskeepers, schools }: { fields: Field[], groundskeepers: Person[], schools: School[] }) {
+export default function FieldsClient({ fields, schools }: { fields: Field[], schools: School[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedField, setSelectedField] = React.useState<Field | null>(null);
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isFieldDialogOpen, setIsFieldDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = React.useState(false);
+
+  // View, Pagination, Filtering, Sorting state
+  const [view, setView] = React.useState<'list' | 'card'>('list');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const ITEMS_PER_PAGE = view === 'list' ? 10 : 12;
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [sortConfig, setSortConfig] = React.useState<{ key: 'name' | 'schoolName'; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+
+  const filteredFields = fields.filter(field =>
+    field.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (field.schoolName && field.schoolName.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const sortedFields = React.useMemo(() => {
+    let sortableItems = [...filteredFields];
+    sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key] ?? '';
+        const bValue = b[sortConfig.key] ?? '';
+        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+    });
+    return sortableItems;
+  }, [filteredFields, sortConfig]);
+
+  const paginatedFields = sortedFields.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  const totalPages = Math.ceil(sortedFields.length / ITEMS_PER_PAGE);
+
+  const requestSort = (key: 'name' | 'schoolName') => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (column: 'name' | 'schoolName') => {
+    if (sortConfig.key !== column) return null;
+    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
+    return <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, view, sortConfig]);
+
 
   const handleDelete = () => {
     if (!selectedField) return;
@@ -178,16 +185,14 @@ export default function FieldsClient({ fields, groundskeepers, schools }: { fiel
     });
   };
 
-  const handleRemoveAssignment = (fieldId: string, assignmentId: string) => {
-    startTransition(async () => {
-      try {
-        await removeGroundskeeperFromFieldAction(fieldId, assignmentId);
-        toast({ title: "Assignment Removed", description: "The grounds-keeper has been unassigned." });
-      } catch (error) {
-        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not remove assignment.", variant: "destructive" });
-      }
-    });
-  }
+  const SortableHeader = ({ column, children }: { column: 'name' | 'schoolName', children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(column)} className="px-0 hover:bg-transparent">
+            {children}
+            {getSortIcon(column)}
+        </Button>
+    </TableHead>
+  );
 
   return (
     <>
@@ -197,79 +202,92 @@ export default function FieldsClient({ fields, groundskeepers, schools }: { fiel
           <Button onClick={() => { setDialogMode('add'); setSelectedField(null); setIsFieldDialogOpen(true); }}><PlusCircle className="mr-2"/>Add Field</Button>
         </header>
 
-        {fields.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {fields.map((field) => (
-              <Card key={field.fieldId}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle>{field.name}</CardTitle>
-                      <CardDescription>
-                        {field.schoolName ? (
-                          <span className="flex items-center gap-1.5"><Building className="h-4 w-4"/>{field.schoolName}</span>
-                        ) : (
-                          <span className="text-primary">Independent Venue</span>
-                        )}
-                      </CardDescription>
-                    </div>
-                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => { setSelectedField(field); setDialogMode('edit'); setIsFieldDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit Details</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => { setSelectedField(field); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete Field</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-xs">Status</Label>
-                    <Badge variant={field.status === 'Available' ? 'secondary' : (field.status === 'Maintenance' ? 'outline' : 'destructive')}>{field.status}</Badge>
-                  </div>
-                   {field.facilities && (
-                    <div>
-                      <Label className="text-xs">Facilities</Label>
-                      <p className="text-sm text-muted-foreground">{field.facilities}</p>
-                    </div>
+         <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Field List</CardTitle>
+                <CardDescription>A list of all fields and venues in the system.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search by name or school..." className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                </div>
+                <div className="flex items-center rounded-md bg-muted p-1">
+                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
+                    <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {view === 'list' && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortableHeader column="name">Field Name</SortableHeader>
+                    <SortableHeader column="schoolName">Owner</SortableHeader>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Staff Assigned</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedFields.length > 0 ? (
+                    paginatedFields.map((field) => (
+                      <TableRow key={field.fieldId}>
+                        <TableCell className="font-medium"><Link href={`/fields/${field.fieldId}`} className="hover:underline">{field.name}</Link></TableCell>
+                        <TableCell>{field.schoolName || <span className="text-muted-foreground">Independent</span>}</TableCell>
+                        <TableCell><Badge variant={field.status === 'Available' ? 'secondary' : (field.status === 'Maintenance' ? 'outline' : 'destructive')}>{field.status}</Badge></TableCell>
+                        <TableCell>{field.assignments?.length || 0}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => { setSelectedField(field); setDialogMode('edit'); setIsFieldDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit Details</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => { setSelectedField(field); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete Field</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center">{searchQuery ? "No fields found matching your search." : "No fields found. Get started by adding a field."}</TableCell>
+                    </TableRow>
                   )}
-                  <Separator />
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                       <h4 className="text-sm font-semibold">Assigned Grounds-Keepers</h4>
-                       <Button variant="outline" size="sm" onClick={() => { setSelectedField(field); setIsAssignDialogOpen(true); }}><UserPlus className="mr-2"/>Assign</Button>
-                    </div>
-                    <div className="space-y-2">
-                        {field.assignments && field.assignments.length > 0 ? (
-                            field.assignments.map(assignment => (
-                                <div key={assignment.assignmentId} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="h-8 w-8"><AvatarImage src={undefined} /><AvatarFallback>{assignment.personName.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>
-                                        <span className="text-sm">{assignment.personName}</span>
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveAssignment(field.fieldId, assignment.assignmentId)} disabled={isPending}>
-                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center py-2">No one assigned.</p>
-                        )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="flex items-center justify-center h-48">
-              <p className="text-muted-foreground">No fields found. Get started by adding a field.</p>
-          </Card>
-        )}
+                </TableBody>
+              </Table>
+            )}
+            {view === 'card' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {paginatedFields.length > 0 ? (
+                        paginatedFields.map(field => (
+                            <FieldCard 
+                                key={field.fieldId} 
+                                field={field} 
+                                onEdit={() => { setSelectedField(field); setDialogMode('edit'); setIsFieldDialogOpen(true); }}
+                                onDelete={() => { setSelectedField(field); setIsDeleteDialogOpen(true); }}
+                            />
+                        ))
+                    ) : (
+                        <p className="col-span-full h-24 flex items-center justify-center text-muted-foreground">{searchQuery ? "No fields found matching your search." : "No fields found."}</p>
+                    )}
+                </div>
+            )}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center pt-8">
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</Button>
+                    <span className="mx-4 text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</Button>
+                </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
-      {isAssignDialogOpen && selectedField && <AssignDialog field={selectedField} groundskeepers={groundskeepeers} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
