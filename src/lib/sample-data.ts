@@ -33,10 +33,11 @@ export const sampleData = {
         { schoolId: 'temp_school_14', name: 'Forrest Hill', abbreviation: 'FHS' },
     ],
     divisions: [
-        { divisionId: 'temp_div_1', name: 'U19 Varsity Division 1' },
-        { divisionId: 'temp_div_2', name: 'U16 Junior Varsity' },
-        { divisionId: 'temp_div_3', name: 'U19 Varsity Division 2' },
-        { divisionId: 'temp_div_4', name: 'U16 Junior Division 2' },
+        { divisionId: 'temp_div_open', name: 'Open' },
+        { divisionId: 'temp_div_u16', name: 'u16' },
+        { divisionId: 'temp_div_u15', name: 'u15' },
+        { divisionId: 'temp_div_u14', name: 'u14' },
+        { divisionId: 'temp_div_u13', name: 'u13' },
     ],
     seasons: [
         { seasonId: 'temp_season_1', name: '2024-2025 Season', startDate: pastDate(30), endDate: futureDate(90), active: true },
@@ -54,7 +55,7 @@ export const sampleData = {
         { vehicleId: 'temp_vehicle_3', name: 'Main Bus', type: 'Bus', capacity: 40, registration: 'GHS-02' }
     ],
     financials: [
-        { transactionId: 'temp_trans_1', description: 'U19 Varsity League Registration Fees', amount: 1500, type: 'Income', category: 'Registration Fee', date: pastDate(25) },
+        { transactionId: 'temp_trans_1', description: 'Open Division 1 League Registration Fees', amount: 1500, type: 'Income', category: 'Registration Fee', date: pastDate(25) },
         { transactionId: 'temp_trans_2', description: 'Awesome Inc. Sponsorship', amount: 5000, type: 'Income', category: 'Sponsorship', date: pastDate(20) },
         { transactionId: 'temp_trans_3', description: 'Main Oval Hire for Pre-Season Series', amount: 750, type: 'Expense', category: 'Venue Hire', date: pastDate(15) },
         { transactionId: 'temp_trans_4', description: 'Purchase of 12 new cricket balls', amount: 300, type: 'Expense', category: 'Equipment', date: pastDate(10) },
@@ -218,16 +219,17 @@ export const sampleData = {
 
     ],
     competitions: [
-        { competitionId: 'temp_comp_1', name: 'U19 Varsity League Division 1', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' },
-        { competitionId: 'temp_comp_2', name: 'U19 Pre-Season Tournament', type: 'Tournament', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'Completed', winnerTeamId: 'temp_team_1' },
-        { competitionId: 'temp_comp_3', name: 'U19 Pre-Season Cup', type: 'Cup', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' },
-        { competitionId: 'temp_comp_4', name: 'Summer Sports Festival', type: 'Festival', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'Draft' },
-        { competitionId: 'temp_comp_5', name: 'U16 Junior Varsity League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_2', status: 'In Progress' },
-        { competitionId: 'temp_comp_6', name: 'U19 Varsity League Division 2', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_3', status: 'In Progress' },
+        { competitionId: 'temp_comp_1', name: 'Open Division 1 League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_open', status: 'In Progress' },
+        { competitionId: 'temp_comp_2', name: 'Open Pre-Season Tournament', type: 'Tournament', seasonId: 'temp_season_1', divisionId: 'temp_div_open', status: 'Completed', winnerTeamId: 'temp_team_1' },
+        { competitionId: 'temp_comp_3', name: 'Open Pre-Season Cup', type: 'Cup', seasonId: 'temp_season_1', divisionId: 'temp_div_open', status: 'In Progress' },
+        { competitionId: 'temp_comp_4', name: 'Summer Sports Festival', type: 'Festival', seasonId: 'temp_season_1', divisionId: 'temp_div_open', status: 'Draft' },
+        { competitionId: 'temp_comp_5', name: 'u16 League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_u16', status: 'In Progress' },
+        { competitionId: 'temp_comp_6', name: 'Open Division 2 League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_open', status: 'In Progress' },
+        { competitionId: 'temp_comp_7', name: 'u15 League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_u15', status: 'Draft' },
     ],
     teams: [
         { 
-            teamId: 'temp_team_1', name: 'Greenwood Gators', schoolId: 'temp_school_1', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_1', name: 'Greenwood Gators', schoolId: 'temp_school_1', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#0A7A42', secondary: '#FFC72C' },
             roster: [
                 { personId: 'p_1', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_2', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -239,7 +241,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_2', name: 'Oakridge Oaks', schoolId: 'temp_school_2', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_2', name: 'Oakridge Oaks', schoolId: 'temp_school_2', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#5D3A00', secondary: '#E0E0E0' },
             roster: [
                 { personId: 'p_13', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_14', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -251,7 +253,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_3', name: 'Riverside Rangers', schoolId: 'temp_school_3', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_3', name: 'Riverside Rangers', schoolId: 'temp_school_3', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#005f73', secondary: '#94d2bd' },
             roster: [
                 { personId: 'p_27', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_28', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -263,7 +265,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_4', name: 'Mountain View Mavericks', schoolId: 'temp_school_4', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_4', name: 'Mountain View Mavericks', schoolId: 'temp_school_4', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#4a4e69', secondary: '#c9ada7' },
             roster: [
                 { personId: 'p_39', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_40', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -275,7 +277,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_5', name: 'Cedar Ridge Centurions', schoolId: 'temp_school_5', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_5', name: 'Cedar Ridge Centurions', schoolId: 'temp_school_5', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#8d0801', secondary: '#f4a259' },
             roster: [
                 { personId: 'p_51', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_52', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -287,7 +289,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_6', name: 'Pinecrest Pythons', schoolId: 'temp_school_6', divisionId: 'temp_div_1', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_6', name: 'Pinecrest Pythons', schoolId: 'temp_school_6', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '1st XI',
             teamColors: { primary: '#003049', secondary: '#d62828' },
             roster: [
                 { personId: 'p_63', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_64', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -299,7 +301,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_7', name: 'Bayview Blazers', schoolId: 'temp_school_7', divisionId: 'temp_div_2', seasonId: 'temp_season_1', teamClass: 'U16 A',
+            teamId: 'temp_team_7', name: 'Bayview Blazers', schoolId: 'temp_school_7', divisionId: 'temp_div_u16', seasonId: 'temp_season_1', teamClass: 'A',
             teamColors: { primary: '#0077b6', secondary: '#caf0f8' },
             roster: [
                 { personId: 'p_75', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_76', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -311,7 +313,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_8', name: 'Summit Strikers', schoolId: 'temp_school_8', divisionId: 'temp_div_2', seasonId: 'temp_season_1', teamClass: 'U16 A',
+            teamId: 'temp_team_8', name: 'Summit Strikers', schoolId: 'temp_school_8', divisionId: 'temp_div_u16', seasonId: 'temp_season_1', teamClass: 'A',
             teamColors: { primary: '#6a040f', secondary: '#f8f9fa' },
             roster: [
                 { personId: 'p_87', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_88', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -323,7 +325,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_9', name: 'Northwood Knights', schoolId: 'temp_school_9', divisionId: 'temp_div_3', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_9', name: 'Northwood Knights', schoolId: 'temp_school_9', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '2nd XI',
             teamColors: { primary: '#03045e', secondary: '#adb5bd' },
             roster: [
                 { personId: 'p_99', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_100', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -335,7 +337,7 @@ export const sampleData = {
             ]
         },
         { 
-            teamId: 'temp_team_10', name: 'Westfield Warriors', schoolId: 'temp_school_10', divisionId: 'temp_div_3', seasonId: 'temp_season_1', teamClass: '1st XI',
+            teamId: 'temp_team_10', name: 'Westfield Warriors', schoolId: 'temp_school_10', divisionId: 'temp_div_open', seasonId: 'temp_season_1', teamClass: '2nd XI',
             teamColors: { primary: '#fca311', secondary: '#14213d' },
             roster: [
                 { personId: 'p_111', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_112', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
@@ -344,6 +346,30 @@ export const sampleData = {
                 { personId: 'p_117', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_118', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
                 { personId: 'p_119', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_120', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
                 { personId: 'p_121', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_122', role: 'Coach', status: 'active', isCaptain: false, isViceCaptain: false },
+            ]
+        },
+        { 
+            teamId: 'temp_team_11', name: 'Bridgewater Bears', schoolId: 'temp_school_11', divisionId: 'temp_div_u15', seasonId: 'temp_season_1', teamClass: 'A',
+            teamColors: { primary: '#468faf', secondary: '#f3e9d2' },
+            roster: [
+                { personId: 'p_1', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_2', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_3', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: true }, { personId: 'p_4', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_5', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_6', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_7', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_8', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_9', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_10', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_11', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_12', role: 'Coach', status: 'active', isCaptain: false, isViceCaptain: false },
+            ]
+        },
+        { 
+            teamId: 'temp_team_12', name: 'Aston Hall Avengers', schoolId: 'temp_school_12', divisionId: 'temp_div_u15', seasonId: 'temp_season_1', teamClass: 'A',
+            teamColors: { primary: '#9b2226', secondary: '#e9d8a6' },
+            roster: [
+                { personId: 'p_13', role: 'Player', status: 'active', isCaptain: true, isViceCaptain: false }, { personId: 'p_14', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_15', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: true }, { personId: 'p_16', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_17', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_18', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_19', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_20', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_21', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false }, { personId: 'p_22', role: 'Player', status: 'active', isCaptain: false, isViceCaptain: false },
+                { personId: 'p_23', role: 'Player', status: 'injured', isCaptain: false, isViceCaptain: false }, { personId: 'p_24', role: 'Coach', status: 'active', isCaptain: false, isViceCaptain: false },
             ]
         },
     ],
@@ -379,6 +405,10 @@ export const sampleData = {
         { 
             matchId: 'temp_match_8', teamAId: 'temp_team_9', teamBId: 'temp_team_10', 
             competitionId: 'temp_comp_6', fieldId: 'temp_field_4', dateTime: futureDate(3), status: 'scheduled'
+        },
+        { 
+            matchId: 'temp_match_9', teamAId: 'temp_team_11', teamBId: 'temp_team_12', 
+            competitionId: 'temp_comp_7', fieldId: 'temp_field_1', dateTime: futureDate(5), status: 'scheduled'
         },
     ],
 };
@@ -540,3 +570,4 @@ export const sampleScorecardData = {
         },
     }
 };
+
