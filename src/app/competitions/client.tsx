@@ -46,6 +46,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
+  competitionClass: z.string().optional(),
   type: z.enum(['League', 'Cup', 'Tournament', 'Festival'], { required_error: "Type is required." }),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
@@ -88,13 +89,14 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
     resolver: zodResolver(competitionSchema),
     defaultValues: mode === 'edit' && competition ? {
       name: competition.name,
+      competitionClass: competition.competitionClass || '',
       type: competition.type,
       seasonId: competition.seasonId,
       divisionId: competition.divisionId,
       status: competition.status,
       winnerTeamId: competition.winnerTeamId || "",
     } : {
-      name: "", type: "League", status: "Draft", winnerTeamId: "",
+      name: "", competitionClass: "", type: "League", status: "Draft", winnerTeamId: "",
     },
   });
   
@@ -110,9 +112,9 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && competition) {
-        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "" });
+        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || "" });
       } else {
-        form.reset({ name: "", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "" });
+        form.reset({ name: "", competitionClass: "", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "" });
       }
     }
   }, [competition, mode, open, form]);
@@ -150,7 +152,10 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Competition Name</FormLabel><FormControl><Input placeholder="e.g. U19 Varsity League" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Competition Name</FormLabel><FormControl><Input placeholder="e.g. U19 Varsity League" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="competitionClass" render={({ field }) => (<FormItem><FormLabel>Class / Level (Optional)</FormLabel><FormControl><Input placeholder="e.g. 1st XI" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
              <FormField
                 control={form.control}
                 name="type"
@@ -427,6 +432,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                         <TableRow>
                             <SortableHeader column="name">Name</SortableHeader>
                             <SortableHeader column="type">Type</SortableHeader>
+                            <TableHead>Class</TableHead>
                             <SortableHeader column="seasonName">Season</SortableHeader>
                             <SortableHeader column="divisionName">Division</SortableHeader>
                             <SortableHeader column="status">Status</SortableHeader>
@@ -447,6 +453,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 )}
                             </TableCell>
                             <TableCell>{comp.type}</TableCell>
+                            <TableCell>{comp.competitionClass || '-'}</TableCell>
                             <TableCell>{comp.seasonName}</TableCell>
                             <TableCell>{comp.divisionName}</TableCell>
                             <TableCell><Badge variant={comp.status === 'Completed' ? 'secondary' : (comp.status === 'In Progress' ? 'default' : 'outline')}>{comp.status}</Badge></TableCell>
@@ -463,7 +470,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                         ))
                     ) : (
                         <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">{filtersApplied ? "No competitions found matching your filters." : "No competitions found. Get started by adding one."}</TableCell>
+                        <TableCell colSpan={7} className="h-24 text-center">{filtersApplied ? "No competitions found matching your filters." : "No competitions found. Get started by adding one."}</TableCell>
                         </TableRow>
                     )}
                     </TableBody>

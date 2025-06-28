@@ -249,6 +249,7 @@ export interface Competition {
   competitionId: string;
   name: string;
   type: 'League' | 'Cup' | 'Tournament' | 'Festival';
+  competitionClass?: string;
   seasonId: string;
   seasonName: string;
   divisionId: string;

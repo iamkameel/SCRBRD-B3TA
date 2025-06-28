@@ -10,7 +10,6 @@ import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person, Match 
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
 import { getTeam, getTeamStats, getTeams } from './teams';
-import { getPerson } from './players';
 import { getPlayerStats } from './stats';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -52,6 +51,7 @@ export async function getCompetition(competitionId: string): Promise<Competition
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
+  competitionClass: z.string().optional(),
   type: z.enum(['League', 'Cup', 'Tournament', 'Festival']),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
@@ -69,7 +69,7 @@ export async function addCompetitionAction(data: CompetitionFormValues) {
     throw new Error('Invalid competition data.');
   }
 
-  const { name, type, seasonId, divisionId, status, winnerTeamId } = validatedFields.data;
+  const { name, type, competitionClass, seasonId, divisionId, status, winnerTeamId } = validatedFields.data;
 
   const [season, division] = await Promise.all([
       getSeason(seasonId),
@@ -81,7 +81,7 @@ export async function addCompetitionAction(data: CompetitionFormValues) {
   }
   
   const newCompetitionData: { [key: string]: any } = {
-    name, type, seasonId, seasonName: season.name, divisionId, divisionName: division.name, status, userId,
+    name, type, competitionClass: competitionClass || '', seasonId, seasonName: season.name, divisionId, divisionName: division.name, status, userId,
   };
   
   if (status === 'Completed' && winnerTeamId) {
@@ -114,7 +114,7 @@ export async function updateCompetitionAction(data: z.infer<typeof updateCompeti
         throw new Error('Invalid competition data.');
     }
 
-    const { competitionId, name, type, seasonId, divisionId, status, winnerTeamId } = validatedFields.data;
+    const { competitionId, name, type, competitionClass, seasonId, divisionId, status, winnerTeamId } = validatedFields.data;
     const competitionDocRef = doc(db, 'competitions', competitionId);
 
     const competitionSnap = await getDoc(competitionDocRef);
@@ -132,7 +132,7 @@ export async function updateCompetitionAction(data: z.infer<typeof updateCompeti
     }
     
     const updatePayload: { [key: string]: any } = {
-        name, type, seasonId, seasonName: season.name, divisionId, divisionName: division.name, status
+        name, type, competitionClass: competitionClass || '', seasonId, seasonName: season.name, divisionId, divisionName: division.name, status
     };
 
     if (status === 'Completed' && winnerTeamId) {

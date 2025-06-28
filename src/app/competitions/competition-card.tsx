@@ -32,7 +32,7 @@ export function CompetitionCard({ competition, onEdit, onDelete }: CompetitionCa
                                 {competition.name}
                             </Link>
                         </CardTitle>
-                        <CardDescription>{competition.type}</CardDescription>
+                        <CardDescription>{competition.type}{competition.competitionClass ? ` - ${competition.competitionClass}` : ''}</CardDescription>
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 -mr-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
