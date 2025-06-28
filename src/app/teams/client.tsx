@@ -48,7 +48,7 @@ const teamSchema = z.object({
   schoolId: z.string({ required_error: "Please select a school." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   seasonId: z.string({ required_error: "Please select a season." }),
-  teamClass: z.string().optional(),
+  teamClass: z.string({ required_error: "Please select a class." }),
   primaryColor: z.string().optional(),
   secondaryColor: z.string().optional(),
 });
@@ -57,6 +57,14 @@ type TeamFormValues = z.infer<typeof teamSchema>;
 
 type SortableColumn = 'name' | 'schoolName' | 'divisionName' | 'seasonName' | 'teamClass';
 
+const CLASS_DIVISION_MAP: { [key: string]: string[] } = {
+    'Open': ['1st XI', '2nd XI', '3rd XI', '4th XI'],
+    'u16': ['U16A', 'U16B', 'U16C'],
+    'u15': ['U15A', 'U15B', 'U15C'],
+    'u14': ['U14A', 'U14B', 'U14C'],
+    'u13': ['U13A', 'U13B'],
+};
+
 function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChange }: { mode: 'add' | 'edit', team?: Team, schools: School[], divisions: Division[], seasons: Season[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
@@ -64,18 +72,42 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamSchema),
     defaultValues: mode === 'edit' && team ? {
-      name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass || '',
+      name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
       primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
     } : {
-      name: "", teamClass: "", primaryColor: "#000000", secondaryColor: "#ffffff",
+      name: "", primaryColor: "#000000", secondaryColor: "#ffffff",
     },
   });
+  
+  const schoolId = form.watch('schoolId');
+  const divisionId = form.watch('divisionId');
+  const teamClass = form.watch('teamClass');
+
+  const eligibleClasses = React.useMemo(() => {
+    if (!divisionId) return [];
+    const selectedDivision = divisions.find(d => d.divisionId === divisionId);
+    if (!selectedDivision) return [];
+    return CLASS_DIVISION_MAP[selectedDivision.name as keyof typeof CLASS_DIVISION_MAP] || [];
+  }, [divisionId, divisions]);
+
+  React.useEffect(() => {
+    const school = schools.find(s => s.schoolId === schoolId);
+    if (school && teamClass) {
+        form.setValue('name', `${school.name} ${teamClass}`);
+    } else if (school) {
+        form.setValue('name', school.name);
+    }
+  }, [schoolId, teamClass, schools, form]);
+
+  React.useEffect(() => {
+      form.resetField('teamClass');
+  }, [divisionId, form]);
 
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && team) {
         form.reset({
-          name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass || '',
+          name: team.name, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
           primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
         });
       } else {
@@ -84,7 +116,7 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
             return s.active && now >= s.startDate && now <= s.endDate;
         });
         form.reset({
-          name: "", schoolId: undefined, divisionId: undefined, seasonId: activeSeason?.seasonId, teamClass: '',
+          name: "", schoolId: undefined, divisionId: undefined, seasonId: activeSeason?.seasonId, teamClass: undefined,
           primaryColor: "#000000", secondaryColor: "#ffffff",
         });
       }
@@ -118,14 +150,14 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
-              <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Team Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood Gators 1st XI" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="teamClass" render={({ field }) => (<FormItem><FormLabel>Class / Level (Optional)</FormLabel><FormControl><Input placeholder="e.g. 1st XI, U15A" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Team Name (Auto-generated)</FormLabel><FormControl><Input placeholder="Auto-generated from selections..." {...field} disabled /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <Separator />
             <div className="space-y-4">
                <h3 className="text-sm font-medium text-muted-foreground">Team Association</h3>
               <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>School</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a school" /></SelectTrigger></FormControl><SelectContent>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+               <FormField control={form.control} name="teamClass" render={({ field }) => (<FormItem><FormLabel>Class / Level</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending || !divisionId || eligibleClasses.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!divisionId ? "Select division first" : "Select a class"} /></SelectTrigger></FormControl><SelectContent>{eligibleClasses.map((cls) => (<SelectItem key={cls} value={cls}>{cls}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
             </div>
              <Separator />
