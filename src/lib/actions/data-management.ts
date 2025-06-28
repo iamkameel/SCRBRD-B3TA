@@ -4,7 +4,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, writeBatch, getDocs, doc, query, where } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, writeBatch, getDocs, doc, query, where, deleteDoc } from 'firebase/firestore';
 import { sampleData, sampleScorecardData } from '@/lib/sample-data';
 import { getPlayers, deletePlayerAction } from './players';
 import { getTeams, deleteTeamAction } from './teams';
@@ -92,17 +92,27 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const idMap = new Map<string, string>();
         let itemCount = 0;
 
-        // Process items with no dependencies first
+        const idKeyMap: { [key: string]: string } = {
+            schools: 'schoolId',
+            divisions: 'divisionId',
+            seasons: 'seasonId',
+            fields: 'fieldId',
+            people: 'personId',
+            vehicles: 'vehicleId',
+            financials: 'transactionId',
+            equipment: 'itemId',
+            sponsors: 'sponsorId',
+        };
+
         const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people', 'vehicles', 'financials', 'equipment', 'sponsors'];
+        
         for (const collName of independentCollections) {
             for (const item of sampleData[collName]) {
-                let idKey: string;
-                if (collName === 'people') idKey = 'personId';
-                else if (collName === 'financials') idKey = 'transactionId';
-                else if (collName === 'equipment') idKey = 'itemId';
-                else if (collName === 'sponsors') idKey = 'sponsorId';
-                else idKey = `${collName.slice(0, -1)}Id`;
-
+                const idKey = idKeyMap[collName];
+                if (!idKey) {
+                    throw new Error(`No idKey mapping found for collection: ${collName}`);
+                }
+                
                 const tempId = item[idKey as keyof typeof item];
                 const { [idKey]: _, ...itemData } = item;
                 
