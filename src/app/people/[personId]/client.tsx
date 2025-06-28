@@ -34,6 +34,7 @@ import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance 
 import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from "@/lib/actions/players";
 import { AddLinkDialog } from "./add-link-dialog";
 import { PlayerFormChart } from "./player-form-chart";
+import { PlayerDevelopmentCard } from "./player-development-card";
 
 
 interface PersonDetailsClientProps {
@@ -244,6 +245,10 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                   </div>
               </CardContent>
           </Card>
+        )}
+
+        {person.roles.includes("Player") && (
+          <PlayerDevelopmentCard personId={person.personId} />
         )}
       </div>
 

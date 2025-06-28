@@ -154,3 +154,26 @@ export const SelectLineupOutputSchema = z.object({
   justification: z.string().describe("A brief, one-paragraph summary explaining the key decisions for the team selection, considering balance, form, and conditions."),
 });
 export type SelectLineupOutput = z.infer<typeof SelectLineupOutputSchema>;
+
+
+// From generate-player-development-plan-flow.ts
+export const RecentPerformanceSchema = z.object({
+    opponent: z.string(),
+    runs: z.number(),
+});
+
+export const PlayerDevelopmentPlanPromptInputSchema = z.object({
+    playerName: z.string(),
+    playerStats: SimplifiedPlayerStatsSchema,
+    recentPerformances: z.array(RecentPerformanceSchema),
+});
+
+export const PlayerDevelopmentPlanSchema = z.object({
+  strengths: z.array(z.string()).describe("A list of the player's key strengths based on their stats."),
+  weaknesses: z.array(z.string()).describe("A list of areas where the player can improve based on their stats and recent form."),
+  recommendations: z.array(z.object({
+    title: z.string().describe("A short, descriptive title for the recommended drill or focus area."),
+    description: z.string().describe("A detailed, step-by-step description of the drill or what the player should focus on to improve."),
+  })).length(3, { message: "Provide exactly three targeted recommendations." }).describe("A list of three personalized recommendations and drills."),
+});
+export type PlayerDevelopmentPlanOutput = z.infer<typeof PlayerDevelopmentPlanSchema>;

@@ -9,6 +9,8 @@ import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, del
 import type { Person, PlayerStats, PlayerTeamAssignment } from '@/lib/data';
 import { getScorecard, getMatchLineup } from './matches';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
+import { generatePlayerDevelopmentPlan } from '@/ai/flows/generate-player-development-plan-flow';
+import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -443,4 +445,20 @@ export async function updateNotificationPreferencesAction(personId: string, pref
   }
 
   revalidatePath('/settings');
+}
+
+
+export async function generatePlayerDevelopmentPlanAction(personId: string): Promise<PlayerDevelopmentPlanOutput> {
+    if (!userId) throw new Error("User not authenticated");
+    const person = await getPerson(personId);
+    if (!person) throw new Error("Person not found or permission denied.");
+
+    try {
+        const plan = await generatePlayerDevelopmentPlan(personId);
+        return plan;
+    } catch (error) {
+        console.error("Error generating development plan:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("Could not generate development plan.");
+    }
 }
