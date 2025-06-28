@@ -73,11 +73,16 @@ function FieldDialog({ mode, field, schools, open, onOpenChange }: { mode: 'add'
   function onSubmit(data: FieldFormValues) {
     startTransition(async () => {
       try {
+        const payload = {
+          ...data,
+          schoolId: data.schoolId?.trim(),
+        };
+
         if (mode === 'edit' && field) {
-          await updateFieldAction({ fieldId: field.fieldId, ...data });
+          await updateFieldAction({ fieldId: field.fieldId, ...payload });
           toast({ title: "Field Updated", description: `${data.name} has been updated.` });
         } else {
-          await addFieldAction(data);
+          await addFieldAction(payload);
           toast({ title: "Field Added", description: `${data.name} has been created.` });
         }
         onOpenChange(false);
@@ -94,7 +99,7 @@ function FieldDialog({ mode, field, schools, open, onOpenChange }: { mode: 'add'
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value="">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="surfaceType" render={({ field }) => (<FormItem><FormLabel>Surface Type (Optional)</FormLabel><FormControl><Input placeholder="e.g. Grass, Turf" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="facilities" render={({ field }) => (<FormItem><FormLabel>Facilities (Optional)</FormLabel><FormControl><Textarea placeholder="e.g. Pavilion, Toilets, Nets" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
@@ -154,8 +159,8 @@ export default function FieldsClient({ fields, schools }: { fields: Field[], sch
   
   const getSortIcon = (column: 'name' | 'schoolName') => {
     if (sortConfig.key !== column) return null;
-    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
-    return <ArrowDown className="ml-2 h-4 w-4" />;
+    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />
+    return <ArrowDown className="ml-2 h-4 w-4" />
   };
 
   const handlePageChange = (page: number) => {
