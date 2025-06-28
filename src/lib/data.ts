@@ -46,7 +46,7 @@ export interface Field {
   schoolId?: string;
   schoolName?: string;
   surfaceType?: string;
-  facilities?: string;
+  facilities?: string[];
   status: 'Available' | 'Maintenance' | 'Closed';
   assignments?: FieldAssignment[];
 }

@@ -27,45 +27,57 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import type { Field, School } from "@/lib/data";
+import type { Field, School, Person } from "@/lib/data";
 import { addFieldAction, updateFieldAction, deleteFieldAction } from '@/lib/actions/fields';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FieldCard } from "./field-card";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
   schoolId: z.string().optional(),
-  surfaceType: z.string().optional(),
-  facilities: z.string().optional(),
   status: z.enum(['Available', 'Maintenance', 'Closed']).default('Available'),
+  surfaceType: z.string().optional(),
+  facilities: z.array(z.string()).optional(),
+  assignments: z.array(z.string()).optional(),
 });
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
 const FIELD_STATUSES = ['Available', 'Maintenance', 'Closed'] as const;
+const SURFACE_TYPES = ['Grass', 'Artificial Turf', 'Matting'] as const;
+const FACILITIES = [
+    { id: 'pavilion', label: 'Pavilion' },
+    { id: 'toilets', label: 'Toilets' },
+    { id: 'nets', label: 'Nets' },
+    { id: 'scoreboard', label: 'Scoreboard' },
+    { id: 'floodlights', label: 'Floodlights' },
+    { id: 'changing_rooms', label: 'Changing Rooms' },
+] as const;
 
-function FieldDialog({ mode, field, schools, open, onOpenChange }: { mode: 'add' | 'edit', field?: Field, schools: School[], open: boolean, onOpenChange: (open: boolean) => void; }) {
+function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange }: { mode: 'add' | 'edit', field?: Field, schools: School[], groundskeepers: Person[], open: boolean, onOpenChange: (open: boolean) => void; }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<FieldFormValues>({
     resolver: zodResolver(fieldSchema),
     defaultValues: mode === 'edit' && field ? 
-        { name: field.name, schoolId: field.schoolId || '', surfaceType: field.surfaceType, facilities: field.facilities, status: field.status } : 
-        { name: "", schoolId: '', surfaceType: "", facilities: "", status: "Available" },
+        { name: field.name, schoolId: field.schoolId || '', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] } : 
+        { name: "", schoolId: '', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] },
   });
 
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && field) {
-        form.reset({ name: field.name, schoolId: field.schoolId || '', surfaceType: field.surfaceType, facilities: field.facilities, status: field.status });
+        form.reset({ name: field.name, schoolId: field.schoolId || '', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] });
       } else {
-        form.reset({ name: "", schoolId: '', surfaceType: "", facilities: "", status: "Available" });
+        form.reset({ name: "", schoolId: '', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] });
       }
     }
   }, [field, mode, open, form]);
@@ -75,7 +87,7 @@ function FieldDialog({ mode, field, schools, open, onOpenChange }: { mode: 'add'
       try {
         const payload = {
           ...data,
-          schoolId: data.schoolId?.trim(),
+          schoolId: data.schoolId === ' ' ? '' : data.schoolId,
         };
 
         if (mode === 'edit' && field) {
@@ -94,15 +106,54 @@ function FieldDialog({ mode, field, schools, open, onOpenChange }: { mode: 'add'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{mode === 'edit' ? 'Edit Field' : 'Add New Field'}</DialogTitle><DialogDescription>Enter the details for the field or venue.</DialogDescription></DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="surfaceType" render={({ field }) => (<FormItem><FormLabel>Surface Type (Optional)</FormLabel><FormControl><Input placeholder="e.g. Grass, Turf" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="facilities" render={({ field }) => (<FormItem><FormLabel>Facilities (Optional)</FormLabel><FormControl><Textarea placeholder="e.g. Pavilion, Toilets, Nets" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-4">
+                <h3 className="text-base font-semibold text-foreground">Field Details</h3>
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+            </div>
+            <Separator />
+            <div className="space-y-4">
+                 <h3 className="text-base font-semibold text-foreground">Specifications</h3>
+                <FormField control={form.control} name="surfaceType" render={({ field }) => (<FormItem><FormLabel>Surface Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{SURFACE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="facilities" render={() => (
+                    <FormItem>
+                        <FormLabel>Facilities</FormLabel>
+                        <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
+                        {FACILITIES.map((item) => (
+                            <FormField key={item.id} control={form.control} name="facilities"
+                            render={({ field }) => { return (<FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))}} disabled={isPending}/></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)}}
+                            />
+                        ))}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}/>
+            </div>
+            <Separator />
+            <div className="space-y-4">
+                <h3 className="text-base font-semibold text-foreground">Staffing</h3>
+                 <FormField control={form.control} name="assignments" render={() => (
+                    <FormItem>
+                        <FormLabel>Assigned Grounds-Keepers</FormLabel>
+                        <FormDescription>Select the staff responsible for this field.</FormDescription>
+                        <ScrollArea className="h-40 w-full rounded-lg border p-4">
+                        {groundskeeper.length > 0 ? (
+                            groundskeeper.map((person) => (
+                                <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
+                            ))
+                        ) : (
+                            <p className="text-sm text-center text-muted-foreground pt-4">No grounds-keepers available. Add them on the People page.</p>
+                        )}
+                        </ScrollArea>
+                        <FormMessage />
+                    </FormItem>
+                )}/>
+            </div>
             <DialogFooter><Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Field"}</Button></DialogFooter>
           </form>
         </Form>
@@ -111,7 +162,7 @@ function FieldDialog({ mode, field, schools, open, onOpenChange }: { mode: 'add'
   );
 }
 
-export default function FieldsClient({ fields, schools }: { fields: Field[], schools: School[] }) {
+export default function FieldsClient({ fields, schools, groundskeepers }: { fields: Field[], schools: School[], groundskeepers: Person[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedField, setSelectedField] = React.useState<Field | null>(null);
@@ -292,7 +343,7 @@ export default function FieldsClient({ fields, schools }: { fields: Field[], sch
         </Card>
       </div>
 
-      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
+      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundskeeper} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

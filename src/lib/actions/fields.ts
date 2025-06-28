@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
 import type { Field, FieldAssignment, Person } from '@/lib/data';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -109,45 +109,69 @@ export async function getField(fieldId: string): Promise<Field | null> {
 }
 
 
-const fieldSchema = z.object({
+const fieldActionSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
   schoolId: z.string().optional(),
   surfaceType: z.string().optional(),
-  facilities: z.string().optional(),
+  facilities: z.array(z.string()).optional(),
   status: z.enum(['Available', 'Maintenance', 'Closed']).default('Available'),
+  assignments: z.array(z.string()).optional(),
 });
 
-type FieldFormValues = z.infer<typeof fieldSchema>;
+type FieldFormValues = z.infer<typeof fieldActionSchema>;
+
+async function syncAssignments(batch: FirebaseFirestore.WriteBatch, fieldId: string, personIds: string[] = []) {
+    const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
+    const currentAssignmentsSnap = await getDocs(assignmentsCol);
+    const currentPersonIds = new Set(currentAssignmentsSnap.docs.map(d => d.data().personId));
+    const newPersonIds = new Set(personIds);
+
+    // Delete assignments that are no longer needed
+    for (const doc of currentAssignmentsSnap.docs) {
+        if (!newPersonIds.has(doc.data().personId)) {
+            batch.delete(doc.ref);
+        }
+    }
+
+    // Add new assignments
+    for (const personId of personIds) {
+        if (!currentPersonIds.has(personId)) {
+            const newAssignmentRef = doc(collection(db, 'fields', fieldId, 'assignments'));
+            batch.set(newAssignmentRef, { personId });
+        }
+    }
+}
 
 export async function addFieldAction(data: FieldFormValues) {
   if (!userId) throw new Error("User not authenticated");
-  const validatedFields = fieldSchema.safeParse(data);
+  const validatedFields = fieldActionSchema.safeParse(data);
 
-  if (!validatedFields.success) {
-    throw new Error('Invalid field data.');
-  }
-
-  const { name, schoolId, surfaceType, facilities, status } = validatedFields.data;
+  if (!validatedFields.success) throw new Error('Invalid field data.');
+  
+  const { assignments, ...fieldData } = validatedFields.data;
   
   let schoolName = '';
-  if (schoolId) {
-      const schoolSnap = await getDoc(doc(db, 'schools', schoolId));
+  if (fieldData.schoolId) {
+      const schoolSnap = await getDoc(doc(db, 'schools', fieldData.schoolId));
       if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) throw new Error("Selected school not found.");
       schoolName = schoolSnap.data().name;
   }
+  
+  const batch = writeBatch(db);
+  const newFieldRef = doc(collection(db, 'fields'));
+
+  batch.set(newFieldRef, {
+      ...fieldData,
+      schoolName: schoolName || null,
+      userId: userId,
+  });
+
+  await syncAssignments(batch, newFieldRef.id, assignments);
 
   try {
-    await addDoc(collection(db, 'fields'), {
-      name,
-      schoolId: schoolId || null,
-      schoolName: schoolName || null,
-      surfaceType: surfaceType || "",
-      facilities: facilities || "",
-      status,
-      userId: userId,
-    });
+    await batch.commit();
   } catch (error) {
-    console.error("Error adding document: ", error);
+    console.error("Error adding document and assignments: ", error);
     throw new Error("Could not add field.");
   }
   
@@ -155,7 +179,7 @@ export async function addFieldAction(data: FieldFormValues) {
   revalidatePath('/new-match');
 }
 
-const updateFieldSchema = fieldSchema.extend({
+const updateFieldSchema = fieldActionSchema.extend({
   fieldId: z.string(),
 });
 
@@ -163,11 +187,9 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateFieldSchema.safeParse(data);
 
-    if (!validatedFields.success) {
-        throw new Error('Invalid field data.');
-    }
+    if (!validatedFields.success) throw new Error('Invalid field data.');
 
-    const { fieldId, ...updateData } = validatedFields.data;
+    const { fieldId, assignments, ...updateData } = validatedFields.data;
     const fieldDocRef = doc(db, 'fields', fieldId);
 
     const fieldSnap = await getDoc(fieldDocRef);
@@ -181,15 +203,19 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
         if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) throw new Error("Selected school not found.");
         schoolName = schoolSnap.data().name;
     }
+    
+    const batch = writeBatch(db);
+    batch.update(fieldDocRef, {
+        ...updateData,
+        schoolName: schoolName || null,
+    });
+
+    await syncAssignments(batch, fieldId, assignments);
 
     try {
-        await updateDoc(fieldDocRef, {
-            ...updateData,
-            schoolId: updateData.schoolId || null,
-            schoolName: schoolName || null,
-        });
+        await batch.commit();
     } catch (error) {
-        console.error("Error updating field:", error);
+        console.error("Error updating field and assignments:", error);
         throw new Error("Could not update field.");
     }
 
@@ -209,8 +235,14 @@ export async function deleteFieldAction(fieldId: string) {
     throw new Error("Field not found or you do not have permission to delete it.");
   }
   
+  const batch = writeBatch(db);
+  const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
+  const assignmentsSnapshot = await getDocs(assignmentsCol);
+  assignmentsSnapshot.forEach(doc => batch.delete(doc.ref));
+  batch.delete(fieldDocRef);
+  
   try {
-    await deleteDoc(fieldDocRef);
+    await batch.commit();
   } catch (error) {
     console.error("Error deleting field:", error);
     throw new Error("Could not delete field.");
@@ -265,3 +297,4 @@ export async function removeGroundskeeperFromFieldAction(fieldId: string, assign
 
     revalidatePath(`/fields/${fieldId}`);
 }
+
