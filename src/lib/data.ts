@@ -248,7 +248,7 @@ export interface StandingTeam extends Team {
 export interface Competition {
   competitionId: string;
   name: string;
-  type: 'League' | 'Cup' | 'Tournament' | 'Festival';
+  type: 'League' | 'Cup' | 'Tournament' | 'Festival' | 'Friendlies';
   competitionClass?: string;
   seasonId: string;
   seasonName: string;
@@ -257,6 +257,7 @@ export interface Competition {
   status: 'Draft' | 'In Progress' | 'Completed';
   winnerTeamId?: string;
   winnerTeamName?: string;
+  teamIds?: string[];
 }
 
 export interface PlayerMatchPerformance {

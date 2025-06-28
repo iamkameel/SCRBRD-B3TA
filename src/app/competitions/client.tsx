@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,15 +43,18 @@ import type { Competition, Season, Division, Team } from "@/lib/data";
 import { addCompetitionAction, updateCompetitionAction, deleteCompetitionAction } from '@/lib/actions/competitions';
 import { CompetitionCard } from "./competition-card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
   competitionClass: z.string().optional(),
-  type: z.enum(['League', 'Cup', 'Tournament', 'Festival'], { required_error: "Type is required." }),
+  type: z.enum(['League', 'Cup', 'Tournament', 'Festival', 'Friendlies'], { required_error: "Type is required." }),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
   winnerTeamId: z.string().optional(),
+  teamIds: z.array(z.string()).optional(),
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
 
@@ -84,6 +87,11 @@ const COMPETITION_TYPE_DEFINITIONS = [
         label: 'Festival',
         description: 'A broader, celebratory event focused on community and atmosphere, which can host multiple competitions.',
     },
+    {
+        id: 'Friendlies',
+        label: 'Friendlies',
+        description: 'A collection of one-off matches not assigned to a formal league or cup structure.',
+    }
 ] as const;
 
 const COMPETITION_TYPES = COMPETITION_TYPE_DEFINITIONS.map(t => t.id);
@@ -103,8 +111,9 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
       divisionId: competition.divisionId,
       status: competition.status,
       winnerTeamId: competition.winnerTeamId || "",
+      teamIds: competition.teamIds || [],
     } : {
-      name: "", competitionClass: " ", type: "League", status: "Draft", winnerTeamId: "",
+      name: "", competitionClass: " ", type: "League", status: "Draft", winnerTeamId: "", teamIds: [],
     },
   });
   
@@ -127,9 +136,9 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && competition) {
-        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || " " });
+        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || " ", teamIds: competition.teamIds || [] });
       } else {
-        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "" });
+        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: undefined, divisionId: undefined, winnerTeamId: "", teamIds: [] });
       }
     }
   }, [competition, mode, open, form]);
@@ -228,6 +237,64 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
               <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Draft" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             </div>
+
+            <FormField
+              control={form.control}
+              name="teamIds"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Assign Teams</FormLabel>
+                  <FormDescription>
+                    Select the teams that will participate in this competition. Teams are filtered by the selected season and division.
+                  </FormDescription>
+                  <ScrollArea className="h-48 rounded-md border">
+                    <div className="p-4">
+                      {eligibleTeams.length > 0 ? (
+                        eligibleTeams.map((team) => (
+                          <FormField
+                            key={team.teamId}
+                            control={form.control}
+                            name="teamIds"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={team.teamId}
+                                  className="flex flex-row items-start space-x-3 space-y-0 mb-4"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(team.teamId)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), team.teamId])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== team.teamId
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {team.name}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center pt-4">
+                          No teams available for the selected division and season.
+                        </p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {status === 'Completed' && (
               <FormField control={form.control} name="winnerTeamId" render={({ field }) => (
                 <FormItem>
