@@ -24,7 +24,7 @@ const collectionNameMap = {
     'Financials': 'financials', 'Equipment': 'equipment',
 } as const;
 export type SubsetName = keyof typeof collectionNameMap;
-const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment'];
+const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Teams', 'Matches', 'Competitions'];
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
@@ -39,7 +39,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
             'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
-            'equipment', 'equipmentAssignments'
+            'equipment', 'equipmentAssignments', 'sponsors'
         ];
 
         for (const collName of collectionsToClear) {
@@ -93,10 +93,16 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         let itemCount = 0;
 
         // Process items with no dependencies first
-        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people', 'vehicles', 'financials', 'equipment'];
+        const independentCollections: (keyof typeof sampleData)[] = ['schools', 'divisions', 'seasons', 'fields', 'people', 'vehicles', 'financials', 'equipment', 'sponsors'];
         for (const collName of independentCollections) {
             for (const item of sampleData[collName]) {
-                const idKey = ['people', 'financials', 'equipment'].includes(collName) ? `${collName.slice(0, -1)}Id` : `${collName.slice(0, -1)}Id`;
+                let idKey: string;
+                if (collName === 'people') idKey = 'personId';
+                else if (collName === 'financials') idKey = 'transactionId';
+                else if (collName === 'equipment') idKey = 'itemId';
+                else if (collName === 'sponsors') idKey = 'sponsorId';
+                else idKey = `${collName.slice(0, -1)}Id`;
+
                 const tempId = item[idKey as keyof typeof item];
                 const { [idKey]: _, ...itemData } = item;
                 
@@ -255,11 +261,15 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
 }
 
 export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
+    if (!independentSubsets.includes(subsetName)) {
+        return { success: false, message: `Individual deletion for ${subsetName} is not supported due to data dependencies. Please use the 'Delete All Data' function.` };
+    }
     try {
         const getAction = {
             'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
             'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
-            'Equipment': getEquipment,
+            'Equipment': getEquipment, 'Financials': async () => getDocs(query(collection(db, 'financials'), where("userId", "==", userId))).then(snap => snap.docs.map(d => ({...d.data(), transactionId: d.id}))),
+            'Sponsors': async () => getDocs(query(collection(db, 'sponsors'), where("userId", "==", userId))).then(snap => snap.docs.map(d => ({...d.data(), sponsorId: d.id}))),
         }[subsetName];
         
         let deleteAction: ((id: string) => Promise<any>) | undefined;
@@ -272,6 +282,10 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         else if (subsetName === 'Fields') deleteAction = deleteFieldAction;
         else if (subsetName === 'Competitions') deleteAction = deleteCompetitionAction;
         else if (subsetName === 'Equipment') deleteAction = deleteEquipmentItemAction;
+        else if (['Financials', 'Sponsors'].includes(subsetName)) {
+            const collName = collectionNameMap[subsetName as 'Financials' | 'Sponsors'];
+            deleteAction = (id: string) => deleteDoc(doc(db, collName, id));
+        }
 
         let idKey: string | undefined;
         if (subsetName === 'People') idKey = 'personId';
@@ -283,23 +297,17 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         else if (subsetName === 'Fields') idKey = 'fieldId';
         else if (subsetName === 'Competitions') idKey = 'competitionId';
         else if (subsetName === 'Equipment') idKey = 'itemId';
-
+        else if (subsetName === 'Financials') idKey = 'transactionId';
+        else if (subsetName === 'Sponsors') idKey = 'sponsorId';
 
         if (!getAction || !deleteAction || !idKey) {
-            // This is a temporary fix until we have a get for financials
-            if (subsetName === 'Financials') {
-                 const q = query(collection(db, 'financials'), where("userId", "==", userId));
-                 const snapshot = await getDocs(q);
-                 const batch = writeBatch(db);
-                 snapshot.forEach(doc => batch.delete(doc.ref));
-                 await batch.commit();
-                 return { success: true, message: `All ${subsetName} data has been deleted.` };
-            }
-            throw new Error(`Invalid subset name: ${subsetName}`);
+            throw new Error(`Invalid subset name for deletion: ${subsetName}`);
         }
 
+        // @ts-ignore
         const items = await getAction();
-        for (const item of items) { // @ts-ignore
+        for (const item of items) { 
+            // @ts-ignore
             await deleteAction(item[idKey]);
         }
         revalidatePath('/data-management');
@@ -324,8 +332,14 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
         let count = 0;
         
         for (const item of sampleData[collectionName]) {
-            const tempIdKey = ['people', 'financials', 'equipment'].includes(collectionName) ? `${collectionName.slice(0, -1)}Id` : `${collectionName.slice(0, -1)}Id`;
-            const { [tempIdKey]: _, ...itemData } = item as any;
+            let idKey: string;
+            if (subsetName === 'People') idKey = 'personId';
+            else if (subsetName === 'Financials') idKey = 'transactionId';
+            else if (subsetName === 'Equipment') idKey = 'itemId';
+            else if (subsetName === 'Sponsors') idKey = 'sponsorId';
+            else idKey = `${collectionName.slice(0, -1)}Id`;
+            
+            const { [idKey]: _, ...itemData } = item as any;
             
             const dataToSave: {[key: string]: any} = { ...itemData, userId };
             if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
