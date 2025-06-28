@@ -46,7 +46,7 @@ const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
   schoolId: z.string().optional(),
   status: z.enum(['Available', 'Maintenance', 'Closed']).default('Available'),
-  surfaceType: z.string().optional(),
+  pitchType: z.string().optional(),
   facilities: z.array(z.string()).optional(),
   assignments: z.array(z.string()).optional(),
   location: z.string().optional(),
@@ -60,7 +60,7 @@ const fieldSchema = z.object({
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
 const FIELD_STATUSES = ['Available', 'Maintenance', 'Closed'] as const;
-const SURFACE_TYPES = ['Grass', 'Artificial Turf', 'Matting'] as const;
+const PITCH_TYPES = ['Natural Turf', 'Drop-in Turf', 'Artificial Astro-Turf', 'Matting Wicket', 'Concrete Base', 'Indoor Synthetic', 'Hybrid Reinforced', 'Drop-in Artificial'] as const;
 const FIELD_SIZES = ['Full Size', 'Youth', 'Training Area'] as const;
 const FACILITIES = [
     { id: 'pavilion', label: 'Pavilion' },
@@ -85,7 +85,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
     resolver: zodResolver(fieldSchema),
     defaultValues: mode === 'edit' && field ? 
         { ...field, schoolId: field.schoolId || ' ', assignments: field.assignments?.map(a => a.personId) || [] } : 
-        { name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], amenities: [], assignments: [] },
+        { name: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [] },
   });
 
   React.useEffect(() => {
@@ -93,7 +93,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
       if (mode === 'edit' && field) {
         form.reset({ ...field, schoolId: field.schoolId || ' ', assignments: field.assignments?.map(a => a.personId) || [] });
       } else {
-        form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "" });
+        form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "" });
       }
     }
   }, [field, mode, open, form]);
@@ -136,7 +136,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
             <div className="space-y-4">
                  <h3 className="text-base font-semibold text-foreground">Specifications &amp; Facilities</h3>
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="surfaceType" render={({ field }) => (<FormItem><FormLabel>Surface Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{SURFACE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="pitchType" render={({ field }) => (<FormItem><FormLabel>Pitch Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{PITCH_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="size" render={({ field }) => (<FormItem><FormLabel>Field Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger></FormControl><SelectContent>{FIELD_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
                 <div className="grid grid-cols-2 gap-8">

@@ -45,7 +45,7 @@ export interface Field {
   name: string;
   schoolId?: string;
   schoolName?: string;
-  surfaceType?: string;
+  pitchType?: string;
   facilities?: string[];
   status: 'Available' | 'Maintenance' | 'Closed';
   assignments?: FieldAssignment[];

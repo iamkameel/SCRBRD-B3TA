@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import Link from 'next/link';
-import { ArrowLeft, Building, MapPin, Map, Maximize, Wind, Check, User, Phone, FileText } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize } from 'lucide-react';
 import type { Field, Match } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,10 +73,10 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                             <CardTitle>Field Details</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <DetailItem icon={Map} label="Location" value={field.location} />
+                            <DetailItem icon={MapPin} label="Location" value={field.location} />
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <h4 className="font-semibold flex items-center gap-2 mb-2"><Wind className="h-4 w-4 text-muted-foreground" /> Facilities</h4>
+                                    <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Facilities</h4>
                                     {field.facilities && field.facilities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
                                             {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
@@ -94,7 +94,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                             </div>
                             <Separator />
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <DetailItem icon={Wind} label="Surface Type" value={field.surfaceType} />
+                                <DetailItem icon={Wind} label="Pitch Type" value={field.pitchType} />
                                 <DetailItem icon={Maximize} label="Field Size" value={field.size} />
                             </div>
                         </CardContent>
