@@ -412,7 +412,7 @@ export async function generateAndSavePlayerPortraitAction(personId: string) {
         const personRef = doc(db, 'people', personId);
         await updateDoc(personRef, { profileImageUrl: imageUrl });
 
-        revalidatePath(`/players/${personId}`);
+        revalidatePath(`/people/${personId}`);
         revalidatePath('/people');
 
         return { success: true, message: "AI Portrait generated and saved successfully!" };
