@@ -112,12 +112,40 @@ export default function CompetitionDetailsClient({ competition, standings, match
                         <Card>
                             <CardHeader>
                                 <CardTitle>Tournament Bracket</CardTitle>
-                                <CardDescription>Visual bracket for the {competition.name}.</CardDescription>
+                                <CardDescription>A visual overview of the tournament matchups.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                                    <p className="text-muted-foreground">Tournament bracket view coming soon!</p>
-                                </div>
+                                {matches.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {matches.map(match => (
+                                            <div key={match.matchId} className="border p-4 rounded-lg bg-muted/50">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="space-y-2 flex-1">
+                                                        <p className={`p-2 rounded text-sm ${match.winnerTeamId === match.teamAId ? 'bg-background shadow-sm font-bold' : ''}`}>{match.teamAName}</p>
+                                                        <p className={`p-2 rounded text-sm ${match.winnerTeamId === match.teamBId ? 'bg-background shadow-sm font-bold' : ''}`}>{match.teamBName}</p>
+                                                    </div>
+                                                    <div className="text-right pl-4">
+                                                        {match.status === 'completed' && match.result ? (
+                                                            <Link href={`/matches/${match.matchId}`} className="text-sm text-primary hover:underline">View Result</Link>
+                                                        ) : (
+                                                            <div className="text-sm text-muted-foreground">
+                                                                {isClient && <p>{format(match.dateTime, "dd MMM, yyyy")}</p>}
+                                                                {isClient && <p>{format(match.dateTime, "p")}</p>}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {match.status === 'completed' && match.result && (
+                                                    <p className="text-xs text-center text-muted-foreground pt-2 mt-2 border-t">{match.result}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                                        <p className="text-muted-foreground">No matches scheduled for this competition yet.</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>

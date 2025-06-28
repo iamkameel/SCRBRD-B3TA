@@ -391,8 +391,29 @@ export async function saveScorecard(matchId: string, scorecardData: GenerateScor
   const innings2Ref = doc(db, 'matches', matchId, 'scorecards', 'innings2');
   batch.set(innings2Ref, scorecardData.innings2);
   
+  const { innings1, innings2 } = scorecardData;
+  let winnerTeamId: string | null = null;
+  let result = "Match Drawn";
+
+  if (innings1.totalRuns > innings2.totalRuns) {
+      const winnerTeamName = innings1.teamName;
+      winnerTeamId = match.teamAName === winnerTeamName ? match.teamAId : match.teamBId;
+      const margin = innings1.totalRuns - innings2.totalRuns;
+      result = `${winnerTeamName} won by ${margin} runs`;
+  } else if (innings2.totalRuns > innings1.totalRuns) {
+      const winnerTeamName = innings2.teamName;
+      winnerTeamId = match.teamAName === winnerTeamName ? match.teamAId : match.teamBId;
+      const wicketsRemaining = 10 - innings2.wickets;
+      result = `${winnerTeamName} won by ${wicketsRemaining} wickets`;
+  }
+  
   const matchRef = doc(db, 'matches', matchId);
-  batch.update(matchRef, { status: 'completed', playerOfTheMatch: potmData });
+  batch.update(matchRef, { 
+    status: 'completed', 
+    playerOfTheMatch: potmData,
+    winnerTeamId,
+    result,
+  });
 
   try {
     await batch.commit();

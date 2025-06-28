@@ -103,6 +103,8 @@ export interface Match {
   teamAColor?: string;
   teamBColor?: string;
   playerOfTheMatch?: PlayerOfTheMatch;
+  winnerTeamId?: string;
+  result?: string;
   audioCommentaryUrl?: string;
 }
 
