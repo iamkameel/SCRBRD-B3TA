@@ -1,6 +1,6 @@
+
 import { notFound } from 'next/navigation';
-import { getCompetition, getCompetitionStandings, getCompetitionLeaderboards } from '@/lib/actions/competitions';
-import { getMatchesByCompetition } from '@/lib/actions/matches';
+import { getCompetition, getCompetitionStandings, getCompetitionLeaderboards, getMatchesByCompetition } from '@/lib/actions/competitions';
 import CompetitionDetailsClient from './client';
 
 export default async function CompetitionDetailsPage({ params }: { params: { competitionId: string } }) {

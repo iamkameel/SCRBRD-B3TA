@@ -6,11 +6,11 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person } from '@/lib/data';
+import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person, Match } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
-import { getMatchesByCompetition, getMatchLineup } from './matches';
-import { getTeam, getTeamStats } from './teams';
+import { getMatchLineup } from './matches';
+import { getTeam, getTeamStats, getTeams } from './teams';
 import { getPlayerStats, getPerson } from './players';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -265,4 +265,39 @@ export async function getCompetitionLeaderboards(competitionId: string): Promise
         .slice(0, 5);
         
     return { topRunScorers, topWicketTakers };
+}
+
+
+export async function getMatchesByCompetition(competitionId: string): Promise<Match[]> {
+  if (!userId) return [];
+  if (!competitionId) return [];
+  try {
+    const matchesCollection = collection(db, 'matches');
+    const q = query(matchesCollection, where("userId", "==", userId), where("competitionId", "==", competitionId));
+    
+    const [teams, matchSnapshot] = await Promise.all([
+      getTeams(),
+      getDocs(q),
+    ]);
+    
+    const teamColorMap = new Map<string, { primary?: string; secondary?: string }>();
+    teams.forEach(team => {
+      teamColorMap.set(team.teamId, team.teamColors || {});
+    });
+
+    const matchesList = matchSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        matchId: doc.id,
+        ...data,
+        dateTime: (data.dateTime as Timestamp).toDate(),
+        teamAColor: teamColorMap.get(data.teamAId)?.primary,
+        teamBColor: teamColorMap.get(data.teamBId)?.primary,
+      } as Match;
+    });
+    return matchesList.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+  } catch (error) {
+    console.error(`Error fetching matches for competition ${competitionId}:`, error);
+    return [];
+  }
 }
