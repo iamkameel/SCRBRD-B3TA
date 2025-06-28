@@ -56,6 +56,10 @@ export const sampleData = {
         { fieldId: 'field_12', name: 'Kingsmead Cricket Ground', surfaceType: 'Grass', facilities: 'International Standard, Floodlights, Restaurant', status: 'Available' },
         { fieldId: 'field_13', name: 'Chatsworth Oval', surfaceType: 'Grass', facilities: 'Public Stand, Basic facilities', status: 'Available' }
     ],
+    fieldAssignments: [
+        { assignmentId: 'fa_1', fieldId: 'field_1', personId: 'staff_3' }, // Mark Taylor -> John Medlicott Oval
+        { assignmentId: 'fa_2', fieldId: 'field_12', personId: 'staff_4' }, // Lisa Sthalekar -> Kingsmead
+    ],
     vehicles: [
         { vehicleId: 'vehicle_1', name: 'MHS Minibus 1', type: 'Minibus', capacity: 16, registration: 'MHS-01-ZN' },
         { vehicleId: 'vehicle_2', name: 'HC Sprinter', type: 'Van', capacity: 12, registration: 'HC-01-ZN' },
@@ -63,9 +67,9 @@ export const sampleData = {
     ],
     financials: [
         { transactionId: 'trans_1', description: 'KZN Open League Registration Fees', amount: 2500, type: 'Income', category: 'Registration Fee', date: pastDate(25) },
-        { transactionId: 'trans_2', name: 'SuperSport Sponsorship', amount: 10000, type: 'Income', category: 'Sponsorship', date: pastDate(20) },
-        { transactionId: 'trans_3', name: 'Goldstones Hire for Tournament', amount: 1500, type: 'Expense', category: 'Venue Hire', date: pastDate(15) },
-        { transactionId: 'trans_4', name: 'Purchase of 24 Kookaburra Balls', amount: 800, type: 'Expense', category: 'Equipment', date: pastDate(10) },
+        { transactionId: 'trans_2', description: 'SuperSport Sponsorship', amount: 10000, type: 'Income', category: 'Sponsorship', date: pastDate(20) },
+        { transactionId: 'trans_3', description: 'Goldstones Hire for Tournament', amount: 1500, type: 'Expense', category: 'Venue Hire', date: pastDate(15) },
+        { transactionId: 'trans_4', description: 'Purchase of 24 Kookaburra Balls', amount: 800, type: 'Expense', category: 'Equipment', date: pastDate(10) },
     ],
     equipment: [
         { itemId: 'equip_1', name: 'Gray-Nicolls Bat (Players Grade)', type: 'Bat', size: 'SH', status: 'Available' },
@@ -80,6 +84,8 @@ export const sampleData = {
         { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin'], notificationPreferences: { email: true, push: false } },
         { personId: 'staff_1', firstName: 'John', lastName: 'Doe', email: 'john.doe@umpire.com', roles: ['Umpire', 'Scorer'], notificationPreferences: { email: true, push: false } },
         { personId: 'staff_2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@umpire.com', roles: ['Umpire'], notificationPreferences: { email: true, push: false } },
+        { personId: 'staff_3', firstName: 'Mark', lastName: 'Taylor', email: 'mark.t@ground.com', roles: ['Grounds-Keeper', 'Driver'], notificationPreferences: { email: true, push: false } },
+        { personId: 'staff_4', firstName: 'Lisa', lastName: 'Sthalekar', email: 'lisa.s@ground.com', roles: ['Grounds-Keeper'], notificationPreferences: { email: true, push: false } },
 
         // Michaelhouse Players & Coach
         { personId: 'p_1', firstName: 'James', lastName: 'Anderson', email: 'james.a@example.com', roles: ['Player', 'Captain'], profileImageUrl: 'https://placehold.co/400x400.png', notificationPreferences: { email: true, push: false } },
@@ -303,5 +309,6 @@ export const sampleScorecardData = {
         },
     }
 };
+
 
 

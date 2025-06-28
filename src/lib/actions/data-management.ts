@@ -220,6 +220,19 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
 
+        // Process Field Assignments
+        for (const assignment of sampleData.fieldAssignments) {
+            const { assignmentId: tempId, ...assignmentData } = assignment;
+            const newFieldId = idMap.get(assignment.fieldId);
+            const newPersonId = idMap.get(assignment.personId);
+
+            if (newFieldId && newPersonId) {
+                const assignmentDocRef = doc(collection(db, 'fields', newFieldId, 'assignments'));
+                batch.set(assignmentDocRef, { personId: newPersonId });
+                itemCount++;
+            }
+        }
+        
         // Process Matches
         for (const match of sampleData.matches) {
             const { matchId: tempMatchId, competitionId: tempCompId, ...matchData } = match;
@@ -353,7 +366,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
         const batch = writeBatch(db);
         let count = 0;
         
-        for (const item of sampleData[collectionName]) {
+        for (const item of sampleData[collectionName as Exclude<keyof typeof sampleData, 'teams' | 'matches' | 'competitions' | 'equipmentAssignments' | 'fieldAssignments'>]) {
             let idKey: string;
             if (subsetName === 'People') idKey = 'personId';
             else if (subsetName === 'Financials') idKey = 'transactionId';
