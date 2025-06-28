@@ -5,9 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
-import type { Team, RosterMember, TeamStats, Match } from '@/lib/data';
+import type { Team, RosterMember, TeamStats, Match, Innings } from '@/lib/data';
 import { getPerson } from './players';
-import { getScorecard } from './matches';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
@@ -79,7 +78,19 @@ export async function getTeamStats(teamId: string): Promise<TeamStats> {
     let totalOversBowled = 0;
 
     for (const matchDoc of uniqueMatches) {
-        const scorecard = await getScorecard(matchDoc.id);
+        // Replicating getScorecard logic directly to break circular dependency
+        const innings1Ref = doc(db, 'matches', matchDoc.id, 'scorecards', 'innings1');
+        const innings2Ref = doc(db, 'matches', matchDoc.id, 'scorecards', 'innings2');
+        const [innings1Snap, innings2Snap] = await Promise.all([getDoc(innings1Ref), getDoc(innings2Ref)]);
+        
+        let scorecard = null;
+        if (innings1Snap.exists() && innings2Snap.exists()) {
+             scorecard = {
+                innings1: innings1Snap.data() as Innings,
+                innings2: innings2Snap.data() as Innings,
+            };
+        }
+        
         if (!scorecard) continue;
 
         stats.matchesPlayed++;

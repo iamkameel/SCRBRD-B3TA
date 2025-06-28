@@ -1,9 +1,9 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import type { PlayerStats, PlayerMatchPerformance } from '@/lib/data';
-import { getScorecard, getMatchLineup } from './matches';
+import { collection, getDocs, query, where, Timestamp, doc, getDoc } from 'firebase/firestore';
+import type { PlayerStats, PlayerMatchPerformance, Innings } from '@/lib/data';
 import { getPerson } from './players';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -29,13 +29,29 @@ export async function getPlayerStats(personId: string): Promise<PlayerStats> {
     let stats = { ...defaultStats };
 
     for (const matchDoc of completedMatchesSnapshot.docs) {
-        const lineupA = await getMatchLineup(matchDoc.id, matchDoc.data().teamAId);
-        const lineupB = await getMatchLineup(matchDoc.id, matchDoc.data().teamBId);
+        // Replicating getMatchLineup logic directly
+        const lineupADocRef = doc(db, 'matches', matchDoc.id, 'lineups', matchDoc.data().teamAId);
+        const lineupBDocRef = doc(db, 'matches', matchDoc.id, 'lineups', matchDoc.data().teamBId);
+        const [lineupASnap, lineupBSnap] = await Promise.all([getDoc(lineupADocRef), getDoc(lineupBDocRef)]);
+        const lineupA = lineupASnap.exists() ? lineupASnap.data().playerIds || [] : [];
+        const lineupB = lineupBSnap.exists() ? lineupBSnap.data().playerIds || [] : [];
         const playerIsInMatch = [...lineupA, ...lineupB].includes(personId);
         
         if (!playerIsInMatch) continue;
+        
+        // Replicating getScorecard logic directly
+        const innings1Ref = doc(db, 'matches', matchDoc.id, 'scorecards', 'innings1');
+        const innings2Ref = doc(db, 'matches', matchDoc.id, 'scorecards', 'innings2');
+        const [innings1Snap, innings2Snap] = await Promise.all([getDoc(innings1Ref), getDoc(innings2Ref)]);
+        
+        let scorecard = null;
+        if (innings1Snap.exists() && innings2Snap.exists()) {
+            scorecard = {
+                innings1: innings1Snap.data() as Innings,
+                innings2: innings2Snap.data() as Innings,
+            };
+        }
 
-        const scorecard = await getScorecard(matchDoc.id);
         if (!scorecard) continue;
 
         stats.matchesPlayed++;
@@ -104,15 +120,31 @@ export async function getPlayerMatchHistory(personId: string): Promise<PlayerMat
 
     for (const matchDoc of completedMatchesSnapshot.docs) {
         const matchData = matchDoc.data();
-        const lineupA = await getMatchLineup(matchDoc.id, matchData.teamAId);
-        const lineupB = await getMatchLineup(matchDoc.id, matchData.teamBId);
+        
+        // Replicating getMatchLineup logic directly
+        const lineupADocRef = doc(db, 'matches', matchDoc.id, 'lineups', matchData.teamAId);
+        const lineupBDocRef = doc(db, 'matches', matchDoc.id, 'lineups', matchData.teamBId);
+        const [lineupASnap, lineupBSnap] = await Promise.all([getDoc(lineupADocRef), getDoc(lineupBDocRef)]);
+        const lineupA = lineupASnap.exists() ? lineupASnap.data().playerIds || [] : [];
+        const lineupB = lineupBSnap.exists() ? lineupBSnap.data().playerIds || [] : [];
         
         const playerTeamId = lineupA.includes(personId) ? matchData.teamAId : lineupB.includes(personId) ? matchData.teamBId : null;
         if (!playerTeamId) continue;
         
         const opponentName = playerTeamId === matchData.teamAId ? matchData.teamBName : matchData.teamAName;
 
-        const scorecard = await getScorecard(matchDoc.id);
+        // Replicating getScorecard logic directly
+        const innings1Ref = doc(db, 'matches', matchDoc.id, 'scorecards', 'innings1');
+        const innings2Ref = doc(db, 'matches', matchDoc.id, 'scorecards', 'innings2');
+        const [innings1Snap, innings2Snap] = await Promise.all([getDoc(innings1Ref), getDoc(innings2Ref)]);
+        let scorecard = null;
+        if (innings1Snap.exists() && innings2Snap.exists()) {
+             scorecard = {
+                innings1: innings1Snap.data() as Innings,
+                innings2: innings2Snap.data() as Innings,
+            };
+        }
+        
         if (!scorecard) continue;
 
         const battingInnings = scorecard.innings1.battingCard.find(b => b.name === personName) || scorecard.innings2.battingCard.find(b => b.name === personName);
