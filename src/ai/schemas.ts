@@ -185,3 +185,18 @@ export const OppositionAnalysisInputSchema = z.object({
   opponentKeyPlayers: z.string().describe("JSON string of the opponent's key players and their stats."),
 });
 export type OppositionAnalysisInput = z.infer<typeof OppositionAnalysisInputSchema>;
+
+// From umpire-review-flow.ts
+export const UmpireReviewInputSchema = z.object({
+  photoDataUri: z.string().describe("A photo of a cricket delivery, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+});
+export type UmpireReviewInput = z.infer<typeof UmpireReviewInputSchema>;
+
+export const UmpireDecisionSchema = z.object({
+  decision: z.enum(['Out', 'Not Out', "Umpire's Call"]).describe("The final decision based on the analysis."),
+  pitching: z.enum(['In-Line', 'Outside Leg', 'Outside Off']).describe("Where the ball pitched in relation to the wickets."),
+  impact: z.enum(['In-Line', 'Outside Leg', 'Outside Off', 'Too High']).describe("Where the ball impacted the batsman's pads."),
+  wickets: z.enum(['Hitting', 'Missing', "Umpire's Call"]).describe("Whether the ball's trajectory was going on to hit the wickets."),
+  justification: z.string().describe("A brief, step-by-step justification for the final decision, explaining each component (pitching, impact, wickets)."),
+});
+export type UmpireDecisionOutput = z.infer<typeof UmpireDecisionSchema>;
