@@ -94,44 +94,51 @@ export async function addMatchAction(data: FixtureFormValues) {
   const newMatchStartTime = dateTime.getTime();
   const newMatchEndTime = new Date(newMatchStartTime).setHours(dateTime.getHours() + MATCH_DURATION_HOURS);
 
-  const startOfDay = new Date(dateTime);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(dateTime);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  const matchesRef = collection(db, 'matches');
-  const clashQuery = query(
-    matchesRef,
-    where("userId", "==", userId),
-    where("dateTime", ">=", Timestamp.fromDate(startOfDay)),
-    where("dateTime", "<=", Timestamp.fromDate(endOfDay))
-  );
-  const conflictingMatchesSnapshot = await getDocs(clashQuery);
   const teamANameTemp = (await getDoc(doc(db, 'teams', teamAId))).data()?.name || 'Team A';
   const teamBNameTemp = (await getDoc(doc(db, 'teams', teamBId))).data()?.name || 'Team B';
   const fieldNameTemp = (await getDoc(doc(db, 'fields', fieldId))).data()?.name || 'The selected field';
 
+  const matchesRef = collection(db, 'matches');
 
-  for (const matchDoc of conflictingMatchesSnapshot.docs) {
+  const checkClashes = (snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>, entityName: string, entityType: 'team' | 'field') => {
+    for (const matchDoc of snapshot.docs) {
       const existingMatch = matchDoc.data();
       const existingMatchStartTime = (existingMatch.dateTime as Timestamp).toMillis();
       const existingMatchEndTime = new Date(existingMatchStartTime).setHours(new Date(existingMatchStartTime).getHours() + MATCH_DURATION_HOURS);
-      
-      const timesOverlap = (newMatchStartTime < existingMatchEndTime) && (newMatchEndTime > existingMatchStartTime);
 
+      const timesOverlap = (newMatchStartTime < existingMatchEndTime) && (newMatchEndTime > existingMatchStartTime);
+      
       if (timesOverlap) {
-          if (existingMatch.teamAId === teamAId || existingMatch.teamBId === teamAId) {
-              throw new Error(`Clash detected: ${teamANameTemp} is already scheduled for a match around this time.`);
-          }
-          if (existingMatch.teamAId === teamBId || existingMatch.teamBId === teamBId) {
-              throw new Error(`Clash detected: ${teamBNameTemp} is already scheduled for a match around this time.`);
-          }
-          if (existingMatch.fieldId === fieldId) {
-              throw new Error(`Clash detected: ${fieldNameTemp} is already booked around this time.`);
-          }
+        if (entityType === 'team') {
+          throw new Error(`Clash detected: ${entityName} is already scheduled for a match around this time.`);
+        }
+        if (entityType === 'field') {
+          throw new Error(`Clash detected: ${entityName} is already booked for a match around this time.`);
+        }
       }
-  }
+    }
+  };
+
+  const queries = [
+    // Team A clashes
+    query(matchesRef, where("userId", "==", userId), where("teamAId", "==", teamAId)),
+    query(matchesRef, where("userId", "==", userId), where("teamBId", "==", teamAId)),
+    // Team B clashes
+    query(matchesRef, where("userId", "==", userId), where("teamAId", "==", teamBId)),
+    query(matchesRef, where("userId", "==", userId), where("teamBId", "==", teamBId)),
+    // Field clashes
+    query(matchesRef, where("userId", "==", userId), where("fieldId", "==", fieldId)),
+  ];
+
+  const snapshots = await Promise.all(queries.map(q => getDocs(q)));
+
+  checkClashes(snapshots[0], teamANameTemp, 'team');
+  checkClashes(snapshots[1], teamANameTemp, 'team');
+  checkClashes(snapshots[2], teamBNameTemp, 'team');
+  checkClashes(snapshots[3], teamBNameTemp, 'team');
+  checkClashes(snapshots[4], fieldNameTemp, 'field');
   // --- End of Clash Detection ---
+
 
   const [teamASnap, teamBSnap, competition, fieldSnap] = await Promise.all([
     getDoc(doc(db, 'teams', teamAId)),
