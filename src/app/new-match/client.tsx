@@ -23,9 +23,9 @@ import type { Team, Competition, Field } from "@/lib/data";
 import { addMatchAction } from "@/lib/actions/matches";
 
 const baseFixtureSchema = z.object({
+  competitionId: z.string({ required_error: "Please select a competition." }),
   teamAId: z.string({ required_error: "Please select the home team." }),
   teamBId: z.string({ required_error: "Please select the away team." }),
-  competitionId: z.string({ required_error: "Please select a competition." }),
   fieldId: z.string({ required_error: "Please select a field." }),
   dateTime: z.date({
     required_error: "A date for the match is required.",
@@ -60,8 +60,23 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
     },
   });
 
+  const competitionId = form.watch('competitionId');
   const teamAId = form.watch('teamAId');
   const teamBId = form.watch('teamBId');
+
+  const eligibleTeams = React.useMemo(() => {
+    if (!competitionId) return [];
+    const selectedCompetition = competitions.find(c => c.competitionId === competitionId);
+    if (!selectedCompetition) return [];
+    return teams.filter(t => t.seasonId === selectedCompetition.seasonId && t.divisionId === selectedCompetition.divisionId);
+  }, [competitionId, competitions, teams]);
+
+  React.useEffect(() => {
+    if (competitionId) {
+      form.resetField('teamAId', { defaultValue: '' });
+      form.resetField('teamBId', { defaultValue: '' });
+    }
+  }, [competitionId, form]);
 
   function onSubmit(data: FixtureFormValues) {
     startTransition(async () => {
@@ -108,62 +123,12 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
         <CardHeader>
           <CardTitle>Match Setup</CardTitle>
           <CardDescription>
-            Select teams, venue, and date to create a new match.
+            Select the competition first to filter the available teams.
           </CardDescription>
         </CardHeader>
         <CardContent>
            <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="teamAId"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Home Team</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a team" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {teams.map((team) => (
-                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>
-                                    {team.name}
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="teamBId"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Away Team</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a team" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {teams.map((team) => (
-                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>
-                                    {team.name}
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
                 <FormField
                     control={form.control}
                     name="competitionId"
@@ -188,6 +153,58 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
                         </FormItem>
                     )}
                 />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="teamAId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Home Team</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !competitionId}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={!competitionId ? "Select competition first" : "Select a team"} />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {eligibleTeams.map((team) => (
+                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>
+                                    {team.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="teamBId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Away Team</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !competitionId}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={!competitionId ? "Select competition first" : "Select a team"} />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {eligibleTeams.map((team) => (
+                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>
+                                    {team.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
                  <FormField
                     control={form.control}
                     name="fieldId"
