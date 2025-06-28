@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import type { Team, Competition, Field } from "@/lib/data";
+import type { Team, Competition, Field, Season, Division } from "@/lib/data";
 import { addMatchAction } from "@/lib/actions/matches";
 
 const baseFixtureSchema = z.object({
@@ -35,48 +35,65 @@ const baseFixtureSchema = z.object({
   }),
 });
 
-const fixtureSchema = baseFixtureSchema.refine(data => data.teamAId !== data.teamBId, {
+// A more specific schema for the form UI to handle cascading filters
+const fixtureFormSchema = baseFixtureSchema.extend({
+    seasonId: z.string({ required_error: "Please select a season." }),
+    divisionId: z.string({ required_error: "Please select a division." }),
+}).refine(data => data.teamAId !== data.teamBId, {
   message: "Home and away teams cannot be the same.",
   path: ["teamBId"],
 });
 
-type FixtureFormValues = z.infer<typeof fixtureSchema>;
+
+type FixtureFormValues = z.infer<typeof fixtureFormSchema>;
 
 interface NewMatchClientProps {
   teams: Team[];
   competitions: Competition[];
   fields: Field[];
+  seasons: Season[];
+  divisions: Division[];
 }
 
-export default function NewMatchClient({ teams, competitions, fields }: NewMatchClientProps) {
+export default function NewMatchClient({ teams, competitions, fields, seasons, divisions }: NewMatchClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<FixtureFormValues>({
-    resolver: zodResolver(fixtureSchema),
+    resolver: zodResolver(fixtureFormSchema),
     defaultValues: {
       time: "10:00",
     },
   });
 
-  const competitionId = form.watch('competitionId');
+  const selectedSeasonId = form.watch('seasonId');
+  const selectedDivisionId = form.watch('divisionId');
   const teamAId = form.watch('teamAId');
   const teamBId = form.watch('teamBId');
+  
+  const availableCompetitions = React.useMemo(() => {
+    if (!selectedSeasonId || !selectedDivisionId) return [];
+    return competitions.filter(c => c.seasonId === selectedSeasonId && c.divisionId === selectedDivisionId);
+  }, [selectedSeasonId, selectedDivisionId, competitions]);
 
   const eligibleTeams = React.useMemo(() => {
-    if (!competitionId) return [];
-    const selectedCompetition = competitions.find(c => c.competitionId === competitionId);
-    if (!selectedCompetition) return [];
-    return teams.filter(t => t.seasonId === selectedCompetition.seasonId && t.divisionId === selectedCompetition.divisionId);
-  }, [competitionId, competitions, teams]);
+    if (!selectedSeasonId || !selectedDivisionId) return [];
+    return teams.filter(t => t.seasonId === selectedSeasonId && t.divisionId === selectedDivisionId);
+  }, [selectedSeasonId, selectedDivisionId, teams]);
+  
+  React.useEffect(() => {
+    form.resetField('divisionId');
+    form.resetField('competitionId');
+    form.resetField('teamAId');
+    form.resetField('teamBId');
+  }, [selectedSeasonId, form]);
 
   React.useEffect(() => {
-    if (competitionId) {
-      form.resetField('teamAId', { defaultValue: '' });
-      form.resetField('teamBId', { defaultValue: '' });
-    }
-  }, [competitionId, form]);
+    form.resetField('competitionId');
+    form.resetField('teamAId');
+    form.resetField('teamBId');
+  }, [selectedDivisionId, form]);
 
   function onSubmit(data: FixtureFormValues) {
     startTransition(async () => {
@@ -85,8 +102,13 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
         const combinedDateTime = new Date(data.dateTime);
         combinedDateTime.setHours(hours, minutes, 0, 0);
 
-        const { time, ...rest } = data;
-        const finalData = { ...rest, dateTime: combinedDateTime };
+        const finalData = {
+            competitionId: data.competitionId,
+            teamAId: data.teamAId,
+            teamBId: data.teamBId,
+            fieldId: data.fieldId,
+            dateTime: combinedDateTime
+        };
         
         await addMatchAction(finalData);
         
@@ -119,176 +141,36 @@ export default function NewMatchClient({ teams, competitions, fields }: NewMatch
           Create a New Match
         </h1>
         <p className="text-muted-foreground">
-          Set up the details for your next fixture.
+          Set up the details for your next fixture by refining your choices.
         </p>
       </header>
       <Card>
         <CardHeader>
           <CardTitle>Match Setup</CardTitle>
           <CardDescription>
-            Select the competition first to filter the available teams.
+            Select the season and division to filter the available competitions and teams.
           </CardDescription>
         </CardHeader>
         <CardContent>
            <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="competitionId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Competition</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a competition" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {competitions.map((comp) => (
-                                <SelectItem key={comp.competitionId} value={comp.competitionId}>
-                                {comp.name} ({comp.seasonName})
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>1. Season</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>2. Division</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedSeasonId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedSeasonId ? "Select season first" : "Select a division"}/></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                </div>
+                
+                <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>3. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDivisionId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDivisionId ? "Select division first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.type})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="teamAId"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Home Team</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !competitionId}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={!competitionId ? "Select competition first" : "Select a team"} />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {eligibleTeams.map((team) => (
-                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>
-                                    {team.name}
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="teamBId"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Away Team</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !competitionId}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={!competitionId ? "Select competition first" : "Select a team"} />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                {eligibleTeams.map((team) => (
-                                    <SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>
-                                    {team.name}
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>4. Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDivisionId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDivisionId ? "Select division first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>5. Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDivisionId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDivisionId ? "Select division first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
 
-                 <FormField
-                    control={form.control}
-                    name="fieldId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Venue / Field</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a field" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {fields.map((field) => (
-                                <SelectItem key={field.fieldId} value={field.fieldId}>
-                                {field.name}
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 <FormField control={form.control} name="fieldId" render={({ field }) => (<FormItem><FormLabel>6. Venue / Field</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger></FormControl><SelectContent>{fields.map((field) => (<SelectItem key={field.fieldId} value={field.fieldId}>{field.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <FormField
-                        control={form.control}
-                        name="dateTime"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Match Date</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    disabled={isPending}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date < new Date(new Date().setHours(0,0,0,0))
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="time"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Match Time</FormLabel>
-                                <FormControl>
-                                    <Input type="time" className="w-full" {...field} disabled={isPending}/>
-                                </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <FormField control={form.control} name="dateTime" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>7. Match Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : (<span>Pick a date</span>)}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="time" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>8. Match Time</FormLabel><FormControl><Input type="time" className="w-full" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Creating Match..." : "Create Fixture & Start Scoring"}
