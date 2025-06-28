@@ -38,7 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction } from '@/lib/actions/matches';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
@@ -386,6 +386,9 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [isDeleteOfficialDialogOpen, setIsDeleteOfficialDialogOpen] = React.useState(false);
   const [isDeleteTransportDialogOpen, setIsDeleteTransportDialogOpen] = React.useState(false);
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
+  const [isGeneratingAnalysis, startAnalysisGeneration] = React.useTransition();
+  const [analyzedTeamId, setAnalyzedTeamId] = React.useState<string | null>(null);
+
 
   React.useEffect(() => {
     setIsClient(true);
@@ -479,6 +482,20 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             }
         } catch (error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not fetch forecast.", variant: "destructive" });
+        }
+    });
+  };
+
+  const handleGenerateAnalysis = (teamToAnalyzeId: string) => {
+    setAnalyzedTeamId(teamToAnalyzeId);
+    startAnalysisGeneration(async () => {
+        try {
+            const result = await generateOppositionAnalysisAction(match.matchId, teamToAnalyzeId);
+            toast({ title: "Success", description: result.message });
+        } catch (error) {
+             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate analysis.", variant: "destructive" });
+        } finally {
+            setAnalyzedTeamId(null);
         }
     });
   };
@@ -660,6 +677,54 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <CardContent>{match.report ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.report}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No report has been generated for this match yet.</p>{innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}{!innings1 && <p className="text-xs">A report can be generated once a scorecard exists.</p>}</div>)}</CardContent>
                     </Card>
                 )}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Opposition Analysis</CardTitle>
+                        <CardDescription>Generate a strategic scouting report on either team.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {(match.status === 'scheduled') &&
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Button 
+                                    onClick={() => handleGenerateAnalysis(match.teamBId)} 
+                                    disabled={isGeneratingAnalysis}
+                                    variant="outline"
+                                >
+                                    {(isGeneratingAnalysis && analyzedTeamId === match.teamBId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                    Analyze {match.teamBName}
+                                </Button>
+                                <Button 
+                                    onClick={() => handleGenerateAnalysis(match.teamAId)} 
+                                    disabled={isGeneratingAnalysis}
+                                    variant="outline"
+                                >
+                                    {(isGeneratingAnalysis && analyzedTeamId === match.teamAId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                    Analyze {match.teamAName}
+                                </Button>
+                            </div>
+                        }
+                        <div className="space-y-4">
+                            {match.analysisReports?.[match.teamAId] && (
+                                <div className="border p-4 rounded-md bg-muted/50">
+                                    <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamAName}</h3>
+                                    <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamAId]}</p>
+                                </div>
+                            )}
+                            {match.analysisReports?.[match.teamBId] && (
+                                <div className="border p-4 rounded-md bg-muted/50">
+                                    <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamBName}</h3>
+                                    <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamBId]}</p>
+                                </div>
+                            )}
+                            {Object.keys(match.analysisReports || {}).length === 0 && (
+                                <div className="text-center text-muted-foreground py-8">
+                                    <p>No analysis has been generated yet.</p>
+                                    {match.status === 'scheduled' && <p className="text-xs">Click a button above to generate a scouting report.</p>}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
                 {match.playerOfTheMatch && (
                     <Card>
                         <CardHeader>

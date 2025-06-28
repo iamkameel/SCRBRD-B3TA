@@ -19,6 +19,7 @@ import { generateMatchCommentary } from '@/ai/flows/generate-match-commentary-fl
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
 import { selectLineup } from '@/ai/flows/select-lineup-flow';
+import { generateOppositionAnalysis } from '@/ai/flows/generate-opposition-analysis-flow';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
@@ -131,6 +132,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     report: '',
     preview: '',
     audioCommentaryUrl: '',
+    analysisReports: {},
   };
 
   let newMatchId: string;
@@ -640,4 +642,36 @@ export async function autoSelectLineupAction(matchId: string, teamId: string): P
         if (error instanceof Error) throw error;
         throw new Error("Could not auto-select lineup.");
     }
+}
+
+export async function generateOppositionAnalysisAction(matchId: string, opponentTeamId: string) {
+    if (!userId) throw new Error("User not authenticated");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    if (match.status !== 'scheduled') {
+        throw new Error("Opposition analysis can only be generated for scheduled matches.");
+    }
+    
+    const opponentTeamName = opponentTeamId === match.teamAId ? match.teamAName : match.teamBName;
+
+    const analysisText = await generateOppositionAnalysis({ opponentTeamId, opponentTeamName });
+
+    if (!analysisText) {
+        throw new Error("AI failed to generate an opposition analysis.");
+    }
+
+    try {
+        const matchRef = doc(db, 'matches', matchId);
+        // Use dot notation to update a field in a map
+        const updateKey = `analysisReports.${opponentTeamId}`;
+        await updateDoc(matchRef, { [updateKey]: analysisText });
+    } catch (error) {
+        console.error(`Error saving opposition analysis for match ${matchId}:`, error);
+        throw new Error("Could not save opposition analysis.");
+    }
+
+    revalidatePath(`/matches/${matchId}`);
+    return { success: true, message: "Opposition analysis generated successfully!" };
 }

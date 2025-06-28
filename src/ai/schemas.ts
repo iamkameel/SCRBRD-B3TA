@@ -177,3 +177,11 @@ export const PlayerDevelopmentPlanSchema = z.object({
   })).length(3, { message: "Provide exactly three targeted recommendations." }).describe("A list of three personalized recommendations and drills."),
 });
 export type PlayerDevelopmentPlanOutput = z.infer<typeof PlayerDevelopmentPlanSchema>;
+
+// From generate-opposition-analysis-flow.ts
+export const OppositionAnalysisInputSchema = z.object({
+  opponentTeamName: z.string(),
+  opponentTeamStats: z.string().describe("JSON string of the opponent team's overall season stats."),
+  opponentKeyPlayers: z.string().describe("JSON string of the opponent's key players and their stats."),
+});
+export type OppositionAnalysisInput = z.infer<typeof OppositionAnalysisInputSchema>;

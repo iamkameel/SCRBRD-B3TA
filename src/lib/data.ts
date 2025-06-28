@@ -106,6 +106,7 @@ export interface Match {
   winnerTeamId?: string;
   result?: string;
   audioCommentaryUrl?: string;
+  analysisReports?: { [teamId: string]: string; };
 }
 
 export interface Official {
