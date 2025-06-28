@@ -283,3 +283,25 @@ export interface Transaction {
   category: 'Registration Fee' | 'Sponsorship' | 'Venue Hire' | 'Equipment' | 'Umpire Fees' | 'Other';
   date: Date;
 }
+
+export interface EquipmentItem {
+  itemId: string;
+  name: string;
+  type: 'Bat' | 'Pads' | 'Gloves' | 'Helmet' | 'Ball' | 'Other';
+  size?: string;
+  status: 'Available' | 'Assigned' | 'Maintenance';
+  currentAssignmentId?: string;
+  currentHolderId?: string;
+  currentHolderName?: string;
+}
+
+export interface FullEquipmentAssignment {
+  assignmentId: string;
+  itemId: string;
+  itemName: string;
+  itemType: EquipmentItem['type'];
+  personId: string;
+  personName: string;
+  assignedDate: Date;
+  returnedDate?: Date;
+}

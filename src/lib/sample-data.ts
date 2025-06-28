@@ -45,6 +45,16 @@ export const sampleData = {
         { transactionId: 'temp_trans_4', description: 'Purchase of 12 new cricket balls', amount: 300, type: 'Expense', category: 'Equipment', date: pastDate(10) },
         { transactionId: 'temp_trans_5', description: 'Umpire payment for Match #2', amount: 100, type: 'Expense', category: 'Umpire Fees', date: pastDate(14) },
     ],
+    equipment: [
+        { itemId: 'temp_equip_1', name: 'Kookaburra Bat', type: 'Bat', size: 'SH', status: 'Available' },
+        { itemId: 'temp_equip_2', name: 'Gray-Nicolls Pads', type: 'Pads', size: 'Adult', status: 'Assigned' },
+        { itemId: 'temp_equip_3', name: 'Masuri Helmet', type: 'Helmet', size: 'Large', status: 'Available' },
+        { itemId: 'temp_equip_4', name: 'SG Club Ball (Box of 6)', type: 'Ball', status: 'Maintenance' },
+        { itemId: 'temp_equip_5', name: 'Adidas Gloves', type: 'Gloves', size: 'Adult', status: 'Available' },
+    ],
+    equipmentAssignments: [
+        { assignmentId: 'temp_assign_1', itemId: 'temp_equip_2', personId: 'p_1', assignedDate: pastDate(10) },
+    ],
     people: [
         // Greenwood Gators (12 people)
         { personId: 'p_1', firstName: 'Liam', lastName: 'Smith', email: 'liam.smith@example.com', roles: ['Player', 'Captain'], notificationPreferences: { email: true, push: false } },
