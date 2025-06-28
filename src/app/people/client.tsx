@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -29,7 +32,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import type { Person } from "@/lib/data";
@@ -64,22 +66,22 @@ export default function PeopleClient({ people }: { people: Person[] }) {
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 12;
   
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [roleFilter, setRoleFilter] = React.useState<string>("all");
+  const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
 
   const filteredPeople = people.filter(person => {
     const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'all' || person.roles.includes(roleFilter);
+    const matchesRole = roleFilters.length === 0 || roleFilters.every(role => person.roles.includes(role));
     return matchesSearch && matchesRole;
   });
 
-  const filtersApplied = searchQuery || roleFilter !== 'all';
+  const filtersApplied = searchQuery || roleFilters.length > 0;
 
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, roleFilter, view]);
+  }, [searchQuery, roleFilters, view]);
 
   // Pagination logic
   const paginatedPeople = filteredPeople.slice(
@@ -159,16 +161,49 @@ export default function PeopleClient({ people }: { people: Person[] }) {
                           />
                         </div>
                         <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="role-filter">Role</Label>
-                          <Select value={roleFilter} onValueChange={setRoleFilter}>
-                            <SelectTrigger className="col-span-2 h-8">
-                              <SelectValue placeholder="All Roles" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Roles</SelectItem>
-                              {ROLES.map(r => <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
+                            <Label>Roles</Label>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
+                                        <span className="truncate">
+                                            {roleFilters.length === 0 && "Select roles..."}
+                                            {roleFilters.length === 1 && ROLES.find(r => r.id === roleFilters[0])?.label}
+                                            {roleFilters.length > 1 && `${roleFilters.length} roles selected`}
+                                        </span>
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56">
+                                    <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {ROLES.map(role => (
+                                    <DropdownMenuCheckboxItem
+                                        key={role.id}
+                                        checked={roleFilters.includes(role.id)}
+                                        onSelect={(e) => e.preventDefault()}
+                                        onCheckedChange={checked => {
+                                            const newFilters = checked
+                                                ? [...roleFilters, role.id]
+                                                : roleFilters.filter(id => id !== role.id);
+                                            setRoleFilters(newFilters);
+                                        }}
+                                    >
+                                        {role.label}
+                                    </DropdownMenuCheckboxItem>
+                                    ))}
+                                    {roleFilters.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                        onSelect={() => setRoleFilters([])}
+                                        className="justify-center text-sm"
+                                        >
+                                        Clear filters
+                                        </DropdownMenuItem>
+                                    </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                       </div>
                     </div>
