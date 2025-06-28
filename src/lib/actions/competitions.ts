@@ -52,7 +52,7 @@ export async function getCompetition(competitionId: string): Promise<Competition
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
-  type: z.enum(['League', 'Knockout', 'Series', 'Festival']),
+  type: z.enum(['League', 'Cup', 'Tournament', 'Festival']),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
@@ -195,7 +195,7 @@ export async function getCompetitionStandings(competitionId: string): Promise<St
     const teamIds = new Set<string>();
     matches.forEach(match => {
         teamIds.add(match.teamAId);
-        teamIds.add(match.teamBId);
+        if (match.teamBId) teamIds.add(match.teamBId);
     });
 
     const teams: Team[] = [];
@@ -231,7 +231,7 @@ export async function getCompetitionLeaderboards(competitionId: string): Promise
     for (const match of matches) {
         const [lineupA, lineupB] = await Promise.all([
             getMatchLineup(match.matchId, match.teamAId),
-            getMatchLineup(match.matchId, match.teamBId),
+            match.teamBId ? getMatchLineup(match.matchId, match.teamBId) : Promise.resolve([]),
         ]);
         lineupA.forEach(id => playerIds.add(id));
         lineupB.forEach(id => playerIds.add(id));

@@ -42,20 +42,43 @@ import { useToast } from "@/hooks/use-toast";
 import type { Competition, Season, Division, Team } from "@/lib/data";
 import { addCompetitionAction, updateCompetitionAction, deleteCompetitionAction } from '@/lib/actions/competitions';
 import { CompetitionCard } from "./competition-card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
-  type: z.enum(['League', 'Knockout', 'Series', 'Festival'], { required_error: "Type is required." }),
+  type: z.enum(['League', 'Cup', 'Tournament', 'Festival'], { required_error: "Type is required." }),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
   winnerTeamId: z.string().optional(),
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
-const COMPETITION_TYPES = ['League', 'Knockout', 'Series', 'Festival'] as const;
-const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 
-type SortableColumn = 'name' | 'type' | 'seasonName' | 'divisionName' | 'status';
+const COMPETITION_TYPE_DEFINITIONS = [
+    {
+        id: 'League',
+        label: 'League',
+        description: 'A round-robin format testing consistency. Teams play each other home and away over a season.',
+    },
+    {
+        id: 'Cup',
+        label: 'Cup',
+        description: 'A high-stakes, single-elimination knockout competition. Matchups are often determined by a random draw.',
+    },
+    {
+        id: 'Tournament',
+        label: 'Tournament',
+        description: 'A showcase event combining a league-style group stage followed by an intense knockout phase.',
+    },
+    {
+        id: 'Festival',
+        label: 'Festival',
+        description: 'A broader, celebratory event focused on community and atmosphere, which can host multiple competitions.',
+    },
+] as const;
+
+const COMPETITION_TYPES = COMPETITION_TYPE_DEFINITIONS.map(t => t.id);
+const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 
 function CompetitionDialog({ mode, competition, seasons, divisions, teams, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
@@ -120,17 +143,48 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{mode === 'edit' ? 'Edit Competition' : 'Add New Competition'}</DialogTitle>
           <DialogDescription>Enter the details for the competition.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Competition Name</FormLabel><FormControl><Input placeholder="e.g. U19 Varsity League" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Type</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="League" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a type" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+             <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                    <FormLabel>Competition Type</FormLabel>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        defaultValue={field.value}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                        >
+                        {COMPETITION_TYPE_DEFINITIONS.map(typeDef => (
+                            <FormItem key={typeDef.id} className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-muted/50 transition-colors has-[:checked]:bg-muted has-[:checked]:border-primary">
+                            <FormControl>
+                                <RadioGroupItem value={typeDef.id} />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel className="font-semibold">{typeDef.label}</FormLabel>
+                                <p className="text-sm text-muted-foreground">{typeDef.description}</p>
+                            </div>
+                            </FormItem>
+                        ))}
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+            </div>
             <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Draft" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             {status === 'Completed' && (
               <FormField control={form.control} name="winnerTeamId" render={({ field }) => (

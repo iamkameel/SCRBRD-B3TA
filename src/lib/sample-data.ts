@@ -121,8 +121,8 @@ export const sampleData = {
     ],
     competitions: [
         { competitionId: 'temp_comp_1', name: 'U19 Varsity League', type: 'League', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' },
-        { competitionId: 'temp_comp_2', name: 'Pre-Season Series', type: 'Series', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'Completed', winnerTeamId: 'temp_team_1' },
-        { competitionId: 'temp_comp_3', name: 'U19 Pre-Season Cup', type: 'Knockout', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' },
+        { competitionId: 'temp_comp_2', name: 'Pre-Season Tournament', type: 'Tournament', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'Completed', winnerTeamId: 'temp_team_1' },
+        { competitionId: 'temp_comp_3', name: 'U19 Pre-Season Cup', type: 'Cup', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' },
         { competitionId: 'temp_comp_4', name: 'Summer Sports Festival', type: 'Festival', seasonId: 'temp_season_1', divisionId: 'temp_div_1', status: 'In Progress' }
     ],
     teams: [
