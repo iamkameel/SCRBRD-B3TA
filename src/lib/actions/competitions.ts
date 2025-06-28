@@ -9,7 +9,6 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person, Match } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
-import { getMatchLineup } from './matches';
 import { getTeam, getTeamStats, getTeams } from './teams';
 import { getPerson } from './players';
 import { getPlayerStats } from './stats';
@@ -230,12 +229,24 @@ export async function getCompetitionLeaderboards(competitionId: string): Promise
 
     const playerIds = new Set<string>();
     for (const match of matches) {
-        const [lineupA, lineupB] = await Promise.all([
-            getMatchLineup(match.matchId, match.teamAId),
-            match.teamBId ? getMatchLineup(match.matchId, match.teamBId) : Promise.resolve([]),
-        ]);
-        lineupA.forEach(id => playerIds.add(id));
-        lineupB.forEach(id => playerIds.add(id));
+        const lineupAref = doc(db, 'matches', match.matchId, 'lineups', match.teamAId);
+        const lineupPromises: Promise<any>[] = [getDoc(lineupAref)];
+
+        if (match.teamBId) {
+            const lineupBref = doc(db, 'matches', match.matchId, 'lineups', match.teamBId);
+            lineupPromises.push(getDoc(lineupBref));
+        }
+        
+        const lineupSnapshots = await Promise.all(lineupPromises);
+
+        for (const lineupSnap of lineupSnapshots) {
+            if (lineupSnap && lineupSnap.exists()) {
+                const lineupData = lineupSnap.data();
+                if (lineupData && lineupData.playerIds && Array.isArray(lineupData.playerIds)) {
+                    lineupData.playerIds.forEach((id: string) => playerIds.add(id));
+                }
+            }
+        }
     }
     
     // Note: This is a simplification for the demo.
