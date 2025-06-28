@@ -376,7 +376,7 @@ export async function getScorecard(matchId: string): Promise<{ innings1: Innings
     return null;
   } catch (error) {
     console.error(`Error fetching scorecard for match ${matchId}:`, error);
-    return null;
+    return [];
   }
 }
 
