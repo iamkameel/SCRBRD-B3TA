@@ -75,9 +75,9 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && field) {
-        form.reset({ name: field.name, schoolId: field.schoolId || '', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] });
+        form.reset({ name: field.name, schoolId: field.schoolId || ' ', status: field.status, surfaceType: field.surfaceType, facilities: field.facilities || [], assignments: field.assignments?.map(a => a.personId) || [] });
       } else {
-        form.reset({ name: "", schoolId: '', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] });
+        form.reset({ name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], assignments: [] });
       }
     }
   }, [field, mode, open, form]);
@@ -87,7 +87,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
       try {
         const payload = {
           ...data,
-          schoolId: data.schoolId === ' ' ? '' : data.schoolId,
+          schoolId: data.schoolId?.trim(),
         };
 
         if (mode === 'edit' && field) {
@@ -343,7 +343,7 @@ export default function FieldsClient({ fields, schools, groundskeepers }: { fiel
         </Card>
       </div>
 
-      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundskeeper} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
+      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundkeepers} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
