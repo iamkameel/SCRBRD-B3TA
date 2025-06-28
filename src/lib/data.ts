@@ -52,6 +52,10 @@ export interface Field {
   location?: string;
   size?: string;
   amenities?: string[];
+  alias?: string;
+  contactPerson?: string;
+  contactPhone?: string;
+  notes?: string;
 }
 
 export interface Team {

@@ -31,6 +31,10 @@ export async function getFields(): Promise<Field[]> {
         location: data.location,
         size: data.size,
         amenities: data.amenities,
+        alias: data.alias,
+        contactPerson: data.contactPerson,
+        contactPhone: data.contactPhone,
+        notes: data.notes,
       };
 
       const assignmentsCol = collection(db, 'fields', docSnapshot.id, 'assignments');
@@ -85,6 +89,10 @@ export async function getField(fieldId: string): Promise<Field | null> {
       location: data.location,
       size: data.size,
       amenities: data.amenities,
+      alias: data.alias,
+      contactPerson: data.contactPerson,
+      contactPhone: data.contactPhone,
+      notes: data.notes,
     };
 
     const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
@@ -125,6 +133,10 @@ const fieldActionSchema = z.object({
   location: z.string().optional(),
   size: z.string().optional(),
   amenities: z.array(z.string()).optional(),
+  alias: z.string().optional(),
+  contactPerson: z.string().optional(),
+  contactPhone: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 type FieldFormValues = z.infer<typeof fieldActionSchema>;

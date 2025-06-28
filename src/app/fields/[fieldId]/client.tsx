@@ -1,16 +1,17 @@
 
+
 'use client';
 
 import * as React from "react";
 import Link from 'next/link';
-import { format } from "date-fns";
-import { ArrowLeft, Building, MapPin, Map, Maximize, Wind, Check } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Map, Maximize, Wind, Check, User, Phone, FileText } from 'lucide-react';
 import type { Field, Match } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
 
 export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
     const [isClient, setIsClient] = React.useState(false);
@@ -29,6 +30,19 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
     const ListItem = ({ children }: { children: React.ReactNode }) => (
         <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {children}</li>
     );
+    
+    const InfoBlock = ({ label, value, icon: Icon }: { label: string, value?: string, icon: React.ElementType }) => {
+        if (!value) return null;
+        return (
+            <div className="flex items-start gap-3">
+                <Icon className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
+                <div>
+                    <p className="font-semibold">{label}</p>
+                    <p className="text-sm text-muted-foreground">{value}</p>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="flex flex-col gap-8">
@@ -39,7 +53,8 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">{field.name}</h1>
-                        <p className="text-muted-foreground mt-1 flex items-center gap-2">
+                         {field.alias && <p className="text-lg text-muted-foreground -mt-1">{field.alias}</p>}
+                        <p className="text-muted-foreground mt-2 flex items-center gap-2">
                            {field.schoolName ? (
                                 <span className="flex items-center gap-1.5"><Building className="h-4 w-4"/>{field.schoolName}</span>
                             ) : (
@@ -64,7 +79,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                     <h4 className="font-semibold flex items-center gap-2 mb-2"><Wind className="h-4 w-4 text-muted-foreground" /> Facilities</h4>
                                     {field.facilities && field.facilities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.facilities.map((f, index) => <ListItem key={`facility-${index}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No facilities listed.</p>)}
                                 </div>
@@ -72,7 +87,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                      <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Amenities</h4>
                                     {field.amenities && field.amenities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.amenities.map((a, index) => <ListItem key={`amenity-${index}`}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.amenities.map((a, i) => <ListItem key={`${a}-${i}`}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No amenities listed.</p>)}
                                 </div>
@@ -150,6 +165,31 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                     </Card>
                 </div>
                 <div className="lg:col-span-1 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Venue Operations</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                           <InfoBlock label="Contact Person" value={field.contactPerson} icon={User} />
+                           <InfoBlock label="Contact Phone" value={field.contactPhone} icon={Phone} />
+                           
+                           {(field.contactPerson || field.contactPhone) && field.notes && <Separator />}
+
+                            {field.notes && (
+                                <div className="flex items-start gap-3">
+                                    <FileText className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">Condition Notes</p>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{field.notes}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                             {!(field.contactPerson || field.contactPhone || field.notes) && (
+                                <p className="text-sm text-muted-foreground text-center py-4">No contact or notes available.</p>
+                             )}
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle>Assigned Grounds-Keepers</CardTitle>

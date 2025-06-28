@@ -41,19 +41,19 @@ export const sampleData = {
     ],
     fields: [
         // School-owned fields
-        { fieldId: 'field_1', schoolId: 'school_1', name: 'John Medlicott Oval', location: 'Michaelhouse, Balgowan', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'toilets', 'nets'], amenities: ['seating', 'changing_rooms'], status: 'Available' },
-        { fieldId: 'field_2', schoolId: 'school_2', name: 'Hart-Davis Oval', location: 'Hilton College, Hilton', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'scoreboard'], amenities: ['seating', 'parking'], status: 'Available' },
+        { fieldId: 'field_1', schoolId: 'school_1', name: 'John Medlicott Oval', alias: 'Main Oval', location: 'Michaelhouse, Balgowan', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'toilets', 'nets'], amenities: ['seating', 'changing_rooms'], status: 'Available', contactPerson: 'Mark Taylor', contactPhone: '555-0101', notes: 'Pristine condition. Excellent drainage after rain.' },
+        { fieldId: 'field_2', schoolId: 'school_2', name: 'Hart-Davis Oval', alias: 'The Hart-Davis', location: 'Hilton College, Hilton', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'scoreboard'], amenities: ['seating', 'parking'], status: 'Available', contactPerson: 'Grounds Dept.', contactPhone: '555-0102', notes: '' },
         { fieldId: 'field_3', schoolId: 'school_3', name: 'Goldstones', location: 'Maritzburg College, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['nets'], amenities: ['seating', 'food_drink'], status: 'Available' },
         { fieldId: 'field_4', schoolId: 'school_4', name: 'The Horse-Shoe', location: 'DHS, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Available' },
         { fieldId: 'field_5', schoolId: 'school_5', name: 'Dixons', location: 'Glenwood High, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Available' },
         { fieldId: 'field_6', schoolId: 'school_6', name: 'Bowdens', location: 'WBHS, Westville', size: 'Full Size', surfaceType: 'Grass', facilities: ['nets', 'toilets'], amenities: ['parking'], status: 'Available' },
         { fieldId: 'field_7', schoolId: 'school_7', name: 'AH Smith Oval', location: 'Kearsney College, Botha\'s Hill', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion', 'nets'], amenities: ['seating'], status: 'Available' },
-        { fieldId: 'field_8', schoolId: 'school_8', name: 'St Charles Oval', location: 'St Charles College, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Maintenance' },
+        { fieldId: 'field_8', schoolId: 'school_8', name: 'St Charles Oval', location: 'St Charles College, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Maintenance', notes: 'Top-dressing in progress until mid-October.' },
         { fieldId: 'field_9', schoolId: 'school_9', name: 'Northwood Oval', location: 'Northwood School, Durban North', size: 'Full Size', surfaceType: 'Grass', facilities: ['scoreboard', 'nets'], amenities: [], status: 'Available' },
         { fieldId: 'field_10', schoolId: 'school_10', name: 'Clifton Oval', location: 'Clifton School, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['pavilion'], amenities: [], status: 'Available' },
         // Independent fields
-        { fieldId: 'field_11', name: 'Pietermaritzburg Oval', location: 'Alexandra Park, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['floodlights'], amenities: ['seating', 'changing_rooms', 'food_drink'], status: 'Available' },
-        { fieldId: 'field_12', name: 'Kingsmead Cricket Ground', location: 'Kingsmead, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['floodlights', 'scoreboard'], amenities: ['seating', 'parking', 'food_drink', 'changing_rooms'], status: 'Available' },
+        { fieldId: 'field_11', name: 'Pietermaritzburg Oval', alias: 'The Oval', location: 'Alexandra Park, Pietermaritzburg', size: 'Full Size', surfaceType: 'Grass', facilities: ['floodlights'], amenities: ['seating', 'changing_rooms', 'food_drink'], status: 'Available', contactPerson: 'City Venues Dept.', contactPhone: '555-0111', notes: 'Historic venue. Pitch can be slow in the mornings.' },
+        { fieldId: 'field_12', name: 'Kingsmead Cricket Ground', location: 'Kingsmead, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: ['floodlights', 'scoreboard'], amenities: ['seating', 'parking', 'food_drink', 'changing_rooms'], status: 'Available', contactPerson: 'Lisa Sthalekar', contactPhone: '555-0112', notes: 'International standard venue. Bookings must be made well in advance.' },
         { fieldId: 'field_13', name: 'Chatsworth Oval', location: 'Chatsworth, Durban', size: 'Full Size', surfaceType: 'Grass', facilities: [], amenities: ['seating'], status: 'Available' }
     ],
     fieldAssignments: [
@@ -151,9 +151,9 @@ export const sampleData = {
         { personId: 'p_48', firstName: 'Mickey', lastName: 'Arthur', email: 'mickey.a@coach.com', roles: ['Coach'], notificationPreferences: { email: true, push: false } },
     ],
     competitions: [
-        { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress' },
-        { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress' },
-        { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'Completed', winnerTeamId: 'team_2' },
+        { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
+        { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress', teamIds: [] },
+        { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'Completed', winnerTeamId: 'team_2', teamIds: ['team_1', 'team_2', 'team_4', 'team_5', 'team_6', 'team_7', 'team_9', 'team_10'] },
     ],
     teams: [
         { teamId: 'team_1', name: 'Michaelhouse 1st XI', schoolId: 'school_1', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#00205B', secondary: '#FFFFFF' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 1}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },

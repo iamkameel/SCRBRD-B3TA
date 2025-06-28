@@ -40,6 +40,7 @@ import { FieldCard } from "./field-card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 
 const fieldSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
@@ -51,6 +52,10 @@ const fieldSchema = z.object({
   location: z.string().optional(),
   size: z.string().optional(),
   amenities: z.array(z.string()).optional(),
+  alias: z.string().optional(),
+  contactPerson: z.string().optional(),
+  contactPhone: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
@@ -88,7 +93,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
       if (mode === 'edit' && field) {
         form.reset({ ...field, schoolId: field.schoolId || ' ', assignments: field.assignments?.map(a => a.personId) || [] });
       } else {
-        form.reset({ name: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], amenities: [], assignments: [] });
+        form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", surfaceType: 'Grass', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "" });
       }
     }
   }, [field, mode, open, form]);
@@ -113,20 +118,23 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{mode === 'edit' ? 'Edit Field' : 'Add New Field'}</DialogTitle><DialogDescription>Enter the details for the field or venue.</DialogDescription></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
                 <h3 className="text-base font-semibold text-foreground">Field Details</h3>
-                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="alias" render={({ field }) => (<FormItem><FormLabel>Alias (Optional)</FormLabel><FormControl><Input placeholder="e.g. The Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
                 <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address (Optional)</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             </div>
             <Separator />
             <div className="space-y-4">
-                 <h3 className="text-base font-semibold text-foreground">Specifications</h3>
+                 <h3 className="text-base font-semibold text-foreground">Specifications &amp; Facilities</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="surfaceType" render={({ field }) => (<FormItem><FormLabel>Surface Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{SURFACE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="size" render={({ field }) => (<FormItem><FormLabel>Field Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger></FormControl><SelectContent>{FIELD_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -147,6 +155,15 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                 </div>
             </div>
             <Separator />
+             <div className="space-y-4">
+                <h3 className="text-base font-semibold text-foreground">Contact &amp; Notes</h3>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="contactPerson" render={({ field }) => (<FormItem><FormLabel>Contact Person</FormLabel><FormControl><Input placeholder="e.g. John Smith" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="contactPhone" render={({ field }) => (<FormItem><FormLabel>Contact Phone</FormLabel><FormControl><Input placeholder="e.g. 555-1234" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+                 <FormField control={form.control} name="notes" render={({ field }) => (<FormItem><FormLabel>Condition Notes</FormLabel><FormControl><Textarea placeholder="e.g. Excellent drainage, pitch plays fast." {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            <Separator />
             <div className="space-y-4">
                 <h3 className="text-base font-semibold text-foreground">Staffing</h3>
                  <FormField control={form.control} name="assignments" render={() => (
@@ -154,8 +171,8 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                         <FormLabel>Assigned Grounds-Keepers</FormLabel>
                         <FormDescription>Select the staff responsible for this field.</FormDescription>
                         <ScrollArea className="h-40 w-full rounded-lg border p-4">
-                        {groundskeepers.length > 0 ? (
-                            groundskeepers.map((person) => (
+                        {groundskeeper.length > 0 ? (
+                            groundskeeper.map((person) => (
                                 <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
                             ))
                         ) : (
