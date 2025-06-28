@@ -43,6 +43,7 @@ import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { LiveScoringInterface } from "./live-scoring-interface";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -545,7 +546,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                 match.status === 'live' ? "grid-cols-4" : "grid-cols-3"
             )}>
                 {match.status === 'live' && (
-                    <TabsTrigger value="scoring"><RadioTower />Live Scoring</TabsTrigger>
+                    <TabsTrigger value="scoring"><RadioTower className="mr-2 h-4 w-4" />Live Scoring</TabsTrigger>
                 )}
                 <TabsTrigger value="scorecard"><ClipboardList />Scorecard</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart />Analysis</TabsTrigger>
@@ -554,17 +555,11 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
 
             {match.status === 'live' && (
                 <TabsContent value="scoring" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Live Scoring Interface</CardTitle>
-                            <CardDescription>This is where the live scoring controls for the match will appear.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">Live scoring feature coming soon!</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <LiveScoringInterface
+                        teamARoster={teamARoster}
+                        teamBRoster={teamBRoster}
+                        match={match}
+                    />
                 </TabsContent>
             )}
 
