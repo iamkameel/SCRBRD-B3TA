@@ -278,6 +278,12 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
 export async function deleteTeamAction(teamId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+
+    const user = await getPerson(userId);
+    if (!user?.roles.includes('Admin')) {
+        throw new Error("You do not have permission to delete teams.");
+    }
+    
     if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
 
     const batch = writeBatch(db);

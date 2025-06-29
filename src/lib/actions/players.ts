@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit } from 'firebase/firestore';
 import type { Person, PlayerTeamAssignment, PlayerDevelopmentPlanOutput, Match } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
