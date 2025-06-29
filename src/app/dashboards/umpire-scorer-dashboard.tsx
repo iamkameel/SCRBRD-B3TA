@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -7,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Whistle, Check, Clock, RadioTower, ArrowRight, ClipboardList } from 'lucide-react';
+import { Check, Clock, RadioTower, ArrowRight, ClipboardList } from 'lucide-react';
 import type { Official, MatchStatus } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -142,7 +141,7 @@ function UmpireScorerDashboardInternal({ assignments }: UmpireScorerDashboardInt
                             {upcomingAssignments.length > 0 ? (
                                 upcomingAssignments.map((assignment) => <AssignmentRow key={assignment.assignmentId} assignment={assignment} />)
                             ) : (
-                                <TableRow><TableCell colSpan={5} className="h-24 text-center"><Whistle className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />You have no upcoming match assignments.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center"><ClipboardList className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />You have no upcoming match assignments.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
