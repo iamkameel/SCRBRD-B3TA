@@ -206,13 +206,16 @@ export type UmpireDecisionOutput = z.infer<typeof UmpireDecisionSchema>;
 // From generate-live-match-update-flow.ts
 export const LiveMatchUpdateInputSchema = z.object({
     battingTeamName: z.string(),
+    bowlingTeamName: z.string(),
     currentScore: z.number(),
     wickets: z.number(),
     overs: z.number(),
+    targetScore: z.number().optional().describe("The target score to win. Only applicable in the second innings."),
 });
 export type LiveMatchUpdateInput = z.infer<typeof LiveMatchUpdateInputSchema>;
 
 export const LiveMatchUpdateOutputSchema = z.object({
-    updateText: z.string().describe("A concise, one or two-sentence summary of the current match situation."),
+    winProbability: z.number().min(0).max(100).describe("The batting team's win probability percentage (0-100)."),
+    summary: z.string().describe("A very brief, one-sentence summary explaining the current win probability."),
 });
 export type LiveMatchUpdateOutput = z.infer<typeof LiveMatchUpdateOutputSchema>;

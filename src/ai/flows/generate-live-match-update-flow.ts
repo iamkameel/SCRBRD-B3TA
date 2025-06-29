@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview An AI flow to generate a live, qualitative update on a cricket match in progress.
+ * @fileOverview An AI flow to generate a live win probability for a cricket match.
  * 
- * - generateLiveMatchUpdate - A function that analyzes the current score to provide an update.
+ * - generateLiveMatchUpdate - A function that analyzes the current score to provide a win probability.
  * - LiveMatchUpdateInput - The input type for the generateLiveMatchUpdate function.
  * - LiveMatchUpdateOutput - The return type for the generateLiveMatchUpdate function.
  */
@@ -16,15 +16,24 @@ const generateLiveMatchUpdatePrompt = ai.definePrompt({
     name: 'generateLiveMatchUpdatePrompt',
     input: { schema: LiveMatchUpdateInputSchema },
     output: { schema: LiveMatchUpdateOutputSchema },
-    prompt: `You are an expert cricket commentator providing a mid-game update for a T20 match. 
-The batting team is {{{battingTeamName}}}.
+    prompt: `You are an expert cricket analyst calculating the win probability for a T20 match in real-time.
 
-Current Score: {{{currentScore}}} runs for {{{wickets}}} wickets.
-Overs Completed: {{{overs}}}.
+Current Match State:
+- Batting Team: {{{battingTeamName}}}
+- Bowling Team: {{{bowlingTeamName}}}
+- Score: {{{currentScore}}}/{{{wickets}}}
+- Overs Completed: {{{overs}}}
+{{#if targetScore}}
+- Target Score: {{{targetScore}}}
+{{else}}
+- This is the first innings.
+{{/if}}
 
-Based on this information, provide a concise, one or two-sentence tactical summary. Comment on the current run rate, project a final score after 20 overs, and assess whether they are in a strong or weak position.
+Analyze the situation considering the runs scored, wickets lost, and overs remaining.
+- In the first innings, project a final score and estimate the probability of that score being a winning one. A good score is typically 180+.
+- In the second innings, calculate the required run rate and assess the batting team's chances of reaching the {{{targetScore}}}.
 
-Provide only the analysis text in your response.
+Your output must be in the specified JSON format. The 'winProbability' should be for the **batting team**. The 'summary' should be a concise, single sentence justifying your calculation.
 `,
 });
 

@@ -14,8 +14,10 @@ import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
 import { generateMatchCommentary } from '@/ai/flows/generate-match-commentary-flow';
 import { selectLineup } from '@/ai/flows/select-lineup-flow';
 import { generateOppositionAnalysis } from '@/ai/flows/generate-opposition-analysis-flow';
+import { generateLiveMatchUpdate } from '@/ai/flows/generate-live-match-update-flow';
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, GenerateScorecardOutput, PlayerOfTheMatchOutput } from '@/ai/schemas';
+
+import type { UmpireDecisionOutput, GenerateMatchReportInput, GenerateScorecardOutput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
@@ -245,4 +247,31 @@ export async function generateOppositionAnalysisAction(matchId: string, opponent
 
     revalidatePath(`/matches/${matchId}`);
     return { success: true, message: "Opposition analysis generated successfully!" };
+}
+
+export async function generateLiveMatchUpdateAction(matchId: string): Promise<LiveMatchUpdateOutput> {
+    if (!userId) throw new Error("User not authenticated.");
+    const match = await getMatch(matchId);
+    if (!match || !match.liveScore) throw new Error("Match not found or no live score data available.");
+
+    const isFirstInnings = match.liveScore.liveInnings === 1;
+    const battingTeamName = isFirstInnings ? match.teamAName : match.teamBName;
+    const bowlingTeamName = isFirstInnings ? match.teamBName : match.teamAName;
+    const targetScore = isFirstInnings ? undefined : match.firstInningsTotal ? match.firstInningsTotal + 1 : undefined;
+
+    try {
+        const result = await generateLiveMatchUpdate({
+            battingTeamName: battingTeamName,
+            bowlingTeamName: bowlingTeamName,
+            currentScore: match.liveScore.runs,
+            wickets: match.liveScore.wickets,
+            overs: parseFloat(`${match.liveScore.overs}.${match.liveScore.balls}`),
+            targetScore: targetScore,
+        });
+        return result;
+    } catch (error) {
+        console.error("Error generating live match update:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("The AI failed to generate a live match update.");
+    }
 }
