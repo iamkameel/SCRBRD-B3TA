@@ -151,6 +151,7 @@ const playerSchema = z.object({
     phone: z.string().optional(),
     profileImageUrl: z.string().url().optional().or(z.literal('')),
     roles: z.array(z.string()).min(1),
+    assignedSchools: z.array(z.string()).optional(),
     activeRole: z.string().optional(),
 });
 

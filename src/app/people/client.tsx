@@ -35,7 +35,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import type { Person } from "@/lib/data";
+import type { Person, School } from "@/lib/data";
 import { deletePlayerAction } from '@/lib/actions/players';
 import { PersonCard } from "./person-card";
 
@@ -54,7 +54,7 @@ const ALL_ROLES = [
 
 type SortableColumn = 'name' | 'email';
 
-export default function PeopleClient({ people, user }: { people: Person[], user: Person | null }) {
+export default function PeopleClient({ people, user, schools }: { people: Person[], user: Person | null, schools: School[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
@@ -337,7 +337,7 @@ export default function PeopleClient({ people, user }: { people: Person[], user:
         </Card>
       </div>
 
-      {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} currentUser={user} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} />}
+      {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} currentUser={user} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} schools={schools} />}
 
       {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

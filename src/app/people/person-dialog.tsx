@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -12,10 +13,12 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import type { Person } from "@/lib/data";
+import type { Person, School } from "@/lib/data";
 import { addPlayerAction, updatePlayerAction } from '@/lib/actions/players';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ROLE_GROUPS } from "@/lib/roles";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 const personSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -26,6 +29,7 @@ const personSchema = z.object({
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
+  assignedSchools: z.array(z.string()).optional(),
   activeRole: z.string().optional(),
 }).refine(data => {
     if (data.roles && data.roles.length > 0 && !data.activeRole) {
@@ -42,7 +46,7 @@ const personSchema = z.object({
 
 type PersonFormValues = z.infer<typeof personSchema>;
 
-export function PersonDialog({ mode, person, currentUser, open, onOpenChange }: { mode: 'add' | 'edit', person?: Person, currentUser: Person | null, open: boolean, onOpenChange: (open: boolean) => void }) {
+export function PersonDialog({ mode, person, currentUser, open, onOpenChange, schools }: { mode: 'add' | 'edit', person?: Person, currentUser: Person | null, open: boolean, onOpenChange: (open: boolean) => void, schools: School[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
@@ -52,12 +56,14 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange }: 
       ...person,
       phone: person.phone ?? '',
       profileImageUrl: person.profileImageUrl ?? '',
+      assignedSchools: person.assignedSchools ?? [],
     } : {
-      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player",
+      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchools: [],
     },
   });
   
   const selectedRoles = form.watch('roles');
+  const showSchoolAssignment = selectedRoles?.includes('Sportsmaster') || selectedRoles?.includes('School Admin');
 
   const getAssignableRoles = React.useCallback((currentUserRole?: string) => {
     if (!currentUserRole) return [];
@@ -96,10 +102,11 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange }: 
           ...person,
           phone: person.phone ?? '',
           profileImageUrl: person.profileImageUrl ?? '',
+          assignedSchools: person.assignedSchools ?? [],
         });
       } else {
         form.reset({
-          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player",
+          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchools: [],
         });
       }
     }
@@ -154,6 +161,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange }: 
                 </FormItem>
               )}
             />
+            <Separator />
             <FormField control={form.control} name="roles" render={() => (
               <FormItem>
                 <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>
@@ -184,6 +192,54 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange }: 
                 <FormMessage />
               </FormItem>
             )} />
+
+            {showSchoolAssignment && (
+                <FormField
+                    control={form.control}
+                    name="assignedSchools"
+                    render={() => (
+                        <FormItem>
+                            <FormLabel>School Assignments</FormLabel>
+                            <FormDescription>Select the schools this user will manage.</FormDescription>
+                            <ScrollArea className="h-40 w-full rounded-lg border p-4">
+                                {schools.map((school) => (
+                                    <FormField
+                                        key={school.schoolId}
+                                        control={form.control}
+                                        name="assignedSchools"
+                                        render={({ field }) => (
+                                            <FormItem
+                                                key={school.schoolId}
+                                                className="flex flex-row items-start space-x-3 space-y-0 mb-4"
+                                            >
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value?.includes(school.schoolId)}
+                                                        onCheckedChange={(checked) => {
+                                                            return checked
+                                                                ? field.onChange([...(field.value || []), school.schoolId])
+                                                                : field.onChange(
+                                                                    field.value?.filter(
+                                                                        (value) => value !== school.schoolId
+                                                                    )
+                                                                );
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel className="font-normal">
+                                                    {school.name}
+                                                </FormLabel>
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
+                            </ScrollArea>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+
             <FormField
                 control={form.control}
                 name="activeRole"
