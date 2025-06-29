@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -164,7 +163,10 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
             <Separator />
             <FormField control={form.control} name="roles" render={() => (
               <FormItem>
-                <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>
+                <div className="mb-4">
+                  <FormLabel>Roles</FormLabel>
+                  <FormDescription>Assign at least one role. Selecting roles like Sportsmaster or School Admin will reveal further assignment options.</FormDescription>
+                </div>
                 {assignableRoles.length === 0 && <p className="text-sm text-destructive">You do not have permission to assign roles.</p>}
                 <div className="space-y-4">
                   {assignableRoles.map((group) => (
