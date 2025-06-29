@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -63,7 +64,7 @@ export default function DashboardPage() {
     case 'Spectator':
       return <SpectatorDashboard />;
     default:
-      // A safe default for any other roles
+      // A safe default for any other roles, including School Admin for now
       return <SpectatorDashboard />;
   }
 }

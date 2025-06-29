@@ -10,6 +10,10 @@ import { getFieldsForGroundskeeper, getFields } from './fields';
 import { getMatchesByField, getMatches } from './matches';
 import { getCompetitions } from './competitions';
 import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from './alerts';
+import { getSponsors } from './sponsors';
+import { getEquipment } from './equipment';
+import { getVehicles } from './transport';
+import { getTransactions } from './financials';
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
     const players = await getPlayers();
@@ -105,10 +109,10 @@ export async function getAdminDashboardData(personId: string) {
         getTeams(),
         getPlayers(),
         getFields(),
-        [], // getTransactions(),
-        [], // getSponsors(),
-        [], // getVehicles(),
-        [], // getEquipment(),
+        getTransactions(),
+        getSponsors(),
+        getVehicles(),
+        getEquipment(),
         getCompetitions(),
         getFixtureConflicts(),
         getUnconfirmedAssignmentsCount(),

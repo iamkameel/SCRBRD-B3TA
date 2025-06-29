@@ -253,6 +253,7 @@ export function getNavConfig(role: string) {
         case 'Trainer':
             return { topLevel: trainerTopLevelNavItems, groups: trainerNavGroups };
         case 'Spectator':
+        case 'School Admin':
             return { topLevel: spectatorTopLevelNavItems, groups: spectatorNavGroups };
         default:
              // Default to a safe, minimal navigation for any other roles
