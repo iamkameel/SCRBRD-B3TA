@@ -140,11 +140,11 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
-          "fieldPath": "userId",
+          "fieldPath": "confirmed",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "confirmed",
+          "fieldPath": "userId",
           "order": "ASCENDING"
         }
       ]
