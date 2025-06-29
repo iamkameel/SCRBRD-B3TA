@@ -144,6 +144,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "officials",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "confirmed",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
