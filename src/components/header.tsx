@@ -33,10 +33,10 @@ export function Header({ user }: { user: Person | null }) {
     const isAdmin = user?.roles.includes('Admin');
 
     return (
-        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6 sticky top-0 z-30">
+        <header className="flex h-14 items-center gap-4 border-b border-black/20 bg-primary text-primary-foreground px-4 lg:px-6 sticky top-0 z-30">
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                    <Button variant="ghost" size="icon" className="shrink-0 md:hidden hover:bg-white/20">
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Toggle navigation menu</span>
                     </Button>
@@ -44,7 +44,7 @@ export function Header({ user }: { user: Person | null }) {
                 <SheetContent side="left" className="flex flex-col p-0">
                     <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     <SheetDescription className="sr-only">A list of pages to navigate through the application.</SheetDescription>
-                    <div className="flex h-16 items-center px-6 border-b">
+                    <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
                         <Link href="/" className="flex items-center gap-2 font-bold">
                           <CricketIcon className="h-6 w-6 text-primary" />
                           <span>SCRBRD</span>
@@ -79,7 +79,7 @@ export function Header({ user }: { user: Person | null }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/20">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.profileImageUrl} alt={user?.firstName} />
                     <AvatarFallback>{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
