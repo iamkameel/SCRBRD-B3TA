@@ -1,5 +1,4 @@
 
-
 import { getTeams } from '@/lib/actions/teams';
 import { getSchools } from '@/lib/actions/schools';
 import { getDivisions } from '@/lib/actions/divisions';
@@ -22,4 +21,3 @@ export default async function TeamsPage() {
 
   return <TeamsClient teams={teams} schools={schools} divisions={divisions} seasons={seasons} canManage={canManage} />;
 }
-
