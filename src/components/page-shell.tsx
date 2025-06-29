@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
 
-const PUBLIC_ROUTES = ['/home', '/login', '/signup', '/data-management'];
+const PUBLIC_ROUTES = ['/home', '/login', '/signup'];
 
 export default function PageShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -26,15 +26,6 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
   }
 
   if (!user && isPublicRoute) {
-    // For guest users, wrap the data management page in a main container
-    // but leave other public routes like login/signup as-is.
-    if (pathname === '/data-management') {
-      return (
-        <main className="flex-1 bg-background p-4 md:p-8">
-          {children}
-        </main>
-      );
-    }
     return <>{children}</>;
   }
   
