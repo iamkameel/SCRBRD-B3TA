@@ -13,12 +13,15 @@ import { getFields } from "@/lib/actions/fields";
 import { format } from "date-fns";
 import { TopRunScorersChart, TopWicketTakersChart, TeamStandingsChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
-import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { getTransactions } from "@/lib/actions/financials";
 import { getSponsors } from "@/lib/actions/sponsors";
 import { getVehicles } from "@/lib/actions/transport";
 import { getEquipment } from "@/lib/actions/equipment";
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { getCompetitions } from '@/lib/actions/competitions';
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -54,6 +57,7 @@ export default async function AdminDashboard() {
     allSponsors,
     allVehicles,
     allEquipment,
+    allCompetitions,
   ] = await Promise.all([
     getMatches(),
     getLeaderboards(),
@@ -65,6 +69,7 @@ export default async function AdminDashboard() {
     getSponsors(),
     getVehicles(),
     getEquipment(),
+    getCompetitions(),
   ]);
 
   const today = new Date();
@@ -77,13 +82,11 @@ export default async function AdminDashboard() {
   const fieldsInUse = new Set(liveMatches.map(m => m.fieldId));
   const fieldsInMaintenance = allFields.filter(f => f.status === 'Maintenance').length;
   const fieldsAvailable = allFields.length - fieldsInUse.size - fieldsInMaintenance;
-
-  const competitions = new Set(allMatches.filter(m => m.competitionId).map(m => m.competitionId));
-
+  
   const income = allTransactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
   const expense = allTransactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
   const financialSummary = { income, expense, balance: income - expense };
-
+  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   }
@@ -92,62 +95,48 @@ export default async function AdminDashboard() {
     <div className="flex flex-col gap-8">
       <header>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to your cricket league overview.</p>
+        <p className="text-muted-foreground">Welcome to your cricket league command center.</p>
       </header>
-
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20">
-                <CardHeader className="pb-2">
-                    <CardDescription className="flex items-center gap-2 font-semibold text-red-600 dark:text-red-400"><AlertTriangle />Fixture Conflicts</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-2xl font-bold">0</p>
-                    <p className="text-xs text-muted-foreground">No conflicts detected.</p>
-                </CardContent>
-            </Card>
-             <Card className="border-yellow-500/50 bg-yellow-500/10 dark:bg-yellow-900/20">
-                <CardHeader className="pb-2">
-                    <CardDescription className="flex items-center gap-2 font-semibold text-yellow-600 dark:text-yellow-400"><AlertTriangle />Umpire Reviews</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-2xl font-bold">0</p>
-                    <p className="text-xs text-muted-foreground">All reviews handled.</p>
-                </CardContent>
-            </Card>
+        
+        {/* Critical Alerts Zone */}
+        <div className="space-y-2">
+            <Alert variant="destructive" className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+                <AlertTriangle className="h-4 w-4 !text-red-600 dark:!text-red-400" />
+                <AlertTitle className="font-semibold">Fixture Conflicts</AlertTitle>
+                <AlertDescription className="flex justify-between items-center">
+                    <span>There are 0 conflicts that need resolution.</span>
+                    <Button size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">Resolve Now</Button>
+                </AlertDescription>
+            </Alert>
+             <Alert className="border-yellow-500/50 bg-yellow-500/10 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
+                <AlertTriangle className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
+                <AlertTitle className="font-semibold">Umpire Reviews</AlertTitle>
+                <AlertDescription className="flex justify-between items-center">
+                    <span>There are 0 overdue umpire reviews.</span>
+                    <Button size="sm" variant="outline" className="border-yellow-500/50 hover:bg-yellow-500/20">Review Queue</Button>
+                </AlertDescription>
+            </Alert>
         </div>
 
+        {/* KPI Cards Zone */}
+        <Card>
+            <CardHeader><CardTitle>League Overview</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <StatCardLink href="/competitions" title="Competitions" value={allCompetitions.length} icon={ClipboardList} description="active this season" />
+                <StatCardLink href="/teams" title="Teams" value={allTeams.length} icon={Users} description="across all divisions"/>
+                <StatCardLink href="/people" title="Players" value={allPlayers.filter(p => p.roles.includes('Player')).length} icon={Users} description="registered" />
+                <StatCardLink href="/fields" title="Fields & Venues" value={allFields.length} icon={MapPin} description="available for booking" />
+                <StatCardLink href="/financials" title="Net Balance" value={formatCurrency(financialSummary.balance)} icon={Scale} description="income vs. expense" />
+                <StatCardLink href="/sponsors" title="Sponsors" value={allSponsors.length} icon={Handshake} description="partnered" />
+                <StatCardLink href="/transport" title="Vehicles" value={allVehicles.length} icon={Bus} description="in fleet" />
+                <StatCardLink href="/equipment" title="Equipment" value={allEquipment.length} icon={Backpack} description="items in inventory" />
+            </CardContent>
+        </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Main Content Area */}
         <div className="lg:col-span-2 grid grid-cols-1 gap-8">
           
-          <Card>
-            <CardHeader><CardTitle>Operational Overview</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCardLink href="/competitions" title="Competitions" value={competitions.size} icon={ClipboardList} />
-                <StatCardLink href="/teams" title="Teams" value={allTeams.length} icon={Users} />
-                <StatCardLink href="/people" title="Players" value={allPlayers.filter(p => p.roles.includes('Player')).length} icon={Users} />
-                <StatCardLink href="/fields" title="Fields" value={allFields.length} icon={MapPin} />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader><CardTitle>Finance & Partnerships</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCardLink href="/financials" title="Net Balance" value={formatCurrency(financialSummary.balance)} icon={Scale} />
-                <StatCardLink href="/sponsors" title="Sponsors" value={allSponsors.length} icon={Handshake} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Resources & Logistics</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCardLink href="/transport" title="Vehicles" value={allVehicles.length} icon={Bus} description="in fleet" />
-                <StatCardLink href="/equipment" title="Equipment" value={allEquipment.length} icon={Backpack} description="items in inventory" />
-            </CardContent>
-          </Card>
-
-
           <Card>
             <CardHeader><CardTitle>Today's Operations</CardTitle></CardHeader>
             <CardContent>
@@ -224,6 +213,4 @@ export default async function AdminDashboard() {
     </div>
   );
 }
-    
-
     
