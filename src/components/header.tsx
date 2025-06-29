@@ -33,7 +33,7 @@ export function Header({ user }: { user: Person | null }) {
     const isAdmin = user?.roles.includes('Admin');
 
     return (
-        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6 sticky top-0 z-30">
             <Sheet>
                 <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="shrink-0 md:hidden">

@@ -12,7 +12,7 @@ import { getUserId } from '@/lib/auth';
 
 // This function now fetches data from Firestore for the current user
 export const getSchools = cache(async (): Promise<School[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const schoolsCollection = collection(db, 'schools');
@@ -40,7 +40,7 @@ type SchoolFormValues = z.infer<typeof schoolSchema>;
 
 // This function now adds a document to Firestore associated with the current user
 export async function addSchoolAction(data: SchoolFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
 
   const validatedFields = schoolSchema.safeParse(data);
@@ -76,7 +76,7 @@ const updateSchoolSchema = z.object({
 });
 
 export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema>) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateSchoolSchema.safeParse(data);
 
@@ -105,7 +105,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
 }
 
 export async function deleteSchoolAction(schoolId: string) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   
   if (!schoolId) {

@@ -1,3 +1,4 @@
+
 import { getPerson } from '@/lib/actions/players';
 import { getOfficialAssignmentsForPerson } from '@/lib/actions/matches';
 import { getAssignmentsForDriver } from '@/lib/actions/transport';
@@ -9,7 +10,7 @@ import MedicalDashboard from './dashboards/medical-dashboard';
 import { getUserId } from '@/lib/auth';
 
 export default async function DashboardPage() {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) {
     // In a real app, you might redirect to a login page.
     // For now, we'll default to the admin dashboard for guests.

@@ -1,4 +1,5 @@
 
+
 import { getTeams } from '@/lib/actions/teams';
 import { getSchools } from '@/lib/actions/schools';
 import { getDivisions } from '@/lib/actions/divisions';
@@ -8,14 +9,14 @@ import { getPerson } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 
 export default async function TeamsPage() {
-  const [teams, schools, divisions, seasons, userId] = await Promise.all([
+  const [teams, schools, divisions, seasons] = await Promise.all([
     getTeams(),
     getSchools(),
     getDivisions(),
     getSeasons(),
-    getUserId()
   ]);
   
+  const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.includes('Admin') ?? false;
 

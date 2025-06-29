@@ -1,15 +1,17 @@
+
 import UserManagementClient from './client';
 import { getPlayers } from '@/lib/actions/players';
 import { getPerson } from '@/lib/actions/players';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { getUserId } from '@/lib/auth';
 
 
 export default async function UserManagementPage() {
     // In a real app, you would fetch users here from your auth provider.
     // For this demo, we are connecting it to the people in the database.
-    const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
-    const user = await getPerson(userId);
+    const userId = await getUserId();
+    const user = userId ? await getPerson(userId) : null;
 
     // Role-based access control check
     if (!user?.roles.includes('Admin')) {

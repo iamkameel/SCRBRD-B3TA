@@ -23,7 +23,7 @@ import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches
 import { getPerson } from './players';
 
 export async function runUmpireReviewAction(photoDataUri: string): Promise<UmpireDecisionOutput> {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) {
     throw new Error("User not authenticated.");
   }
@@ -43,7 +43,7 @@ export async function runUmpireReviewAction(photoDataUri: string): Promise<Umpir
 }
 
 export async function generateAndSaveScorecardAction(matchId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -96,7 +96,7 @@ export async function generateAndSaveScorecardAction(matchId: string) {
 }
 
 export async function generateMatchReportAction(matchId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -131,7 +131,7 @@ export async function generateMatchReportAction(matchId: string) {
 }
 
 export async function getMatchForecastAction(matchId: string): Promise<MatchForecast | { error: string }> {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -150,7 +150,7 @@ export async function getMatchForecastAction(matchId: string): Promise<MatchFore
 }
 
 export async function generateMatchPreviewAction(matchId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -175,7 +175,7 @@ export async function generateMatchPreviewAction(matchId: string) {
 }
 
 export async function generateMatchCommentaryAction(matchId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -208,7 +208,7 @@ export async function generateMatchCommentaryAction(matchId: string) {
 }
 
 export async function autoSelectLineupAction(matchId: string, teamId: string): Promise<{ playerIds: string[], justification: string }> {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
@@ -224,7 +224,7 @@ export async function autoSelectLineupAction(matchId: string, teamId: string): P
 }
 
 export async function generateOppositionAnalysisAction(matchId: string, opponentTeamId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -256,7 +256,7 @@ export async function generateOppositionAnalysisAction(matchId: string, opponent
 }
 
 export async function generateLiveMatchUpdateAction(matchId: string): Promise<LiveMatchUpdateOutput> {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const match = await getMatch(matchId);
     if (!match || !match.liveScore) throw new Error("Match not found or no live score data available.");

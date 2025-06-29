@@ -9,14 +9,14 @@ import { getPerson } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 
 export default async function MatchesPage() {
-  const [matches, teams, fields, competitions, userId] = await Promise.all([
+  const [matches, teams, fields, competitions] = await Promise.all([
     getMatches(),
     getTeams(),
     getFields(),
     getCompetitions(),
-    getUserId()
   ]);
   
+  const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.includes('Admin') ?? false;
   

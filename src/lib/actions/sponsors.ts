@@ -10,7 +10,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getSponsors = cache(async (): Promise<Sponsor[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const sponsorsCollection = collection(db, 'sponsors');
@@ -34,7 +34,7 @@ const sponsorSchema = z.object({
 });
 
 export async function addSponsorAction(data: z.infer<typeof sponsorSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = sponsorSchema.safeParse(data);
 
@@ -60,7 +60,7 @@ const updateSponsorSchema = sponsorSchema.extend({
 });
 
 export async function updateSponsorAction(data: z.infer<typeof updateSponsorSchema>) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateSponsorSchema.safeParse(data);
 
@@ -87,7 +87,7 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
 }
 
 export async function deleteSponsorAction(sponsorId: string) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   
   if (!sponsorId) {

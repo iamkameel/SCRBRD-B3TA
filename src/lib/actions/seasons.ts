@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,7 +10,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getSeasons = cache(async (): Promise<Season[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
@@ -32,7 +33,7 @@ export const getSeasons = cache(async (): Promise<Season[]> => {
 });
 
 export const getSeason = cache(async (seasonId: string): Promise<Season | null> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return null;
   try {
     const seasonDocRef = doc(db, 'seasons', seasonId);
@@ -70,7 +71,7 @@ const seasonSchema = baseSeasonSchema.refine(data => data.endDate > data.startDa
 type SeasonFormValues = z.infer<typeof seasonSchema>;
 
 export async function addSeasonAction(data: SeasonFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = seasonSchema.safeParse(data);
   if (!validatedFields.success) throw new Error('Invalid season data.');
@@ -91,7 +92,7 @@ const updateSeasonSchema = baseSeasonSchema.extend({ seasonId: z.string() }).ref
 
 
 export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema>) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateSeasonSchema.safeParse(data);
     if (!validatedFields.success) throw new Error('Invalid season data.');
@@ -111,7 +112,7 @@ export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema
 }
 
 export async function deleteSeasonAction(seasonId: string) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   if (!seasonId) throw new Error("Season ID is required.");
   
