@@ -13,9 +13,56 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { acceptAssignmentAction } from "@/lib/actions/matches";
+import { useRouter } from "next/navigation";
+
 
 interface UmpireScorerDashboardProps {
   assignments: (Official & { matchId: string; matchName: string; dateTime: Date; status: MatchStatus })[];
+}
+
+function AssignmentRow({ assignment }: { assignment: UmpireScorerDashboardProps['assignments'][0] }) {
+    const { toast } = useToast();
+    const [isPending, startTransition] = React.useTransition();
+    const router = useRouter();
+
+    const handleAccept = () => {
+        startTransition(async () => {
+            try {
+                await acceptAssignmentAction(assignment.matchId, assignment.assignmentId);
+                toast({ title: "Assignment Accepted", description: "Your confirmation has been recorded." });
+            } catch (error) {
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not accept assignment.", variant: "destructive" });
+            }
+        });
+    };
+
+    const actionButton = () => {
+        if (assignment.status === 'live') {
+            return <Button asChild size="sm"><Link href={`/matches/${assignment.matchId}`}>Go to Live Scoring<ArrowRight className="ml-2" /></Link></Button>;
+        }
+        if (assignment.status === 'scheduled' && !assignment.confirmed) {
+            return <Button onClick={handleAccept} disabled={isPending} size="sm">{isPending ? "Accepting..." : "Accept Assignment"}</Button>
+        }
+        return <Button asChild size="sm" variant="outline"><Link href={`/matches/${assignment.matchId}`}>View Match</Link></Button>
+    }
+
+    return (
+        <TableRow key={assignment.assignmentId}>
+            <TableCell className="font-medium">
+                <Link href={`/matches/${assignment.matchId}`} className="hover:underline">
+                    {assignment.matchName}
+                </Link>
+            </TableCell>
+            <TableCell>{format(assignment.dateTime, "PPP p")}</TableCell>
+            <TableCell>{assignment.role}</TableCell>
+            <TableCell><Badge variant={assignment.confirmed ? "secondary" : "outline"} className={cn(assignment.confirmed ? 'bg-green-100 text-green-800' : '')}>{assignment.confirmed ? <Check className="mr-1" /> : <Clock className="mr-1" />} {assignment.confirmed ? "Confirmed" : "Pending"}</Badge></TableCell>
+            <TableCell className="text-right">
+                {actionButton()}
+            </TableCell>
+        </TableRow>
+    );
 }
 
 export default function UmpireScorerDashboard({ assignments }: UmpireScorerDashboardProps) {
@@ -24,27 +71,6 @@ export default function UmpireScorerDashboard({ assignments }: UmpireScorerDashb
   const liveAssignments = assignments.filter(a => a.status === 'live');
   const upcomingAssignments = assignments.filter(a => a.status === 'scheduled' && a.dateTime >= now);
   const completedAssignments = assignments.filter(a => a.status !== 'live' && a.status !== 'scheduled' || (a.status === 'scheduled' && a.dateTime < now));
-
-  const AssignmentRow = ({ assignment }: { assignment: UmpireScorerDashboardProps['assignments'][0] }) => (
-    <TableRow key={assignment.assignmentId}>
-        <TableCell className="font-medium">
-            <Link href={`/matches/${assignment.matchId}`} className="hover:underline">
-                {assignment.matchName}
-            </Link>
-        </TableCell>
-        <TableCell>{format(assignment.dateTime, "PPP p")}</TableCell>
-        <TableCell>{assignment.role}</TableCell>
-        <TableCell><Badge variant={assignment.confirmed ? "secondary" : "outline"} className={cn(assignment.confirmed ? 'bg-green-100 text-green-800' : '')}>{assignment.confirmed ? <Check className="mr-1" /> : <Clock className="mr-1" />} {assignment.confirmed ? "Confirmed" : "Pending"}</Badge></TableCell>
-        <TableCell className="text-right">
-            <Button asChild size="sm">
-                <Link href={`/matches/${assignment.matchId}`}>
-                    {assignment.status === 'live' ? "Go to Live Scoring" : "View Match"}
-                    <ArrowRight className="ml-2" />
-                </Link>
-            </Button>
-        </TableCell>
-    </TableRow>
-  );
 
   return (
     <div className="flex flex-col gap-8">

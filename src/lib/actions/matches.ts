@@ -379,6 +379,37 @@ export async function assignOfficialToMatchAction(matchId: string, data: Assignm
   return { success: true };
 }
 
+export async function acceptAssignmentAction(matchId: string, assignmentId: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const officialDocRef = doc(db, 'matches', matchId, 'officials', assignmentId);
+    const officialSnap = await getDoc(officialDocRef);
+
+    if (!officialSnap.exists()) {
+        throw new Error("Assignment not found.");
+    }
+
+    const assignmentData = officialSnap.data();
+    if (assignmentData.personId !== userId) {
+        throw new Error("You do not have permission to accept this assignment.");
+    }
+
+    if (assignmentData.confirmed) {
+        return { success: true, message: "Assignment already confirmed." };
+    }
+
+    try {
+        await updateDoc(officialDocRef, { confirmed: true });
+    } catch (error) {
+        console.error("Error confirming assignment:", error);
+        throw new Error("Could not confirm assignment.");
+    }
+
+    revalidatePath('/dashboard');
+    return { success: true };
+}
+
 export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<string[]> => {
   const match = await getMatch(matchId);
   if (!match) return [];
@@ -627,8 +658,8 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (isLegalBall) {
         const endOfOver = liveScore.balls === 5;
         if (endOfOver) {
-            liveScore.balls = 0;
             liveScore.overs++;
+            liveScore.balls = 0;
             liveScore.currentOver = [];
             if (!isOddRun) {
                 [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
@@ -764,3 +795,4 @@ export const getOfficialAssignmentsForPerson = cache(async (personId: string): P
         return [];
     }
 });
+
