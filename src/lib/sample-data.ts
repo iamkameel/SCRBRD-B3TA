@@ -87,6 +87,7 @@ export const sampleData = {
     people: [
         // Admin & Staff
         { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin', 'Coach', 'Umpire'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_kameel', firstName: 'Kameel', lastName: 'Maharaj', email: 'kameel@maverickdesign.co.za', roles: ['Admin'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_1', firstName: 'John', lastName: 'Doe', email: 'john.doe@umpire.com', roles: ['Umpire', 'Scorer'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@umpire.com', roles: ['Umpire'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_3', firstName: 'Mark', lastName: 'Taylor', email: 'mark.t@ground.com', roles: ['Grounds-Keeper', 'Driver'], activeRole: 'Grounds-Keeper', notificationPreferences: { email: true, push: false } },
@@ -343,3 +344,5 @@ export const sampleScorecardData = {
         }
     }
 };
+
+    
