@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -21,9 +22,10 @@ interface MatchCardProps {
     match: Match;
     onEdit: () => void;
     onDelete: () => void;
+    isAdmin: boolean;
 }
 
-export function MatchCard({ match, onEdit, onDelete }: MatchCardProps) {
+export function MatchCard({ match, onEdit, onDelete, isAdmin }: MatchCardProps) {
     const [isClient, setIsClient] = React.useState(false);
     
     React.useEffect(() => {
@@ -50,13 +52,15 @@ export function MatchCard({ match, onEdit, onDelete }: MatchCardProps) {
                              </Link>
                         </CardTitle>
                     </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {isAdmin && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
             </CardHeader>
             <CardContent>

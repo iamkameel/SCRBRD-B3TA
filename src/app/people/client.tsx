@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -54,7 +55,7 @@ const ROLES = [
 
 type SortableColumn = 'name' | 'email';
 
-export default function PeopleClient({ people }: { people: Person[] }) {
+export default function PeopleClient({ people, isAdmin }: { people: Person[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
@@ -162,7 +163,7 @@ export default function PeopleClient({ people }: { people: Person[] }) {
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">People</h1><p className="text-muted-foreground">Manage your roster of players, coaches, and officials.</p></div>
-          <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add Person</Button>
+          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add Person</Button>}
         </header>
 
         <Card>
@@ -269,7 +270,7 @@ export default function PeopleClient({ people }: { people: Person[] }) {
                     <SortableHeader column="name">Name</SortableHeader>
                     <SortableHeader column="email">Email</SortableHeader>
                     <TableHead>Roles</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -290,7 +291,7 @@ export default function PeopleClient({ people }: { people: Person[] }) {
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
+                        {isAdmin && <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -298,11 +299,11 @@ export default function PeopleClient({ people }: { people: Person[] }) {
                               <DropdownMenuItem onSelect={() => { setSelectedPerson(person); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </TableCell>
+                        </TableCell>}
                       </TableRow>
                     ))
                   ) : (
-                    <TableRow><TableCell colSpan={4} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={isAdmin ? 4 : 3} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -316,6 +317,7 @@ export default function PeopleClient({ people }: { people: Person[] }) {
                                 person={person} 
                                 onEdit={() => { setSelectedPerson(person); setDialogMode('edit'); setIsPersonDialogOpen(true); }}
                                 onDelete={() => { setSelectedPerson(person); setIsDeleteDialogOpen(true); }}
+                                isAdmin={isAdmin}
                             />
                         ))
                     ) : (
@@ -334,9 +336,9 @@ export default function PeopleClient({ people }: { people: Person[] }) {
         </Card>
       </div>
 
-      {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} />}
+      {isAdmin && isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} />}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -349,7 +351,7 @@ export default function PeopleClient({ people }: { people: Person[] }) {
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Person"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

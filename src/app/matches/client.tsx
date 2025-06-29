@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -136,7 +137,7 @@ function EditMatchDialog({ match, teams, competitions, fields, open, onOpenChang
 
 const MATCH_STATUSES = ['scheduled', 'live', 'completed', 'cancelled'];
 
-export default function MatchesClient({ matches, teams, fields, competitions }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[] }) {
+export default function MatchesClient({ matches, teams, fields, competitions, isAdmin }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], isAdmin: boolean }) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -217,12 +218,14 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Matches</h1>
             <p className="text-muted-foreground">View all scheduled, live, and completed matches.</p>
           </div>
-          <Button asChild>
-            <Link href="/new-match">
-              <PlusCircle className="mr-2" />
-              Create New Match
-            </Link>
-          </Button>
+          {isAdmin && (
+            <Button asChild>
+              <Link href="/new-match">
+                <PlusCircle className="mr-2" />
+                Create New Match
+              </Link>
+            </Button>
+          )}
         </header>
 
         <Card>
@@ -374,7 +377,13 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
             {view === 'list' && (
                 <Table>
                     <TableHeader>
-                        <TableRow><TableHead>Match</TableHead><TableHead>Date</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                        <TableRow>
+                          <TableHead>Match</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Venue</TableHead>
+                          <TableHead>Status</TableHead>
+                          {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                        </TableRow>
                     </TableHeader>
                     <TableBody>
                         {paginatedMatches.length > 0 ? (
@@ -396,7 +405,7 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
                             <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
                             <TableCell>{match.fieldName}</TableCell>
                             <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
-                            <TableCell className="text-right">
+                            {isAdmin && <TableCell className="text-right">
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -404,11 +413,11 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
                                     <DropdownMenuItem onSelect={() => { setMatchToDelete(match); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
-                            </TableCell>
+                            </TableCell>}
                             </TableRow>
                         ))
                         ) : (
-                        <TableRow><TableCell colSpan={5} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={isAdmin ? 5 : 4} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
@@ -422,6 +431,7 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
                                 match={match} 
                                 onEdit={() => { setMatchToEdit(match); setIsEditDialogOpen(true); }}
                                 onDelete={() => { setMatchToDelete(match); setIsDeleteDialogOpen(true); }}
+                                isAdmin={isAdmin}
                             />
                         ))
                     ) : (
@@ -444,7 +454,7 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
         </Card>
       </div>
 
-      {matchToEdit && (
+      {isAdmin && matchToEdit && (
         <EditMatchDialog 
             match={matchToEdit} 
             teams={teams} 
@@ -455,7 +465,7 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
         />
       )}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -466,7 +476,7 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Match"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

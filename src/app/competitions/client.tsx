@@ -265,8 +265,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
                             {eligibleTeams.length > 0 && (
                                 <div className="mb-4">
                                     <Label>Filter by School</Label>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild><Button variant="outline" className="w-full justify-between font-normal"><span className="truncate">{schoolFilters.length === 0 && "Select schools to filter..."}{schoolFilters.length === 1 && eligibleSchools.find(s => s.schoolId === schoolFilters[0])?.schoolName}{schoolFilters.length > 1 && `${schoolFilters.length} schools selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="w-full justify-between font-normal"><span className="truncate">{schoolFilters.length === 0 && "Select schools to filter..."}{schoolFilters.length === 1 && eligibleSchools.find(s => s.schoolId === schoolFilters[0])?.schoolName}{schoolFilters.length > 1 && `${schoolFilters.length} schools selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
                                         <DropdownMenuContent className="w-[300px]"><DropdownMenuLabel>Filter by School</DropdownMenuLabel><DropdownMenuSeparator />
                                             {eligibleSchools.map(school => (<DropdownMenuCheckboxItem key={school.schoolId} checked={schoolFilters.includes(school.schoolId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => {const newFilters = checked ? [...schoolFilters, school.schoolId] : schoolFilters.filter(id => id !== school.schoolId); setSchoolFilters(newFilters);}}>{school.schoolName}</DropdownMenuCheckboxItem>))}
                                             {schoolFilters.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setSchoolFilters([])} className="justify-center text-sm">Clear filters</DropdownMenuItem></>)}
@@ -313,7 +312,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
   );
 }
 
-export default function CompetitionsClient({ competitions, seasons, divisions, teams }: { competitions: Competition[], seasons: Season[], divisions: Division[], teams: Team[] }) {
+export default function CompetitionsClient({ competitions, seasons, divisions, teams, isAdmin }: { competitions: Competition[], seasons: Season[], divisions: Division[], teams: Team[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedCompetition, setSelectedCompetition] = React.useState<Competition | null>(null);
@@ -419,7 +418,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Competitions</h1><p className="text-muted-foreground">Manage your leagues, cups, and tournaments.</p></div>
-          <Button onClick={() => { setDialogMode('add'); setSelectedCompetition(null); setIsCompetitionDialogOpen(true); }}><PlusCircle className="mr-2"/>Add Competition</Button>
+          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedCompetition(null); setIsCompetitionDialogOpen(true); }}><PlusCircle className="mr-2"/>Add Competition</Button>}
         </header>
         <Card>
             <CardHeader>
@@ -529,7 +528,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                             <SortableHeader column="seasonName">Season</SortableHeader>
                             <SortableHeader column="divisionName">Division</SortableHeader>
                             <SortableHeader column="status">Status</SortableHeader>
-                            <TableHead className="text-right">Actions</TableHead>
+                            {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -550,7 +549,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                             <TableCell>{comp.seasonName}</TableCell>
                             <TableCell>{comp.divisionName}</TableCell>
                             <TableCell><Badge variant={comp.status === 'Completed' ? 'secondary' : (comp.status === 'In Progress' ? 'default' : 'outline')}>{comp.status}</Badge></TableCell>
-                            <TableCell className="text-right">
+                            {isAdmin && <TableCell className="text-right">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -558,12 +557,12 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            </TableCell>
+                            </TableCell>}
                         </TableRow>
                         ))
                     ) : (
                         <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">{filtersApplied ? "No competitions found matching your filters." : "No competitions found. Get started by adding one."}</TableCell>
+                        <TableCell colSpan={isAdmin ? 7 : 6} className="h-24 text-center">{filtersApplied ? "No competitions found matching your filters." : "No competitions found. Get started by adding one."}</TableCell>
                         </TableRow>
                     )}
                     </TableBody>
@@ -578,6 +577,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 competition={comp} 
                                 onEdit={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}
                                 onDelete={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }}
+                                isAdmin={isAdmin}
                             />
                         ))
                     ) : (
@@ -596,9 +596,9 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
         </Card>
       </div>
       
-      <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />
+      {isAdmin && <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />}
       
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete <strong>{selectedCompetition?.name}</strong>. Any matches associated with this competition will need to be updated manually.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
@@ -606,7 +606,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Competition"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

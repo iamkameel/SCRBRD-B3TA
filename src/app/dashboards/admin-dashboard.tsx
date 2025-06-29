@@ -1,3 +1,4 @@
+
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,13 +12,19 @@ import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "..
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { DreamTeamCard } from "../dream-team-card";
+import { getPerson } from '@/lib/actions/players';
+import { getUserId } from '@/lib/auth';
 
 export default async function AdminDashboard() {
-  const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings] = await Promise.all([
+  const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings, userId] = await Promise.all([
     getMatches().then(matches => matches.slice(0, 5)),
     getLeaderboards(),
-    getTeamStandings()
+    getTeamStandings(),
+    getUserId()
   ]);
+
+  const user = userId ? await getPerson(userId) : null;
+  const isAdmin = user?.roles.includes('Admin') ?? false;
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,12 +37,14 @@ export default async function AdminDashboard() {
             Welcome to your cricket league overview.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/new-match">
-            <PlusCircle className="mr-2"/>
-            Create New Match
-          </Link>
-        </Button>
+        {isAdmin && (
+          <Button asChild>
+            <Link href="/new-match">
+              <PlusCircle className="mr-2"/>
+              Create New Match
+            </Link>
+          </Button>
+        )}
       </header>
 
       <div className="grid gap-8 lg:grid-cols-3">
