@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -530,51 +530,38 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName || 'TBD'}</h1>
-                    <p className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                        {match.competitionName && <span className="font-medium text-foreground/90">{match.competitionName}</span>}
-                        <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {isClient ? format(match.dateTime, "PPPP") : '\u00A0'}</span>
-                        <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {isClient ? format(match.dateTime, "p") : '\u00A0'}</span>
-                        <span>{match.fieldName}</span>
-                    </p>
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm">
+                        {match.competitionName && <span className="flex items-center gap-1.5"><Trophy className="h-4 w-4" /> {match.competitionName}</span>}
+                        <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {isClient ? format(match.dateTime, "PPP") : '\u00A0'}</span>
+                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {isClient ? format(match.dateTime, "p") : '\u00A0'}</span>
+                        <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{match.fieldName}</span>
+                    </div>
                 </div>
                 <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize h-fit">{match.status}</Badge>
             </div>
         </header>
 
-        <Tabs defaultValue={match.status === 'live' ? 'scoring' : 'scorecard'}>
-            <TabsList className={cn(
-                "grid w-full",
-                match.status === 'live' ? "grid-cols-4" : "grid-cols-3"
-            )}>
-                {match.status === 'live' && (
-                    <TabsTrigger value="scoring"><RadioTower className="mr-2 h-4 w-4" />Live Scoring</TabsTrigger>
-                )}
-                <TabsTrigger value="scorecard"><ClipboardList />Scorecard</TabsTrigger>
-                <TabsTrigger value="analysis"><BarChart />Analysis</TabsTrigger>
-                <TabsTrigger value="logistics"><Settings />Logistics</TabsTrigger>
+        <Tabs defaultValue="scorecard">
+            <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
+                <TabsTrigger value="lineups" disabled={match.status === 'completed'}><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
+                <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
+                <TabsTrigger value="logistics"><Settings className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
             </TabsList>
-
-            {match.status === 'live' && (
-                <TabsContent value="scoring" className="mt-4">
-                    <LiveScoringInterface
-                        teamARoster={teamARoster}
-                        teamBRoster={teamBRoster}
-                        match={match}
-                    />
-                </TabsContent>
-            )}
 
             <TabsContent value="scorecard" className="mt-4">
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                             <div>
-                                <CardTitle>Scorecard</CardTitle>
+                                <CardTitle>
+                                    {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
+                                </CardTitle>
                                 <CardDescription>
-                                    {match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.'}
+                                    {match.status === 'live' ? 'Enter ball-by-ball data here.' : (match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.')}
                                 </CardDescription>
                             </div>
-                            <div className="flex items-center gap-2 mt-4 md:mt-0">
+                             <div className="flex items-center gap-2 mt-4 md:mt-0">
                                 {match.status === 'scheduled' && !innings1 && (
                                     <TooltipProvider>
                                         <Tooltip>
@@ -622,24 +609,42 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {match.status === 'completed' && innings1 && innings2 ? (
-                            <Tabs defaultValue="team-a-innings-scorecard">
-                                <TabsList>
-                                    <TabsTrigger value="team-a-innings-scorecard">{match.teamAName}</TabsTrigger>
-                                    <TabsTrigger value="team-b-innings-scorecard">{match.teamBName}</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="team-a-innings-scorecard" className="mt-4">
-                                    {firstInnings ? <Scorecard innings={firstInnings} /> : <ScorecardPlaceholder />}
-                                </TabsContent>
-                                <TabsContent value="team-b-innings-scorecard" className="mt-4">
-                                    {secondInnings ? <Scorecard innings={secondInnings} /> : <ScorecardPlaceholder />}
-                                </TabsContent>
-                            </Tabs>
+                        {match.status === 'live' ? (
+                            <LiveScoringInterface
+                                teamARoster={teamARoster}
+                                teamBRoster={teamBRoster}
+                                match={match}
+                            />
                         ) : (
-                             <ScorecardPlaceholder />
+                            (innings1 && innings2) ? (
+                                <Tabs defaultValue="team-a-innings-scorecard">
+                                    <TabsList>
+                                        <TabsTrigger value="team-a-innings-scorecard">{match.teamAName}</TabsTrigger>
+                                        <TabsTrigger value="team-b-innings-scorecard">{match.teamBName}</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="team-a-innings-scorecard" className="mt-4">
+                                        {firstInnings ? <Scorecard innings={firstInnings} /> : <ScorecardPlaceholder />}
+                                    </TabsContent>
+                                    <TabsContent value="team-b-innings-scorecard" className="mt-4">
+                                        {secondInnings ? <Scorecard innings={secondInnings} /> : <ScorecardPlaceholder />}
+                                    </TabsContent>
+                                </Tabs>
+                            ) : (
+                                <ScorecardPlaceholder />
+                            )
                         )}
                     </CardContent>
                 </Card>
+            </TabsContent>
+
+            <TabsContent value="lineups" className="mt-4">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
+                    {match.teamBId ?
+                        <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
+                        : <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
+                    }
+                </div>
             </TabsContent>
 
             <TabsContent value="analysis" className="mt-4 space-y-4">
@@ -778,18 +783,6 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             </TabsContent>
 
             <TabsContent value="logistics" className="mt-4 space-y-4">
-                {match.status !== 'completed' && (
-                    <Card>
-                        <CardHeader><CardTitle>Lineups</CardTitle><CardDescription>Select the 11 players who will participate in this match.</CardDescription></CardHeader>
-                        <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
-                            {match.teamBId ?
-                                <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
-                                : <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
-                            }
-                        </CardContent>
-                    </Card>
-                )}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Transport &amp; Logistics</CardTitle><CardDescription>Manage vehicles and drivers assigned to this match.</CardDescription></div><AssignTransportDialog matchId={match.matchId} vehicles={vehicles} drivers={drivers} transportAssignments={transportAssignments} /></CardHeader>
                     <CardContent><Table><TableHeader><TableRow><TableHead>Vehicle</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{transportAssignments.length > 0 ? (transportAssignments.map(t => (<TableRow key={t.assignmentId}><TableCell className="font-medium">{t.vehicleName}</TableCell><TableCell>{t.vehicleType}</TableCell><TableCell>{t.driverName}</TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedTransport(t); setIsDeleteTransportDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No transport assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
