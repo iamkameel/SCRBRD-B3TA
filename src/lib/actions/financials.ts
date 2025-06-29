@@ -7,10 +7,10 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import type { Transaction } from '@/lib/data';
 import { cache } from 'react';
-
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 export const getTransactions = cache(async (): Promise<Transaction[]> => {
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const transactionsCollection = collection(db, 'financials');
@@ -42,6 +42,7 @@ const transactionSchema = z.object({
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 export async function addTransactionAction(data: TransactionFormValues) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = transactionSchema.safeParse(data);
 
@@ -68,6 +69,7 @@ const updateTransactionSchema = transactionSchema.extend({
 });
 
 export async function updateTransactionAction(data: z.infer<typeof updateTransactionSchema>) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateTransactionSchema.safeParse(data);
 
@@ -97,6 +99,7 @@ export async function updateTransactionAction(data: z.infer<typeof updateTransac
 }
 
 export async function deleteTransactionAction(transactionId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   if (!transactionId) throw new Error("Transaction ID is required.");
   

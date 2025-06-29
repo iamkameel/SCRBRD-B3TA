@@ -8,10 +8,10 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { EquipmentItem, FullEquipmentAssignment, Person } from '@/lib/data';
 import { getPerson } from './players';
 import { cache } from 'react';
-
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 export const getEquipment = cache(async (): Promise<EquipmentItem[]> => {
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const q = query(collection(db, 'equipment'), where("userId", "==", userId));
@@ -34,6 +34,7 @@ const itemSchema = z.object({
 });
 
 export async function addEquipmentItemAction(data: z.infer<typeof itemSchema>) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = itemSchema.safeParse(data);
   if (!validatedFields.success) throw new Error('Invalid item data.');
@@ -47,6 +48,7 @@ export async function addEquipmentItemAction(data: z.infer<typeof itemSchema>) {
 
 const updateItemSchema = itemSchema.extend({ itemId: z.string() });
 export async function updateEquipmentItemAction(data: z.infer<typeof updateItemSchema>) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateItemSchema.safeParse(data);
     if (!validatedFields.success) throw new Error('Invalid item data.');
@@ -63,6 +65,7 @@ export async function updateEquipmentItemAction(data: z.infer<typeof updateItemS
 }
 
 export async function deleteEquipmentItemAction(itemId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const itemRef = doc(db, 'equipment', itemId);
   const itemSnap = await getDoc(itemRef);
@@ -83,6 +86,7 @@ export async function deleteEquipmentItemAction(itemId: string) {
 }
 
 export async function assignEquipmentAction(itemId: string, personId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const itemRef = doc(db, 'equipment', itemId);
   const [itemSnap, person] = await Promise.all([ getDoc(itemRef), getPerson(personId) ]);
@@ -114,6 +118,7 @@ export async function assignEquipmentAction(itemId: string, personId: string) {
 }
 
 export async function returnEquipmentAction(assignmentId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const assignmentRef = doc(db, 'equipmentAssignments', assignmentId);
   const assignmentSnap = await getDoc(assignmentRef);
@@ -142,6 +147,7 @@ export async function returnEquipmentAction(assignmentId: string) {
 }
 
 export const getAllEquipmentAssignments = cache(async (): Promise<FullEquipmentAssignment[]> => {
+    const userId = getUserId();
     if (!userId) return [];
     try {
         const q = query(collection(db, 'equipmentAssignments'), where("userId", "==", userId));

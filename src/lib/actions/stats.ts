@@ -5,16 +5,18 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, Timestamp, doc, getDoc } from 'firebase/firestore';
 import type { PlayerStats, PlayerMatchPerformance, Innings } from '@/lib/data';
 import { getPerson } from './players';
-
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 export async function getPlayerStats(personId: string): Promise<PlayerStats> {
+    const userId = getUserId();
     const defaultStats: PlayerStats = {
         matchesPlayed: 0, inningsBatted: 0, notOuts: 0, totalRuns: 0, highestScore: 0, highestScoreNotOut: false, ballsFaced: 0, hundreds: 0, fifties: 0, fours: 0, sixes: 0,
         oversBowled: 0, runsConceded: 0, maidens: 0, wicketsTaken: 0, bestBowlingWickets: 0, bestBowlingRuns: 0,
         catches: 0, stumpings: 0,
         battingAverage: 0, strikeRate: 0, bowlingAverage: 0, economyRate: 0, bestBowling: "0/0",
     };
+    
+    if (!userId) return defaultStats;
 
     const person = await getPerson(personId);
     if (!person || !person.roles.includes("Player")) {
@@ -106,6 +108,9 @@ export async function getPlayerStats(personId: string): Promise<PlayerStats> {
 }
 
 export async function getPlayerMatchHistory(personId: string): Promise<PlayerMatchPerformance[]> {
+    const userId = getUserId();
+    if (!userId) return [];
+    
     const person = await getPerson(personId);
     if (!person || !person.roles.includes("Player")) {
         return [];

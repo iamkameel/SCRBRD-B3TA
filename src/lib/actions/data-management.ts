@@ -15,8 +15,7 @@ import { getSeasons, deleteSeasonAction } from './seasons';
 import { getFields, deleteFieldAction } from './fields';
 import { getCompetitions, deleteCompetitionAction } from './competitions';
 import { getEquipment, deleteEquipmentItemAction } from './equipment';
-
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
@@ -28,6 +27,7 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
+    const userId = getUserId();
     if (!userId) {
         return { success: false, message: "User not authenticated." };
     }
@@ -83,6 +83,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     try {
@@ -265,6 +266,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             if (match.round) {
                 newMatchData.round = match.round;
             }
+             if (match.winnerTeamId) {
+                newMatchData.winnerTeamId = idMap.get(match.winnerTeamId);
+            }
+            if (match.result) {
+                newMatchData.result = match.result;
+            }
 
             const matchDocRef = doc(collection(db, 'matches'));
             batch.set(matchDocRef, newMatchData);
@@ -296,6 +303,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
 }
 
 export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+        return { success: false, message: "User not authenticated." };
+    }
+
     if (!independentSubsets.includes(subsetName)) {
         return { success: false, message: `Individual deletion for ${subsetName} is not supported due to data dependencies. Please use the 'Delete All Data' function.` };
     }
@@ -355,6 +367,9 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
 }
 
 export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
+    const userId = getUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
     if (!independentSubsets.includes(subsetName)) {
         return { success: false, message: `Individual migration for ${subsetName} is not supported due to data dependencies. Please use the full data migration.` };
     }

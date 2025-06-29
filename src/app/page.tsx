@@ -6,10 +6,16 @@ import AdminDashboard from './dashboards/admin-dashboard';
 import UmpireScorerDashboard from './dashboards/umpire-scorer-dashboard';
 import DriverDashboard from './dashboards/driver-dashboard';
 import MedicalDashboard from './dashboards/medical-dashboard';
+import { getUserId } from '@/lib/auth';
 
 export default async function DashboardPage() {
-  // In a real app, this would get the logged-in user's identity
-  const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+  const userId = getUserId();
+  if (!userId) {
+    // In a real app, you might redirect to a login page.
+    // For now, we'll default to the admin dashboard for guests.
+    return <AdminDashboard />;
+  }
+  
   const user = await getPerson(userId);
 
   // Fallback for when user data is not yet loaded or for guests

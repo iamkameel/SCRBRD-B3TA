@@ -6,11 +6,10 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, Timestamp, query, where } from 'firebase/firestore';
 import type { Season } from '@/lib/data';
 import { cache } from 'react';
-
-// This user ID will be replaced with dynamic auth state later.
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 export const getSeasons = cache(async (): Promise<Season[]> => {
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
@@ -33,6 +32,7 @@ export const getSeasons = cache(async (): Promise<Season[]> => {
 });
 
 export const getSeason = cache(async (seasonId: string): Promise<Season | null> => {
+  const userId = getUserId();
   if (!userId) return null;
   try {
     const seasonDocRef = doc(db, 'seasons', seasonId);
@@ -70,6 +70,7 @@ const seasonSchema = baseSeasonSchema.refine(data => data.endDate > data.startDa
 type SeasonFormValues = z.infer<typeof seasonSchema>;
 
 export async function addSeasonAction(data: SeasonFormValues) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = seasonSchema.safeParse(data);
   if (!validatedFields.success) throw new Error('Invalid season data.');
@@ -90,6 +91,7 @@ const updateSeasonSchema = baseSeasonSchema.extend({ seasonId: z.string() }).ref
 
 
 export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema>) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateSeasonSchema.safeParse(data);
     if (!validatedFields.success) throw new Error('Invalid season data.');
@@ -109,6 +111,7 @@ export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema
 }
 
 export async function deleteSeasonAction(seasonId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   if (!seasonId) throw new Error("Season ID is required.");
   

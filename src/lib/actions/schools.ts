@@ -8,12 +8,11 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { School } from '@/lib/data';
 import { cache } from 'react';
-
-// This user ID will be replaced with dynamic auth state later.
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 // This function now fetches data from Firestore for the current user
 export const getSchools = cache(async (): Promise<School[]> => {
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const schoolsCollection = collection(db, 'schools');
@@ -41,6 +40,7 @@ type SchoolFormValues = z.infer<typeof schoolSchema>;
 
 // This function now adds a document to Firestore associated with the current user
 export async function addSchoolAction(data: SchoolFormValues) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
 
   const validatedFields = schoolSchema.safeParse(data);
@@ -76,6 +76,7 @@ const updateSchoolSchema = z.object({
 });
 
 export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema>) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateSchoolSchema.safeParse(data);
 
@@ -104,6 +105,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
 }
 
 export async function deleteSchoolAction(schoolId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   
   if (!schoolId) {

@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/header';
 import { getPerson } from '@/lib/actions/players';
-import type { Person } from '@/lib/data';
+import { getUserId } from '@/lib/auth';
 
 export const metadata: Metadata = {
   title: 'SCRBRD - Cricket Scorer',
@@ -20,8 +20,8 @@ export default async function RootLayout({
 }>) {
   // In a real app, this would get the logged-in user's identity
   // For this demo, we'll fetch the hardcoded admin user
-  const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
-  const user = await getPerson(userId);
+  const userId = getUserId();
+  const user = userId ? await getPerson(userId) : null;
 
   return (
     <html lang="en" suppressHydrationWarning>

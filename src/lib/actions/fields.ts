@@ -8,10 +8,10 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
 import type { Field, FieldAssignment, Person } from '@/lib/data';
 import { cache } from 'react';
-
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 export const getFields = cache(async (): Promise<Field[]> => {
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const fieldsCollection = collection(db, 'fields');
@@ -70,6 +70,7 @@ export const getFields = cache(async (): Promise<Field[]> => {
 });
 
 export const getField = cache(async (fieldId: string): Promise<Field | null> => {
+  const userId = getUserId();
   if (!userId) return null;
   try {
     const fieldDocRef = doc(db, 'fields', fieldId);
@@ -177,6 +178,7 @@ async function syncAssignments(batch: FirebaseFirestore.WriteBatch, fieldId: str
 }
 
 export async function addFieldAction(data: FieldFormValues) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = fieldActionSchema.safeParse(data);
 
@@ -220,6 +222,7 @@ const updateFieldSchema = fieldActionSchema.extend({
 });
 
 export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateFieldSchema.safeParse(data);
 
@@ -263,6 +266,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
 }
 
 export async function deleteFieldAction(fieldId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   
   if (!fieldId) throw new Error("Field ID is required.");
@@ -291,6 +295,7 @@ export async function deleteFieldAction(fieldId: string) {
 }
 
 export async function assignGroundskeeperToFieldAction(fieldId: string, personId: string) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     if (!fieldId || !personId) throw new Error("Field ID and Person ID are required.");
 
@@ -319,6 +324,7 @@ export async function assignGroundskeeperToFieldAction(fieldId: string, personId
 }
 
 export async function removeGroundskeeperFromFieldAction(fieldId: string, assignmentId: string) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     if (!fieldId || !assignmentId) throw new Error("Field ID and Assignment ID are required.");
 

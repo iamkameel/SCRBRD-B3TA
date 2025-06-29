@@ -6,12 +6,11 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { Division } from '@/lib/data';
 import { cache } from 'react';
-
-// This user ID will be replaced with dynamic auth state later.
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+import { getUserId } from '@/lib/auth';
 
 // This function now fetches data from Firestore for the current user
 export const getDivisions = cache(async (): Promise<Division[]> => {
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const divisionsCollection = collection(db, 'divisions');
@@ -29,6 +28,7 @@ export const getDivisions = cache(async (): Promise<Division[]> => {
 });
 
 export const getDivision = cache(async (divisionId: string): Promise<Division | null> => {
+  const userId = getUserId();
   if (!userId) return null;
   try {
     const divisionDocRef = doc(db, 'divisions', divisionId);
@@ -54,6 +54,7 @@ type DivisionFormValues = z.infer<typeof divisionSchema>;
 
 // This function now adds a document to Firestore for the current user
 export async function addDivisionAction(data: DivisionFormValues) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = divisionSchema.safeParse(data);
 
@@ -86,6 +87,7 @@ const updateDivisionSchema = z.object({
 });
 
 export async function updateDivisionAction(data: z.infer<typeof updateDivisionSchema>) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateDivisionSchema.safeParse(data);
 
@@ -114,6 +116,7 @@ export async function updateDivisionAction(data: z.infer<typeof updateDivisionSc
 }
 
 export async function deleteDivisionAction(divisionId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   
   if (!divisionId) {

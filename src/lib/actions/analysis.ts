@@ -15,16 +15,15 @@ import { generateMatchCommentary } from '@/ai/flows/generate-match-commentary-fl
 import { selectLineup } from '@/ai/flows/select-lineup-flow';
 import { generateOppositionAnalysis } from '@/ai/flows/generate-opposition-analysis-flow';
 import { generateLiveMatchUpdate } from '@/ai/flows/generate-live-match-update-flow';
+import { getUserId } from '@/lib/auth';
 
-
-import type { UmpireDecisionOutput, GenerateMatchReportInput, GenerateScorecardOutput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
-
 export async function runUmpireReviewAction(photoDataUri: string): Promise<UmpireDecisionOutput> {
+  const userId = getUserId();
   if (!userId) {
     throw new Error("User not authenticated.");
   }
@@ -44,6 +43,7 @@ export async function runUmpireReviewAction(photoDataUri: string): Promise<Umpir
 }
 
 export async function generateAndSaveScorecardAction(matchId: string) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -96,6 +96,7 @@ export async function generateAndSaveScorecardAction(matchId: string) {
 }
 
 export async function generateMatchReportAction(matchId: string) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -130,6 +131,7 @@ export async function generateMatchReportAction(matchId: string) {
 }
 
 export async function getMatchForecastAction(matchId: string): Promise<MatchForecast | { error: string }> {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -148,6 +150,7 @@ export async function getMatchForecastAction(matchId: string): Promise<MatchFore
 }
 
 export async function generateMatchPreviewAction(matchId: string) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -172,6 +175,7 @@ export async function generateMatchPreviewAction(matchId: string) {
 }
 
 export async function generateMatchCommentaryAction(matchId: string) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -204,6 +208,7 @@ export async function generateMatchCommentaryAction(matchId: string) {
 }
 
 export async function autoSelectLineupAction(matchId: string, teamId: string): Promise<{ playerIds: string[], justification: string }> {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
@@ -219,6 +224,7 @@ export async function autoSelectLineupAction(matchId: string, teamId: string): P
 }
 
 export async function generateOppositionAnalysisAction(matchId: string, opponentTeamId: string) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -250,16 +256,24 @@ export async function generateOppositionAnalysisAction(matchId: string, opponent
 }
 
 export async function generateLiveMatchUpdateAction(matchId: string): Promise<LiveMatchUpdateOutput> {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const match = await getMatch(matchId);
     if (!match || !match.liveScore) throw new Error("Match not found or no live score data available.");
 
+    const isFirstInnings = match.liveScore.liveInnings === 1;
+    const battingTeamName = isFirstInnings ? match.teamAName : match.teamBName;
+    const bowlingTeamName = isFirstInnings ? match.teamBName : match.teamAName;
+    const targetScore = isFirstInnings ? undefined : match.firstInningsTotal ? match.firstInningsTotal + 1 : undefined;
+
     try {
         const result = await generateLiveMatchUpdate({
-            battingTeamName: match.teamAName, // Assumes Team A is always batting for now
+            battingTeamName: battingTeamName,
+            bowlingTeamName: bowlingTeamName,
             currentScore: match.liveScore.runs,
             wickets: match.liveScore.wickets,
-            overs: match.liveScore.overs + match.liveScore.balls / 10, // Combine overs and balls for prompt
+            overs: parseFloat(`${match.liveScore.overs}.${match.liveScore.balls}`),
+            targetScore: targetScore,
         });
         return result;
     } catch (error) {
