@@ -43,7 +43,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { Match, Team, Competition, Field } from "@/lib/data";
+import type { Match, Team, Competition, Field, MatchStatus } from "@/lib/data";
 import { deleteMatchAction, updateMatchAction } from '@/lib/actions/matches';
 import { MatchCard } from "./match-card";
 import { MatchCalendar } from "./match-calendar";
@@ -55,6 +55,8 @@ const fixtureSchema = z.object({
   fieldId: z.string({ required_error: "Please select a field." }),
   dateTime: z.date({ required_error: "A date for the match is required." }),
   time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Invalid time format. Please use HH:MM." }),
+  status: z.enum(['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned']),
+  statusReason: z.string().optional(),
 }).refine(data => data.teamAId !== data.teamBId, {
   message: "Home and away teams cannot be the same.",
   path: ["teamBId"],
@@ -75,16 +77,19 @@ function EditMatchDialog({ match, teams, competitions, fields, open, onOpenChang
       fieldId: match.fieldId,
       dateTime: match.dateTime,
       time: format(match.dateTime, "HH:mm"),
+      status: match.status,
+      statusReason: match.statusReason || "",
     },
   });
 
   const teamAId = form.watch('teamAId');
   const teamBId = form.watch('teamBId');
+  const status = form.watch('status');
   
   React.useEffect(() => {
     if (match) {
         form.reset({
-            teamAId: match.teamAId, teamBId: match.teamBId, competitionId: match.competitionId, fieldId: match.fieldId, dateTime: match.dateTime, time: format(match.dateTime, "HH:mm"),
+            teamAId: match.teamAId, teamBId: match.teamBId, competitionId: match.competitionId, fieldId: match.fieldId, dateTime: match.dateTime, time: format(match.dateTime, "HH:mm"), status: match.status, statusReason: match.statusReason || "",
         });
     }
   }, [match, form]);
@@ -124,6 +129,12 @@ function EditMatchDialog({ match, teams, competitions, fields, open, onOpenChang
                     <FormField control={form.control} name="dateTime" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Match Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : (<span>Pick a date</span>)}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="time" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Match Time</FormLabel><FormControl><Input type="time" className="w-full" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Match Status</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger></FormControl><SelectContent>{MATCH_STATUSES.map((s) => (<SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    {['postponed', 'cancelled', 'abandoned'].includes(status) && (
+                        <FormField control={form.control} name="statusReason" render={({ field }) => (<FormItem><FormLabel>Reason for Status</FormLabel><FormControl><Input placeholder="e.g., Bad weather" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    )}
+                </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Changes"}</Button>
@@ -135,7 +146,7 @@ function EditMatchDialog({ match, teams, competitions, fields, open, onOpenChang
   );
 }
 
-const MATCH_STATUSES = ['scheduled', 'live', 'completed', 'cancelled'];
+const MATCH_STATUSES: MatchStatus[] = ['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned'];
 
 export default function MatchesClient({ matches, teams, fields, competitions, isAdmin }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], isAdmin: boolean }) {
   const { toast } = useToast();
@@ -406,7 +417,19 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                             </TableCell>
                             <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
                             <TableCell>{match.fieldName}</TableCell>
-                            <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  match.status === 'completed' ? 'secondary' :
+                                  match.status === 'live' ? 'destructive' :
+                                  ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
+                                  'default'
+                                }
+                                className="capitalize"
+                              >
+                                {match.status}
+                              </Badge>
+                            </TableCell>
                             {isAdmin && <TableCell className="text-right">
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>

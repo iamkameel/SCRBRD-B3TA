@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -537,7 +538,20 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{match.fieldName}</span>
                     </div>
                 </div>
-                <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className={cn("capitalize h-fit", match.status === 'live' && "bg-red-500 text-white animate-pulse")}>{match.status}</Badge>
+                <div className="flex flex-col items-end gap-2">
+                    <Badge
+                        variant={
+                            match.status === 'completed' ? 'secondary' :
+                            match.status === 'live' ? 'destructive' :
+                            ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
+                            'default'
+                        }
+                        className={cn("capitalize h-fit", match.status === 'live' && "bg-red-500 text-white animate-pulse")}
+                    >
+                        {match.status}
+                    </Badge>
+                    {match.statusReason && <p className="text-xs text-muted-foreground">{match.statusReason}</p>}
+                </div>
             </div>
         </header>
 

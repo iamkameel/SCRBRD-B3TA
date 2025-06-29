@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
@@ -77,6 +77,8 @@ const fixtureSchema = z.object({
   competitionId: z.string(),
   fieldId: z.string(),
   dateTime: z.date(),
+  status: z.enum(['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned']),
+  statusReason: z.string().optional(),
 });
 
 type FixtureFormValues = z.infer<typeof fixtureSchema>;
@@ -214,10 +216,21 @@ export async function addMatchAction(data: FixtureFormValues) {
   redirect(`/matches/${newMatchId}`);
 }
 
-export async function updateMatchAction(matchId: string, data: FixtureFormValues) {
+const updateMatchFixtureSchema = z.object({
+  teamAId: z.string(),
+  teamBId: z.string(),
+  competitionId: z.string(),
+  fieldId: z.string(),
+  dateTime: z.date(),
+  status: z.enum(['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned']),
+  statusReason: z.string().optional(),
+});
+
+
+export async function updateMatchAction(matchId: string, data: z.infer<typeof updateMatchFixtureSchema>) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  const validatedFields = fixtureSchema.safeParse(data);
+  const validatedFields = updateMatchFixtureSchema.safeParse(data);
 
   if (!validatedFields.success) {
     throw new Error('Invalid match data.');
@@ -229,7 +242,7 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
       throw new Error("Match not found or you do not have permission to edit it.");
   }
 
-  const { teamAId, teamBId, competitionId, fieldId, dateTime } = validatedFields.data;
+  const { teamAId, teamBId, competitionId, fieldId, dateTime, status, statusReason } = validatedFields.data;
 
   const [teamASnap, teamBSnap, fieldSnap] = await Promise.all([
     getDoc(doc(db, 'teams', teamAId)),
@@ -249,6 +262,8 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
         teamBId, teamBName: teamBSnap.data().name,
         fieldId, fieldName: fieldSnap.data().name,
         dateTime,
+        status,
+        statusReason: ['postponed', 'cancelled', 'abandoned'].includes(status) ? statusReason : '',
         competitionId: undefined, competitionName: "Friendly Match",
         seasonId: undefined, seasonName: undefined,
         divisionId: undefined, divisionName: undefined,
@@ -261,6 +276,8 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
         teamBId, teamBName: teamBSnap.data().name,
         fieldId, fieldName: fieldSnap.data().name,
         dateTime,
+        status,
+        statusReason: ['postponed', 'cancelled', 'abandoned'].includes(status) ? statusReason : '',
         competitionId: competition.competitionId, competitionName: competition.name,
         seasonId: competition.seasonId, seasonName: competition.seasonName,
         divisionId: competition.divisionId, divisionName: competition.divisionName,
@@ -269,7 +286,7 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
 
 
   try {
-      await updateDoc(matchRef, updatedMatchData);
+      await updateDoc(matchRef, updatedMatchData as { [key: string]: any });
   } catch (error) {
       console.error("Error updating match:", error);
       throw new Error("Could not update match.");

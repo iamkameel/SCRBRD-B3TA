@@ -98,7 +98,7 @@ export interface RosterMember {
   isViceCaptain: boolean;
 }
 
-export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
+export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'postponed' | 'cancelled' | 'abandoned';
 
 export interface PlayerOfTheMatch {
   name: string;
@@ -135,6 +135,7 @@ export interface Match {
   fieldName: string;
   dateTime: Date;
   status: MatchStatus;
+  statusReason?: string;
   round?: number;
   report?: string;
   preview?: string;
