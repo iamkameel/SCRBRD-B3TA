@@ -10,7 +10,7 @@ import { getLeaderboards, getTeamStandings } from "@/lib/actions/dashboard";
 import { getTeams } from "@/lib/actions/teams";
 import { getPlayers } from "@/lib/actions/players";
 import { getFields } from "@/lib/actions/fields";
-import { format } from "date-fns";
+import { format, isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
 import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database, AlertCircle } from 'lucide-react';
@@ -97,25 +97,23 @@ export default async function AdminDashboard() {
     getUnconfirmedAssignmentsCount(),
   ]);
 
+  // Date and Time Filtering for Operations Center
   const today = new Date();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0));
+
   const liveMatches = allMatches.filter(m => m.status === 'live');
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
-
-  const upcomingToday = allMatches.filter(m => 
-    m.status === 'scheduled' && 
-    new Date(m.dateTime) >= todayStart &&
-    new Date(m.dateTime) <= todayEnd
-  );
   
-  const completedToday = allMatches.filter(m =>
-    m.status === 'completed' &&
-    new Date(m.dateTime) >= todayStart &&
-    new Date(m.dateTime) <= todayEnd
-  );
+  const todayMatches = allMatches.filter(m => isToday(m.dateTime))
+    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
 
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+  
+  const thisWeekMatches = allMatches.filter(m => 
+    isWithinInterval(m.dateTime, { start: todayStart, end: weekEnd })
+  ).sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+
+  
   const fieldsInUse = new Set(liveMatches.map(m => m.fieldId));
   const fieldsInMaintenance = allFields.filter(f => f.status === 'Maintenance').length;
   const fieldsAvailable = allFields.length - fieldsInUse.size - fieldsInMaintenance;
@@ -130,7 +128,7 @@ export default async function AdminDashboard() {
   
   const transportToday = allTransportAssignments.filter(a => {
       const assignmentDate = new Date(a.dateTime);
-      return assignmentDate >= todayStart && assignmentDate <= todayEnd;
+      return isToday(assignmentDate);
   });
 
   const equipmentByStatus = allEquipment.reduce((acc, item) => {
@@ -217,13 +215,16 @@ export default async function AdminDashboard() {
         <div className="lg:col-span-2 grid grid-cols-1 gap-8">
           
           <Card>
-            <CardHeader><CardTitle>Today's Operations</CardTitle></CardHeader>
+            <CardHeader>
+                <CardTitle>Operations Center</CardTitle>
+                <CardDescription>An overview of live, daily, and weekly match operations.</CardDescription>
+            </CardHeader>
             <CardContent>
               <Tabs defaultValue="live">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="live">Live Matches ({liveMatches.length})</TabsTrigger>
-                  <TabsTrigger value="upcoming">Upcoming Today ({upcomingToday.length})</TabsTrigger>
-                  <TabsTrigger value="results">Results Today ({completedToday.length})</TabsTrigger>
+                  <TabsTrigger value="live">Live Now ({liveMatches.length})</TabsTrigger>
+                  <TabsTrigger value="today">Today's Schedule ({todayMatches.length})</TabsTrigger>
+                  <TabsTrigger value="this_week">This Week ({thisWeekMatches.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="live" className="mt-4">
                   {liveMatches.length > 0 ? (
@@ -233,21 +234,21 @@ export default async function AdminDashboard() {
                     </Table>
                   ) : <p className="text-center text-muted-foreground py-8">No matches are currently live.</p>}
                 </TabsContent>
-                <TabsContent value="upcoming" className="mt-4">
-                  {upcomingToday.length > 0 ? (
+                <TabsContent value="today" className="mt-4">
+                  {todayMatches.length > 0 ? (
                      <Table>
-                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Time</TableHead><TableHead>Venue</TableHead></TableRow></TableHeader>
-                        <TableBody>{upcomingToday.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'p')}</TableCell><TableCell>{match.fieldName}</TableCell></TableRow>))}</TableBody>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Time</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                        <TableBody>{todayMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'p')}</TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant={match.status === 'completed' ? 'secondary' : (match.status === 'live' ? 'destructive' : 'default')} className={cn("capitalize", match.status === 'live' && "bg-red-500 text-white animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
                     </Table>
-                  ) : <p className="text-center text-muted-foreground py-8">No more matches scheduled for today.</p>}
+                  ) : <p className="text-center text-muted-foreground py-8">No matches scheduled for today.</p>}
                 </TabsContent>
-                 <TabsContent value="results" className="mt-4">
-                  {completedToday.length > 0 ? (
+                 <TabsContent value="this_week" className="mt-4">
+                  {thisWeekMatches.length > 0 ? (
                     <Table>
-                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Result</TableHead><TableHead>Competition</TableHead></TableRow></TableHeader>
-                        <TableBody>{completedToday.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.result}</TableCell><TableCell>{match.competitionName}</TableCell></TableRow>))}</TableBody>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Date</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                        <TableBody>{thisWeekMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'EEE, dd MMM p')}</TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell></TableRow>))}</TableBody>
                     </Table>
-                  ) : <p className="text-center text-muted-foreground py-8">No matches completed today.</p>}
+                  ) : <p className="text-center text-muted-foreground py-8">No other matches scheduled for this week.</p>}
                 </TabsContent>
               </Tabs>
               <div className="mt-6 border-t pt-4">
