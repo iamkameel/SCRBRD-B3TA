@@ -20,7 +20,7 @@ export function Sidebar({ user }: { user: Person | null }) {
           <span>SCRBRD</span>
         </Link>
       </div>
-      <nav className="flex flex-col gap-2 p-4">
+      <nav className="flex flex-col gap-1 p-4">
         {navItems.map((item) => {
           if (item.adminOnly && !isAdmin) {
             return null;
@@ -31,7 +31,7 @@ export function Sidebar({ user }: { user: Person | null }) {
               key={item.label}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
               )}
             >
