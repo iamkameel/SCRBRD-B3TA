@@ -43,19 +43,18 @@ const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.Per
   ssr: false,
 });
 
-const ROLES = [
-  { id: "Player", label: "Player" }, { id: "Coach", label: "Coach" },
-  { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Team Manager", label: "Team Manager" },
-  { id: "Trainer", label: "Trainer" }, { id: "Physio", label: "Physio" },
-  { id: "Doctor", label: "Doctor" }, { id: "First Aid", label: "First Aid" },
-  { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" },
-  { id: "Guardian", label: "Guardian" }, { id: "Sportmaster", label: "Sportmaster" },
-  { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },
-] as const;
+const ALL_ROLES = [
+    { id: "Admin", label: "Admin" }, { id: "Sportsmaster", label: "Sportsmaster" }, { id: "School Admin", label: "School Admin" },
+    { id: "Coach", label: "Coach" }, { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Captain", label: "Captain" }, { id: "Team Manager", label: "Team Manager" },
+    { id: "Player", label: "Player" }, { id: "Guardian", label: "Guardian" }, { id: "Spectator", label: "Spectator" },
+    { id: "Trainer", label: "Trainer" }, { id: "Physiotherapist", label: "Physiotherapist" }, { id: "Doctor", label: "Doctor" }, { id: "Chiropractor", label: "Chiropractor" }, { id: "Nutritionist", label: "Nutritionist" }, { id: "First Aider", label: "First Aider" },
+    { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" }, { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },
+];
+
 
 type SortableColumn = 'name' | 'email';
 
-export default function PeopleClient({ people, isAdmin }: { people: Person[], isAdmin: boolean }) {
+export default function PeopleClient({ people, user }: { people: Person[], user: Person | null }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
@@ -71,6 +70,8 @@ export default function PeopleClient({ people, isAdmin }: { people: Person[], is
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+  
+  const isAdmin = user?.roles.includes('Admin') ?? false;
 
   const filteredPeople = people.filter(person => {
     const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
@@ -213,7 +214,7 @@ export default function PeopleClient({ people, isAdmin }: { people: Person[], is
                                     <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
                                         <span className="truncate">
                                             {roleFilters.length === 0 && "Select roles..."}
-                                            {roleFilters.length === 1 && ROLES.find(r => r.id === roleFilters[0])?.label}
+                                            {roleFilters.length === 1 && ALL_ROLES.find(r => r.id === roleFilters[0])?.label}
                                             {roleFilters.length > 1 && `${roleFilters.length} roles selected`}
                                         </span>
                                         <ChevronDown className="h-4 w-4 opacity-50" />
@@ -222,7 +223,7 @@ export default function PeopleClient({ people, isAdmin }: { people: Person[], is
                                 <DropdownMenuContent className="w-56">
                                     <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    {ROLES.map(role => (
+                                    {ALL_ROLES.map(role => (
                                     <DropdownMenuCheckboxItem
                                         key={role.id}
                                         checked={roleFilters.includes(role.id)}
@@ -336,7 +337,7 @@ export default function PeopleClient({ people, isAdmin }: { people: Person[], is
         </Card>
       </div>
 
-      {isAdmin && isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} />}
+      {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} currentUser={user} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} />}
 
       {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

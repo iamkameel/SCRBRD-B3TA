@@ -1,4 +1,5 @@
 
+
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -85,8 +86,9 @@ export const sampleData = {
     ],
     people: [
         // Admin & Staff
-        { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin', 'Coach', 'Umpire'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_kameel', firstName: 'Kameel', lastName: 'Kalyan', email: 'kameel@maverickdesign.co.za', roles: ['Admin', 'Coach', 'Umpire'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_kameel', firstName: 'Kameel', lastName: 'Kalyan', email: 'kameel@maverickdesign.co.za', roles: ['Sportsmaster'], activeRole: 'Sportsmaster', assignedSchools: ['school_1', 'school_2'], notificationPreferences: { email: true, push: false } },
+        { personId: 'staff_5', firstName: 'Paddy', lastName: 'Upton', email: 'paddy.upton@schooladmin.com', roles: ['School Admin'], activeRole: 'School Admin', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
         { personId: 'staff_1', firstName: 'John', lastName: 'Doe', email: 'john.doe@umpire.com', roles: ['Umpire', 'Scorer'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@umpire.com', roles: ['Umpire'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_3', firstName: 'Mark', lastName: 'Taylor', email: 'mark.t@ground.com', roles: ['Grounds-Keeper', 'Driver'], activeRole: 'Grounds-Keeper', notificationPreferences: { email: true, push: false } },

@@ -16,6 +16,17 @@ import { useToast } from "@/hooks/use-toast";
 import type { Person } from "@/lib/data";
 import { addPlayerAction, updatePlayerAction } from '@/lib/actions/players';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+
+const ROLE_GROUPS = [
+  { group: "Administrative", roles: [ { id: "Admin", label: "Admin" }, { id: "Sportsmaster", label: "Sportsmaster" }, { id: "School Admin", label: "School Admin" } ] },
+  { group: "Team Staff", roles: [ { id: "Coach", label: "Coach" }, { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Captain", label: "Captain" }, { id: "Team Manager", label: "Team Manager" } ] },
+  { group: "Players & Spectators", roles: [ { id: "Player", label: "Player" }, { id: "Guardian", label: "Guardian" }, { id: "Spectator", label: "Spectator" } ] },
+  { group: "Support & Medical", roles: [ { id: "Trainer", label: "Trainer" }, { id: "Physiotherapist", label: "Physiotherapist" }, { id: "Doctor", label: "Doctor" }, { id: "Chiropractor", label: "Chiropractor" }, { id: "Nutritionist", label: "Nutritionist" }, { id: "First Aider", label: "First Aider" } ] },
+  { group: "Officials & Ground Staff", roles: [ { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" }, { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" } ] },
+];
+
+const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
 
 const personSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -29,11 +40,9 @@ const personSchema = z.object({
   activeRole: z.string().optional(),
 }).refine(data => {
     if (data.roles && data.roles.length > 0 && !data.activeRole) {
-        // If roles are present but no activeRole is set, this is invalid
         return false;
     }
     if (data.activeRole && !data.roles.includes(data.activeRole)) {
-        // If activeRole is set, it must be one of the roles in the roles array
         return false;
     }
     return true;
@@ -44,18 +53,7 @@ const personSchema = z.object({
 
 type PersonFormValues = z.infer<typeof personSchema>;
 
-const ROLES = [
-  { id: "Player", label: "Player" }, { id: "Coach", label: "Coach" },
-  { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Team Manager", label: "Team Manager" },
-  { id: "Trainer", label: "Trainer" }, { id: "Physio", label: "Physio" },
-  { id: "Doctor", label: "Doctor" }, { id: "First Aid", label: "First Aid" },
-  { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" },
-  { id: "Guardian", label: "Guardian" }, { id: "Sportmaster", label: "Sportmaster" },
-  { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },
-] as const;
-
-
-export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add' | 'edit', person?: Person, open: boolean, onOpenChange: (open: boolean) => void }) {
+export function PersonDialog({ mode, person, currentUser, open, onOpenChange }: { mode: 'add' | 'edit', person?: Person, currentUser: Person | null, open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
@@ -71,6 +69,36 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
   });
   
   const selectedRoles = form.watch('roles');
+
+  const getAssignableRoles = React.useCallback((currentUserRole?: string) => {
+    if (!currentUserRole) return [];
+    
+    const allRoleGroups = ROLE_GROUPS;
+
+    switch (currentUserRole) {
+        case 'Admin':
+            return allRoleGroups;
+        case 'Sportsmaster':
+            return [
+                { group: 'Administrative', roles: allRoleGroups.flatMap(g => g.roles).filter(r => r.id === 'School Admin') },
+                { group: 'Officials & Ground Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Umpire', 'Scorer'].includes(r.id)) }
+            ].filter(g => g.roles.length > 0);
+        case 'School Admin':
+             return [
+                { group: 'Team Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Coach', 'Assistant Coach'].includes(r.id)) },
+                { group: 'Support & Medical', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aider'].includes(r.id)) },
+                { group: 'Officials & Ground Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Grounds-Keeper', 'Driver'].includes(r.id)) }
+            ].filter(g => g.roles.length > 0);
+        case 'Coach':
+            return [
+                { group: 'Team Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Assistant Coach', 'Captain'].includes(r.id)) }
+            ];
+        default:
+            return [];
+    }
+  }, []);
+
+  const assignableRoles = getAssignableRoles(currentUser?.activeRole);
 
   React.useEffect(() => {
     if (open) {
@@ -140,20 +168,28 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
             <FormField control={form.control} name="roles" render={() => (
               <FormItem>
                 <div className="mb-4"><FormLabel>Roles</FormLabel><FormDescription>Assign at least one role to this person.</FormDescription></div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {ROLES.map((item) => (
-                    <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
-                      <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
-                           const newRoles = checked ? [...field.value, item.id] : field.value?.filter((v) => v !== item.id);
-                           field.onChange(newRoles);
-                           if (!newRoles.includes(form.getValues('activeRole'))) {
-                               form.setValue('activeRole', newRoles[0]);
-                           }
-                        }} disabled={isPending} /></FormControl>
-                        <FormLabel className="font-normal">{item.label}</FormLabel>
-                      </FormItem>
-                    )} />
+                {assignableRoles.length === 0 && <p className="text-sm text-destructive">You do not have permission to assign roles.</p>}
+                <div className="space-y-4">
+                  {assignableRoles.map((group) => (
+                    <div key={group.group}>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-2">{group.group}</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border p-4 rounded-md">
+                        {group.roles.map((item) => (
+                          <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
+                            <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
+                                 const newRoles = checked ? [...field.value, item.id] : field.value?.filter((v) => v !== item.id);
+                                 field.onChange(newRoles);
+                                 if (newRoles && !newRoles.includes(form.getValues('activeRole'))) {
+                                     form.setValue('activeRole', newRoles[0]);
+                                 }
+                              }} disabled={isPending} /></FormControl>
+                              <FormLabel className="font-normal">{item.label}</FormLabel>
+                            </FormItem>
+                          )} />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
                 <FormMessage />

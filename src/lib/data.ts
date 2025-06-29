@@ -10,6 +10,7 @@ export interface Person {
   profileImageUrl?: string;
   roles: string[];
   activeRole?: string;
+  assignedSchools?: string[];
   notificationPreferences?: {
     email: boolean;
     push: boolean;

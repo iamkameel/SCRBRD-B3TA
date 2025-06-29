@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -183,8 +184,41 @@ const playerSchema = z.object({
     roles: z.array(z.string()).min(1),
     activeRole: z.string().optional(),
 });
+
+function hasPermissionToAssign(assignerRoles: string[], targetRoles: string[]): boolean {
+    if (assignerRoles.includes('Admin')) return true;
+
+    const permissions: { [key: string]: string[] } = {
+        'Sportsmaster': ['School Admin', 'Umpire', 'Scorer'],
+        'School Admin': ['Coach', 'Assistant Coach', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aider', 'Grounds-Keeper', 'Driver'],
+        'Coach': ['Assistant Coach', 'Captain']
+    };
+
+    const allowedToAssign = new Set<string>();
+    assignerRoles.forEach(role => {
+        const allowed = permissions[role as keyof typeof permissions];
+        if (allowed) {
+            allowed.forEach(p => allowedToAssign.add(p));
+        }
+    });
+
+    return targetRoles.every(target => allowedToAssign.has(target));
+}
+
 export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
-  if (!playerSchema.safeParse(data).success) throw new Error('Invalid person data.');
+  const validated = playerSchema.safeParse(data);
+  if (!validated.success) throw new Error('Invalid person data.');
+  
+  const currentUserId = await getUserId();
+  if (!currentUserId) throw new Error("You must be logged in to perform this action.");
+  
+  const currentUser = await getPerson(currentUserId);
+  if (!currentUser) throw new Error("Could not verify your identity.");
+
+  if (!hasPermissionToAssign(currentUser.roles, data.roles)) {
+    throw new Error("You do not have permission to assign one or more of the selected roles.");
+  }
+
   try {
     await addDoc(collection(db, 'people'), { 
       ...data, 
@@ -201,10 +235,26 @@ const updatePlayerSchema = playerSchema.extend({ personId: z.string() });
 export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema>) {
   const validated = updatePlayerSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid person data.');
+
+  const currentUserId = await getUserId();
+  if (!currentUserId) throw new Error("You must be logged in to perform this action.");
+  
+  const currentUser = await getPerson(currentUserId);
+  if (!currentUser) throw new Error("Could not verify your identity.");
+  
   const { personId, ...updateData } = validated.data;
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
   if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
+  
+  const originalRoles = personSnap.data().roles || [];
+  const newRoles = updateData.roles;
+  const changedRoles = newRoles.filter(r => !originalRoles.includes(r));
+
+  if (changedRoles.length > 0 && !hasPermissionToAssign(currentUser.roles, changedRoles)) {
+      throw new Error("You do not have permission to assign one or more of the selected roles.");
+  }
+
   try {
     await updateDoc(personRef, updateData);
   } catch (error) {
