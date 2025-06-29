@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import { cn } from '@/lib/utils';
-import { topLevelNavItems, navGroups } from './sidebar-nav-items';
+import { getNavConfig } from './sidebar-nav-items';
 import { useAuth } from '@/lib/auth-context';
 import {
   Accordion,
@@ -19,13 +19,15 @@ import { ScrollArea } from './ui/scroll-area';
 export function Sidebar() {
   const { person } = useAuth();
   const pathname = usePathname();
-  const activeRole = person?.activeRole;
+  const activeRole = person?.activeRole || 'Player'; // Default to a non-admin role
+
+  const { topLevel: topLevelNavItems, groups: navGroups } = getNavConfig(activeRole);
 
   const defaultOpenItems = React.useMemo(() => 
     navGroups
       .filter(group => group.items.some(item => pathname.startsWith(item.href)))
       .map(group => group.title),
-    [pathname]
+    [pathname, navGroups]
   );
 
   return (

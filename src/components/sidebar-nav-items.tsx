@@ -7,18 +7,18 @@ import {
     Cog
 } from 'lucide-react';
 
-export const topLevelNavItems = [
+const adminTopLevelNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
 
-export const navGroups = [
+const adminNavGroups = [
     {
         title: "Match Operations",
         icon: Swords,
         items: [
-            { href: '/matches', label: 'Matches', icon: ClipboardList },
+            { href: '/matches', label: 'All Matches', icon: ClipboardList },
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
-            { href: '/analysis', label: 'Compare', icon: GitCompareArrows },
+            { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
         ]
     },
     {
@@ -69,3 +69,81 @@ export const navGroups = [
         ]
     }
 ];
+
+const playerCoachTopLevelNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+];
+
+const playerCoachNavGroups = [
+    {
+        title: "My Matches",
+        icon: Swords,
+        items: [
+            { href: '/matches', label: 'Fixtures & Results', icon: ClipboardList },
+        ]
+    },
+    {
+        title: "My Teams",
+        icon: Users,
+        items: [
+            { href: '/teams', label: 'Team Hub', icon: Users },
+            { href: '/people', label: 'Rosters', icon: User },
+        ]
+    },
+    {
+        title: "Analysis",
+        icon: Trophy,
+        items: [
+            { href: '/rankings', label: 'Leaderboards', icon: Trophy },
+            { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
+        ]
+    }
+];
+
+const officialTopLevelNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+];
+
+const officialNavGroups = [
+    {
+        title: "Assignments",
+        icon: ClipboardList,
+        items: [
+            { href: '/matches', label: 'All Matches', icon: ClipboardList },
+        ]
+    }
+];
+
+const driverTopLevelNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+];
+
+const driverNavGroups = [
+    {
+        title: "Assignments",
+        icon: Bus,
+        items: [
+            { href: '/transport', label: 'My Schedule', icon: Bus },
+        ]
+    }
+];
+
+export function getNavConfig(role: string) {
+    switch (role) {
+        case 'Admin':
+            return { topLevel: adminTopLevelNavItems, groups: adminNavGroups };
+        case 'Coach':
+        case 'Player':
+        case 'Captain':
+        case 'Vice-Captain':
+            return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
+        case 'Umpire':
+        case 'Scorer':
+            return { topLevel: officialTopLevelNavItems, groups: officialNavGroups };
+        case 'Driver':
+            return { topLevel: driverTopLevelNavItems, groups: driverNavGroups };
+        default:
+             // Default to a safe, minimal navigation for any other roles
+            return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
+    }
+}

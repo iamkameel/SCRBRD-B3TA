@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { topLevelNavItems, navGroups } from './sidebar-nav-items';
+import { getNavConfig } from './sidebar-nav-items';
 import { cn } from '@/lib/utils';
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import { useAuth } from '@/lib/auth-context';
@@ -87,13 +87,15 @@ export function Header() {
     const { user, person } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const activeRole = person?.activeRole;
+    const activeRole = person?.activeRole || 'Player';
+
+    const { topLevel: topLevelNavItems, groups: navGroups } = getNavConfig(activeRole);
 
     const defaultOpenItems = React.useMemo(() => 
         navGroups
         .filter(group => group.items.some(item => pathname.startsWith(item.href)))
         .map(group => group.title),
-        [pathname]
+        [pathname, navGroups]
     );
 
     const handleSignOut = async () => {
