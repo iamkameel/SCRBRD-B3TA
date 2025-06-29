@@ -16,7 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { Person } from "@/lib/data";
 import { addPlayerAction, updatePlayerAction } from '@/lib/actions/players';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 
 const ROLE_GROUPS = [
   { group: "Administrative", roles: [ { id: "Admin", label: "Admin" }, { id: "Sportsmaster", label: "Sportsmaster" }, { id: "School Admin", label: "School Admin" } ] },
@@ -25,8 +24,6 @@ const ROLE_GROUPS = [
   { group: "Support & Medical", roles: [ { id: "Trainer", label: "Trainer" }, { id: "Physiotherapist", label: "Physiotherapist" }, { id: "Doctor", label: "Doctor" }, { id: "Chiropractor", label: "Chiropractor" }, { id: "Nutritionist", label: "Nutritionist" }, { id: "First Aider", label: "First Aider" } ] },
   { group: "Officials & Ground Staff", roles: [ { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" }, { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" } ] },
 ];
-
-const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
 
 const personSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),

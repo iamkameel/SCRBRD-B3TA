@@ -70,6 +70,43 @@ const adminNavGroups = [
     }
 ];
 
+const sportsmasterNavGroups = [
+    {
+        title: "League Structure",
+        icon: Trophy,
+        items: [
+            { href: '/competitions', label: 'Competitions', icon: Shield },
+            { href: '/seasons', label: 'Seasons', icon: CalendarDays },
+            { href: '/divisions', label: 'Divisions', icon: Medal },
+            { href: '/rankings', label: 'Rankings', icon: Trophy },
+        ]
+    },
+    {
+        title: "Match Operations",
+        icon: Swords,
+        items: [
+            { href: '/matches', label: 'All Matches', icon: ClipboardList },
+            { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
+        ]
+    },
+     {
+        title: "Participants",
+        icon: Users,
+        items: [
+            { href: '/teams', label: 'Teams', icon: Users },
+            { href: '/people', label: 'People', icon: User },
+            { href: '/schools', label: 'Schools', icon: Building },
+        ]
+    },
+    {
+        title: "Resources",
+        icon: Wrench,
+        items: [
+            { href: '/fields', label: 'Fields', icon: MapPin },
+        ]
+    },
+];
+
 const playerCoachTopLevelNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
@@ -132,6 +169,8 @@ export function getNavConfig(role: string) {
     switch (role) {
         case 'Admin':
             return { topLevel: adminTopLevelNavItems, groups: adminNavGroups };
+        case 'Sportsmaster':
+            return { topLevel: adminTopLevelNavItems, groups: sportsmasterNavGroups };
         case 'Coach':
         case 'Player':
         case 'Captain':

@@ -2,13 +2,18 @@
 import { getOfficialAssignmentsForPerson, getMatches } from '@/lib/actions/matches';
 import { getAssignmentsForDriver } from '@/lib/actions/transport';
 import AdminDashboard from '@/app/dashboards/admin-dashboard';
+import SportsmasterDashboard from '@/app/dashboards/sportsmaster-dashboard';
 import UmpireScorerDashboard from '@/app/dashboards/umpire-scorer-dashboard';
 import DriverDashboard from '@/app/dashboards/driver-dashboard';
 import MedicalDashboard from '@/app/dashboards/medical-dashboard';
 import CoachDashboard from '@/app/dashboards/coach-dashboard';
-import { getPerson } from '@/lib/actions/players';
+import { getPerson, getPlayers } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
-import { getCoachDashboardData } from '@/lib/actions/dashboard';
+import { getCoachDashboardData, getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
+import { getCompetitions } from '@/lib/actions/competitions';
+import { getTeams } from '@/lib/actions/teams';
+import { getFields } from '@/lib/actions/fields';
+import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 
 
 export default async function DashboardPage() {
@@ -36,6 +41,40 @@ export default async function DashboardPage() {
   // Use the activeRole to determine which dashboard to show
   if (person.activeRole === 'Admin') {
     return <AdminDashboard />;
+  }
+
+  if (person.activeRole === 'Sportsmaster') {
+    const [
+      allCompetitions,
+      allTeams,
+      allPlayers,
+      allFields,
+      conflicts,
+      unconfirmedAssignmentsCount,
+      teamStandings,
+      leaderboards
+    ] = await Promise.all([
+      getCompetitions(),
+      getTeams(),
+      getPlayers(),
+      getFields(),
+      getFixtureConflicts(),
+      getUnconfirmedAssignmentsCount(),
+      getTeamStandings(),
+      getLeaderboards(),
+    ]);
+
+    // In a future step, we would filter these down based on the sportsmaster's assigned schools/districts.
+    return <SportsmasterDashboard 
+        allCompetitions={allCompetitions}
+        allTeams={allTeams}
+        allPlayers={allPlayers}
+        allFields={allFields}
+        conflicts={conflicts}
+        unconfirmedAssignmentsCount={unconfirmedAssignmentsCount}
+        teamStandings={teamStandings}
+        leaderboards={leaderboards}
+    />;
   }
   
   if (person.activeRole === 'Umpire' || person.activeRole === 'Scorer') {
