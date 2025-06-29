@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -62,7 +61,12 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
   });
   
   const selectedRoles = form.watch('roles');
-  const showSchoolAssignment = selectedRoles?.includes('Sportsmaster') || selectedRoles?.includes('School Admin');
+  
+  const rolesRequiringSchoolAssignment = [
+    'Sportsmaster', 'School Admin', 'Coach', 'Assistant Coach', 'Team Manager',
+    'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid'
+  ];
+  const showSchoolAssignment = selectedRoles?.some(role => rolesRequiringSchoolAssignment.includes(role));
 
   const getAssignableRoles = React.useCallback((currentUserRole?: string) => {
     if (!currentUserRole) return [];
@@ -165,7 +169,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
               <FormItem>
                 <div className="mb-4">
                   <FormLabel>Roles</FormLabel>
-                  <FormDescription>Assign at least one role. Selecting roles like Sportsmaster or School Admin will reveal further assignment options.</FormDescription>
+                  <FormDescription>Assign at least one role. Selecting certain roles will reveal further assignment options.</FormDescription>
                 </div>
                 {assignableRoles.length === 0 && <p className="text-sm text-destructive">You do not have permission to assign roles.</p>}
                 <div className="space-y-4">
