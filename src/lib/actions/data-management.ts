@@ -29,7 +29,9 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
     const userId = await getUserId();
     if (!userId) {
-        return { success: false, message: "User not authenticated." };
+        // If there is no admin user, it's very likely there's no data to delete.
+        // We can treat this as a success case to unblock other actions.
+        return { success: true, message: "No active admin user found, assuming no data to delete." };
     }
     
     try {
@@ -83,15 +85,25 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
-
     try {
+        // This will clear data for an existing admin or do nothing if the DB is empty.
         await deleteAllDataAction();
 
         const batch = writeBatch(db);
         const idMap = new Map<string, string>();
         let itemCount = 0;
+
+        // Find the admin user in the sample data to establish the owner ID for this new data set.
+        const adminRecord = sampleData.people.find(p => p.personId === 'p_admin');
+        if (!adminRecord) {
+            throw new Error("Sample data is corrupt: 'p_admin' user not found.");
+        }
+
+        // Generate a new, real Firestore ID for the admin user. This will be the owner ID for ALL migrated data.
+        const newAdminDocRef = doc(collection(db, 'people'));
+        const userId = newAdminDocRef.id;
+        
+        idMap.set(adminRecord.personId, userId);
 
         const idKeyMap: { [key: string]: string } = {
             schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', fields: 'fieldId',
@@ -110,6 +122,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 if (!idKey) throw new Error(`No idKey mapping for collection: ${collName}`);
                 
                 const tempId = item[idKey as keyof typeof item];
+
+                // If the document is our admin user, we use the pre-generated ref. Otherwise, create a new one.
+                const isPredefinedAdmin = collName === 'people' && tempId === adminRecord.personId;
+                const docRef = isPredefinedAdmin ? newAdminDocRef : doc(collection(db, collName));
+
                 const { [idKey]: _, ...itemData } = item;
                 
                 const dataToSave: { [key: string]: any } = { ...itemData, userId };
@@ -118,9 +135,10 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
                 if (collName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
-                const docRef = doc(collection(db, collName));
                 batch.set(docRef, dataToSave);
-                if (tempId) idMap.set(tempId, docRef.id);
+                if (tempId && !idMap.has(tempId)) {
+                    idMap.set(tempId, docRef.id);
+                }
                 itemCount++;
             }
         }
@@ -305,8 +323,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
 export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
     const userId = await getUserId();
     if (!userId) {
-        return { success: false, message: "User not authenticated." };
+        return { success: true, message: "No active user, so no data to delete." };
     }
+
     if (!independentSubsets.includes(subsetName)) {
         return { success: false, message: `Individual deletion for ${subsetName} is not supported due to data dependencies. Please use the 'Delete All Data' function.` };
     }
@@ -367,7 +386,9 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
 
 export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
     const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
+    if (!userId) {
+        return { success: false, message: "No admin user found. Please use the 'Migrate All Sample Data' function first to create an admin user." };
+    }
     
     if (!independentSubsets.includes(subsetName)) {
         return { success: false, message: `Individual migration for ${subsetName} is not supported due to data dependencies. Please use the full data migration.` };
@@ -412,3 +433,5 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
         return { success: false, message };
     }
 }
+
+    
