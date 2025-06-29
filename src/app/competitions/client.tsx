@@ -58,6 +58,8 @@ const competitionSchema = z.object({
   teamIds: z.array(z.string()).optional(),
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
+type SortableColumn = 'name' | 'type' | 'seasonName' | 'divisionName' | 'status';
+
 
 const CLASS_DIVISION_MAP: { [key: string]: string[] } = {
     'Open': ['1st XI', '2nd XI', '3rd XI', '4th XI'],
@@ -147,7 +149,7 @@ function CompetitionDialog({ mode, competition, seasons, divisions, teams, open,
     if (!divisionId) return [];
     const selectedDivision = divisions.find(d => d.divisionId === divisionId);
     if (!selectedDivision) return [];
-    return CLASS_DIVISION_MAP[selectedDivision.name] || [];
+    return CLASS_DIVISION_MAP[selectedDivision.name as keyof typeof CLASS_DIVISION_MAP] || [];
   }, [divisionId, divisions]);
 
   React.useEffect(() => {
@@ -333,14 +335,16 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
 
-  const filteredCompetitions = competitions.filter(comp => {
-    const matchesSearch = comp.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter.length === 0 || typeFilter.includes(comp.type);
-    const matchesSeason = seasonFilter.length === 0 || seasonFilter.includes(comp.seasonId);
-    const matchesDivision = divisionFilter.length === 0 || divisionFilter.includes(comp.divisionId);
-    const matchesStatus = statusFilter.length === 0 || statusFilter.includes(comp.status);
-    return matchesSearch && matchesType && matchesSeason && matchesDivision && matchesStatus;
-  });
+  const filteredCompetitions = React.useMemo(() => {
+    return competitions.filter(comp => {
+        const matchesSearch = comp.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesType = typeFilter.length === 0 || typeFilter.includes(comp.type);
+        const matchesSeason = seasonFilter.length === 0 || seasonFilter.includes(comp.seasonId);
+        const matchesDivision = divisionFilter.length === 0 || divisionFilter.includes(comp.divisionId);
+        const matchesStatus = statusFilter.length === 0 || statusFilter.includes(comp.status);
+        return matchesSearch && matchesType && matchesSeason && matchesDivision && matchesStatus;
+    });
+  }, [competitions, searchQuery, typeFilter, seasonFilter, divisionFilter, statusFilter]);
 
   const sortedCompetitions = React.useMemo(() => {
     let sortableItems = [...filteredCompetitions];
