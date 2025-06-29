@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Shared Zod schemas for AI flows.
  * This file does not contain 'use server' and can be imported safely on the client and server.
@@ -200,3 +201,18 @@ export const UmpireDecisionSchema = z.object({
   justification: z.string().describe("A brief, step-by-step justification for the final decision, explaining each component (pitching, impact, wickets)."),
 });
 export type UmpireDecisionOutput = z.infer<typeof UmpireDecisionSchema>;
+
+
+// From generate-live-match-update-flow.ts
+export const LiveMatchUpdateInputSchema = z.object({
+    battingTeamName: z.string(),
+    currentScore: z.number(),
+    wickets: z.number(),
+    overs: z.number(),
+});
+export type LiveMatchUpdateInput = z.infer<typeof LiveMatchUpdateInputSchema>;
+
+export const LiveMatchUpdateOutputSchema = z.object({
+    updateText: z.string().describe("A concise, one or two-sentence summary of the current match situation."),
+});
+export type LiveMatchUpdateOutput = z.infer<typeof LiveMatchUpdateOutputSchema>;

@@ -5,11 +5,12 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2 } from 'lucide-react';
 import type { RosterMember, Match } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction } from '@/lib/actions/matches';
+import { generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 
 // A simple display component for the current over
@@ -46,6 +47,8 @@ export function LiveScoringInterface({
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [isGeneratingUpdate, startUpdateGeneration] = React.useTransition();
+  const [liveUpdateText, setLiveUpdateText] = React.useState<string | null>(null);
 
   const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [] };
   const batsmenOut = liveScore.batsmenOut || [];
@@ -101,6 +104,18 @@ export function LiveScoringInterface({
   }
   const handleWicket = () => {
     handleRecordBall('W');
+  }
+
+  const handleGetLiveUpdate = () => {
+    startUpdateGeneration(async () => {
+        setLiveUpdateText(null);
+        try {
+            const result = await generateLiveMatchUpdateAction(match.matchId);
+            setLiveUpdateText(result.updateText);
+        } catch(error) {
+             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not get live update.", variant: "destructive" });
+        }
+    });
   }
 
   return (
@@ -197,6 +212,22 @@ export function LiveScoringInterface({
                     <CardHeader><CardTitle>Current Over</CardTitle></CardHeader>
                     <CardContent>
                         <OverHistory balls={liveScore.currentOver} />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>AI Match Analysis</CardTitle>
+                            <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate}>
+                                <Wand2 className={`mr-2 h-4 w-4 ${isGeneratingUpdate ? 'animate-spin' : ''}`} />
+                                Update
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="min-h-[6rem] flex items-center justify-center">
+                        {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
+                        {!isGeneratingUpdate && liveUpdateText && <p className="text-sm text-muted-foreground">{liveUpdateText}</p>}
+                        {!isGeneratingUpdate && !liveUpdateText && <p className="text-sm text-center text-muted-foreground">Click "Update" for a live AI analysis.</p>}
                     </CardContent>
                 </Card>
                  <Card>
