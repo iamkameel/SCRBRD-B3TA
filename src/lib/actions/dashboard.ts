@@ -2,7 +2,7 @@
 
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict, FullTransportAssignment } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
@@ -12,7 +12,7 @@ import { getCompetitions } from './competitions';
 import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from './alerts';
 import { getSponsors } from './sponsors';
 import { getEquipment } from './equipment';
-import { getVehicles } from './transport';
+import { getVehicles, getAllTransportAssignments } from './transport';
 import { getTransactions } from './financials';
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
@@ -100,6 +100,7 @@ export async function getAdminDashboardData(personId: string) {
         allEquipment,
         allCompetitions,
         conflicts,
+        allTransportAssignments,
         unconfirmedAssignmentsCount,
     ] = await Promise.all([
         getMatches(),
@@ -115,6 +116,7 @@ export async function getAdminDashboardData(personId: string) {
         getEquipment(),
         getCompetitions(),
         getFixtureConflicts(),
+        getAllTransportAssignments(),
         getUnconfirmedAssignmentsCount(),
     ]);
 
@@ -132,6 +134,7 @@ export async function getAdminDashboardData(personId: string) {
         allEquipment,
         allCompetitions,
         conflicts,
+        allTransportAssignments,
         unconfirmedAssignmentsCount,
     };
 }
