@@ -1,12 +1,15 @@
 
+
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
-import { getFieldsForGroundskeeper } from './fields';
-import { getMatchesByField } from './matches';
+import { getFieldsForGroundskeeper, getFields } from './fields';
+import { getMatchesByField, getMatches } from './matches';
+import { getCompetitions } from './competitions';
+import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from './alerts';
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
     const players = await getPlayers();
@@ -77,6 +80,92 @@ export async function getTeamLeaderboard(teamId: string): Promise<{ topRunScorer
         
     return { topRunScorers, topWicketTakers };
 }
+
+export async function getAdminDashboardData(personId: string) {
+    const [
+        allMatches,
+        topRunScorers,
+        topWicketTakers,
+        teamStandings,
+        allTeams,
+        allPlayers,
+        allFields,
+        allTransactions,
+        allSponsors,
+        allVehicles,
+        allEquipment,
+        allCompetitions,
+        conflicts,
+        unconfirmedAssignmentsCount,
+    ] = await Promise.all([
+        getMatches(),
+        getLeaderboards().then(l => l.topRunScorers),
+        getLeaderboards().then(l => l.topWicketTakers),
+        getTeamStandings(),
+        getTeams(),
+        getPlayers(),
+        getFields(),
+        [], // getTransactions(),
+        [], // getSponsors(),
+        [], // getVehicles(),
+        [], // getEquipment(),
+        getCompetitions(),
+        getFixtureConflicts(),
+        getUnconfirmedAssignmentsCount(),
+    ]);
+
+    return {
+        allMatches,
+        topRunScorers,
+        topWicketTakers,
+        teamStandings,
+        allTeams,
+        allPlayers,
+        allFields,
+        allTransactions,
+        allSponsors,
+        allVehicles,
+        allEquipment,
+        allCompetitions,
+        conflicts,
+        unconfirmedAssignmentsCount,
+    };
+}
+
+
+export async function getSportsmasterDashboardData() {
+    const [
+        allCompetitions,
+        allTeams,
+        allPlayers,
+        allFields,
+        conflicts,
+        unconfirmedAssignmentsCount,
+        teamStandings,
+        leaderboards,
+    ] = await Promise.all([
+        getCompetitions(),
+        getTeams(),
+        getPlayers(),
+        getFields(),
+        getFixtureConflicts(),
+        getUnconfirmedAssignmentsCount(),
+        getTeamStandings(),
+        getLeaderboards(),
+    ]);
+
+    return {
+        allCompetitions,
+        allTeams,
+        allPlayers,
+        allFields,
+        conflicts,
+        unconfirmedAssignmentsCount,
+        teamStandings,
+        leaderboards,
+    };
+}
+
 
 export async function getCoachDashboardData(personId: string) {
     const assignments = await getPersonTeamAssignments(personId);

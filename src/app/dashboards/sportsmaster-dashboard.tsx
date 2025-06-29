@@ -1,4 +1,6 @@
 
+'use client';
+
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -8,8 +10,9 @@ import { TeamStandingsChart } from "../dashboard-charts";
 import { AlertTriangle, Users, MapPin, AlertCircle, Shield } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import type { Competition, Team, FixtureConflict } from '@/lib/data';
-import type { Person, StandingTeam, LeaderboardPlayer } from '@/lib/data';
+import type { Competition, Team, FixtureConflict, Person, StandingTeam, LeaderboardPlayer } from '@/lib/data';
+import { getSportsmasterDashboardData } from '@/lib/actions/dashboard';
+import DashboardSkeleton from '@/app/loading';
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -26,7 +29,7 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
     );
 }
 
-interface SportsmasterDashboardProps {
+interface SportsmasterDashboardData {
     allCompetitions: Competition[];
     allTeams: Team[];
     allPlayers: Person[];
@@ -40,8 +43,25 @@ interface SportsmasterDashboardProps {
     };
 }
 
+export default function SportsmasterDashboard() {
+  const [data, setData] = React.useState<SportsmasterDashboardData | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
-export default async function SportsmasterDashboard({
+  React.useEffect(() => {
+    getSportsmasterDashboardData().then(fetchedData => {
+      setData(fetchedData);
+      setLoading(false);
+    }).catch(error => {
+      console.error("Failed to load sportsmaster dashboard data:", error);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading || !data) {
+    return <DashboardSkeleton />;
+  }
+
+  const {
     allCompetitions,
     allTeams,
     allPlayers,
@@ -50,8 +70,8 @@ export default async function SportsmasterDashboard({
     unconfirmedAssignmentsCount,
     teamStandings,
     leaderboards
-}: SportsmasterDashboardProps) {
-
+  } = data;
+  
   const { topRunScorers, topWicketTakers } = leaderboards;
 
   return (
