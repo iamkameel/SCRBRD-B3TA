@@ -27,8 +27,8 @@ export const getUserId = cache(async (): Promise<string | null> => {
         return adminId;
     }
     
-    // 3. If no admins are found at all.
-    console.error("No admin user found in the database. Server actions may fail.");
+    // 3. If no admins are found at all, warn the developer. This is an expected state on first run.
+    console.warn("No admin user found in the database. This is normal on first launch. Please sign up or migrate sample data to proceed.");
     return null;
 
   } catch (error) {
