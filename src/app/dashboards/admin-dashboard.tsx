@@ -1,212 +1,170 @@
-
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMatches } from "@/lib/actions/matches";
 import { getLeaderboards, getTeamStandings } from "@/lib/actions/dashboard";
+import { getTeams } from "@/lib/actions/teams";
+import { getPlayers } from "@/lib/actions/players";
+import { getFields } from "@/lib/actions/fields";
 import { format } from "date-fns";
-import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
-import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { AlertTriangle, ClipboardList, BarChart, Users, MapPin } from 'lucide-react';
+import { cn } from "@/lib/utils";
+
+function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default async function AdminDashboard() {
-  const userId = await getUserId();
-
-  const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings, user] = await Promise.all([
-    getMatches().then(matches => matches.slice(0, 5)),
+  const [allMatches, { topRunScorers, topWicketTakers }, teamStandings, allTeams, allPlayers, allFields] = await Promise.all([
+    getMatches(),
     getLeaderboards(),
     getTeamStandings(),
-    userId ? getPerson(userId) : Promise.resolve(null),
+    getTeams(),
+    getPlayers(),
+    getFields(),
   ]);
 
-  const isAdmin = user?.roles.includes('Admin') ?? false;
+  const today = new Date();
+  const liveMatches = allMatches.filter(m => m.status === 'live');
+  const upcomingToday = allMatches.filter(m => 
+    m.status === 'scheduled' && 
+    new Date(m.dateTime).toDateString() === today.toDateString()
+  );
+
+  const fieldsInUse = new Set(liveMatches.map(m => m.fieldId));
+  const fieldsInMaintenance = allFields.filter(f => f.status === 'Maintenance').length;
+  const fieldsAvailable = allFields.length - fieldsInUse.size - fieldsInMaintenance;
+
+  const competitions = new Set(allMatches.filter(m => m.competitionId).map(m => m.competitionId));
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Welcome to your cricket league overview.
-          </p>
-        </div>
-        {isAdmin && (
-          <Button asChild>
-            <Link href="/new-match">
-              <PlusCircle className="mr-2"/>
-              Create New Match
-            </Link>
-          </Button>
-        )}
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground">Welcome to your cricket league overview.</p>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Team Standings</CardTitle>
-                    <CardDescription>Season leaderboard based on wins and Net Run Rate.</CardDescription>
+      {/* Critical Action Zone (Phase 1 Placeholder) */}
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20">
+                <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2 font-semibold text-red-600 dark:text-red-400"><AlertTriangle />Fixture Conflicts</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <TeamStandingsChart data={teamStandings} />
-                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50px]">Pos</TableHead>
-                                <TableHead>Team</TableHead>
-                                <TableHead className="text-right">Played</TableHead>
-                                <TableHead className="text-right">Won</TableHead>
-                                <TableHead className="text-right">Lost</TableHead>
-                                <TableHead className="text-right">NRR</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {teamStandings.length > 0 ? (
-                            teamStandings.map((team, index) => (
-                              <TableRow key={team.teamId}>
-                                <TableCell className="font-medium">{index + 1}</TableCell>
-                                <TableCell>
-                                  <Link href={`/teams/${team.teamId}`} className="font-medium hover:underline">{team.name}</Link>
-                                </TableCell>
-                                <TableCell className="text-right">{team.stats.matchesPlayed}</TableCell>
-                                <TableCell className="text-right">{team.stats.matchesWon}</TableCell>
-                                <TableCell className="text-right">{team.stats.matchesLost}</TableCell>
-                                <TableCell className="text-right">{team.stats.netRunRate.toFixed(2)}</TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow><TableCell colSpan={6} className="h-24 text-center">No team stats available. Complete some matches to see standings.</TableCell></TableRow>
-                          )}
-                        </TableBody>
-                    </Table>
+                <CardContent>
+                    <p className="text-2xl font-bold">0</p>
+                    <p className="text-xs text-muted-foreground">No conflicts detected.</p>
+                </CardContent>
+            </Card>
+             <Card className="border-yellow-500/50 bg-yellow-500/10 dark:bg-yellow-900/20">
+                <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2 font-semibold text-yellow-600 dark:text-yellow-400"><AlertTriangle />Umpire Reviews</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-2xl font-bold">0</p>
+                    <p className="text-xs text-muted-foreground">All reviews handled.</p>
                 </CardContent>
             </Card>
         </div>
 
-        <div className="lg:col-span-1">
-          <Tabs defaultValue="batting">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Performers</CardTitle>
-                <div className="flex items-center justify-between">
-                  <CardDescription>Season leaders in key categories.</CardDescription>
-                   <TabsList>
-                      <TabsTrigger value="batting">Batting</TabsTrigger>
-                      <TabsTrigger value="bowling">Bowling</TabsTrigger>
-                  </TabsList>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Main Content Area */}
+        <div className="lg:col-span-2 grid grid-cols-1 gap-8">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard title="Active Competitions" value={competitions.size} icon={ClipboardList} />
+              <StatCard title="Registered Teams" value={allTeams.length} icon={Users} />
+              <StatCard title="Active Players" value={allPlayers.filter(p => p.roles.includes('Player')).length} icon={Users} />
+              <StatCard title="Available Fields" value={allFields.length} icon={MapPin} />
+          </div>
+
+          <Card>
+            <CardHeader><CardTitle>Today's Operations</CardTitle></CardHeader>
+            <CardContent>
+              <Tabs defaultValue="live">
+                <TabsList>
+                  <TabsTrigger value="live">Live Matches ({liveMatches.length})</TabsTrigger>
+                  <TabsTrigger value="upcoming">Upcoming Today ({upcomingToday.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="live" className="mt-4">
+                  {liveMatches.length > 0 ? (
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                        <TableBody>{liveMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant="destructive" className="capitalize animate-pulse">{match.status}</Badge></TableCell></TableRow>))}</TableBody>
+                    </Table>
+                  ) : <p className="text-center text-muted-foreground py-8">No matches are currently live.</p>}
+                </TabsContent>
+                <TabsContent value="upcoming" className="mt-4">
+                  {upcomingToday.length > 0 ? (
+                     <Table>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Time</TableHead><TableHead>Venue</TableHead></TableRow></TableHeader>
+                        <TableBody>{upcomingToday.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'p')}</TableCell><TableCell>{match.fieldName}</TableCell></TableRow>))}</TableBody>
+                    </Table>
+                  ) : <p className="text-center text-muted-foreground py-8">No more matches scheduled for today.</p>}
+                </TabsContent>
+              </Tabs>
+              <div className="mt-6 border-t pt-4">
+                <h4 className="text-sm font-semibold mb-2">Field Status</h4>
+                <div className="flex items-center gap-4 text-sm">
+                    <span className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-green-500"/>Available: {fieldsAvailable}</span>
+                    <span className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500"/>In Use: {fieldsInUse.size}</span>
+                    <span className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-yellow-500"/>Maintenance: {fieldsInMaintenance}</span>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <TabsContent value="batting">
-                   <div className="space-y-4">
-                     <TopRunScorersChart data={topRunScorers} />
-                     {topRunScorers.length > 0 ? topRunScorers.map((player) => (
-                       <div key={player.personId} className="flex items-center gap-4">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} />
-                            <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <Link href={`/people/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
-                            <p className="text-sm text-muted-foreground">Avg: {player.stats.battingAverage.toFixed(2)} | SR: {player.stats.strikeRate.toFixed(2)}</p>
-                          </div>
-                          <div className="text-right">
-                             <p className="font-bold text-lg">{player.stats.totalRuns}</p>
-                             <p className="text-xs text-muted-foreground">Runs</p>
-                          </div>
-                       </div>
-                     )) : <p className="text-sm text-center text-muted-foreground py-8">No batting stats yet.</p>}
-                   </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Team Standings</CardTitle><CardDescription>Season leaderboard based on wins and Net Run Rate.</CardDescription></CardHeader>
+            <CardContent className="space-y-6">
+              <TeamStandingsChart data={teamStandings} />
+              <Table>
+                <TableHeader><TableRow><TableHead className="w-[50px]">Pos</TableHead><TableHead>Team</TableHead><TableHead className="text-right">W</TableHead><TableHead className="text-right">L</TableHead><TableHead className="text-right">NRR</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {teamStandings.slice(0, 5).map((team, index) => (
+                    <TableRow key={team.teamId}><TableCell className="font-medium">{index + 1}</TableCell><TableCell><Link href={`/teams/${team.teamId}`} className="font-medium hover:underline">{team.name}</Link></TableCell><TableCell className="text-right">{team.stats.matchesWon}</TableCell><TableCell className="text-right">{team.stats.matchesLost}</TableCell><TableCell className="text-right">{team.stats.netRunRate.toFixed(2)}</TableCell></TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="lg:col-span-1 space-y-8">
+          <Card>
+            <CardHeader><CardTitle>Top Performers</CardTitle><CardDescription>Season leaders in key categories.</CardDescription></CardHeader>
+            <CardContent>
+              <Tabs defaultValue="batting">
+                <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="batting">Batting</TabsTrigger><TabsTrigger value="bowling">Bowling</TabsTrigger></TabsList>
+                <TabsContent value="batting" className="mt-4">
+                  <TopRunScorersChart data={topRunScorers} />
+                  {topRunScorers.map(player => (<div key={player.personId} className="flex items-center gap-2 mt-2"><div className="font-bold w-4 text-center text-xs"></div><div><Link className="font-semibold text-sm hover:underline" href={`/people/${player.personId}`}>{player.firstName} {player.lastName}</Link></div><div className="ml-auto font-bold text-sm">{player.stats.totalRuns}</div></div>))}
                 </TabsContent>
-                 <TabsContent value="bowling">
-                   <div className="space-y-4">
-                     <TopWicketTakersChart data={topWicketTakers} />
-                     {topWicketTakers.length > 0 ? topWicketTakers.map((player) => (
-                       <div key={player.personId} className="flex items-center gap-4">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={player.profileImageUrl} alt={`${player.firstName} ${player.lastName}`} />
-                            <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                             <Link href={`/people/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link>
-                             <p className="text-sm text-muted-foreground">Avg: {player.stats.bowlingAverage.toFixed(2)} | Econ: {player.stats.economyRate.toFixed(2)}</p>
-                          </div>
-                          <div className="text-right">
-                             <p className="font-bold text-lg">{player.stats.wicketsTaken}</p>
-                              <p className="text-xs text-muted-foreground">Wickets</p>
-                          </div>
-                       </div>
-                     )) : <p className="text-sm text-center text-muted-foreground py-8">No bowling stats yet.</p>}
-                   </div>
+                <TabsContent value="bowling" className="mt-4">
+                  <TopWicketTakersChart data={topWicketTakers} />
+                  {topWicketTakers.map(player => (<div key={player.personId} className="flex items-center gap-2 mt-2"><div className="font-bold w-4 text-center text-xs"></div><div><Link className="font-semibold text-sm hover:underline" href={`/people/${player.personId}`}>{player.firstName} {player.lastName}</Link></div><div className="ml-auto font-bold text-sm">{player.stats.wicketsTaken}</div></div>))}
                 </TabsContent>
-              </CardContent>
-            </Card>
-          </Tabs>
+              </Tabs>
+            </CardContent>
+          </Card>
+          <DreamTeamCard />
         </div>
       </div>
-
-       <DreamTeamCard />
-
-       <Card>
-        <CardHeader>
-          <CardTitle>Recent & Upcoming Matches</CardTitle>
-          <CardDescription>
-            A list of your most recent and scheduled matches.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Match</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentMatches.length > 0 ? (
-                recentMatches.map((match) => (
-                  <TableRow key={match.matchId}>
-                    <TableCell className="font-medium">
-                      <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
-                          <div className="flex items-center gap-1.5">
-                              <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
-                              <span>{match.teamAName}</span>
-                          </div>
-                          <span className="text-muted-foreground text-xs">vs</span>
-                          <div className="flex items-center gap-1.5">
-                              <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />
-                              <span>{match.teamBName}</span>
-                          </div>
-                      </Link>
-                    </TableCell>
-                    <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
-                    <TableCell>
-                      <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
-                        {match.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
-                    No recent matches found. <Link href="/new-match" className="text-primary underline">Create one now</Link>.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 }

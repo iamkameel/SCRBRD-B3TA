@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Wand2, Loader2, Users } from "lucide-react";
-import { generateDreamTeam, type DreamTeamOutput } from '@/ai/flows/generate-dream-team-flow';
+import { generateDreamTeam } from '@/ai/flows/generate-dream-team-flow';
+import type { DreamTeamOutput } from '@/ai/schemas';
 
 export function DreamTeamCard() {
     const { toast } = useToast();
