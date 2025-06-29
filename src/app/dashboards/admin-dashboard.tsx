@@ -11,7 +11,7 @@ import { getTeams } from "@/lib/actions/teams";
 import { getPlayers } from "@/lib/actions/players";
 import { getFields } from "@/lib/actions/fields";
 import { format } from "date-fns";
-import { TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
+import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
 import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -214,7 +214,7 @@ export default async function AdminDashboard() {
           <Card>
             <CardHeader><CardTitle>Team Standings</CardTitle><CardDescription>Season leaderboard based on wins and Net Run Rate.</CardDescription></CardHeader>
             <CardContent className="space-y-6">
-              <TopRunScorersChart data={teamStandings} />
+              <TeamStandingsChart data={teamStandings} />
               <Table>
                 <TableHeader><TableRow><TableHead className="w-[50px]">Pos</TableHead><TableHead>Team</TableHead><TableHead className="text-right">W</TableHead><TableHead className="text-right">L</TableHead><TableHead className="text-right">NRR</TableHead></TableRow></TableHeader>
                 <TableBody>
@@ -252,5 +252,6 @@ export default async function AdminDashboard() {
   );
 }
     
+
 
 
