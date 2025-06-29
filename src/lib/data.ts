@@ -1,6 +1,5 @@
 
 
-
 // Interfaces
 export interface Person {
   personId: string;

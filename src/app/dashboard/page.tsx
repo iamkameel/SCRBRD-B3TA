@@ -18,12 +18,15 @@ export default async function DashboardPage() {
   const person = await getPerson(userId);
   
   if (!person) {
+    // This can happen for a new user whose Firestore doc hasn't been created yet.
+    // Show the admin dashboard as a safe default.
     return <AdminDashboard />;
   }
 
   const medicalRoles = ['Doctor', 'Physio', 'First Aid', 'Trainer'];
   const isMedicalStaff = person.roles.some(role => medicalRoles.includes(role));
 
+  // Use the activeRole to determine which dashboard to show
   if (person.activeRole === 'Admin') {
     return <AdminDashboard />;
   }
@@ -43,6 +46,7 @@ export default async function DashboardPage() {
     return <MedicalDashboard matches={upcomingMatches} />;
   }
   
-  // Default for any other role (Player, Coach etc)
+  // Default for any other role (Player, Coach etc) is the Admin dashboard for now
+  // In a future iteration, these would have their own specific dashboards.
   return <AdminDashboard />;
 }

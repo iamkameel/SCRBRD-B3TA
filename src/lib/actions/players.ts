@@ -11,6 +11,7 @@ import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-de
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
+import { getUserId } from '@/lib/auth';
 
 export const getPlayers = cache(async (): Promise<Person[]> => {
   try {
@@ -47,6 +48,22 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
         return { personId: personSnap.id, ...personSnap.data() } as Person;
     } catch (error) {
         console.error(`Error fetching person with ID ${personId}:`, error);
+        return null;
+    }
+});
+
+export const getPersonByEmail = cache(async (email: string): Promise<Person | null> => {
+    try {
+        const peopleCollection = collection(db, 'people');
+        const q = query(peopleCollection, where("email", "==", email));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            return null;
+        }
+        const doc = snapshot.docs[0];
+        return { personId: doc.id, ...doc.data() } as Person;
+    } catch(e) {
+        console.error("Error fetching person by email", e);
         return null;
     }
 });
