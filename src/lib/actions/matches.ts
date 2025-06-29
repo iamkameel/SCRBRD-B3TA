@@ -170,6 +170,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     fieldName: fieldSnap.data().name,
     dateTime: Timestamp.fromDate(dateTime),
     status: 'scheduled',
+    liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [] },
     userId: userId,
     report: '',
     preview: '',
@@ -494,4 +495,66 @@ export async function getMatchesByField(fieldId: string): Promise<Match[]> {
     console.error(`Error fetching matches for field ${fieldId}:`, error);
     return [];
   }
+}
+
+// LIVE SCORING ACTIONS
+export async function updateLivePlayersAction(matchId: string, updates: { onStrikeBatsmanId?: string; nonStrikerBatsmanId?: string; bowlerId?: string; }) {
+    if (!userId) throw new Error("User not authenticated.");
+    const matchRef = doc(db, 'matches', matchId);
+    const matchSnap = await getDoc(matchRef);
+    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+        throw new Error("Match not found or permission denied.");
+    }
+
+    const liveScoreUpdate: { [key: string]: any } = {};
+    if (updates.onStrikeBatsmanId) liveScoreUpdate['liveScore.onStrikeBatsmanId'] = updates.onStrikeBatsmanId;
+    if (updates.nonStrikerBatsmanId) liveScoreUpdate['liveScore.nonStrikerBatsmanId'] = updates.nonStrikerBatsmanId;
+    if (updates.bowlerId) liveScoreUpdate['liveScore.bowlerId'] = updates.bowlerId;
+    
+    await updateDoc(matchRef, liveScoreUpdate);
+    revalidatePath(`/matches/${matchId}`);
+}
+
+export async function recordBallAction(matchId: string, ball: { runs?: number, event: string }) {
+    if (!userId) throw new Error("User not authenticated.");
+
+    const matchRef = doc(db, 'matches', matchId);
+    const matchSnap = await getDoc(matchRef);
+    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+        throw new Error("Match not found or permission denied.");
+    }
+    
+    const match = matchSnap.data() as Match;
+    const liveScore = match.liveScore || {
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [],
+    };
+
+    const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
+
+    // Update score
+    if (ball.runs) liveScore.runs += ball.runs;
+    if (ball.event === 'W') {
+        liveScore.wickets++;
+    }
+    if (ball.event === 'wd' || ball.event === 'nb') {
+        liveScore.runs++; // Add 1 for the extra
+    }
+    
+    // Update current over history
+    liveScore.currentOver.push(ball.event);
+
+    // Update balls/overs
+    if (isLegalBall) {
+        if (liveScore.balls === 5) {
+            liveScore.balls = 0;
+            liveScore.overs++;
+            liveScore.currentOver = []; // Clear for next over
+        } else {
+            liveScore.balls++;
+        }
+    }
+
+    await updateDoc(matchRef, { liveScore });
+    revalidatePath(`/matches/${matchId}`);
+    return liveScore;
 }

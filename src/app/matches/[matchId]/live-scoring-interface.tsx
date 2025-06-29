@@ -2,37 +2,15 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Dot, Undo } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle, ArrowRight, Undo } from 'lucide-react';
 import type { RosterMember, Match } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { updateLivePlayersAction, recordBallAction } from '@/lib/actions/matches';
+import { useToast } from '@/hooks/use-toast';
 
 // A simple display component for the current over
 function OverHistory({ balls }: { balls: string[] }) {
@@ -66,46 +44,56 @@ export function LiveScoringInterface({
   teamBRoster: RosterMember[];
   match: Match;
 }) {
-  const [runs, setRuns] = React.useState(0);
-  const [wickets, setWickets] = React.useState(0);
-  const [overs, setOvers] = React.useState(0);
-  const [balls, setBalls] = React.useState(0);
-  const [currentOver, setCurrentOver] = React.useState<string[]>([]);
-  
-  const isSetupComplete = true; // Placeholder for now
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
 
-  const handleAddBall = (ball: string, isLegalBall: boolean = true) => {
-    setCurrentOver((prev) => [...prev, ball]);
-    if (isLegalBall) {
-      if (balls === 5) {
-        setBalls(0);
-        setOvers((o) => o + 1);
-        setCurrentOver([]);
-      } else {
-        setBalls((b) => b + 1);
+  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [] };
+  
+  // For this demo, let's assume Team A is always the batting team.
+  const battingTeamRoster = teamARoster;
+  const bowlingTeamRoster = teamBRoster;
+
+  const onStrikeBatsmanId = liveScore.onStrikeBatsmanId;
+  const nonStrikerBatsmanId = liveScore.nonStrikerBatsmanId;
+  const bowlerId = liveScore.bowlerId;
+  
+  const isSetupComplete = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
+  const runRate = liveScore.overs + liveScore.balls / 6 > 0 ? (liveScore.runs / (liveScore.overs + liveScore.balls / 6)).toFixed(2) : '0.00';
+
+  const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler', personId: string) => {
+    startTransition(async () => {
+      try {
+        const updates = {
+            onStrikeBatsmanId: type === 'onStrike' ? personId : onStrikeBatsmanId,
+            nonStrikerBatsmanId: type === 'nonStriker' ? personId : nonStrikerBatsmanId,
+            bowlerId: type === 'bowler' ? personId : bowlerId,
+        };
+        await updateLivePlayersAction(match.matchId, updates);
+      } catch (error) {
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not update player selection.", variant: "destructive" });
       }
-    }
+    });
+  };
+
+  const handleRecordBall = (event: string, runs?: number) => {
+    startTransition(async () => {
+        try {
+            await recordBallAction(match.matchId, { event, runs });
+        } catch(error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
+        }
+    });
   };
   
   const handleScore = (run: number) => {
-    setRuns(r => r + run);
-    handleAddBall(run === 0 ? '.' : run.toString());
+    handleRecordBall(run === 0 ? '.' : run.toString(), run);
   };
-
   const handleExtra = (type: 'wd' | 'nb') => {
-    setRuns(r => r + 1);
-    handleAddBall(type, false);
+    handleRecordBall(type);
   }
-
   const handleWicket = () => {
-    if (wickets < 10) {
-      setWickets(w => w + 1);
-      handleAddBall('W');
-    }
+    handleRecordBall('W');
   }
-  
-  const runRate = overs + balls / 6 > 0 ? (runs / (overs + balls / 6)).toFixed(2) : '0.00';
-
 
   return (
     <div className="space-y-4">
@@ -119,11 +107,11 @@ export function LiveScoringInterface({
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="text-6xl font-bold text-foreground">
-              {runs} / {wickets}
+              {liveScore.runs} / {liveScore.wickets}
             </div>
             <div className="text-right">
               <p className="text-3xl font-bold">
-                {overs}.{balls}
+                {liveScore.overs}.{liveScore.balls}
               </p>
               <p className="text-sm text-muted-foreground">Overs</p>
             </div>
@@ -135,6 +123,30 @@ export function LiveScoringInterface({
         </CardContent>
       </Card>
       
+      <Card>
+        <CardHeader><CardTitle>Player Selection</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+                <Label>On Strike</Label>
+                <Select value={onStrikeBatsmanId} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                    <SelectContent>{battingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId} disabled={p.personId === nonStrikerBatsmanId}>{p.personName}</SelectItem>)}</SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Non-Striker</Label>
+                <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                    <SelectContent>{battingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId} disabled={p.personId === onStrikeBatsmanId}>{p.personName}</SelectItem>)}</SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Bowler</Label>
+                <Select value={bowlerId} onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending}><SelectTrigger><SelectValue placeholder="Select Bowler"/></SelectTrigger>
+                    <SelectContent>{bowlingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                </Select>
+            </div>
+        </CardContent>
+      </Card>
+
       {!isSetupComplete ? (
         <Card className="p-8 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500" />
@@ -149,13 +161,13 @@ export function LiveScoringInterface({
                     <CardContent className="space-y-4">
                         <Label>Runs Scored</Label>
                         <div className="grid grid-cols-4 gap-2">
-                            {[0, 1, 2, 3, 4, 5, 6].map(run => <Button key={run} onClick={() => handleScore(run)} variant="outline">{run}</Button>)}
-                            <Button onClick={handleWicket} variant="destructive">Wicket</Button>
+                            {[0, 1, 2, 3, 4, 5, 6].map(run => <Button key={run} onClick={() => handleScore(run)} variant="outline" disabled={isPending}>{run}</Button>)}
+                            <Button onClick={handleWicket} variant="destructive" disabled={isPending}>Wicket</Button>
                         </div>
                         <Label>Extras</Label>
                         <div className="grid grid-cols-2 gap-2">
-                             <Button onClick={() => handleExtra('wd')} variant="outline">Wide</Button>
-                             <Button onClick={() => handleExtra('nb')} variant="outline">No Ball</Button>
+                             <Button onClick={() => handleExtra('wd')} variant="outline" disabled={isPending}>Wide</Button>
+                             <Button onClick={() => handleExtra('nb')} variant="outline" disabled={isPending}>No Ball</Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -164,7 +176,7 @@ export function LiveScoringInterface({
                 <Card>
                     <CardHeader><CardTitle>Current Over</CardTitle></CardHeader>
                     <CardContent>
-                        <OverHistory balls={currentOver} />
+                        <OverHistory balls={liveScore.currentOver} />
                     </CardContent>
                 </Card>
                  <Card>

@@ -129,6 +129,16 @@ export interface Match {
   result?: string;
   audioCommentaryUrl?: string;
   analysisReports?: { [teamId: string]: string; };
+  liveScore?: {
+    runs: number;
+    wickets: number;
+    overs: number;
+    balls: number;
+    currentOver: string[];
+    onStrikeBatsmanId?: string;
+    nonStrikerBatsmanId?: string;
+    bowlerId?: string;
+  };
 }
 
 export interface Official {
