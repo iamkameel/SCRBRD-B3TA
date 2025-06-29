@@ -1,5 +1,4 @@
 
-
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -46,7 +45,7 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 const StatCardLink = ({ href, ...props }: React.ComponentProps<typeof StatCard> & { href: string }) => (
-  <Link href={href} className="hover:bg-muted/50 block rounded-lg transition-colors">
+  <Link href={href} className="block transition-colors rounded-lg hover:bg-muted/50">
     <StatCard {...props} />
   </Link>
 );
@@ -149,9 +148,9 @@ export default async function AdminDashboard() {
         <div className="space-y-2">
              {unconfirmedAssignmentsCount > 0 && (
                 <Alert variant="warning">
-                    <AlertCircle className="h-4 w-4" />
+                    <AlertCircle className="w-4 h-4" />
                     <AlertTitle className="font-semibold">Pending Confirmations</AlertTitle>
-                    <AlertDescription className="flex justify-between items-center">
+                    <AlertDescription className="flex items-center justify-between">
                         <span>{unconfirmedAssignmentsCount} official assignment(s) are awaiting confirmation.</span>
                         <Button asChild size="sm" variant="outline" className="border-accent/50 hover:bg-accent/20">
                             <Link href="/matches">View Matches</Link>
@@ -163,9 +162,9 @@ export default async function AdminDashboard() {
                 <div className="space-y-2">
                     {conflicts.map((conflict, index) => (
                         <Alert key={index} variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTriangle className="w-4 h-4" />
                             <AlertTitle className="font-semibold">{conflict.type} Conflict Detected</AlertTitle>
-                            <AlertDescription className="flex justify-between items-center">
+                            <AlertDescription className="flex items-center justify-between">
                                 <span>{conflict.message}</span>
                                 <Button asChild size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">
                                     <Link href="/matches">Resolve Now</Link>
@@ -179,7 +178,7 @@ export default async function AdminDashboard() {
 
         <Card>
             <CardHeader><CardTitle>League Overview</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 <TooltipProvider><Tooltip><TooltipTrigger asChild>
                     <StatCardLink href="/competitions" title="Competitions" value={allCompetitions.length} icon={ClipboardList} description="active this season" />
                 </TooltipTrigger><TooltipContent><p>View and manage all competitions.</p></TooltipContent></Tooltip></TooltipProvider>
@@ -214,8 +213,8 @@ export default async function AdminDashboard() {
             </CardContent>
         </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-2 grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 items-start">
+        <div className="grid grid-cols-1 gap-8 lg:col-span-2">
           
           <Card>
             <CardHeader>
@@ -233,17 +232,17 @@ export default async function AdminDashboard() {
                   {liveMatches.length > 0 ? (
                     <Table>
                         <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-                        <TableBody>{liveMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant="destructive" className={cn("capitalize", match.status === 'live' && "bg-red-500 text-white animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
+                        <TableBody>{liveMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant="destructive" className={cn("capitalize", match.status === 'live' && "text-white bg-red-500 animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
                     </Table>
-                  ) : <p className="text-center text-muted-foreground py-8">No matches are currently live.</p>}
+                  ) : <p className="py-8 text-center text-muted-foreground">No matches are currently live.</p>}
                 </TabsContent>
                 <TabsContent value="today" className="mt-4">
                   {todayMatches.length > 0 ? (
                      <Table>
                         <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Time</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-                        <TableBody>{todayMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'p')}</TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant={match.status === 'completed' ? 'secondary' : (match.status === 'live' ? 'destructive' : 'default')} className={cn("capitalize", match.status === 'live' && "bg-red-500 text-white animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
+                        <TableBody>{todayMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'p')}</TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant={match.status === 'completed' ? 'secondary' : (match.status === 'live' ? 'destructive' : 'default')} className={cn("capitalize", match.status === 'live' && "text-white bg-red-500 animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
                     </Table>
-                  ) : <p className="text-center text-muted-foreground py-8">No matches scheduled for today.</p>}
+                  ) : <p className="py-8 text-center text-muted-foreground">No matches scheduled for today.</p>}
                 </TabsContent>
                  <TabsContent value="this_week" className="mt-4">
                   {thisWeekMatches.length > 0 ? (
@@ -251,15 +250,15 @@ export default async function AdminDashboard() {
                         <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Date</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
                         <TableBody>{thisWeekMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'EEE, dd MMM p')}</TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell></TableRow>))}</TableBody>
                     </Table>
-                  ) : <p className="text-center text-muted-foreground py-8">No other matches scheduled for this week.</p>}
+                  ) : <p className="py-8 text-center text-muted-foreground">No other matches scheduled for this week.</p>}
                 </TabsContent>
               </Tabs>
-              <div className="mt-6 border-t pt-4">
-                <h4 className="text-sm font-semibold mb-2">Field Status</h4>
+              <div className="pt-4 mt-6 border-t">
+                <h4 className="mb-2 text-sm font-semibold">Field Status</h4>
                 <div className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-green-500"/>Available: {fieldsAvailable}</span>
-                    <span className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500"/>In Use: {fieldsInUse.size}</span>
-                    <span className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-yellow-500"/>Maintenance: {fieldsInMaintenance}</span>
+                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"/>Available: {fieldsAvailable}</span>
+                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"/>In Use: {fieldsInUse.size}</span>
+                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-500"/>Maintenance: {fieldsInMaintenance}</span>
                 </div>
               </div>
             </CardContent>
@@ -281,7 +280,7 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="lg:col-span-1 space-y-8">
+        <div className="space-y-8 lg:col-span-1">
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -324,8 +323,8 @@ export default async function AdminDashboard() {
                         <TableRow key={player.personId}>
                           <TableCell className="font-bold">#{index + 1}</TableCell>
                           <TableCell>
-                            <Link href={`/people/${player.personId}`} className="font-medium hover:underline flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
+                            <Link href={`/people/${player.personId}`} className="flex items-center gap-2 font-medium hover:underline">
+                              <Avatar className="w-8 h-8">
                                 <AvatarImage src={player.profileImageUrl} alt={player.firstName} />
                                 <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
                               </Avatar>
@@ -360,8 +359,8 @@ export default async function AdminDashboard() {
                         <TableRow key={player.personId}>
                           <TableCell className="font-bold">#{index + 1}</TableCell>
                           <TableCell>
-                            <Link href={`/people/${player.personId}`} className="font-medium hover:underline flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
+                            <Link href={`/people/${player.personId}`} className="flex items-center gap-2 font-medium hover:underline">
+                              <Avatar className="w-8 h-8">
                                 <AvatarImage src={player.profileImageUrl} alt={player.firstName} />
                                 <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
                               </Avatar>
@@ -420,25 +419,25 @@ export default async function AdminDashboard() {
                 <CardTitle>System Administration</CardTitle>
                 <CardDescription>Quick access to system-level management tools.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link href="/user-management" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Link href="/user-management" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
                     <div className="flex items-center gap-4">
-                        <UserCog className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                        <UserCog className="w-8 h-8 text-muted-foreground shrink-0" />
                         <div className="flex-1">
                             <h3 className="font-semibold">User Management</h3>
                             <p className="text-sm text-muted-foreground">Manage user roles and permissions.</p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
                     </div>
                 </Link>
-                <Link href="/data-management" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <Link href="/data-management" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
                     <div className="flex items-center gap-4">
-                        <Database className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                        <Database className="w-8 h-8 text-muted-foreground shrink-0" />
                         <div className="flex-1">
                             <h3 className="font-semibold">Data Management</h3>
                             <p className="text-sm text-muted-foreground">Migrate sample data or clear existing records.</p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
                     </div>
                 </Link>
             </CardContent>
@@ -446,4 +445,3 @@ export default async function AdminDashboard() {
     </div>
   );
 }
-

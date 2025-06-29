@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -137,8 +138,7 @@ export const getMatchTransportAssignments = cache(async (matchId: string): Promi
         getDoc(doc(db, 'people', assignData.driverId)),
       ]);
 
-      if (!vehicleSnap.exists() || vehicleSnap.data().userId !== userId) return null;
-      if (!driverSnap.exists() || driverSnap.data().userId !== userId) return null;
+      if (!vehicleSnap.exists() || !driverSnap.exists()) return null;
       
       const vehicleData = vehicleSnap.data() as Omit<Vehicle, 'vehicleId'>;
       const driverData = driverSnap.data() as Omit<Person, 'personId'>;
@@ -196,7 +196,7 @@ export const getAssignmentsForDriver = cache(async (personId: string): Promise<F
             if (!matchRef) return null;
 
             const match = await getMatch(matchRef.id);
-            if (!match || match.status !== 'scheduled' || match.userId !== userId) return null;
+            if (!match || match.status !== 'scheduled') return null;
 
             const vehicleSnap = await getDoc(doc(db, 'vehicles', assignmentData.vehicleId));
             if (!vehicleSnap.exists()) return null;

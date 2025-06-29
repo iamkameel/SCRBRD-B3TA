@@ -53,7 +53,7 @@ export default function MedicalDashboard({ matches }: MedicalDashboardProps) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">
-                    <Stethoscope className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                    <Stethoscope className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
                     There are no upcoming matches scheduled.
                   </TableCell>
                 </TableRow>

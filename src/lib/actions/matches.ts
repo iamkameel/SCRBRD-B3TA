@@ -77,8 +77,6 @@ const fixtureSchema = z.object({
   competitionId: z.string(),
   fieldId: z.string(),
   dateTime: z.date(),
-  status: z.enum(['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned']),
-  statusReason: z.string().optional(),
 });
 
 type FixtureFormValues = z.infer<typeof fixtureSchema>;
@@ -311,7 +309,9 @@ export const getMatchOfficials = cache(async (matchId: string): Promise<Official
       const officialData = officialDoc.data();
       const personSnap = await getDoc(doc(db, 'people', officialData.personId));
 
-      if (!personSnap.exists() || personSnap.data().userId !== userId) {
+      // Note: Officials might be from a different 'organization' or user group in a real app.
+      // Here, we assume they are part of the same user base.
+      if (!personSnap.exists()) {
         return null;
       }
       const personData = personSnap.data();
@@ -319,7 +319,6 @@ export const getMatchOfficials = cache(async (matchId: string): Promise<Official
         assignmentId: officialDoc.id, personId: officialData.personId,
         personName: `${personData.firstName} ${personData.lastName}`,
         role: officialData.role, confirmed: officialData.confirmed || false,
-        userId: personData.userId,
       };
     });
 
@@ -742,11 +741,8 @@ export const getOfficialAssignmentsForPerson = cache(async (personId: string): P
             const matchRef = docSnap.ref.parent.parent; 
             if (!matchRef) return null;
             
-            const person = await getPerson(personId);
-            if (!person || person.userId !== userId) return null;
-
             const match = await getMatch(matchRef.id);
-            if (!match || match.status !== 'scheduled' || match.userId !== userId) return null;
+            if (!match || match.status !== 'scheduled') return null;
             
             return {
                 assignmentId: docSnap.id,
@@ -754,10 +750,9 @@ export const getOfficialAssignmentsForPerson = cache(async (personId: string): P
                 matchName: `${match.teamAName} vs ${match.teamBName}`,
                 dateTime: match.dateTime,
                 personId: assignmentData.personId,
-                personName: `${person.firstName} ${person.lastName}`,
+                personName: (await getPerson(assignmentData.personId))?.firstName + ' ' + (await getPerson(assignmentData.personId))?.lastName,
                 role: assignmentData.role,
                 confirmed: assignmentData.confirmed,
-                userId: userId,
             }
         });
         const results = (await Promise.all(assignmentsPromises)).filter((a): a is any => a !== null);

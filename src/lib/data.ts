@@ -9,7 +9,7 @@ export interface Person {
   phone?: string;
   profileImageUrl?: string;
   roles: string[];
-  activeRole?: string;
+  activeRole: string;
   assignedSchools?: string[];
   notificationPreferences?: {
     email: boolean;
@@ -149,6 +149,7 @@ export interface Match {
   firstInningsTotal?: number;
   liveScore?: LiveScore;
   previousLiveScore?: LiveScore;
+  userId?: string;
 }
 
 export interface Official {
@@ -157,7 +158,6 @@ export interface Official {
   personName: string;
   role: string;
   confirmed: boolean;
-  userId: string;
 }
 
 // Scorecard related types

@@ -54,7 +54,7 @@ export default function UmpireScorerDashboard({ assignments }: UmpireScorerDashb
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">
-                    <Whistle className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                    <Whistle className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
                     You have no upcoming match assignments.
                   </TableCell>
                 </TableRow>

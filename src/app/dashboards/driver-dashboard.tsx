@@ -53,7 +53,7 @@ export default function DriverDashboard({ assignments }: DriverDashboardProps) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">
-                     <Bus className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                     <Bus className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
                     You have no upcoming driving assignments.
                   </TableCell>
                 </TableRow>
