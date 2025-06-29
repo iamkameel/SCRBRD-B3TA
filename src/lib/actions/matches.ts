@@ -598,29 +598,64 @@ export async function endInningsAction(matchId: string) {
     const match = matchSnap.data() as Match;
     const currentLiveScore = match.liveScore;
 
-    if (!currentLiveScore || currentLiveScore.liveInnings !== 1) {
-        // Here we could end the match, but for now we'll just handle 1st innings
-        return; 
+    if (!currentLiveScore) {
+        throw new Error("No live score data available to end innings.");
     }
 
-    // Reset for second innings
-    const newLiveScore = {
-        runs: 0,
-        wickets: 0,
-        overs: 0,
-        balls: 0,
-        currentOver: [],
-        batsmenOut: [],
-        liveInnings: 2,
-        onStrikeBatsmanId: undefined,
-        nonStrikerBatsmanId: undefined,
-        bowlerId: undefined,
-    };
-    
-    await updateDoc(matchRef, { 
-        liveScore: newLiveScore,
-        firstInningsTotal: currentLiveScore.runs,
-    });
-    
-    revalidatePath(`/matches/${matchId}`);
+    if (currentLiveScore.liveInnings === 1) {
+        // Ending the first innings
+        const newLiveScore = {
+            runs: 0,
+            wickets: 0,
+            overs: 0,
+            balls: 0,
+            currentOver: [],
+            batsmenOut: [],
+            liveInnings: 2,
+            onStrikeBatsmanId: undefined,
+            nonStrikerBatsmanId: undefined,
+            bowlerId: undefined,
+        };
+        
+        await updateDoc(matchRef, { 
+            liveScore: newLiveScore,
+            firstInningsTotal: currentLiveScore.runs,
+        });
+        revalidatePath(`/matches/${matchId}`);
+        return { message: "First innings ended. Second innings is ready." };
+
+    } else if (currentLiveScore.liveInnings === 2) {
+        // Ending the second innings and the match
+        const firstInningsRuns = match.firstInningsTotal || 0;
+        const secondInningsRuns = currentLiveScore.runs;
+
+        let winnerTeamId: string | null = null;
+        let result: string;
+        let winnerTeamName: string | null = null;
+
+        if (secondInningsRuns > firstInningsRuns) {
+            winnerTeamId = match.teamBId; // Team B is batting second
+            winnerTeamName = match.teamBName;
+            const wicketsRemaining = 10 - currentLiveScore.wickets;
+            result = `${winnerTeamName} won by ${wicketsRemaining} wickets`;
+        } else if (firstInningsRuns > secondInningsRuns) {
+            winnerTeamId = match.teamAId; // Team A batted first
+            winnerTeamName = match.teamAName;
+            const margin = firstInningsRuns - secondInningsRuns;
+            result = `${winnerTeamName} won by ${margin} runs`;
+        } else {
+            result = "Match Tied";
+        }
+        
+        await updateDoc(matchRef, {
+            status: 'completed',
+            winnerTeamId,
+            result,
+            liveScore: null, // Clear live score data
+        });
+
+        revalidatePath(`/matches/${matchId}`);
+        revalidatePath('/'); // For dashboard updates
+        return { message: "Match completed!" };
+    }
 }
