@@ -248,10 +248,39 @@ export default async function AdminDashboard() {
           <DreamTeamCard />
         </div>
       </div>
+       <Card>
+            <CardHeader>
+                <CardTitle>System Administration</CardTitle>
+                <CardDescription>Quick access to system-level management tools.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/user-management" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                        <UserCog className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1">
+                            <h3 className="font-semibold">User Management</h3>
+                            <p className="text-sm text-muted-foreground">Manage user roles and permissions.</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                    </div>
+                </Link>
+                <Link href="/data-management" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                        <Database className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1">
+                            <h3 className="font-semibold">Data Management</h3>
+                            <p className="text-sm text-muted-foreground">Migrate sample data or clear existing records.</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                    </div>
+                </Link>
+            </CardContent>
+        </Card>
     </div>
   );
 }
     
+
 
 
 
