@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from 'next/link';
 import { format } from "date-fns";
-import { ArrowLeft, Users, ClipboardList, BarChart, Trophy, GitMerge } from "lucide-react";
+import { ArrowLeft, Users, ClipboardList, Trophy, GitMerge } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,37 +27,33 @@ interface CompetitionDetailsClientProps {
     };
 }
 
-function MatchupCard({ match }: { match: Match }) {
+function BracketMatch({ match }: { match: Match }) {
   const [isClient, setIsClient] = React.useState(false);
   React.useEffect(() => { setIsClient(true); }, []);
 
-  const teamAStyles = match.winnerTeamId === match.teamAId ? 'font-bold bg-background shadow-sm' : '';
-  const teamBStyles = match.winnerTeamId === match.teamBId ? 'font-bold bg-background shadow-sm' : '';
+  const teamAStyles = match.winnerTeamId === match.teamAId ? 'font-bold text-foreground' : 'text-muted-foreground';
+  const teamBStyles = match.winnerTeamId === match.teamBId ? 'font-bold text-foreground' : 'text-muted-foreground';
+  const isTBD = !match.teamBId;
 
   return (
-    <div className="border p-3 rounded-lg bg-muted/50 w-full">
-      <div className="flex justify-between items-center">
-        <div className="space-y-1.5 flex-1">
-          <div className={cn("p-1.5 rounded text-sm flex items-center gap-2", teamAStyles)}>
+    <div className="border p-3 rounded-lg bg-background w-64 shadow-sm">
+      <div className="flex justify-between items-center text-xs text-muted-foreground mb-2">
+        <p>{isClient ? format(match.dateTime, "dd MMM, p") : '...'}</p>
+        {!isTBD && <Link href={`/matches/${match.matchId}`} className="hover:underline">Details</Link>}
+      </div>
+      <div className="space-y-1.5 text-sm">
+        <div className={cn("flex items-center gap-2", teamAStyles)}>
             <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
             {match.teamAName}
-          </div>
-          <div className={cn("p-1.5 rounded text-sm flex items-center gap-2", teamBStyles)}>
+        </div>
+        <div className={cn("flex items-center gap-2", teamBStyles)}>
             {match.teamBId ? (<span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />) : (<div className="h-2 w-2" />) }
             {match.teamBName || 'TBD'}
-          </div>
-        </div>
-        <div className="text-right pl-2">
-          {match.status === 'completed' && match.result ? (
-            <Link href={`/matches/${match.matchId}`} className="text-xs text-primary hover:underline">View Result</Link>
-          ) : (
-            <div className="text-xs text-muted-foreground">
-              {isClient && <p>{format(match.dateTime, "dd MMM")}</p>}
-              {isClient && <p>{format(match.dateTime, "p")}</p>}
-            </div>
-          )}
         </div>
       </div>
+       {match.status === 'completed' && match.result && (
+        <p className="text-xs text-center mt-2 font-medium">{match.result}</p>
+      )}
     </div>
   );
 }
@@ -84,6 +80,15 @@ export default function CompetitionDetailsClient({ competition, standings, match
             matches: matchesInRound.sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime()),
         })).sort((a, b) => a.round - b.round);
     }, [matches]);
+    
+    const getRoundTitle = (matchCount: number) => {
+        if (matchCount === 1) return 'Final';
+        if (matchCount === 2) return 'Semi-Finals';
+        if (matchCount === 4) return 'Quarter-Finals';
+        if (matchCount > 0) return `Round of ${matchCount * 2}`;
+        return 'Round';
+    }
+
 
     return (
         <div className="flex flex-col gap-8">
@@ -171,16 +176,14 @@ export default function CompetitionDetailsClient({ competition, standings, match
                             <CardContent>
                                 {bracketRounds.length > 0 ? (
                                     <ScrollArea>
-                                        <div className="flex items-stretch gap-8 p-4 min-h-[400px]">
-                                            {bracketRounds.map(round => (
-                                                <div key={round.round} className="flex-shrink-0 w-72 flex flex-col">
-                                                    <h3 className="text-lg font-bold mb-4 text-center">
-                                                        {round.matches.length === 1 ? 'Final' : `Round ${round.round}`}
+                                        <div className="flex items-stretch gap-12 p-4 min-h-[400px]">
+                                            {bracketRounds.map((round) => (
+                                                <div key={round.round} className="flex flex-col justify-around">
+                                                    <h3 className="text-lg font-bold mb-4 text-center sticky top-0 bg-card/80 py-2 backdrop-blur-sm z-10">
+                                                        {getRoundTitle(round.matches.length)}
                                                     </h3>
                                                     <div className="flex flex-col justify-around flex-grow gap-y-8">
-                                                        {round.matches.map(match => (
-                                                            <MatchupCard key={match.matchId} match={match} />
-                                                        ))}
+                                                        {round.matches.map(match => <BracketMatch key={match.matchId} match={match} />)}
                                                     </div>
                                                 </div>
                                             ))}
