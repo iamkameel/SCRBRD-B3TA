@@ -11,7 +11,7 @@ import { getTeams } from "@/lib/actions/teams";
 import { getPlayers } from "@/lib/actions/players";
 import { getFields } from "@/lib/actions/fields";
 import { format } from "date-fns";
-import { TopRunScorersChart, TopWicketTakersChart, TeamStandingsChart } from "../dashboard-charts";
+import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
 import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -78,6 +78,10 @@ export default async function AdminDashboard() {
     m.status === 'scheduled' && 
     new Date(m.dateTime).toDateString() === today.toDateString()
   );
+  const completedToday = allMatches.filter(m =>
+    m.status === 'completed' &&
+    new Date(m.dateTime).toDateString() === today.toDateString()
+  );
 
   const fieldsInUse = new Set(liveMatches.map(m => m.fieldId));
   const fieldsInMaintenance = allFields.filter(f => f.status === 'Maintenance').length;
@@ -141,9 +145,10 @@ export default async function AdminDashboard() {
             <CardHeader><CardTitle>Today's Operations</CardTitle></CardHeader>
             <CardContent>
               <Tabs defaultValue="live">
-                <TabsList>
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="live">Live Matches ({liveMatches.length})</TabsTrigger>
                   <TabsTrigger value="upcoming">Upcoming Today ({upcomingToday.length})</TabsTrigger>
+                  <TabsTrigger value="results">Results ({completedToday.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="live" className="mt-4">
                   {liveMatches.length > 0 ? (
@@ -160,6 +165,14 @@ export default async function AdminDashboard() {
                         <TableBody>{upcomingToday.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'p')}</TableCell><TableCell>{match.fieldName}</TableCell></TableRow>))}</TableBody>
                     </Table>
                   ) : <p className="text-center text-muted-foreground py-8">No more matches scheduled for today.</p>}
+                </TabsContent>
+                 <TabsContent value="results" className="mt-4">
+                  {completedToday.length > 0 ? (
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Result</TableHead><TableHead>Competition</TableHead></TableRow></TableHeader>
+                        <TableBody>{completedToday.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.result}</TableCell><TableCell>{match.competitionName}</TableCell></TableRow>))}</TableBody>
+                    </Table>
+                  ) : <p className="text-center text-muted-foreground py-8">No matches completed today.</p>}
                 </TabsContent>
               </Tabs>
               <div className="mt-6 border-t pt-4">
@@ -214,3 +227,4 @@ export default async function AdminDashboard() {
   );
 }
     
+
