@@ -9,6 +9,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Field, FieldAssignment, Person } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { getPerson } from './players';
 
 export const getFields = cache(async (): Promise<Field[]> => {
   const userId = await getUserId();
@@ -294,50 +295,51 @@ export async function deleteFieldAction(fieldId: string) {
   revalidatePath('/new-match');
 }
 
-export async function assignGroundskeeperToFieldAction(fieldId: string, personId: string) {
+export const getFieldsForGroundskeeper = cache(async (personId: string): Promise<Field[]> => {
+    const userId = await getUserId();
+    if (!userId) return [];
+    
+    const allUserFields = await getFields();
+    
+    return allUserFields.filter(field => 
+        field.assignments?.some(assignment => assignment.personId === personId)
+    );
+});
+
+
+const fieldStatusSchema = z.enum(['Available', 'Maintenance', 'Closed']);
+export async function updateFieldStatusAction(fieldId: string, status: z.infer<typeof fieldStatusSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
-    if (!fieldId || !personId) throw new Error("Field ID and Person ID are required.");
 
-    const fieldRef = doc(db, 'fields', fieldId);
-    const personRef = doc(db, 'people', personId);
-    const [fieldSnap, personSnap] = await Promise.all([getDoc(fieldRef), getDoc(personRef)]);
-
-    if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) throw new Error("Field not found.");
-    if (!personSnap.exists() || personSnap.data().userId !== userId) throw new Error("Person not found.");
-    if (!personSnap.data().roles.includes('Grounds-Keeper')) throw new Error("This person is not a grounds-keeper.");
-
-    const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
-    const q = query(assignmentsCol, where("personId", "==", personId));
-    const existing = await getDocs(q);
-
-    if (!existing.empty) throw new Error("This person is already assigned to this field.");
-
-    try {
-        await addDoc(assignmentsCol, { personId });
-    } catch (error) {
-        console.error("Error assigning grounds-keeper:", error);
-        throw new Error("Could not assign grounds-keeper.");
+    const person = await getPerson(userId);
+    if (!person || !person.roles.includes('Grounds-Keeper')) {
+        throw new Error("You do not have permission to perform this action.");
     }
 
-    revalidatePath(`/fields/${fieldId}`);
-}
-
-export async function removeGroundskeeperFromFieldAction(fieldId: string, assignmentId: string) {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
-    if (!fieldId || !assignmentId) throw new Error("Field ID and Assignment ID are required.");
+    const validatedStatus = fieldStatusSchema.safeParse(status);
+    if (!validatedStatus.success) throw new Error("Invalid status provided.");
 
     const fieldRef = doc(db, 'fields', fieldId);
     const fieldSnap = await getDoc(fieldRef);
-    if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) throw new Error("Field not found.");
 
-    try {
-        await deleteDoc(doc(db, 'fields', fieldId, 'assignments', assignmentId));
-    } catch (error) {
-        console.error("Error removing assignment:", error);
-        throw new Error("Could not remove assignment.");
+    if (!fieldSnap.exists()) {
+        throw new Error("Field not found.");
+    }
+    
+    const fieldData = await getField(fieldId);
+    const isAssigned = fieldData?.assignments?.some(a => a.personId === userId);
+
+    if (!isAssigned) {
+        throw new Error("You are not assigned to manage this field.");
     }
 
-    revalidatePath(`/fields/${fieldId}`);
+    try {
+        await updateDoc(fieldRef, { status: validatedStatus.data });
+        revalidatePath('/dashboard');
+        revalidatePath(`/fields/${fieldId}`);
+    } catch (error) {
+        console.error("Error updating field status:", error);
+        throw new Error("Could not update field status.");
+    }
 }

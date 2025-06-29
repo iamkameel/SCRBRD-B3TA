@@ -7,13 +7,15 @@ import UmpireScorerDashboard from '@/app/dashboards/umpire-scorer-dashboard';
 import DriverDashboard from '@/app/dashboards/driver-dashboard';
 import MedicalDashboard from '@/app/dashboards/medical-dashboard';
 import CoachDashboard from '@/app/dashboards/coach-dashboard';
+import GroundskeeperDashboard from '@/app/dashboards/groundskeeper-dashboard';
 import { getPerson, getPlayers } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 import { getCoachDashboardData, getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { getTeams } from '@/lib/actions/teams';
-import { getFields } from '@/lib/actions/fields';
+import { getFields, getFieldsForGroundskeeper } from '@/lib/actions/fields';
 import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
+import type { Match } from '@/lib/data';
 
 
 export default async function DashboardPage() {
@@ -36,6 +38,8 @@ export default async function DashboardPage() {
   
   const coachingRoles = ['Coach', 'Assistant Coach', 'Captain'];
   const isCoach = person.roles.some(role => coachingRoles.includes(role));
+
+  const isGroundsKeeper = person.roles.includes('Grounds-Keeper');
 
 
   // Use the activeRole to determine which dashboard to show
@@ -85,6 +89,25 @@ export default async function DashboardPage() {
   if (person.activeRole === 'Driver') {
     const assignments = await getAssignmentsForDriver(person.personId);
     return <DriverDashboard assignments={assignments} />;
+  }
+  
+  if (isGroundsKeeper && person.activeRole === 'Grounds-Keeper') {
+    const assignedFields = await getFieldsForGroundskeeper(person.personId);
+    const assignedFieldIds = assignedFields.map(f => f.fieldId);
+
+    const allMatches = await getMatches();
+    const upcomingMatches = allMatches.filter(m => 
+        m.status === 'scheduled' && assignedFieldIds.includes(m.fieldId)
+    );
+    
+    const matchesByField: Record<string, Match[]> = {};
+    assignedFields.forEach(field => {
+        matchesByField[field.fieldId] = upcomingMatches
+            .filter(match => match.fieldId === field.fieldId)
+            .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+    });
+
+    return <GroundskeeperDashboard fields={assignedFields} matchesByField={matchesByField} />;
   }
   
   if (isCoach && ['Coach', 'Assistant Coach', 'Captain'].includes(person.activeRole)) {

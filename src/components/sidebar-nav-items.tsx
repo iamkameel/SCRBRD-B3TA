@@ -1,3 +1,4 @@
+
 import {
     LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database,
     Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack,
@@ -165,6 +166,21 @@ const driverNavGroups = [
     }
 ];
 
+const groundskeeperTopLevelNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+];
+
+const groundskeeperNavGroups = [
+    {
+        title: "Facilities",
+        icon: Wrench,
+        items: [
+            { href: '/fields', label: 'All Fields', icon: MapPin },
+        ]
+    }
+];
+
+
 export function getNavConfig(role: string) {
     switch (role) {
         case 'Admin':
@@ -181,6 +197,8 @@ export function getNavConfig(role: string) {
             return { topLevel: officialTopLevelNavItems, groups: officialNavGroups };
         case 'Driver':
             return { topLevel: driverTopLevelNavItems, groups: driverNavGroups };
+        case 'Grounds-Keeper':
+            return { topLevel: groundskeeperTopLevelNavItems, groups: groundskeeperNavGroups };
         default:
              // Default to a safe, minimal navigation for any other roles
             return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
