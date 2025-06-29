@@ -1,16 +1,18 @@
 
+'use client';
+
+import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Bus } from 'lucide-react';
 import type { FullTransportAssignment } from "@/lib/data";
+import { useAuth } from '@/lib/auth-context';
+import { getAssignmentsForDriver } from '@/lib/actions/transport';
+import DashboardSkeleton from '@/app/loading';
 
-interface DriverDashboardProps {
-  assignments: FullTransportAssignment[];
-}
-
-export default function DriverDashboard({ assignments }: DriverDashboardProps) {
+function DriverDashboardInternal({ assignments }: { assignments: FullTransportAssignment[] }) {
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -64,4 +66,25 @@ export default function DriverDashboard({ assignments }: DriverDashboardProps) {
       </Card>
     </div>
   );
+}
+
+export default function DriverDashboard() {
+  const { person } = useAuth();
+  const [assignments, setAssignments] = React.useState<FullTransportAssignment[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person?.personId) {
+      getAssignmentsForDriver(person.personId).then(fetchedAssignments => {
+        setAssignments(fetchedAssignments);
+        setLoading(false);
+      });
+    }
+  }, [person]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  return <DriverDashboardInternal assignments={assignments} />;
 }

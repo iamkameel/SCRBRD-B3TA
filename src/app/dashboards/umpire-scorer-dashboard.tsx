@@ -14,15 +14,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { acceptAssignmentAction } from "@/lib/actions/matches";
+import { acceptAssignmentAction, getOfficialAssignmentsForPerson } from "@/lib/actions/matches";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import DashboardSkeleton from "@/app/loading";
 
 
-interface UmpireScorerDashboardProps {
-  assignments: (Official & { matchId: string; matchName: string; dateTime: Date; status: MatchStatus })[];
+interface AssignmentRowProps {
+  assignment: (Official & { matchId: string; matchName: string; dateTime: Date; status: MatchStatus });
 }
 
-function AssignmentRow({ assignment }: { assignment: UmpireScorerDashboardProps['assignments'][0] }) {
+function AssignmentRow({ assignment }: AssignmentRowProps) {
     const { toast } = useToast();
     const [isPending, startTransition] = React.useTransition();
     const router = useRouter();
@@ -65,7 +67,11 @@ function AssignmentRow({ assignment }: { assignment: UmpireScorerDashboardProps[
     );
 }
 
-export default function UmpireScorerDashboard({ assignments }: UmpireScorerDashboardProps) {
+interface UmpireScorerDashboardInternalProps {
+  assignments: (Official & { matchId: string; matchName: string; dateTime: Date; status: MatchStatus })[];
+}
+
+function UmpireScorerDashboardInternal({ assignments }: UmpireScorerDashboardInternalProps) {
   const now = new Date();
 
   const liveAssignments = assignments.filter(a => a.status === 'live');
@@ -168,4 +174,25 @@ export default function UmpireScorerDashboard({ assignments }: UmpireScorerDashb
       </Tabs>
     </div>
   );
+}
+
+export default function UmpireScorerDashboard() {
+  const { person } = useAuth();
+  const [assignments, setAssignments] = React.useState<UmpireScorerDashboardInternalProps['assignments']>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person?.personId) {
+      getOfficialAssignmentsForPerson(person.personId).then(fetchedAssignments => {
+        setAssignments(fetchedAssignments);
+        setLoading(false);
+      });
+    }
+  }, [person]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+  
+  return <UmpireScorerDashboardInternal assignments={assignments} />;
 }

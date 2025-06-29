@@ -9,13 +9,18 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Calendar, Clock, MapPin, MessageSquare, IndianRupee, User, ArrowRight } from 'lucide-react';
 import type { Person, Match } from '@/lib/data';
+import { useAuth } from '@/lib/auth-context';
+import { getGuardianDashboardData } from '@/lib/actions/players';
+import DashboardSkeleton from '@/app/loading';
+
+interface GuardianDashboardData {
+  child: Person;
+  teamName: string;
+  nextMatch: Match | null;
+}
 
 interface GuardianDashboardProps {
-  data: {
-    child: Person;
-    teamName: string;
-    nextMatch: Match | null;
-  }[];
+  data: GuardianDashboardData[];
 }
 
 function ChildCard({ child, teamName, nextMatch }: { child: Person, teamName: string, nextMatch: Match | null }) {
@@ -65,7 +70,7 @@ function ChildCard({ child, teamName, nextMatch }: { child: Person, teamName: st
     )
 }
 
-export default function GuardianDashboard({ data }: GuardianDashboardProps) {
+function GuardianDashboardInternal({ data }: GuardianDashboardProps) {
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -94,4 +99,25 @@ export default function GuardianDashboard({ data }: GuardianDashboardProps) {
       )}
     </div>
   );
+}
+
+export default function GuardianDashboard() {
+  const { person } = useAuth();
+  const [data, setData] = React.useState<GuardianDashboardData[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person?.personId) {
+      getGuardianDashboardData(person.personId).then(fetchedData => {
+        setData(fetchedData);
+        setLoading(false);
+      });
+    }
+  }, [person]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  return <GuardianDashboardInternal data={data} />;
 }

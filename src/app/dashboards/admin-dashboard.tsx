@@ -1,33 +1,27 @@
 
+'use client';
+
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getMatches } from "@/lib/actions/matches";
-import { getLeaderboards, getTeamStandings } from "@/lib/actions/dashboard";
-import { getTeams } from "@/lib/actions/teams";
-import { getPlayers } from "@/lib/actions/players";
-import { getFields } from "@/lib/actions/fields";
 import { format, isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { TeamStandingsChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
-import { AlertTriangle, ClipboardList, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database, AlertCircle, Download } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database, AlertCircle, Download, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { getTransactions } from "@/lib/actions/financials";
-import { getSponsors } from "@/lib/actions/sponsors";
-import { getVehicles, getAllTransportAssignments } from "@/lib/actions/transport";
-import { getEquipment } from "@/lib/actions/equipment";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { getCompetitions } from '@/lib/actions/competitions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import { useAuth } from '@/lib/auth-context';
+import { getAdminDashboardData } from '@/lib/actions/dashboard';
+import DashboardSkeleton from '@/app/loading';
+import type { Competition, Team, FixtureConflict, Person, StandingTeam, LeaderboardPlayer, Match, Vehicle, FullTransportAssignment, EquipmentItem, Transaction, Sponsor } from '@/lib/data';
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -66,40 +60,52 @@ function ResourceStat({ icon: Icon, label, value, total, indicatorClassName }: {
     );
 }
 
-export default async function AdminDashboard() {
-  const [
-    allMatches, 
-    { topRunScorers, topWicketTakers }, 
-    teamStandings, 
-    allTeams, 
-    allPlayers, 
-    allFields,
-    allTransactions,
-    allSponsors,
-    allVehicles,
-    allEquipment,
-    allCompetitions,
-    conflicts,
-    allTransportAssignments,
-    unconfirmedAssignmentsCount,
-  ] = await Promise.all([
-    getMatches(),
-    getLeaderboards(),
-    getTeamStandings(),
-    getTeams(),
-    getPlayers(),
-    getFields(),
-    getTransactions(),
-    getSponsors(),
-    getVehicles(),
-    getEquipment(),
-    getCompetitions(),
-    getFixtureConflicts(),
-    getAllTransportAssignments(),
-    getUnconfirmedAssignmentsCount(),
-  ]);
+interface AdminDashboardData {
+    allMatches: Match[];
+    topRunScorers: LeaderboardPlayer[];
+    topWicketTakers: LeaderboardPlayer[];
+    teamStandings: StandingTeam[];
+    allTeams: Team[];
+    allPlayers: Person[];
+    allFields: any[];
+    allTransactions: Transaction[];
+    allSponsors: Sponsor[];
+    allVehicles: Vehicle[];
+    allEquipment: EquipmentItem[];
+    allCompetitions: Competition[];
+    conflicts: FixtureConflict[];
+    allTransportAssignments: FullTransportAssignment[];
+    unconfirmedAssignmentsCount: number;
+}
 
-  // Date and Time Filtering for Operations Center
+export default function AdminDashboard() {
+  const { person } = useAuth();
+  const [data, setData] = React.useState<AdminDashboardData | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person?.personId) {
+      getAdminDashboardData(person.personId).then(fetchedData => {
+        setData(fetchedData);
+        setLoading(false);
+      }).catch(error => {
+        console.error("Failed to load admin dashboard data:", error);
+        setLoading(false);
+      });
+    }
+  }, [person]);
+
+  if (loading || !data) {
+    return <DashboardSkeleton />;
+  }
+  
+  const {
+    allMatches, topRunScorers, topWicketTakers, teamStandings, allTeams, allPlayers, 
+    allFields, allTransactions, allSponsors, allVehicles, allEquipment, allCompetitions,
+    conflicts, allTransportAssignments, unconfirmedAssignmentsCount,
+  } = data;
+
+
   const today = new Date();
   const todayStart = new Date(today.setHours(0, 0, 0, 0));
 

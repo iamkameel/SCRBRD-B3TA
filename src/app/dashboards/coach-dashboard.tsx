@@ -1,4 +1,6 @@
 
+'use client';
+
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -9,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Calendar, Users, BarChart2, ClipboardList, Target, Medal } from 'lucide-react';
 import type { Team, Match, TeamStats, LeaderboardPlayer } from '@/lib/data';
+import { useAuth } from '@/lib/auth-context';
+import { getCoachDashboardData } from '@/lib/actions/dashboard';
+import DashboardSkeleton from '@/app/loading';
 
 interface CoachDashboardProps {
   data: {
@@ -32,7 +37,7 @@ function StatItem({ label, value }: { label: string, value: string | number }) {
     )
 }
 
-export default function CoachDashboard({ data }: CoachDashboardProps) {
+function CoachDashboardInternal({ data }: CoachDashboardProps) {
   const { team, nextMatch, recentMatches, teamStats, leaderboards } = data;
 
   if (!team || !teamStats) {
@@ -169,4 +174,25 @@ export default function CoachDashboard({ data }: CoachDashboardProps) {
       </div>
     </div>
   );
+}
+
+export default function CoachDashboard() {
+  const { person } = useAuth();
+  const [data, setData] = React.useState<CoachDashboardProps['data'] | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person?.personId) {
+      getCoachDashboardData(person.personId).then(fetchedData => {
+        setData(fetchedData);
+        setLoading(false);
+      });
+    }
+  }, [person]);
+
+  if (loading || !data) {
+    return <DashboardSkeleton />;
+  }
+
+  return <CoachDashboardInternal data={data} />;
 }
