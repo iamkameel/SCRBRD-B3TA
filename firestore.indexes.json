@@ -108,6 +108,20 @@
       ]
     },
     {
+      "collectionGroup": "officials",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "confirmed",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "people",
       "queryScope": "COLLECTION",
       "fields": [
@@ -115,6 +129,16 @@
           "fieldPath": "userId",
           "order": "ASCENDING"
         },
+        {
+          "fieldPath": "email",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "people",
+      "queryScope": "COLLECTION",
+      "fields": [
         {
           "fieldPath": "email",
           "order": "ASCENDING"
