@@ -1,4 +1,6 @@
+'use client';
 
+import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from 'next/link';
@@ -6,12 +8,16 @@ import { Dumbbell, ClipboardList, User } from 'lucide-react';
 import type { Person } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useAuth } from '@/lib/auth-context';
+import { getPeopleByRole } from '@/lib/actions/players';
+import DashboardSkeleton from '@/app/loading';
 
-interface TrainerDashboardProps {
+
+interface TrainerDashboardInternalProps {
   players: Person[];
 }
 
-export default function TrainerDashboard({ players }: TrainerDashboardProps) {
+function TrainerDashboardInternal({ players }: TrainerDashboardInternalProps) {
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -87,4 +93,28 @@ export default function TrainerDashboard({ players }: TrainerDashboardProps) {
       </Card>
     </div>
   );
+}
+
+
+export default function TrainerDashboard() {
+  const { person } = useAuth();
+  const [players, setPlayers] = React.useState<Person[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person) {
+      getPeopleByRole('Player').then(fetchedPlayers => {
+        setPlayers(fetchedPlayers);
+        setLoading(false);
+      });
+    } else if (person === null) {
+      setLoading(false);
+    }
+  }, [person]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  return <TrainerDashboardInternal players={players} />;
 }
