@@ -1,6 +1,5 @@
 
 
-
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -154,7 +153,7 @@ export const sampleData = {
     competitions: [
         { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
         { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress', teamIds: [] },
-        { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'Completed', winnerTeamId: 'team_2', teamIds: ['team_1', 'team_2', 'team_4', 'team_5', 'team_6', 'team_7', 'team_9', 'team_10'] },
+        { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
     ],
     teams: [
         { teamId: 'team_1', name: 'Michaelhouse 1st XI', schoolId: 'school_1', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#00205B', secondary: '#FFFFFF' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 1}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
@@ -167,6 +166,10 @@ export const sampleData = {
         { matchId: 'match_2', teamAId: 'team_3', teamBId: 'team_4', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed' },
         { matchId: 'match_3', teamAId: 'team_1', teamBId: 'team_3', competitionId: 'comp_1', fieldId: 'field_1', dateTime: futureDate(7), status: 'scheduled' },
         { matchId: 'match_4', teamAId: 'team_2', teamBId: 'team_4', competitionId: 'comp_1', fieldId: 'field_2', dateTime: futureDate(10), status: 'scheduled' },
+        // Coastal Cup Matches
+        { matchId: 'match_5', teamAId: 'team_1', teamBId: 'team_4', competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(2), status: 'completed' },
+        { matchId: 'match_6', teamAId: 'team_2', teamBId: 'team_3', competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(1), status: 'completed' },
+        { matchId: 'match_7', teamAId: 'team_1', teamBId: 'team_2', competitionId: 'comp_3', round: 2, fieldId: 'field_12', dateTime: futureDate(14), status: 'scheduled' },
     ],
 };
 
@@ -313,5 +316,27 @@ export const sampleScorecardData = {
             ],
             extras: { total: 10, details: "(w 6, nb 1, b 2, lb 1)" },
         },
+    },
+    "match_5": {
+        playerOfTheMatch: { name: "Babar Azam", teamName: "DHS 1st XI", justification: "A captain's knock of 75 not out saw his team home in a tricky run chase."},
+        innings1: {
+            teamName: "Michaelhouse 1st XI", totalRuns: 165, wickets: 8, overs: 20,
+            battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
+        },
+        innings2: {
+            teamName: "DHS 1st XI", totalRuns: 166, wickets: 5, overs: 19.1,
+            battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
+        }
+    },
+    "match_6": {
+        playerOfTheMatch: { name: "Virat Kohli", teamName: "Hilton 1st XI", justification: "A magnificent century (102 off 60) laid the platform for a dominant victory."},
+        innings1: {
+            teamName: "Hilton 1st XI", totalRuns: 205, wickets: 4, overs: 20,
+            battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
+        },
+        innings2: {
+            teamName: "Maritzburg 1st XI", totalRuns: 150, wickets: 9, overs: 20,
+            battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
+        }
     }
 };
