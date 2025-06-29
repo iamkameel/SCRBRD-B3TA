@@ -85,12 +85,31 @@ export async function getUnconfirmedAssignmentsCount(): Promise<number> {
     const userId = await getUserId();
     if (!userId) return 0;
     
-    // The order of `where` clauses should align with the index definition for clarity.
-    const officialsQuery = query(
-        collectionGroup(db, 'officials'), 
-        where('confirmed', '==', false),
-        where('userId', '==', userId)
-    );
-    const snapshot = await getDocs(officialsQuery);
-    return snapshot.size;
+    // Step 1: Get all scheduled matches for the user. This query is simple and already indexed.
+    const allMatches = await getMatches();
+    const scheduledMatches = allMatches.filter(m => m.status === 'scheduled');
+
+    if (scheduledMatches.length === 0) {
+        return 0;
+    }
+
+    let unconfirmedCount = 0;
+
+    // Step 2: Iterate through scheduled matches and query the 'officials' subcollection.
+    for (const match of scheduledMatches) {
+        // This is a simple query on a subcollection and doesn't need a composite index.
+        const officialsCol = collection(db, 'matches', match.matchId, 'officials');
+        const unconfirmedQuery = query(officialsCol, where('confirmed', '==', false));
+        
+        try {
+            const snapshot = await getDocs(unconfirmedQuery);
+            unconfirmedCount += snapshot.size;
+        } catch (error) {
+            // This might happen if a match has an officials subcollection but something else is wrong.
+            // Log it but don't crash the entire dashboard.
+            console.error(`Could not query officials for match ${match.matchId}:`, error);
+        }
+    }
+    
+    return unconfirmedCount;
 }
