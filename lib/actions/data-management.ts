@@ -265,6 +265,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             if (match.round) {
                 newMatchData.round = match.round;
             }
+             if (match.winnerTeamId) {
+                newMatchData.winnerTeamId = idMap.get(match.winnerTeamId);
+            }
+            if (match.result) {
+                newMatchData.result = match.result;
+            }
 
             const matchDocRef = doc(collection(db, 'matches'));
             batch.set(matchDocRef, newMatchData);
