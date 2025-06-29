@@ -180,6 +180,22 @@ const groundskeeperNavGroups = [
     }
 ];
 
+const guardianTopLevelNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+];
+
+const guardianNavGroups = [
+    {
+        title: "My Family",
+        icon: Users,
+        items: [
+            { href: '/matches', label: 'Schedule', icon: CalendarDays },
+            { href: '/teams', label: 'Teams', icon: Users },
+            { href: '/people', label: 'Profiles', icon: User },
+        ]
+    }
+];
+
 
 export function getNavConfig(role: string) {
     switch (role) {
@@ -199,6 +215,8 @@ export function getNavConfig(role: string) {
             return { topLevel: driverTopLevelNavItems, groups: driverNavGroups };
         case 'Grounds-Keeper':
             return { topLevel: groundskeeperTopLevelNavItems, groups: groundskeeperNavGroups };
+        case 'Guardian':
+            return { topLevel: guardianTopLevelNavItems, groups: guardianNavGroups };
         default:
              // Default to a safe, minimal navigation for any other roles
             return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };

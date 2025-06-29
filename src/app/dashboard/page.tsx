@@ -7,8 +7,9 @@ import UmpireScorerDashboard from '@/app/dashboards/umpire-scorer-dashboard';
 import DriverDashboard from '@/app/dashboards/driver-dashboard';
 import MedicalDashboard from '@/app/dashboards/medical-dashboard';
 import CoachDashboard from '@/app/dashboards/coach-dashboard';
+import GuardianDashboard from '@/app/dashboards/guardian-dashboard';
 import GroundskeeperDashboard from '@/app/dashboards/groundskeeper-dashboard';
-import { getPerson, getPlayers } from '@/lib/actions/players';
+import { getPerson, getPlayers, getGuardianDashboardData } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 import { getCoachDashboardData, getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
 import { getCompetitions } from '@/lib/actions/competitions';
@@ -40,6 +41,7 @@ export default async function DashboardPage() {
   const isCoach = person.roles.some(role => coachingRoles.includes(role));
 
   const isGroundsKeeper = person.roles.includes('Grounds-Keeper');
+  const isGuardian = person.roles.includes('Guardian');
 
 
   // Use the activeRole to determine which dashboard to show
@@ -118,6 +120,11 @@ export default async function DashboardPage() {
   if (isMedicalStaff) {
     const upcomingMatches = await getMatches().then(matches => matches.filter(m => m.status === 'scheduled'));
     return <MedicalDashboard matches={upcomingMatches} />;
+  }
+  
+  if (isGuardian && person.activeRole === 'Guardian') {
+    const guardianData = await getGuardianDashboardData(person.personId);
+    return <GuardianDashboard data={guardianData} />;
   }
   
   // Default for any other role (Player, etc) is the Admin dashboard for now
