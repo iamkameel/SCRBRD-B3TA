@@ -1,10 +1,12 @@
 
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
+import { getFieldsForGroundskeeper } from './fields';
+import { getMatchesByField } from './matches';
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
     const players = await getPlayers();
@@ -97,4 +99,19 @@ export async function getCoachDashboardData(personId: string) {
     const recentMatches = allMatches.filter(m => m.status === 'completed').sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime()).slice(0, 3);
     
     return { team, nextMatch, recentMatches, teamStats, leaderboards };
+}
+
+
+export async function getGroundskeeperDashboardData(personId: string) {
+    const fields = await getFieldsForGroundskeeper(personId);
+    
+    const matchesByField: Record<string, Match[]> = {};
+    const matchPromises = fields.map(field => getMatchesByField(field.fieldId));
+    const matchesForFields = await Promise.all(matchPromises);
+
+    fields.forEach((field, index) => {
+        matchesByField[field.fieldId] = matchesForFields[index];
+    });
+    
+    return { fields, matchesByField };
 }

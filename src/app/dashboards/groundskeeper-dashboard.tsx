@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -13,6 +12,9 @@ import { updateFieldStatusAction } from '@/lib/actions/fields';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth-context';
+import { getGroundskeeperDashboardData } from '@/lib/actions/dashboard';
+import DashboardSkeleton from '@/app/loading';
 
 interface GroundskeeperDashboardProps {
   fields: Field[];
@@ -50,7 +52,7 @@ function FieldStatusSelector({ fieldId, currentStatus }: { fieldId: string, curr
     );
 }
 
-export default function GroundskeeperDashboard({ fields, matchesByField }: GroundskeeperDashboardProps) {
+function GroundskeeperDashboardInternal({ fields, matchesByField }: GroundskeeperDashboardProps) {
 
   const getStatusBadge = (status: Field['status']) => {
       switch(status) {
@@ -132,4 +134,44 @@ export default function GroundskeeperDashboard({ fields, matchesByField }: Groun
       )}
     </div>
   );
+}
+
+export default function GroundskeeperDashboard() {
+  const { person } = useAuth();
+  const [data, setData] = React.useState<{ fields: Field[], matchesByField: Record<string, Match[]> } | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person?.personId) {
+      getGroundskeeperDashboardData(person.personId).then(fetchedData => {
+        setData(fetchedData);
+        setLoading(false);
+      }).catch(error => {
+        console.error("Failed to load groundskeeper dashboard data:", error);
+        setLoading(false);
+      });
+    } else if (person === null) {
+      // If there's no person, we can stop loading
+      setLoading(false);
+    }
+  }, [person]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  // Handle case where data might still be null after loading (e.g., no personId)
+  if (!data) {
+     return (
+        <Card>
+          <CardContent className="h-48 flex flex-col items-center justify-center text-center">
+            <Wrench className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="font-semibold">No Fields Assigned</p>
+            <p className="text-sm text-muted-foreground">You are not currently assigned to manage any fields.</p>
+          </CardContent>
+        </Card>
+      )
+  }
+
+  return <GroundskeeperDashboardInternal fields={data.fields} matchesByField={data.matchesByField} />;
 }
