@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -7,11 +6,12 @@ import { usePathname } from 'next/navigation';
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import { cn } from '@/lib/utils';
 import { navItems } from './sidebar-nav-items';
-import type { Person } from '@/lib/data';
+import { useAuth } from '@/lib/auth-context';
 
-export function Sidebar({ user }: { user: Person | null }) {
+export function Sidebar() {
+  const { person } = useAuth();
   const pathname = usePathname();
-  const activeRole = user?.activeRole;
+  const activeRole = person?.activeRole;
 
   return (
     <aside className="w-64 flex-col fixed inset-y-0 z-50 bg-sidebar text-sidebar-foreground border-r border-sidebar-border hidden md:flex">
@@ -26,7 +26,7 @@ export function Sidebar({ user }: { user: Person | null }) {
           if (item.adminOnly && activeRole !== 'Admin') {
             return null;
           }
-          const isActive = (item.href === '/' && pathname === '/') || (item.href !== '/' && pathname.startsWith(item.href));
+          const isActive = (item.href === '/dashboard' && pathname === '/dashboard') || (item.href !== '/dashboard' && item.href !== '/' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.label}

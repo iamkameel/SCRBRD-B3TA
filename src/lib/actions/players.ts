@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -12,15 +11,11 @@ import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-de
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
 
 export const getPlayers = cache(async (): Promise<Person[]> => {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
-    const q = query(peopleCollection, where("userId", "==", userId));
-    const peopleSnapshot = await getDocs(q);
+    const peopleSnapshot = await getDocs(peopleCollection);
     return peopleSnapshot.docs.map(doc => ({
       personId: doc.id, ...doc.data()
     } as Person));
@@ -31,11 +26,9 @@ export const getPlayers = cache(async (): Promise<Person[]> => {
 });
 
 export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
-    const q = query(peopleCollection, where("userId", "==", userId), where("roles", "array-contains", role));
+    const q = query(peopleCollection, where("roles", "array-contains", role));
     const peopleSnapshot = await getDocs(q);
     return peopleSnapshot.docs.map(doc => ({
       personId: doc.id, ...doc.data()
@@ -47,13 +40,9 @@ export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => 
 });
 
 export const getPerson = cache(async (personId: string): Promise<Person | null> => {
-    const userId = await getUserId();
-    if (!userId) return null;
     try {
         const personDocRef = doc(db, 'people', personId);
         const personSnap = await getDoc(personDocRef);
-        // We don't check for userId here because an admin might need to see any user.
-        // The check should happen at the call site (e.g., in a server action or page).
         if (!personSnap.exists()) return null;
         return { personId: personSnap.id, ...personSnap.data() } as Person;
     } catch (error) {
@@ -62,29 +51,12 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
     }
 });
 
-export const getPersonByEmail = cache(async (email: string): Promise<Person | null> => {
-    try {
-        const peopleCollection = collection(db, 'people');
-        // This query does not need a userId filter as it's for initial auth lookup.
-        const q = query(peopleCollection, where("email", "==", email));
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) return null;
-        const doc = snapshot.docs[0];
-        return { personId: doc.id, ...doc.data() } as Person;
-    } catch (error) {
-        console.error(`Error fetching person with email ${email}:`, error);
-        return null;
-    }
-});
-
 export const getPersonLinks = cache(async (personId: string): Promise<{ guardians: Person[], children: Person[] }> => {
-    const userId = await getUserId();
-    if (!userId) return { guardians: [], children: [] };
     if (!await getPerson(personId)) return { guardians: [], children: [] };
 
     const linksCollection = collection(db, 'familyLinks');
-    const guardiansQuery = query(linksCollection, where("childId", "==", personId), where("userId", "==", userId));
-    const childrenQuery = query(linksCollection, where("parentId", "==", personId), where("userId", "==", userId));
+    const guardiansQuery = query(linksCollection, where("childId", "==", personId));
+    const childrenQuery = query(linksCollection, where("parentId", "==", personId));
 
     try {
         const [guardiansSnapshot, childrenSnapshot] = await Promise.all([getDocs(guardiansQuery), getDocs(childrenQuery)]);
@@ -94,8 +66,8 @@ export const getPersonLinks = cache(async (personId: string): Promise<{ guardian
         const guardianPromises = guardianIds.length > 0 ? guardianIds.map(id => getDoc(doc(db, 'people', id))) : [];
         const childrenPromises = childrenIds.length > 0 ? childrenIds.map(id => getDoc(doc(db, 'people', id))) : [];
         
-        const guardians = (await Promise.all(guardianPromises)).filter(doc => doc.exists() && doc.data()?.userId === userId).map(doc => ({ personId: doc.id, ...doc.data() } as Person));
-        const children = (await Promise.all(childrenPromises)).filter(doc => doc.exists() && doc.data()?.userId === userId).map(doc => ({ personId: doc.id, ...doc.data() } as Person));
+        const guardians = (await Promise.all(guardianPromises)).filter(doc => doc.exists()).map(doc => ({ personId: doc.id, ...doc.data() } as Person));
+        const children = (await Promise.all(childrenPromises)).filter(doc => doc.exists()).map(doc => ({ personId: doc.id, ...doc.data() } as Person));
         return { guardians, children };
     } catch (error) {
         console.error(`Error fetching links for person ${personId}:`, error);
@@ -104,13 +76,11 @@ export const getPersonLinks = cache(async (personId: string): Promise<{ guardian
 });
 
 export const getPersonTeamAssignments = cache(async (personId: string): Promise<PlayerTeamAssignment[]> => {
-    const userId = await getUserId();
-    if (!userId) return [];
     if (!await getPerson(personId)) return [];
 
     const assignments: PlayerTeamAssignment[] = [];
     const teamsCollection = collection(db, 'teams');
-    const q = query(teamsCollection, where("userId", "==", userId));
+    const q = query(teamsCollection);
 
     try {
         const teamsSnapshot = await getDocs(q);
@@ -142,18 +112,16 @@ const addLinkSchema = z.object({
 });
 
 export async function addPersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
-  const userId = await getUserId();
-  if (!userId) throw new Error("User not authenticated");
   if (!addLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
   if (!await getPerson(currentPersonId) || !await getPerson(linkedPersonId)) throw new Error("One or both people could not be found.");
 
   const { parentId, childId } = relationship === 'guardian' ? { parentId: linkedPersonId, childId: currentPersonId } : { parentId: currentPersonId, childId: linkedPersonId };
   const linksCollection = collection(db, 'familyLinks');
-  const q = query(linksCollection, where("parentId", "==", parentId), where("childId", "==", childId), where("userId", "==", userId));
+  const q = query(linksCollection, where("parentId", "==", parentId), where("childId", "==", childId));
   if (!(await getDocs(q)).empty) throw new Error("This link already exists.");
   
   try {
-    await addDoc(linksCollection, { parentId, childId, userId });
+    await addDoc(linksCollection, { parentId, childId });
   } catch (error) {
     console.error("Error adding family link:", error);
     throw new Error("Could not create the link.");
@@ -167,8 +135,6 @@ const removeLinkSchema = z.object({
 });
 
 export async function removePersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
     if (!removeLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
     
     const [currentPerson, linkedPerson] = await Promise.all([getPerson(currentPersonId), getPerson(linkedPersonId)]);
@@ -178,7 +144,7 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
     
     const { parentId, childId } = relationship === 'guardian' ? { parentId: linkedPersonId, childId: currentPersonId } : { parentId: currentPersonId, childId: linkedPersonId };
     
-    const q = query(collection(db, 'familyLinks'), where("parentId", "==", parentId), where("childId", "==", childId), where("userId", "==", userId));
+    const q = query(collection(db, 'familyLinks'), where("parentId", "==", parentId), where("childId", "==", childId));
     const linkSnapshot = await getDocs(q);
     if (linkSnapshot.empty) throw new Error("Link not found.");
 
@@ -201,13 +167,10 @@ const playerSchema = z.object({
     activeRole: z.string().optional(),
 });
 export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("User not authenticated");
   if (!playerSchema.safeParse(data).success) throw new Error('Invalid person data.');
   try {
     await addDoc(collection(db, 'people'), { 
       ...data, 
-      userId,
       notificationPreferences: { email: true, push: false },
     });
   } catch (error) {
@@ -219,14 +182,12 @@ export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
 
 const updatePlayerSchema = playerSchema.extend({ personId: z.string() });
 export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema>) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("User not authenticated");
   const validated = updatePlayerSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid person data.');
   const { personId, ...updateData } = validated.data;
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
-  if (!personSnap.exists() || personSnap.data().userId !== userId) throw new Error("Person not found or you do not have permission.");
+  if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
   try {
     await updateDoc(personRef, updateData);
   } catch (error) {
@@ -238,16 +199,14 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
 }
 
 export async function deletePlayerAction(personId: string) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("User not authenticated");
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
-  if (!personSnap.exists() || personSnap.data().userId !== userId) throw new Error("Person not found or you do not have permission.");
+  if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
   
   const batch = writeBatch(db);
   
-  // 1. Remove from all team rosters that belong to the user
-  const teamsQuery = query(collection(db, 'teams'), where("userId", "==", userId));
+  // 1. Remove from all team rosters
+  const teamsQuery = query(collection(db, 'teams'));
   const teamsSnapshot = await getDocs(teamsQuery);
 
   for (const teamDoc of teamsSnapshot.docs) {
@@ -259,8 +218,8 @@ export async function deletePlayerAction(personId: string) {
   }
 
   // 2. Remove family links
-  const parentLinksQuery = query(collection(db, 'familyLinks'), where("parentId", "==", personId), where("userId", "==", userId));
-  const childLinksQuery = query(collection(db, 'familyLinks'), where("childId", "==", personId), where("userId", "==", userId));
+  const parentLinksQuery = query(collection(db, 'familyLinks'), where("parentId", "==", personId));
+  const childLinksQuery = query(collection(db, 'familyLinks'), where("childId", "==", personId));
   const [parentLinks, childLinks] = await Promise.all([getDocs(parentLinksQuery), getDocs(childLinksQuery)]);
   parentLinks.forEach(doc => batch.delete(doc.ref));
   childLinks.forEach(doc => batch.delete(doc.ref));
@@ -280,8 +239,6 @@ export async function deletePlayerAction(personId: string) {
 }
 
 export async function generateAndSavePlayerPortraitAction(personId: string) {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
     const person = await getPerson(personId);
     if (!person) throw new Error("Person not found or permission denied.");
 
@@ -310,12 +267,10 @@ export async function generateAndSavePlayerPortraitAction(personId: string) {
 }
 
 export async function updateNotificationPreferencesAction(personId: string, preferences: { email?: boolean; push?: boolean }) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("User not authenticated");
   const personRef = doc(db, 'people', personId);
   
   const personSnap = await getDoc(personRef);
-  if (!personSnap.exists() || personSnap.data().userId !== userId) {
+  if (!personSnap.exists()) {
     throw new Error("Person not found or you do not have permission.");
   }
   
@@ -343,9 +298,6 @@ export async function updateNotificationPreferencesAction(personId: string, pref
 
 
 export async function generatePlayerDevelopmentPlanAction(personId: string): Promise<PlayerDevelopmentPlanOutput> {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
-    
     const person = await getPerson(personId);
     if (!person) {
         throw new Error('Player not found.');
@@ -388,13 +340,10 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
 }
 
 export async function updateActiveRoleAction(personId: string, role: string) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("User not authenticated");
-
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
   
-  if (!personSnap.exists() || personSnap.data().userId !== userId) {
+  if (!personSnap.exists()) {
     throw new Error("Person not found or you do not have permission.");
   }
 
@@ -409,6 +358,4 @@ export async function updateActiveRoleAction(personId: string, role: string) {
     console.error("Error updating active role:", error);
     throw new Error("Could not update active role.");
   }
-
-  revalidatePath('/', 'layout');
 }
