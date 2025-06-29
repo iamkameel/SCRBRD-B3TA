@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -5,10 +6,11 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { Sponsor } from '@/lib/data';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getSponsors(): Promise<Sponsor[]> {
+export const getSponsors = cache(async (): Promise<Sponsor[]> => {
   if (!userId) return [];
   try {
     const sponsorsCollection = collection(db, 'sponsors');
@@ -23,7 +25,7 @@ export async function getSponsors(): Promise<Sponsor[]> {
     console.error("Error fetching sponsors:", error);
     return [];
   }
-}
+});
 
 const sponsorSchema = z.object({
   name: z.string().min(1, { message: "Sponsor name is required." }),

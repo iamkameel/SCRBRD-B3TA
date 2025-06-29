@@ -6,10 +6,11 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import type { Transaction } from '@/lib/data';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getTransactions(): Promise<Transaction[]> {
+export const getTransactions = cache(async (): Promise<Transaction[]> => {
   if (!userId) return [];
   try {
     const transactionsCollection = collection(db, 'financials');
@@ -28,7 +29,7 @@ export async function getTransactions(): Promise<Transaction[]> {
     console.error("Error fetching transactions:", error);
     return [];
   }
-}
+});
 
 const transactionSchema = z.object({
   description: z.string().min(1, { message: "Description is required." }),

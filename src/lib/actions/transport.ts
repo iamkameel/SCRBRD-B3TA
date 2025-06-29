@@ -8,10 +8,11 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Vehicle, Person, TransportAssignment, FullTransportAssignment } from '@/lib/data';
 import { getMatch, getMatches } from './matches';
 import { getPerson } from './players';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getVehicles(): Promise<Vehicle[]> {
+export const getVehicles = cache(async (): Promise<Vehicle[]> => {
   if (!userId) return [];
   try {
     const vehiclesCollection = collection(db, 'vehicles');
@@ -26,7 +27,7 @@ export async function getVehicles(): Promise<Vehicle[]> {
     console.error("Error fetching vehicles:", error);
     return [];
   }
-}
+});
 
 const vehicleSchema = z.object({
   name: z.string().min(1, { message: "Vehicle name is required." }),
@@ -117,7 +118,7 @@ export async function deleteVehicleAction(vehicleId: string) {
 }
 
 // TRANSPORT ASSIGNMENT ACTIONS
-export async function getMatchTransportAssignments(matchId: string): Promise<TransportAssignment[]> {
+export const getMatchTransportAssignments = cache(async (matchId: string): Promise<TransportAssignment[]> => {
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -153,9 +154,9 @@ export async function getMatchTransportAssignments(matchId: string): Promise<Tra
     console.error(`Error fetching transport assignments for match ${matchId}:`, error);
     return [];
   }
-}
+});
 
-export async function getAllTransportAssignments(): Promise<FullTransportAssignment[]> {
+export const getAllTransportAssignments = cache(async (): Promise<FullTransportAssignment[]> => {
     if (!userId) return [];
     
     const allMatches = await getMatches();
@@ -174,7 +175,7 @@ export async function getAllTransportAssignments(): Promise<FullTransportAssignm
     }
     
     return allAssignments.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
-}
+});
 
 const transportAssignmentSchema = z.object({
   vehicleId: z.string({ required_error: "Please select a vehicle." }),

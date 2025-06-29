@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -7,10 +8,11 @@ import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
 import type { Team, RosterMember, TeamStats, Match, Innings } from '@/lib/data';
 import { getPerson } from './players';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getTeams(): Promise<Team[]> {
+export const getTeams = cache(async (): Promise<Team[]> => {
   if (!userId) return [];
   try {
     const q = query(collection(db, 'teams'), where("userId", "==", userId));
@@ -20,9 +22,9 @@ export async function getTeams(): Promise<Team[]> {
     console.error("Error fetching teams:", error);
     return [];
   }
-}
+});
 
-export async function getTeam(teamId: string): Promise<Team | null> {
+export const getTeam = cache(async (teamId: string): Promise<Team | null> => {
   if (!userId) return null;
   try {
     const teamDocRef = doc(db, 'teams', teamId);
@@ -33,9 +35,9 @@ export async function getTeam(teamId: string): Promise<Team | null> {
     console.error(`Error fetching team with ID ${teamId}:`, error);
     return null;
   }
-}
+});
 
-export async function getTeamRoster(teamId: string): Promise<RosterMember[]> {
+export const getTeamRoster = cache(async (teamId: string): Promise<RosterMember[]> => {
   if (!await getTeam(teamId)) return [];
   try {
     const rosterCol = collection(db, 'teams', teamId, 'roster');
@@ -53,9 +55,9 @@ export async function getTeamRoster(teamId: string): Promise<RosterMember[]> {
     console.error(`Error fetching roster for team ${teamId}:`, error);
     return [];
   }
-}
+});
 
-export async function getTeamStats(teamId: string): Promise<TeamStats> {
+export const getTeamStats = cache(async (teamId: string): Promise<TeamStats> => {
     const defaultStats: TeamStats = {
         matchesPlayed: 0, matchesWon: 0, matchesLost: 0, matchesDrawn: 0,
         totalRunsScored: 0, totalWicketsTaken: 0, netRunRate: 0.0
@@ -124,7 +126,7 @@ export async function getTeamStats(teamId: string): Promise<TeamStats> {
     stats.netRunRate = runRateFor - runRateAgainst;
 
     return stats;
-}
+});
 
 
 const assignmentSchema = z.object({
@@ -306,7 +308,7 @@ export async function deleteTeamAction(teamId: string) {
     revalidatePath('/');
 }
 
-export async function getTeamMatches(teamId: string): Promise<Match[]> {
+export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => {
   if (!userId) return [];
   if (!await getTeam(teamId)) return [];
 
@@ -340,4 +342,4 @@ export async function getTeamMatches(teamId: string): Promise<Match[]> {
     console.error(`Error fetching matches for team ${teamId}:`, error);
     return [];
   }
-}
+});

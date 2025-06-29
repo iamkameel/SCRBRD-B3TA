@@ -5,11 +5,12 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, Timestamp, query, where } from 'firebase/firestore';
 import type { Season } from '@/lib/data';
+import { cache } from 'react';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getSeasons(): Promise<Season[]> {
+export const getSeasons = cache(async (): Promise<Season[]> => {
   if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
@@ -29,9 +30,9 @@ export async function getSeasons(): Promise<Season[]> {
     console.error("Error fetching seasons:", error);
     return [];
   }
-}
+});
 
-export async function getSeason(seasonId: string): Promise<Season | null> {
+export const getSeason = cache(async (seasonId: string): Promise<Season | null> => {
   if (!userId) return null;
   try {
     const seasonDocRef = doc(db, 'seasons', seasonId);
@@ -51,7 +52,7 @@ export async function getSeason(seasonId: string): Promise<Season | null> {
     console.error(`Error fetching season with ID ${seasonId}:`, error);
     return null;
   }
-}
+});
 
 const baseSeasonSchema = z.object({
   name: z.string().min(1, { message: "Season name is required." }),

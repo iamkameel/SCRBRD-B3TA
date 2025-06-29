@@ -11,11 +11,12 @@ import type { Match, Official, Innings, PlayerOfTheMatch } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
+import { cache } from 'react';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getMatches(): Promise<Match[]> {
+export const getMatches = cache(async (): Promise<Match[]> => {
   if (!userId) return [];
   try {
     const matchesCollection = collection(db, 'matches');
@@ -46,9 +47,9 @@ export async function getMatches(): Promise<Match[]> {
     console.error("Error fetching matches:", error);
     return [];
   }
-}
+});
 
-export async function getMatch(matchId: string): Promise<Match | null> {
+export const getMatch = cache(async (matchId: string): Promise<Match | null> => {
   if (!userId) return null;
   try {
     const matchDocRef = doc(db, 'matches', matchId);
@@ -68,7 +69,7 @@ export async function getMatch(matchId: string): Promise<Match | null> {
     console.error(`Error fetching match with ID ${matchId}:`, error);
     return null;
   }
-}
+});
 
 const fixtureSchema = z.object({
   teamAId: z.string(),
@@ -248,7 +249,7 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
 }
 
 
-export async function getMatchOfficials(matchId: string): Promise<Official[]> {
+export const getMatchOfficials = cache(async (matchId: string): Promise<Official[]> => {
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -277,7 +278,7 @@ export async function getMatchOfficials(matchId: string): Promise<Official[]> {
     console.error(`Error fetching officials for match ${matchId}:`, error);
     return [];
   }
-}
+});
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -327,7 +328,7 @@ export async function assignOfficialToMatchAction(matchId: string, data: Assignm
   return { success: true };
 }
 
-export async function getMatchLineup(matchId: string, teamId: string): Promise<string[]> {
+export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<string[]> => {
   const match = await getMatch(matchId);
   if (!match) return [];
   
@@ -339,7 +340,7 @@ export async function getMatchLineup(matchId: string, teamId: string): Promise<s
     console.error(`Error fetching lineup for match ${matchId}, team ${teamId}:`, error);
     return [];
   }
-}
+});
 
 const lineupSchema = z.object({ playerIds: z.array(z.string()) });
 
@@ -401,7 +402,7 @@ export async function deleteMatchAction(matchId: string) {
 }
 
 // SCORECARD ACTIONS
-export async function getScorecard(matchId: string): Promise<{ innings1: Innings; innings2: Innings } | null> {
+export const getScorecard = cache(async (matchId: string): Promise<{ innings1: Innings; innings2: Innings } | null> => {
   const match = await getMatch(matchId);
   if (!match) return null;
 
@@ -421,7 +422,7 @@ export async function getScorecard(matchId: string): Promise<{ innings1: Innings
     console.error(`Error fetching scorecard for match ${matchId}:`, error);
     return [];
   }
-}
+});
 
 export async function saveScorecard(matchId: string, scorecardData: { innings1: Innings; innings2: Innings }, potmData: PlayerOfTheMatch) {
   if (!userId) throw new Error("User not authenticated");
@@ -472,7 +473,7 @@ export async function saveScorecard(matchId: string, scorecardData: { innings1: 
   revalidatePath('/');
 }
 
-export async function getMatchesByField(fieldId: string): Promise<Match[]> {
+export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]> => {
   if (!userId) return [];
   if (!fieldId) return [];
 
@@ -495,7 +496,7 @@ export async function getMatchesByField(fieldId: string): Promise<Match[]> {
     console.error(`Error fetching matches for field ${fieldId}:`, error);
     return [];
   }
-}
+});
 
 // LIVE SCORING ACTIONS
 export async function updateLivePlayersAction(matchId: string, updates: { onStrikeBatsmanId?: string; nonStrikerBatsmanId?: string; bowlerId?: string; }) {

@@ -7,10 +7,11 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
 import type { Field, FieldAssignment, Person } from '@/lib/data';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getFields(): Promise<Field[]> {
+export const getFields = cache(async (): Promise<Field[]> => {
   if (!userId) return [];
   try {
     const fieldsCollection = collection(db, 'fields');
@@ -66,9 +67,9 @@ export async function getFields(): Promise<Field[]> {
     console.error("Error fetching fields:", error);
     return [];
   }
-}
+});
 
-export async function getField(fieldId: string): Promise<Field | null> {
+export const getField = cache(async (fieldId: string): Promise<Field | null> => {
   if (!userId) return null;
   try {
     const fieldDocRef = doc(db, 'fields', fieldId);
@@ -124,7 +125,7 @@ export async function getField(fieldId: string): Promise<Field | null> {
     console.error(`Error fetching field with ID ${fieldId}:`, error);
     return null;
   }
-}
+});
 
 
 const fieldActionSchema = z.object({

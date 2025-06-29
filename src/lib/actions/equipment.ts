@@ -7,10 +7,11 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
 import type { EquipmentItem, FullEquipmentAssignment, Person } from '@/lib/data';
 import { getPerson } from './players';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getEquipment(): Promise<EquipmentItem[]> {
+export const getEquipment = cache(async (): Promise<EquipmentItem[]> => {
   if (!userId) return [];
   try {
     const q = query(collection(db, 'equipment'), where("userId", "==", userId));
@@ -23,7 +24,7 @@ export async function getEquipment(): Promise<EquipmentItem[]> {
     console.error("Error fetching equipment:", error);
     return [];
   }
-}
+});
 
 const itemSchema = z.object({
   name: z.string().min(1, { message: "Item name is required." }),
@@ -140,7 +141,7 @@ export async function returnEquipmentAction(assignmentId: string) {
   revalidatePath('/equipment');
 }
 
-export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignment[]> {
+export const getAllEquipmentAssignments = cache(async (): Promise<FullEquipmentAssignment[]> => {
     if (!userId) return [];
     try {
         const q = query(collection(db, 'equipmentAssignments'), where("userId", "==", userId));
@@ -173,4 +174,4 @@ export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignm
         console.error("Error fetching all assignments:", error);
         return [];
     }
-}
+});

@@ -11,10 +11,11 @@ import { getSeason } from './seasons';
 import { getDivision } from './divisions';
 import { getTeam, getTeamStats, getTeams } from './teams';
 import { getPlayerStats } from './stats';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getCompetitions(): Promise<Competition[]> {
+export const getCompetitions = cache(async (): Promise<Competition[]> => {
   if (!userId) return [];
   try {
     const competitionsCollection = collection(db, 'competitions');
@@ -29,9 +30,9 @@ export async function getCompetitions(): Promise<Competition[]> {
     console.error("Error fetching competitions:", error);
     return [];
   }
-}
+});
 
-export async function getCompetition(competitionId: string): Promise<Competition | null> {
+export const getCompetition = cache(async (competitionId: string): Promise<Competition | null> => {
   if (!userId) return null;
   try {
     const competitionDocRef = doc(db, 'competitions', competitionId);
@@ -47,7 +48,7 @@ export async function getCompetition(competitionId: string): Promise<Competition
     console.error(`Error fetching competition with ID ${competitionId}:`, error);
     return null;
   }
-}
+});
 
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
@@ -185,7 +186,7 @@ export async function deleteCompetitionAction(competitionId: string) {
 }
 
 
-export async function getCompetitionStandings(competitionId: string): Promise<StandingTeam[]> {
+export const getCompetitionStandings = cache(async (competitionId: string): Promise<StandingTeam[]> => {
     const competition = await getCompetition(competitionId);
     if (!competition) return [];
 
@@ -221,10 +222,10 @@ export async function getCompetitionStandings(competitionId: string): Promise<St
         }
         return b.stats.netRunRate - a.stats.netRunRate;
     });
-}
+});
 
 
-export async function getCompetitionLeaderboards(competitionId: string): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
+export const getCompetitionLeaderboards = cache(async (competitionId: string): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> => {
     const matches = await getMatchesByCompetition(competitionId);
     if (matches.length === 0) return { topRunScorers: [], topWicketTakers: [] };
 
@@ -278,10 +279,10 @@ export async function getCompetitionLeaderboards(competitionId: string): Promise
         .slice(0, 5);
         
     return { topRunScorers, topWicketTakers };
-}
+});
 
 
-export async function getMatchesByCompetition(competitionId: string): Promise<Match[]> {
+export const getMatchesByCompetition = cache(async (competitionId: string): Promise<Match[]> => {
   if (!userId) return [];
   if (!competitionId) return [];
   try {
@@ -313,4 +314,4 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
     console.error(`Error fetching matches for competition ${competitionId}:`, error);
     return [];
   }
-}
+});

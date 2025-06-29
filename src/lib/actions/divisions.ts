@@ -5,12 +5,13 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { Division } from '@/lib/data';
+import { cache } from 'react';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
 // This function now fetches data from Firestore for the current user
-export async function getDivisions(): Promise<Division[]> {
+export const getDivisions = cache(async (): Promise<Division[]> => {
   if (!userId) return [];
   try {
     const divisionsCollection = collection(db, 'divisions');
@@ -25,9 +26,9 @@ export async function getDivisions(): Promise<Division[]> {
     console.error("Error fetching divisions:", error);
     return [];
   }
-}
+});
 
-export async function getDivision(divisionId: string): Promise<Division | null> {
+export const getDivision = cache(async (divisionId: string): Promise<Division | null> => {
   if (!userId) return null;
   try {
     const divisionDocRef = doc(db, 'divisions', divisionId);
@@ -43,7 +44,7 @@ export async function getDivision(divisionId: string): Promise<Division | null> 
     console.error(`Error fetching division with ID ${divisionId}:`, error);
     return null;
   }
-}
+});
 
 const divisionSchema = z.object({
   name: z.string().min(1, { message: "Division name is required." }),

@@ -7,12 +7,13 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { School } from '@/lib/data';
+import { cache } from 'react';
 
 // This user ID will be replaced with dynamic auth state later.
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
 // This function now fetches data from Firestore for the current user
-export async function getSchools(): Promise<School[]> {
+export const getSchools = cache(async (): Promise<School[]> => {
   if (!userId) return [];
   try {
     const schoolsCollection = collection(db, 'schools');
@@ -29,7 +30,7 @@ export async function getSchools(): Promise<School[]> {
     // Return empty array or handle error as needed
     return [];
   }
-}
+});
 
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),

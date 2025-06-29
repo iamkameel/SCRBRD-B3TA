@@ -11,10 +11,11 @@ import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
+import { cache } from 'react';
 
 const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
 
-export async function getPlayers(): Promise<Person[]> {
+export const getPlayers = cache(async (): Promise<Person[]> => {
   if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
@@ -27,9 +28,9 @@ export async function getPlayers(): Promise<Person[]> {
     console.error("Error fetching people:", error);
     return [];
   }
-}
+});
 
-export async function getPeopleByRole(role: string): Promise<Person[]> {
+export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => {
   if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
@@ -42,9 +43,9 @@ export async function getPeopleByRole(role: string): Promise<Person[]> {
     console.error(`Error fetching people with role ${role}:`, error);
     return [];
   }
-}
+});
 
-export async function getPerson(personId: string): Promise<Person | null> {
+export const getPerson = cache(async (personId: string): Promise<Person | null> => {
     if (!userId) return null;
     try {
         const personDocRef = doc(db, 'people', personId);
@@ -55,9 +56,9 @@ export async function getPerson(personId: string): Promise<Person | null> {
         console.error(`Error fetching person with ID ${personId}:`, error);
         return null;
     }
-}
+});
 
-export async function getPersonByEmail(email: string): Promise<Person | null> {
+export const getPersonByEmail = cache(async (email: string): Promise<Person | null> => {
     if (!userId) return null;
     try {
         const peopleCollection = collection(db, 'people');
@@ -70,9 +71,9 @@ export async function getPersonByEmail(email: string): Promise<Person | null> {
         console.error(`Error fetching person with email ${email}:`, error);
         return null;
     }
-}
+});
 
-export async function getPersonLinks(personId: string): Promise<{ guardians: Person[], children: Person[] }> {
+export const getPersonLinks = cache(async (personId: string): Promise<{ guardians: Person[], children: Person[] }> => {
     if (!userId) return { guardians: [], children: [] };
     if (!await getPerson(personId)) return { guardians: [], children: [] };
 
@@ -95,9 +96,9 @@ export async function getPersonLinks(personId: string): Promise<{ guardians: Per
         console.error(`Error fetching links for person ${personId}:`, error);
         return { guardians: [], children: [] };
     }
-}
+});
 
-export async function getPersonTeamAssignments(personId: string): Promise<PlayerTeamAssignment[]> {
+export const getPersonTeamAssignments = cache(async (personId: string): Promise<PlayerTeamAssignment[]> => {
     if (!userId) return [];
     if (!await getPerson(personId)) return [];
 
@@ -128,7 +129,7 @@ export async function getPersonTeamAssignments(personId: string): Promise<Player
     }
 
     return assignments;
-}
+});
 
 const addLinkSchema = z.object({
   currentPersonId: z.string(), linkedPersonId: z.string(), relationship: z.enum(["guardian", "child"]),
