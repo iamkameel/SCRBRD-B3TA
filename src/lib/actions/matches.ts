@@ -15,7 +15,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getMatches = cache(async (): Promise<Match[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const matchesCollection = collection(db, 'matches');
@@ -49,7 +49,7 @@ export const getMatches = cache(async (): Promise<Match[]> => {
 });
 
 export const getMatch = cache(async (matchId: string): Promise<Match | null> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return null;
   try {
     const matchDocRef = doc(db, 'matches', matchId);
@@ -82,7 +82,7 @@ const fixtureSchema = z.object({
 type FixtureFormValues = z.infer<typeof fixtureSchema>;
 
 export async function addMatchAction(data: FixtureFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = fixtureSchema.safeParse(data);
 
@@ -196,7 +196,7 @@ export async function addMatchAction(data: FixtureFormValues) {
 }
 
 export async function updateMatchAction(matchId: string, data: FixtureFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = fixtureSchema.safeParse(data);
 
@@ -252,7 +252,7 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
 
 
 export const getMatchOfficials = cache(async (matchId: string): Promise<Official[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -292,7 +292,7 @@ type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
 
 export async function assignOfficialToMatchAction(matchId: string, data: AssignmentFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
 
   const match = await getMatch(matchId);
@@ -349,7 +349,7 @@ export const getMatchLineup = cache(async (matchId: string, teamId: string): Pro
 const lineupSchema = z.object({ playerIds: z.array(z.string()) });
 
 export async function saveMatchLineupAction(matchId: string, teamId: string, playerIds: string[]) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const match = await getMatch(matchId);
   if (!match) throw new Error("Match not found or you do not have permission to edit it.");
@@ -365,7 +365,7 @@ export async function saveMatchLineupAction(matchId: string, teamId: string, pla
 }
 
 export async function removeOfficialFromMatchAction(matchId: string, assignmentId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or you do not have permission to edit it.");
@@ -379,7 +379,7 @@ export async function removeOfficialFromMatchAction(matchId: string, assignmentI
 }
 
 export async function deleteMatchAction(matchId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -432,7 +432,7 @@ export const getScorecard = cache(async (matchId: string): Promise<{ innings1: I
 });
 
 export async function saveScorecard(matchId: string, scorecardData: { innings1: Innings; innings2: Innings }, potmData: PlayerOfTheMatch) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const match = await getMatch(matchId);
   if (!match) throw new Error("Match not found or permission denied.");
@@ -482,7 +482,7 @@ export async function saveScorecard(matchId: string, scorecardData: { innings1: 
 }
 
 export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   if (!fieldId) return [];
 
@@ -509,7 +509,7 @@ export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]>
 
 // LIVE SCORING ACTIONS
 export async function updateLivePlayersAction(matchId: string, updates: { onStrikeBatsmanId?: string; nonStrikerBatsmanId?: string; bowlerId?: string; }) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -527,7 +527,7 @@ export async function updateLivePlayersAction(matchId: string, updates: { onStri
 }
 
 export async function recordBallAction(matchId: string, ball: { runs?: number, event: string }) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
     const matchRef = doc(db, 'matches', matchId);
@@ -598,7 +598,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 }
 
 export async function undoLastBallAction(matchId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -620,7 +620,7 @@ export async function undoLastBallAction(matchId: string) {
 }
 
 export async function endInningsAction(matchId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -682,7 +682,7 @@ export async function endInningsAction(matchId: string) {
 }
 
 export const getOfficialAssignmentsForPerson = cache(async (personId: string): Promise<(Official & { matchId: string; matchName: string; dateTime: Date; })[]> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId || !personId) return [];
     try {
         const assignmentsQuery = query(collectionGroup(db, 'officials'), where("personId", "==", personId));

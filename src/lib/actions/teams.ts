@@ -12,7 +12,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getTeams = cache(async (): Promise<Team[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const q = query(collection(db, 'teams'), where("userId", "==", userId));
@@ -25,7 +25,7 @@ export const getTeams = cache(async (): Promise<Team[]> => {
 });
 
 export const getTeam = cache(async (teamId: string): Promise<Team | null> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return null;
   try {
     const teamDocRef = doc(db, 'teams', teamId);
@@ -59,7 +59,7 @@ export const getTeamRoster = cache(async (teamId: string): Promise<RosterMember[
 });
 
 export const getTeamStats = cache(async (teamId: string): Promise<TeamStats> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return { matchesPlayed: 0, matchesWon: 0, matchesLost: 0, matchesDrawn: 0, totalRunsScored: 0, totalWicketsTaken: 0, netRunRate: 0.0 };
 
     const defaultStats: TeamStats = {
@@ -139,7 +139,7 @@ const assignmentSchema = z.object({
 });
 
 export async function addPlayerToRosterAction(teamId: string, data: z.infer<typeof assignmentSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
   if (!await getPerson(data.personId)) throw new Error("Person not found or permission denied.");
@@ -163,7 +163,7 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
 }
 
 export async function removeRosterAssignmentAction(teamId: string, assignmentId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
     try {
@@ -185,7 +185,7 @@ const updateAssignmentSchema = z.object({
 });
 
 export async function updateRosterAssignmentAction(data: z.infer<typeof updateAssignmentSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validated = updateAssignmentSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid assignment data.');
@@ -217,7 +217,7 @@ const teamSchema = z.object({
 });
 
 async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const refs = [doc(db, 'schools', schoolId), doc(db, 'divisions', divisionId), doc(db, 'seasons', seasonId)];
     const snapshots = await Promise.all(refs.map(ref => getDoc(ref)));
@@ -228,7 +228,7 @@ async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: 
 }
 
 export async function addTeamAction(data: z.infer<typeof teamSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validated = teamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
@@ -252,7 +252,7 @@ export async function addTeamAction(data: z.infer<typeof teamSchema>) {
 
 const updateTeamSchema = teamSchema.extend({ teamId: z.string() });
 export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validated = updateTeamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
@@ -276,7 +276,7 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
 }
 
 export async function deleteTeamAction(teamId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
 
@@ -321,7 +321,7 @@ export async function deleteTeamAction(teamId: string) {
 }
 
 export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   if (!await getTeam(teamId)) return [];
 

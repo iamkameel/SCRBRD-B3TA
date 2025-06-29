@@ -15,7 +15,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getPlayers = cache(async (): Promise<Person[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
@@ -31,7 +31,7 @@ export const getPlayers = cache(async (): Promise<Person[]> => {
 });
 
 export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
@@ -47,7 +47,7 @@ export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => 
 });
 
 export const getPerson = cache(async (personId: string): Promise<Person | null> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return null;
     try {
         const personDocRef = doc(db, 'people', personId);
@@ -61,7 +61,7 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
 });
 
 export const getPersonByEmail = cache(async (email: string): Promise<Person | null> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return null;
     try {
         const peopleCollection = collection(db, 'people');
@@ -77,7 +77,7 @@ export const getPersonByEmail = cache(async (email: string): Promise<Person | nu
 });
 
 export const getPersonLinks = cache(async (personId: string): Promise<{ guardians: Person[], children: Person[] }> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return { guardians: [], children: [] };
     if (!await getPerson(personId)) return { guardians: [], children: [] };
 
@@ -103,7 +103,7 @@ export const getPersonLinks = cache(async (personId: string): Promise<{ guardian
 });
 
 export const getPersonTeamAssignments = cache(async (personId: string): Promise<PlayerTeamAssignment[]> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return [];
     if (!await getPerson(personId)) return [];
 
@@ -141,7 +141,7 @@ const addLinkSchema = z.object({
 });
 
 export async function addPersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   if (!addLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
   if (!await getPerson(currentPersonId) || !await getPerson(linkedPersonId)) throw new Error("One or both people could not be found.");
@@ -166,7 +166,7 @@ const removeLinkSchema = z.object({
 });
 
 export async function removePersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     if (!removeLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
     
@@ -200,7 +200,7 @@ const playerSchema = z.object({
     roles: z.array(z.string()).min(1),
 });
 export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   if (!playerSchema.safeParse(data).success) throw new Error('Invalid person data.');
   try {
@@ -218,7 +218,7 @@ export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
 
 const updatePlayerSchema = playerSchema.extend({ personId: z.string() });
 export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validated = updatePlayerSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid person data.');
@@ -237,7 +237,7 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
 }
 
 export async function deletePlayerAction(personId: string) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
@@ -279,7 +279,7 @@ export async function deletePlayerAction(personId: string) {
 }
 
 export async function generateAndSavePlayerPortraitAction(personId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const person = await getPerson(personId);
     if (!person) throw new Error("Person not found or permission denied.");
@@ -309,7 +309,7 @@ export async function generateAndSavePlayerPortraitAction(personId: string) {
 }
 
 export async function updateNotificationPreferencesAction(personId: string, preferences: { email?: boolean; push?: boolean }) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const personRef = doc(db, 'people', personId);
   
@@ -342,7 +342,7 @@ export async function updateNotificationPreferencesAction(personId: string, pref
 
 
 export async function generatePlayerDevelopmentPlanAction(personId: string): Promise<PlayerDevelopmentPlanOutput> {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     
     const person = await getPerson(personId);

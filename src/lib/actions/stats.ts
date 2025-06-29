@@ -8,7 +8,7 @@ import { getPerson } from './players';
 import { getUserId } from '@/lib/auth';
 
 export async function getPlayerStats(personId: string): Promise<PlayerStats> {
-    const userId = getUserId();
+    const userId = await getUserId();
     const defaultStats: PlayerStats = {
         matchesPlayed: 0, inningsBatted: 0, notOuts: 0, totalRuns: 0, highestScore: 0, highestScoreNotOut: false, ballsFaced: 0, hundreds: 0, fifties: 0, fours: 0, sixes: 0,
         oversBowled: 0, runsConceded: 0, maidens: 0, wicketsTaken: 0, bestBowlingWickets: 0, bestBowlingRuns: 0,
@@ -108,7 +108,7 @@ export async function getPlayerStats(personId: string): Promise<PlayerStats> {
 }
 
 export async function getPlayerMatchHistory(personId: string): Promise<PlayerMatchPerformance[]> {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return [];
     
     const person = await getPerson(personId);

@@ -15,7 +15,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getCompetitions = cache(async (): Promise<Competition[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const competitionsCollection = collection(db, 'competitions');
@@ -33,7 +33,7 @@ export const getCompetitions = cache(async (): Promise<Competition[]> => {
 });
 
 export const getCompetition = cache(async (competitionId: string): Promise<Competition | null> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return null;
   try {
     const competitionDocRef = doc(db, 'competitions', competitionId);
@@ -65,7 +65,7 @@ const competitionSchema = z.object({
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
 
 export async function addCompetitionAction(data: CompetitionFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = competitionSchema.safeParse(data);
 
@@ -111,7 +111,7 @@ const updateCompetitionSchema = competitionSchema.extend({
 });
 
 export async function updateCompetitionAction(data: z.infer<typeof updateCompetitionSchema>) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateCompetitionSchema.safeParse(data);
 
@@ -166,7 +166,7 @@ export async function updateCompetitionAction(data: z.infer<typeof updateCompeti
 }
 
 export async function deleteCompetitionAction(competitionId: string) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   if (!competitionId) throw new Error("Competition ID is required.");
   
@@ -287,7 +287,7 @@ export const getCompetitionLeaderboards = cache(async (competitionId: string): P
 
 
 export const getMatchesByCompetition = cache(async (competitionId: string): Promise<Match[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   if (!competitionId) return [];
   try {

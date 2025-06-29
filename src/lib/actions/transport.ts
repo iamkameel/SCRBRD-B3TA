@@ -13,7 +13,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getVehicles = cache(async (): Promise<Vehicle[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const vehiclesCollection = collection(db, 'vehicles');
@@ -40,7 +40,7 @@ const vehicleSchema = z.object({
 type VehicleFormValues = z.infer<typeof vehicleSchema>;
 
 export async function addVehicleAction(data: VehicleFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = vehicleSchema.safeParse(data);
 
@@ -71,7 +71,7 @@ const updateVehicleSchema = vehicleSchema.extend({
 });
 
 export async function updateVehicleAction(data: z.infer<typeof updateVehicleSchema>) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const validatedFields = updateVehicleSchema.safeParse(data);
 
@@ -98,7 +98,7 @@ export async function updateVehicleAction(data: z.infer<typeof updateVehicleSche
 }
 
 export async function deleteVehicleAction(vehicleId: string) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   
   if (!vehicleId) {
@@ -123,7 +123,7 @@ export async function deleteVehicleAction(vehicleId: string) {
 
 // TRANSPORT ASSIGNMENT ACTIONS
 export const getMatchTransportAssignments = cache(async (matchId: string): Promise<TransportAssignment[]> => {
-  const userId = getUserId();
+  const userId = await getUserId();
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -162,7 +162,7 @@ export const getMatchTransportAssignments = cache(async (matchId: string): Promi
 });
 
 export const getAllTransportAssignments = cache(async (): Promise<FullTransportAssignment[]> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return [];
     
     const allMatches = await getMatches();
@@ -184,7 +184,7 @@ export const getAllTransportAssignments = cache(async (): Promise<FullTransportA
 });
 
 export const getAssignmentsForDriver = cache(async (personId: string): Promise<FullTransportAssignment[]> => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId || !personId) return [];
     try {
         const assignmentsQuery = query(collectionGroup(db, 'transportAssignments'), where("driverId", "==", personId));
@@ -232,7 +232,7 @@ const transportAssignmentSchema = z.object({
 });
 
 export async function assignVehicleToMatchAction(matchId: string, data: z.infer<typeof transportAssignmentSchema>) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   const match = await getMatch(matchId);
   if (!match) throw new Error("Match not found or permission denied.");
@@ -268,7 +268,7 @@ export async function assignVehicleToMatchAction(matchId: string, data: z.infer<
 }
 
 export async function removeVehicleFromMatchAction(matchId: string, assignmentId: string) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
