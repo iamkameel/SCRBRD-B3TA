@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search, List, LayoutGrid, CalendarDays, PlusCircle } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search, List, LayoutGrid, CalendarDays, PlusCircle, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -19,6 +19,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -142,15 +145,14 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
-  // New state
   const [isClient, setIsClient] = React.useState(false);
   const [view, setView] = React.useState<'list' | 'card' | 'calendar'>('list');
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 8;
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState("all");
-  const [competitionFilter, setCompetitionFilter] = React.useState("all");
+  const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
+  const [competitionFilter, setCompetitionFilter] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -179,7 +181,6 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
     });
   };
   
-  // Reset page to 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, competitionFilter, view]);
@@ -189,12 +190,11 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
     const matchesSearch = `${match.teamAName} ${match.teamBName}`
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || match.status === statusFilter;
-    const matchesCompetition = competitionFilter === 'all' || match.competitionId === competitionFilter;
+    const matchesStatus = statusFilter.length === 0 || statusFilter.includes(match.status);
+    const matchesCompetition = competitionFilter.length === 0 || competitionFilter.includes(match.competitionId);
     return matchesSearch && matchesStatus && matchesCompetition;
   });
 
-  // Pagination logic
   const paginatedMatches = filteredMatches.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -207,7 +207,7 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
     }
   };
 
-  const filtersApplied = searchQuery || statusFilter !== 'all' || competitionFilter !== 'all';
+  const filtersApplied = searchQuery || statusFilter.length > 0 || competitionFilter.length > 0;
   
   return (
     <>
@@ -266,27 +266,98 @@ export default function MatchesClient({ matches, teams, fields, competitions }: 
                           />
                         </div>
                         <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="status-filter">Status</Label>
-                          <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="col-span-2 h-8 capitalize">
-                              <SelectValue placeholder="All Statuses" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Statuses</SelectItem>
-                              {MATCH_STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
+                            <Label>Status</Label>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="col-span-2 h-8 justify-between font-normal capitalize">
+                                        <span className="truncate">
+                                            {statusFilter.length === 0 && "Select statuses..."}
+                                            {statusFilter.length === 1 && statusFilter[0]}
+                                            {statusFilter.length > 1 && `${statusFilter.length} statuses selected`}
+                                        </span>
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56">
+                                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {MATCH_STATUSES.map(status => (
+                                    <DropdownMenuCheckboxItem
+                                        key={status}
+                                        checked={statusFilter.includes(status)}
+                                        onSelect={(e) => e.preventDefault()}
+                                        onCheckedChange={checked => {
+                                            const newFilters = checked
+                                                ? [...statusFilter, status]
+                                                : statusFilter.filter(id => id !== status);
+                                            setStatusFilter(newFilters);
+                                        }}
+                                        className="capitalize"
+                                    >
+                                        {status}
+                                    </DropdownMenuCheckboxItem>
+                                    ))}
+                                    {statusFilter.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                        onSelect={() => setStatusFilter([])}
+                                        className="justify-center text-sm"
+                                        >
+                                        Clear filter
+                                        </DropdownMenuItem>
+                                    </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
+
                         <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="competition-filter">Competition</Label>
-                          <Select value={competitionFilter} onValueChange={setCompetitionFilter}>
-                              <SelectTrigger className="col-span-2 h-8"><SelectValue placeholder="All Competitions"/></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All Competitions</SelectItem>
-                                {competitions.map(c => <SelectItem key={c.competitionId} value={c.competitionId}>{c.name}</SelectItem>)}
-                              </SelectContent>
-                          </Select>
+                            <Label>Competition</Label>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
+                                        <span className="truncate">
+                                            {competitionFilter.length === 0 && "Select competitions..."}
+                                            {competitionFilter.length === 1 && competitions.find(c => c.competitionId === competitionFilter[0])?.name}
+                                            {competitionFilter.length > 1 && `${competitionFilter.length} competitions selected`}
+                                        </span>
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56">
+                                    <DropdownMenuLabel>Filter by Competition</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {competitions.map(comp => (
+                                    <DropdownMenuCheckboxItem
+                                        key={comp.competitionId}
+                                        checked={competitionFilter.includes(comp.competitionId)}
+                                        onSelect={(e) => e.preventDefault()}
+                                        onCheckedChange={checked => {
+                                            const newFilters = checked
+                                                ? [...competitionFilter, comp.competitionId]
+                                                : competitionFilter.filter(id => id !== comp.competitionId);
+                                            setCompetitionFilter(newFilters);
+                                        }}
+                                    >
+                                        {comp.name}
+                                    </DropdownMenuCheckboxItem>
+                                    ))}
+                                    {competitionFilter.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                        onSelect={() => setCompetitionFilter([])}
+                                        className="justify-center text-sm"
+                                        >
+                                        Clear filter
+                                        </DropdownMenuItem>
+                                    </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
+
                       </div>
                     </div>
                   </PopoverContent>

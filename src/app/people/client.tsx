@@ -75,7 +75,7 @@ export default function PeopleClient({ people }: { people: Person[] }) {
     const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilters.length === 0 || roleFilters.every(role => person.roles.includes(role));
+    const matchesRole = roleFilters.length === 0 || roleFilters.some(role => person.roles.includes(role));
     return matchesSearch && matchesRole;
   });
 
