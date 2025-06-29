@@ -18,6 +18,6 @@ export const navItems = [
     { href: '/equipment', label: 'Equipment', icon: Backpack },
     { href: '/sponsors', label: 'Sponsors', icon: Handshake },
     { href: '/financials', label: 'Financials', icon: Landmark },
-    { href: '/user-management', label: 'User Management', icon: UserCog },
+    { href: '/user-management', label: 'User Management', icon: UserCog, adminOnly: true },
     { href: '/data-management', label: 'Data Management', icon: Database },
 ];

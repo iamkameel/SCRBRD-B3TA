@@ -5,17 +5,24 @@ import { Toaster } from "@/components/ui/toaster"
 import { Sidebar } from '@/components/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/header';
+import { getPerson } from '@/lib/actions/players';
+import type { Person } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'SCRBRD - Cricket Scorer',
   description: 'A modern cricket scoring and management tool.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // In a real app, this would get the logged-in user's identity
+  // For this demo, we'll fetch the hardcoded admin user
+  const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
+  const user = await getPerson(userId);
+
   return (
     <html lang="en" suppressHydrationWarning>
        <head>
@@ -32,9 +39,9 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <div className="flex min-h-screen w-full">
-                <Sidebar />
+                <Sidebar user={user} />
                 <div className="flex flex-col flex-1 md:pl-64">
-                    <Header />
+                    <Header user={user} />
                     <main className="flex-1 bg-background p-4 md:p-8">
                     {children}
                     </main>

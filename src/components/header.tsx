@@ -26,22 +26,11 @@ import { Button } from '@/components/ui/button';
 import { navItems } from './sidebar-nav-items';
 import { cn } from '@/lib/utils';
 import { CricketIcon } from '@/components/icons/cricket-icon';
-import { getPersonByEmail } from '@/lib/actions/players';
 import type { Person } from '@/lib/data';
 
-export function Header() {
+export function Header({ user }: { user: Person | null }) {
     const pathname = usePathname();
-    const [user, setUser] = React.useState<Person | null>(null);
-
-    React.useEffect(() => {
-        async function fetchUser() {
-            // In a real app, you'd get the current user's identity
-            // For this demo, we'll fetch the hardcoded admin user
-            const userProfile = await getPersonByEmail('admin@scrbrd.app');
-            setUser(userProfile);
-        }
-        fetchUser();
-    }, []);
+    const isAdmin = user?.roles.includes('Admin');
 
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
@@ -63,6 +52,9 @@ export function Header() {
                     </div>
                     <nav className="grid gap-2 p-4 text-base font-medium">
                         {navItems.map((item) => {
+                            if (item.adminOnly && !isAdmin) {
+                                return null;
+                            }
                             const isActive = (item.href === '/' && pathname === '/') || (item.href !== '/' && pathname.startsWith(item.href));
                             return (
                                 <SheetClose asChild key={item.label}>

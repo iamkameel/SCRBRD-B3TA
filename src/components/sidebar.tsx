@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -5,9 +6,11 @@ import { usePathname } from 'next/navigation';
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import { cn } from '@/lib/utils';
 import { navItems } from './sidebar-nav-items';
+import type { Person } from '@/lib/data';
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: Person | null }) {
   const pathname = usePathname();
+  const isAdmin = user?.roles.includes('Admin');
 
   return (
     <aside className="w-64 flex-col fixed inset-y-0 z-50 bg-sidebar text-sidebar-foreground border-r border-sidebar-border hidden md:flex">
@@ -19,6 +22,9 @@ export function Sidebar() {
       </div>
       <nav className="flex flex-col gap-2 p-4">
         {navItems.map((item) => {
+          if (item.adminOnly && !isAdmin) {
+            return null;
+          }
           const isActive = (item.href === '/' && pathname === '/') || (item.href !== '/' && pathname.startsWith(item.href));
           return (
             <Link
