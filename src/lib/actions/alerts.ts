@@ -86,17 +86,19 @@ export async function getUnconfirmedAssignmentsCount(): Promise<number> {
     if (!userId) return 0;
     
     try {
-        // This is a single, efficient query that requires a composite index.
-        const officialsQuery = query(
-            collectionGroup(db, 'officials'), 
-            where('confirmed', '==', false),
-            where("userId", "==", userId)
-        );
-        const snapshot = await getDocs(officialsQuery);
-        return snapshot.size;
+        const scheduledMatches = await getMatches().then(m => m.filter(match => match.status === 'scheduled' && match.userId === userId));
+        let unconfirmedCount = 0;
+
+        for (const match of scheduledMatches) {
+            const officialsCol = collection(db, 'matches', match.matchId, 'officials');
+            const q = query(officialsCol, where('confirmed', '==', false));
+            const snapshot = await getDocs(q);
+            unconfirmedCount += snapshot.size;
+        }
+
+        return unconfirmedCount;
     } catch(error) {
         console.error("Error fetching unconfirmed assignments count:", error);
-        // A failing dashboard alert is not critical. Prevent a crash.
-        return 0;
+        return 0; // Prevent dashboard crash
     }
 }
