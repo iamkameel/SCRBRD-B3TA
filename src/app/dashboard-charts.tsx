@@ -10,8 +10,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import type { StandingTeam } from '@/lib/actions/dashboard';
-import type { LeaderboardPlayer } from '@/lib/actions/dashboard';
+import type { StandingTeam } from '@/lib/data';
+import type { LeaderboardPlayer } from '@/lib/data';
 
 // --- Team Standings Chart ---
 const teamStandingsChartConfig = {
@@ -64,16 +64,25 @@ const topRunScorersChartConfig = {
 } satisfies ChartConfig;
 
 interface TopRunScorersChartProps {
-    data: LeaderboardPlayer[];
+    data: LeaderboardPlayer[] | StandingTeam[];
 }
 
 export function TopRunScorersChart({ data }: TopRunScorersChartProps) {
     if (!data || data.length === 0) return null;
 
-    const chartData = data.map(player => ({
-        name: `${player.firstName.charAt(0)}. ${player.lastName}`,
-        totalRuns: player.stats.totalRuns,
-    }));
+    const chartData = data.map(item => 'stats' in item && 'totalRuns' in item.stats ? ({
+        name: 'firstName' in item ? `${item.firstName.charAt(0)}. ${item.lastName}` : item.name,
+        totalRuns: item.stats.totalRuns,
+    }) : 'stats' in item && 'matchesWon' in item.stats ? ({ // This case is for TeamStandingsChart data
+        name: item.name,
+        matchesWon: item.stats.matchesWon,
+    }) : null).filter(Boolean);
+
+
+    if (data[0] && 'stats' in data[0] && 'matchesWon' in data[0].stats) {
+        return <TeamStandingsChart data={data as StandingTeam[]} />;
+    }
+
 
     return (
         <ChartContainer config={topRunScorersChartConfig} className="min-h-[160px] w-full">

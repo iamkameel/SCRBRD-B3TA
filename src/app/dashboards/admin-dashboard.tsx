@@ -11,7 +11,7 @@ import { getTeams } from "@/lib/actions/teams";
 import { getPlayers } from "@/lib/actions/players";
 import { getFields } from "@/lib/actions/fields";
 import { format } from "date-fns";
-import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
+import { TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
 import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -22,6 +22,8 @@ import { getEquipment } from "@/lib/actions/equipment";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { getCompetitions } from '@/lib/actions/competitions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -126,14 +128,37 @@ export default async function AdminDashboard() {
         <Card>
             <CardHeader><CardTitle>League Overview</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <StatCardLink href="/competitions" title="Competitions" value={allCompetitions.length} icon={ClipboardList} description="active this season" />
-                <StatCardLink href="/teams" title="Teams" value={allTeams.length} icon={Users} description="across all divisions"/>
-                <StatCardLink href="/people" title="Players" value={allPlayers.filter(p => p.roles.includes('Player')).length} icon={Users} description="registered" />
-                <StatCardLink href="/fields" title="Fields & Venues" value={allFields.length} icon={MapPin} description="available for booking" />
-                <StatCardLink href="/financials" title="Net Balance" value={formatCurrency(financialSummary.balance)} icon={Scale} description="income vs. expense" />
-                <StatCardLink href="/sponsors" title="Sponsors" value={allSponsors.length} icon={Handshake} description="partnered" />
-                <StatCardLink href="/transport" title="Vehicles" value={allVehicles.length} icon={Bus} description="in fleet" />
-                <StatCardLink href="/equipment" title="Equipment" value={allEquipment.length} icon={Backpack} description="items in inventory" />
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/competitions" title="Competitions" value={allCompetitions.length} icon={ClipboardList} description="active this season" />
+                </TooltipTrigger><TooltipContent><p>View and manage all competitions.</p></TooltipContent></Tooltip></TooltipProvider>
+
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/teams" title="Teams" value={allTeams.length} icon={Users} description="across all divisions"/>
+                </TooltipTrigger><TooltipContent><p>View and manage all teams.</p></TooltipContent></Tooltip></TooltipProvider>
+
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/people" title="Players" value={allPlayers.filter(p => p.roles.includes('Player')).length} icon={Users} description="registered" />
+                </TooltipTrigger><TooltipContent><p>View and manage all players, coaches, and staff.</p></TooltipContent></Tooltip></TooltipProvider>
+
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/fields" title="Fields & Venues" value={allFields.length} icon={MapPin} description="available for booking" />
+                </TooltipTrigger><TooltipContent><p>View and manage all fields and venues.</p></TooltipContent></Tooltip></TooltipProvider>
+
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/financials" title="Net Balance" value={formatCurrency(financialSummary.balance)} icon={Scale} description="income vs. expense" />
+                </TooltipTrigger><TooltipContent><p>View and manage all financial transactions.</p></TooltipContent></Tooltip></TooltipProvider>
+                
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/sponsors" title="Sponsors" value={allSponsors.length} icon={Handshake} description="partnered" />
+                </TooltipTrigger><TooltipContent><p>View and manage all sponsors.</p></TooltipContent></Tooltip></TooltipProvider>
+
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/transport" title="Vehicles" value={allVehicles.length} icon={Bus} description="in fleet" />
+                </TooltipTrigger><TooltipContent><p>View and manage the transport fleet.</p></TooltipContent></Tooltip></TooltipProvider>
+                
+                <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <StatCardLink href="/equipment" title="Equipment" value={allEquipment.length} icon={Backpack} description="items in inventory" />
+                </TooltipTrigger><TooltipContent><p>View and manage all equipment.</p></TooltipContent></Tooltip></TooltipProvider>
             </CardContent>
         </Card>
 
@@ -189,7 +214,7 @@ export default async function AdminDashboard() {
           <Card>
             <CardHeader><CardTitle>Team Standings</CardTitle><CardDescription>Season leaderboard based on wins and Net Run Rate.</CardDescription></CardHeader>
             <CardContent className="space-y-6">
-              <TeamStandingsChart data={teamStandings} />
+              <TopRunScorersChart data={teamStandings} />
               <Table>
                 <TableHeader><TableRow><TableHead className="w-[50px]">Pos</TableHead><TableHead>Team</TableHead><TableHead className="text-right">W</TableHead><TableHead className="text-right">L</TableHead><TableHead className="text-right">NRR</TableHead></TableRow></TableHeader>
                 <TableBody>
@@ -227,4 +252,5 @@ export default async function AdminDashboard() {
   );
 }
     
+
 
