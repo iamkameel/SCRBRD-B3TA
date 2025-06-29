@@ -41,19 +41,23 @@ import {
 import { ScrollArea } from './ui/scroll-area';
 
 function RoleSwitcher() {
-    const { user, person } = useAuth();
+    const { person } = useAuth();
     const { toast } = useToast();
     const [isPending, startTransition] = React.useTransition();
     const router = useRouter();
 
-    if (!user || !person || !person.roles || person.roles.length <= 1) {
+    if (!person || !person.roles || person.roles.length <= 1) {
         return <p className="text-sm font-medium">{person?.activeRole}</p>;
     }
 
     const handleRoleChange = (role: string) => {
         startTransition(async () => {
+            if (!person?.personId) {
+                toast({ title: "Error", description: "User profile ID not found.", variant: "destructive" });
+                return;
+            }
             try {
-                await updateActiveRoleAction(user.uid, role);
+                await updateActiveRoleAction(person.personId, role);
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
                 router.refresh();
             } catch (error) {
