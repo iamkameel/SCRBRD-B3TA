@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Settings, LogOut } from 'lucide-react';
+import { Menu, Settings, LogOut, ChevronDown, Check } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -20,6 +21,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
@@ -27,13 +30,55 @@ import { navItems } from './sidebar-nav-items';
 import { cn } from '@/lib/utils';
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import type { Person } from '@/lib/data';
+import { updateActiveRoleAction } from '@/lib/actions/players';
+import { useToast } from '@/hooks/use-toast';
+
+function RoleSwitcher({ user }: { user: Person }) {
+    const { toast } = useToast();
+    const [isPending, startTransition] = React.useTransition();
+
+    const handleRoleChange = (role: string) => {
+        startTransition(async () => {
+            try {
+                await updateActiveRoleAction(user.personId, role);
+                toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
+            } catch (error) {
+                toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });
+            }
+        });
+    };
+
+    if (!user.roles || user.roles.length <= 1) {
+        return <p className="text-sm font-medium">{user.activeRole}</p>;
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-auto p-0 hover:bg-transparent" disabled={isPending}>
+                    {user.activeRole}
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Switch Active Role</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={user.activeRole} onValueChange={handleRoleChange}>
+                    {user.roles.map((role) => (
+                        <DropdownMenuRadioItem key={role} value={role}>{role}</DropdownMenuRadioItem>
+                    ))}
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
 
 export function Header({ user }: { user: Person | null }) {
     const pathname = usePathname();
     const isAdmin = user?.roles.includes('Admin');
 
     return (
-        <header className="flex h-14 items-center gap-4 border-b border-black/20 bg-primary text-primary-foreground px-4 lg:px-6 sticky top-0 z-30">
+        <header className="flex h-14 items-center gap-4 border-b bg-primary text-primary-foreground px-4 lg:px-6 sticky top-0 z-40">
             <Sheet>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="shrink-0 md:hidden hover:bg-white/20">
@@ -76,6 +121,8 @@ export function Header({ user }: { user: Person | null }) {
             </Sheet>
 
             <div className="w-full flex-1" />
+
+            {user && <RoleSwitcher user={user} />}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

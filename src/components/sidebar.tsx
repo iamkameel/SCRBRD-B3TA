@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -10,7 +11,7 @@ import type { Person } from '@/lib/data';
 
 export function Sidebar({ user }: { user: Person | null }) {
   const pathname = usePathname();
-  const isAdmin = user?.roles.includes('Admin');
+  const activeRole = user?.activeRole;
 
   return (
     <aside className="w-64 flex-col fixed inset-y-0 z-50 bg-sidebar text-sidebar-foreground border-r border-sidebar-border hidden md:flex">
@@ -22,7 +23,7 @@ export function Sidebar({ user }: { user: Person | null }) {
       </div>
       <nav className="flex flex-col gap-1 p-4">
         {navItems.map((item) => {
-          if (item.adminOnly && !isAdmin) {
+          if (item.adminOnly && activeRole !== 'Admin') {
             return null;
           }
           const isActive = (item.href === '/' && pathname === '/') || (item.href !== '/' && pathname.startsWith(item.href));

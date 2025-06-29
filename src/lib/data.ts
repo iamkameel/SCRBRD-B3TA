@@ -9,6 +9,7 @@ export interface Person {
   phone?: string;
   profileImageUrl?: string;
   roles: string[];
+  activeRole?: string;
   notificationPreferences?: {
     email: boolean;
     push: boolean;

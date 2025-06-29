@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -14,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import type { Person } from "@/lib/data";
 import { addPlayerAction, updatePlayerAction } from '@/lib/actions/players';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const personSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -24,6 +26,20 @@ const personSchema = z.object({
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
+  activeRole: z.string().optional(),
+}).refine(data => {
+    if (data.roles && data.roles.length > 0 && !data.activeRole) {
+        // If roles are present but no activeRole is set, this is invalid
+        return false;
+    }
+    if (data.activeRole && !data.roles.includes(data.activeRole)) {
+        // If activeRole is set, it must be one of the roles in the roles array
+        return false;
+    }
+    return true;
+}, {
+    message: "An active role must be selected from the assigned roles.",
+    path: ["activeRole"],
 });
 
 type PersonFormValues = z.infer<typeof personSchema>;
@@ -46,21 +62,27 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
   const form = useForm<PersonFormValues>({
     resolver: zodResolver(personSchema),
     defaultValues: mode === 'edit' && person ? {
-      firstName: person.firstName, lastName: person.lastName, email: person.email, phone: person.phone, profileImageUrl: person.profileImageUrl, roles: person.roles,
+      ...person,
+      phone: person.phone ?? '',
+      profileImageUrl: person.profileImageUrl ?? '',
     } : {
-      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"],
+      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player",
     },
   });
   
+  const selectedRoles = form.watch('roles');
+
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && person) {
         form.reset({
-          firstName: person.firstName, lastName: person.lastName, email: person.email, phone: person.phone, profileImageUrl: person.profileImageUrl ?? '', roles: person.roles,
+          ...person,
+          phone: person.phone ?? '',
+          profileImageUrl: person.profileImageUrl ?? '',
         });
       } else {
         form.reset({
-          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"],
+          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player",
         });
       }
     }
@@ -69,11 +91,12 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
   function onSubmit(data: PersonFormValues) {
     startTransition(async () => {
       try {
+        const payload = { ...data, activeRole: data.activeRole || data.roles[0] };
         if (mode === 'edit' && person) {
-          await updatePlayerAction({ personId: person.personId, ...data });
+          await updatePlayerAction({ personId: person.personId, ...payload });
           toast({ title: "Person Updated", description: `${data.firstName} ${data.lastName} has been updated.` });
         } else {
-          await addPlayerAction(data);
+          await addPlayerAction(payload);
           toast({ title: "Person Added", description: `${data.firstName} ${data.lastName} has been added.` });
         }
         onOpenChange(false);
@@ -121,7 +144,13 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
                   {ROLES.map((item) => (
                     <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
                       <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => (checked ? field.onChange([...field.value, item.id]) : field.onChange(field.value?.filter((v) => v !== item.id)))} disabled={isPending} /></FormControl>
+                        <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
+                           const newRoles = checked ? [...field.value, item.id] : field.value?.filter((v) => v !== item.id);
+                           field.onChange(newRoles);
+                           if (!newRoles.includes(form.getValues('activeRole'))) {
+                               form.setValue('activeRole', newRoles[0]);
+                           }
+                        }} disabled={isPending} /></FormControl>
                         <FormLabel className="font-normal">{item.label}</FormLabel>
                       </FormItem>
                     )} />
@@ -130,6 +159,21 @@ export function PersonDialog({ mode, person, open, onOpenChange }: { mode: 'add'
                 <FormMessage />
               </FormItem>
             )} />
+            <FormField
+                control={form.control}
+                name="activeRole"
+                render={({field}) => (
+                    <FormItem>
+                        <FormLabel>Active Role</FormLabel>
+                        <FormDescription>The primary role this user will have when they log in.</FormDescription>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isPending || !selectedRoles || selectedRoles.length === 0}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select an active role"/></SelectTrigger></FormControl>
+                            <SelectContent>{selectedRoles?.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <FormMessage/>
+                    </FormItem>
+                )}
+            />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Person"}</Button>

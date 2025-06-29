@@ -61,7 +61,7 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
 });
 
 export const getPersonByEmail = cache(async (email: string): Promise<Person | null> => {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) return null;
     try {
         const peopleCollection = collection(db, 'people');
@@ -198,6 +198,7 @@ const playerSchema = z.object({
     phone: z.string().optional(),
     profileImageUrl: z.string().url().optional().or(z.literal('')),
     roles: z.array(z.string()).min(1),
+    activeRole: z.string().optional(),
 });
 export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
   const userId = await getUserId();
@@ -384,4 +385,30 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
         if (error instanceof Error) throw error;
         throw new Error("Could not generate development plan.");
     }
+}
+
+export async function updateActiveRoleAction(personId: string, role: string) {
+  const userId = await getUserId();
+  if (!userId) throw new Error("User not authenticated");
+
+  const personRef = doc(db, 'people', personId);
+  const personSnap = await getDoc(personRef);
+  
+  if (!personSnap.exists() || personSnap.data().userId !== userId) {
+    throw new Error("Person not found or you do not have permission.");
+  }
+
+  const personData = personSnap.data() as Person;
+  if (!personData.roles.includes(role)) {
+    throw new Error("Cannot switch to a role the user does not have.");
+  }
+
+  try {
+    await updateDoc(personRef, { activeRole: role });
+  } catch (error) {
+    console.error("Error updating active role:", error);
+    throw new Error("Could not update active role.");
+  }
+
+  revalidatePath('/', 'layout');
 }
