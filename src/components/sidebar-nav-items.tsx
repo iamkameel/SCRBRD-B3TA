@@ -2,7 +2,7 @@
 import { LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database, Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack } from 'lucide-react';
 
 export const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/matches', label: 'Matches', icon: ClipboardList },
     { href: '/teams', label: 'Teams', icon: Users },
     { href: '/people', label: 'People', icon: User },
