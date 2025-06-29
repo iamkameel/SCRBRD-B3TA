@@ -1,4 +1,5 @@
 
+
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -11,9 +12,9 @@ import { getTeams } from "@/lib/actions/teams";
 import { getPlayers } from "@/lib/actions/players";
 import { getFields } from "@/lib/actions/fields";
 import { format, isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
-import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
+import { TeamStandingsChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
-import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database, AlertCircle } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database, AlertCircle, Download } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { getTransactions } from "@/lib/actions/financials";
 import { getSponsors } from "@/lib/actions/sponsors";
@@ -25,6 +26,8 @@ import { getCompetitions } from '@/lib/actions/competitions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
@@ -280,17 +283,102 @@ export default async function AdminDashboard() {
 
         <div className="lg:col-span-1 space-y-8">
           <Card>
-            <CardHeader><CardTitle>Top Performers</CardTitle><CardDescription>Season leaders in key categories.</CardDescription></CardHeader>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                  <CardTitle>Top Performers</CardTitle>
+                  <CardDescription>Season leaders across all divisions and categories.</CardDescription>
+                </div>
+                <div className="flex items-center gap-2 mt-4 md:mt-0">
+                  <Select disabled>
+                    <SelectTrigger className="w-auto md:w-[120px]">
+                      <SelectValue placeholder="All Seasons" />
+                    </SelectTrigger>
+                  </Select>
+                  <Button variant="outline" disabled>
+                    <Download className="mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
             <CardContent>
               <Tabs defaultValue="batting">
-                <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="batting">Batting</TabsTrigger><TabsTrigger value="bowling">Bowling</TabsTrigger></TabsList>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="batting">Batting</TabsTrigger>
+                  <TabsTrigger value="bowling">Bowling</TabsTrigger>
+                </TabsList>
                 <TabsContent value="batting" className="mt-4">
-                  <TopRunScorersChart data={topRunScorers} />
-                  {topRunScorers.map(player => (<div key={player.personId} className="flex items-center gap-2 mt-2"><div className="font-bold w-4 text-center text-xs"></div><div><Link className="font-semibold text-sm hover:underline" href={`/people/${player.personId}`}>{player.firstName} {player.lastName}</Link></div><div className="ml-auto font-bold text-sm">{player.stats.totalRuns}</div></div>))}
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[50px]">Rank</TableHead>
+                        <TableHead>Player</TableHead>
+                        <TableHead className="text-right">Runs</TableHead>
+                        <TableHead className="text-right">Avg</TableHead>
+                        <TableHead className="text-right">SR</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {topRunScorers.length > 0 ? topRunScorers.map((player, index) => (
+                        <TableRow key={player.personId}>
+                          <TableCell className="font-bold">#{index + 1}</TableCell>
+                          <TableCell>
+                            <Link href={`/people/${player.personId}`} className="font-medium hover:underline flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={player.profileImageUrl} alt={player.firstName} />
+                                <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
+                              </Avatar>
+                              <span>{player.firstName} {player.lastName}</span>
+                            </Link>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">{player.stats.totalRuns}</TableCell>
+                          <TableCell className="text-right">{player.stats.battingAverage.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{player.stats.strikeRate.toFixed(2)}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="h-24 text-center">No batting data available.</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </TabsContent>
                 <TabsContent value="bowling" className="mt-4">
-                  <TopWicketTakersChart data={topWicketTakers} />
-                  {topWicketTakers.map(player => (<div key={player.personId} className="flex items-center gap-2 mt-2"><div className="font-bold w-4 text-center text-xs"></div><div><Link className="font-semibold text-sm hover:underline" href={`/people/${player.personId}`}>{player.firstName} {player.lastName}</Link></div><div className="ml-auto font-bold text-sm">{player.stats.wicketsTaken}</div></div>))}
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[50px]">Rank</TableHead>
+                        <TableHead>Player</TableHead>
+                        <TableHead className="text-right">Wickets</TableHead>
+                        <TableHead className="text-right">Avg</TableHead>
+                        <TableHead className="text-right">Econ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {topWicketTakers.length > 0 ? topWicketTakers.map((player, index) => (
+                        <TableRow key={player.personId}>
+                          <TableCell className="font-bold">#{index + 1}</TableCell>
+                          <TableCell>
+                            <Link href={`/people/${player.personId}`} className="font-medium hover:underline flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={player.profileImageUrl} alt={player.firstName} />
+                                <AvatarFallback>{player.firstName?.[0]}{player.lastName?.[0]}</AvatarFallback>
+                              </Avatar>
+                              <span>{player.firstName} {player.lastName}</span>
+                            </Link>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">{player.stats.wicketsTaken}</TableCell>
+                          <TableCell className="text-right">{player.stats.bowlingAverage.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{player.stats.economyRate.toFixed(2)}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="h-24 text-center">No bowling data available.</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </TabsContent>
               </Tabs>
             </CardContent>
@@ -358,3 +446,4 @@ export default async function AdminDashboard() {
     </div>
   );
 }
+
