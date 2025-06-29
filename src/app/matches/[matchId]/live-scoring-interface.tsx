@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users } from 'lucide-react';
 import type { RosterMember, Match } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -47,7 +47,8 @@ export function LiveScoringInterface({
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
-  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [] };
+  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [] };
+  const batsmenOut = liveScore.batsmenOut || [];
   
   // For this demo, let's assume Team A is always the batting team.
   const battingTeamRoster = teamARoster;
@@ -57,8 +58,15 @@ export function LiveScoringInterface({
   const nonStrikerBatsmanId = liveScore.nonStrikerBatsmanId;
   const bowlerId = liveScore.bowlerId;
   
-  const isSetupComplete = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
+  const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
   const runRate = liveScore.overs + liveScore.balls / 6 > 0 ? (liveScore.runs / (liveScore.overs + liveScore.balls / 6)).toFixed(2) : '0.00';
+
+  const isAllOut = liveScore.wickets >= 10;
+  const needsNewBatsman = !isAllOut && liveScore.wickets > 0 && !onStrikeBatsmanId;
+
+  const availableOnStrikeBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId);
+  const availableNonStrikers = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== onStrikeBatsmanId);
+
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler', personId: string) => {
     startTransition(async () => {
@@ -128,14 +136,14 @@ export function LiveScoringInterface({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
                 <Label>On Strike</Label>
-                <Select value={onStrikeBatsmanId} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                    <SelectContent>{battingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId} disabled={p.personId === nonStrikerBatsmanId}>{p.personName}</SelectItem>)}</SelectContent>
+                <Select value={onStrikeBatsmanId} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || needsNewBatsman}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                    <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
                 <Label>Non-Striker</Label>
                 <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                    <SelectContent>{battingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId} disabled={p.personId === onStrikeBatsmanId}>{p.personName}</SelectItem>)}</SelectContent>
+                    <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
@@ -147,7 +155,19 @@ export function LiveScoringInterface({
         </CardContent>
       </Card>
 
-      {!isSetupComplete ? (
+      {isAllOut ? (
+        <Card className="p-8 text-center bg-muted">
+            <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
+            <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
+            <p className="mt-1 text-sm text-muted-foreground">All 10 wickets have fallen.</p>
+        </Card>
+      ) : needsNewBatsman ? (
+        <Card className="p-8 text-center bg-yellow-50 dark:bg-yellow-900/30">
+            <Users className="mx-auto h-12 w-12 text-yellow-600 dark:text-yellow-400" />
+            <h3 className="mt-4 text-xl font-bold">Wicket! Select Next Batsman</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Choose the new batsman for the 'On Strike' position to continue scoring.</p>
+        </Card>
+      ) : !isReadyToScore ? (
         <Card className="p-8 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500" />
             <h3 className="mt-4 text-lg font-medium">Setup Required</h3>

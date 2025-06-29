@@ -138,6 +138,7 @@ export interface Match {
     onStrikeBatsmanId?: string;
     nonStrikerBatsmanId?: string;
     bowlerId?: string;
+    batsmenOut?: string[];
   };
 }
 

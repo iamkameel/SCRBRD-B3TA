@@ -170,7 +170,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     fieldName: fieldSnap.data().name,
     dateTime: Timestamp.fromDate(dateTime),
     status: 'scheduled',
-    liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [] },
+    liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [] },
     userId: userId,
     report: '',
     preview: '',
@@ -526,7 +526,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const match = matchSnap.data() as Match;
     const liveScore = match.liveScore || {
-        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [],
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [],
     };
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
@@ -542,6 +542,13 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (ball.event === 'W') {
         if (liveScore.wickets < 10) {
             liveScore.wickets++;
+             if (liveScore.onStrikeBatsmanId) {
+                if (!liveScore.batsmenOut) {
+                    liveScore.batsmenOut = [];
+                }
+                liveScore.batsmenOut.push(liveScore.onStrikeBatsmanId);
+            }
+            liveScore.onStrikeBatsmanId = undefined; // Clear the on-strike batsman
         }
     }
     if (ball.event === 'wd' || ball.event === 'nb') {
@@ -578,5 +585,3 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     revalidatePath(`/matches/${matchId}`);
     return liveScore;
 }
-
-    
