@@ -1,10 +1,9 @@
-
 'use client';
 
 import * as React from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, query, collection, where, limit } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
 
@@ -39,18 +38,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
-    // This effect runs when `user` changes.
-    // It's only for fetching the profile.
     if (user) {
-      setLoading(true); // Start loading when we have a user but no profile yet
-      const unsub = onSnapshot(doc(db, 'people', user.uid), (doc) => {
-        if (doc.exists()) {
-          setPerson({ personId: doc.id, ...doc.data() } as Person);
+      setLoading(true);
+      // Query for the person document using their email address, which is consistent
+      // for both sample users and newly registered users.
+      const q = query(collection(db, "people"), where("email", "==", user.email), limit(1));
+      
+      const unsub = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const userDoc = snapshot.docs[0];
+          setPerson({ personId: userDoc.id, ...userDoc.data() } as Person);
         } else {
-          // Handle case where user exists in Auth but not in 'people' collection
+          // This can happen if a user is created in Auth but not yet in Firestore,
+          // or if they were deleted from Firestore but not Auth.
           setPerson(null);
         }
-        setLoading(false); // We have checked for a profile, so we're done loading.
+        setLoading(false);
       });
       return () => unsub();
     }
