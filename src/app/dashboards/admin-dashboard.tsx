@@ -1,3 +1,5 @@
+
+import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -78,11 +80,9 @@ export default async function AdminDashboard() {
 
   const competitions = new Set(allMatches.filter(m => m.competitionId).map(m => m.competitionId));
 
-  const financialSummary = React.useMemo(() => {
-    const income = allTransactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
-    const expense = allTransactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
-    return { income, expense, balance: income - expense };
-  }, [allTransactions]);
+  const income = allTransactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
+  const expense = allTransactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+  const financialSummary = { income, expense, balance: income - expense };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -224,3 +224,4 @@ export default async function AdminDashboard() {
     </div>
   );
 }
+    
