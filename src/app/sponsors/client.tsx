@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -106,7 +107,7 @@ function SponsorDialog({ mode, sponsor, open, onOpenChange }: { mode: 'add' | 'e
 }
 
 
-export default function SponsorsClient({ sponsors }: { sponsors: Sponsor[] }) {
+export default function SponsorsClient({ sponsors, isAdmin }: { sponsors: Sponsor[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   
@@ -139,9 +140,9 @@ export default function SponsorsClient({ sponsors }: { sponsors: Sponsor[] }) {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Sponsors</h1>
             <p className="text-muted-foreground">Manage your league and team sponsors.</p>
           </div>
-          <Button onClick={() => { setDialogMode('add'); setSelectedSponsor(null); setIsSponsorDialogOpen(true); }}>
+          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedSponsor(null); setIsSponsorDialogOpen(true); }}>
               <PlusCircle className="mr-2" />Add Sponsor
-          </Button>
+          </Button>}
         </header>
         <Card>
           <CardHeader>
@@ -155,7 +156,7 @@ export default function SponsorsClient({ sponsors }: { sponsors: Sponsor[] }) {
                   <TableHead>Logo</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Website</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,7 +180,7 @@ export default function SponsorsClient({ sponsors }: { sponsors: Sponsor[] }) {
                             <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      {isAdmin && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -193,12 +194,12 @@ export default function SponsorsClient({ sponsors }: { sponsors: Sponsor[] }) {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">No sponsors found. Get started by adding a sponsor.</TableCell>
+                    <TableCell colSpan={isAdmin ? 4 : 3} className="h-24 text-center">No sponsors found. Get started by adding a sponsor.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -207,14 +208,14 @@ export default function SponsorsClient({ sponsors }: { sponsors: Sponsor[] }) {
         </Card>
       </div>
 
-      <SponsorDialog
+      {isAdmin && <SponsorDialog
         mode={dialogMode}
         sponsor={selectedSponsor ?? undefined}
         open={isSponsorDialogOpen}
         onOpenChange={setIsSponsorDialogOpen}
-      />
+      />}
       
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -233,7 +234,7 @@ export default function SponsorsClient({ sponsors }: { sponsors: Sponsor[] }) {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -95,7 +96,7 @@ function TransactionDialog({ mode, transaction, open, onOpenChange }: { mode: 'a
   );
 }
 
-export default function FinancialsClient({ transactions }: { transactions: Transaction[] }) {
+export default function FinancialsClient({ transactions, isAdmin }: { transactions: Transaction[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedTransaction, setSelectedTransaction] = React.useState<Transaction | null>(null);
@@ -135,7 +136,7 @@ export default function FinancialsClient({ transactions }: { transactions: Trans
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Financials</h1><p className="text-muted-foreground">Manage your income and expenses.</p></div>
-          <Button onClick={() => { setDialogMode('add'); setSelectedTransaction(null); setIsDialogOpen(true); }}><PlusCircle className="mr-2"/>Add Transaction</Button>
+          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedTransaction(null); setIsDialogOpen(true); }}><PlusCircle className="mr-2"/>Add Transaction</Button>}
         </header>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -151,7 +152,7 @@ export default function FinancialsClient({ transactions }: { transactions: Trans
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Category</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Category</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Amount</TableHead>{isAdmin && <TableHead className="text-right">Actions</TableHead>}</TableRow></TableHeader>
               <TableBody>
                 {transactions.length > 0 ? (
                   transactions.map((t) => (
@@ -161,7 +162,7 @@ export default function FinancialsClient({ transactions }: { transactions: Trans
                       <TableCell><Badge variant="outline">{t.category}</Badge></TableCell>
                       <TableCell><Badge variant={t.type === 'Income' ? 'secondary' : 'destructive'} className={t.type === 'Income' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'}>{t.type}</Badge></TableCell>
                       <TableCell className={cn("text-right font-mono", t.type === 'Income' ? 'text-green-600' : 'text-destructive')}>{formatCurrency(t.amount)}</TableCell>
-                      <TableCell className="text-right">
+                      {isAdmin && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -169,11 +170,11 @@ export default function FinancialsClient({ transactions }: { transactions: Trans
                             <DropdownMenuItem onSelect={() => { setSelectedTransaction(t); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={6} className="h-24 text-center">No transactions found. Get started by adding one.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center">No transactions found. Get started by adding one.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -181,9 +182,9 @@ export default function FinancialsClient({ transactions }: { transactions: Trans
         </Card>
       </div>
 
-      <TransactionDialog mode={dialogMode} transaction={selectedTransaction ?? undefined} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      {isAdmin && <TransactionDialog mode={dialogMode} transaction={selectedTransaction ?? undefined} open={isDialogOpen} onOpenChange={setIsDialogOpen} />}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete the transaction: <strong>{selectedTransaction?.description}</strong>.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
@@ -191,7 +192,7 @@ export default function FinancialsClient({ transactions }: { transactions: Trans
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Transaction"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

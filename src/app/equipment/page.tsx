@@ -1,14 +1,20 @@
 
+
 import { getEquipment, getAllEquipmentAssignments } from '@/lib/actions/equipment';
-import { getPeopleByRole } from '@/lib/actions/players';
+import { getPeopleByRole, getPerson } from '@/lib/actions/players';
 import EquipmentClient from './client';
+import { getUserId } from '@/lib/auth';
 
 export default async function EquipmentPage() {
-  const [inventory, assignments, players] = await Promise.all([
+  const [inventory, assignments, players, userId] = await Promise.all([
     getEquipment(),
     getAllEquipmentAssignments(),
     getPeopleByRole('Player'),
+    getUserId(),
   ]);
   
-  return <EquipmentClient inventory={inventory} assignments={assignments} players={players} />;
+  const user = userId ? await getPerson(userId) : null;
+  const isAdmin = user?.roles.includes('Admin') ?? false;
+  
+  return <EquipmentClient inventory={inventory} assignments={assignments} players={players} isAdmin={isAdmin} />;
 }

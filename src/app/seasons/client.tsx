@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -117,7 +118,7 @@ function SeasonDialog({ mode, season, open, onOpenChange }: { mode: 'add' | 'edi
   );
 }
 
-export default function SeasonsClient({ seasons }: { seasons: Season[] }) {
+export default function SeasonsClient({ seasons, isAdmin }: { seasons: Season[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedSeason, setSelectedSeason] = React.useState<Season | null>(null);
@@ -146,14 +147,14 @@ export default function SeasonsClient({ seasons }: { seasons: Season[] }) {
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Seasons</h1><p className="text-muted-foreground">Manage your competition seasons.</p></div>
-          <Button onClick={() => { setDialogMode('add'); setSelectedSeason(null); setIsSeasonDialogOpen(true); }}><PlusCircle className="mr-2" />Add Season</Button>
+          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedSeason(null); setIsSeasonDialogOpen(true); }}><PlusCircle className="mr-2" />Add Season</Button>}
         </header>
         <Card>
           <CardHeader><CardTitle>Season List</CardTitle><CardDescription>A list of all seasons in the system.</CardDescription></CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Start Date</TableHead><TableHead>End Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                <TableRow><TableHead>Name</TableHead><TableHead>Start Date</TableHead><TableHead>End Date</TableHead><TableHead>Status</TableHead>{isAdmin && <TableHead className="text-right">Actions</TableHead>}</TableRow>
               </TableHeader>
               <TableBody>
                 {seasons.length > 0 ? (
@@ -163,7 +164,7 @@ export default function SeasonsClient({ seasons }: { seasons: Season[] }) {
                       <TableCell>{format(season.startDate, "PPP")}</TableCell>
                       <TableCell>{format(season.endDate, "PPP")}</TableCell>
                       <TableCell><Badge variant={season.active ? "default" : "secondary"}>{season.active ? "Active" : "Inactive"}</Badge></TableCell>
-                      <TableCell className="text-right">
+                      {isAdmin && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -171,11 +172,11 @@ export default function SeasonsClient({ seasons }: { seasons: Season[] }) {
                             <DropdownMenuItem onSelect={() => { setSelectedSeason(season); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={5} className="h-24 text-center">No seasons found. Get started by adding a season.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isAdmin ? 5 : 4} className="h-24 text-center">No seasons found. Get started by adding a season.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -183,9 +184,9 @@ export default function SeasonsClient({ seasons }: { seasons: Season[] }) {
         </Card>
       </div>
 
-      <SeasonDialog mode={dialogMode} season={selectedSeason ?? undefined} open={isSeasonDialogOpen} onOpenChange={setIsSeasonDialogOpen} />
+      {isAdmin && <SeasonDialog mode={dialogMode} season={selectedSeason ?? undefined} open={isSeasonDialogOpen} onOpenChange={setIsSeasonDialogOpen} />}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete <strong>{selectedSeason?.name}</strong>. Any teams or matches in this season will need to be updated manually.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
@@ -193,7 +194,7 @@ export default function SeasonsClient({ seasons }: { seasons: Season[] }) {
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Season"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

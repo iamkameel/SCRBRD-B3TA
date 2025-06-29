@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -175,7 +176,7 @@ function EditDivisionDialog({ division, open, onOpenChange }: { division: Divisi
   );
 }
 
-export default function DivisionsClient({ divisions }: { divisions: Division[] }) {
+export default function DivisionsClient({ divisions, isAdmin }: { divisions: Division[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedDivision, setSelectedDivision] = React.useState<Division | null>(null);
@@ -213,7 +214,7 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Divisions</h1>
             <p className="text-muted-foreground">Manage your competition divisions.</p>
           </div>
-          <AddDivisionDialog />
+          {isAdmin && <AddDivisionDialog />}
         </header>
         <Card>
           <CardHeader>
@@ -225,7 +226,7 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -233,7 +234,7 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
                   divisions.map((division) => (
                     <TableRow key={division.divisionId}>
                       <TableCell className="font-medium">{division.name}</TableCell>
-                      <TableCell className="text-right">
+                      {isAdmin && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -249,12 +250,12 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
                               }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center">No divisions found. Get started by adding a division.</TableCell>
+                    <TableCell colSpan={isAdmin ? 2 : 1} className="h-24 text-center">No divisions found. Get started by adding a division.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -263,7 +264,7 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
         </Card>
       </div>
 
-      {selectedDivision && (
+      {isAdmin && selectedDivision && (
         <EditDivisionDialog
           division={selectedDivision}
           open={isEditDialogOpen}
@@ -274,7 +275,7 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
         />
       )}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -294,7 +295,7 @@ export default function DivisionsClient({ divisions }: { divisions: Division[] }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

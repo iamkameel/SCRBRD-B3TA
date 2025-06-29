@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -110,7 +111,7 @@ function VehicleDialog({ mode, vehicle, open, onOpenChange }: { mode: 'add' | 'e
   );
 }
 
-export default function TransportClient({ vehicles, assignments, drivers }: { vehicles: Vehicle[], assignments: FullTransportAssignment[], drivers: Person[] }) {
+export default function TransportClient({ vehicles, assignments, drivers, isAdmin }: { vehicles: Vehicle[], assignments: FullTransportAssignment[], drivers: Person[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
@@ -154,14 +155,14 @@ export default function TransportClient({ vehicles, assignments, drivers }: { ve
                     <TabsTrigger value="drivers">Drivers</TabsTrigger>
                     <TabsTrigger value="assignments">Assignments</TabsTrigger>
                 </TabsList>
-                <Button onClick={() => { setDialogMode('add'); setSelectedVehicle(null); setIsVehicleDialogOpen(true); }}><PlusCircle className="mr-2" />Add Vehicle</Button>
+                {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedVehicle(null); setIsVehicleDialogOpen(true); }}><PlusCircle className="mr-2" />Add Vehicle</Button>}
             </div>
             <TabsContent value="fleet">
                 <Card>
                 <CardHeader><CardTitle>Vehicle Fleet</CardTitle><CardDescription>A list of all vehicles in the system.</CardDescription></CardHeader>
                 <CardContent>
                     <Table>
-                    <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Capacity</TableHead><TableHead>Registration</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Capacity</TableHead><TableHead>Registration</TableHead>{isAdmin && <TableHead className="text-right">Actions</TableHead>}</TableRow></TableHeader>
                     <TableBody>
                         {vehicles.length > 0 ? (
                         vehicles.map((vehicle) => (
@@ -170,7 +171,7 @@ export default function TransportClient({ vehicles, assignments, drivers }: { ve
                             <TableCell>{vehicle.type}</TableCell>
                             <TableCell>{vehicle.capacity}</TableCell>
                             <TableCell>{vehicle.registration}</TableCell>
-                            <TableCell className="text-right">
+                            {isAdmin && <TableCell className="text-right">
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -178,11 +179,11 @@ export default function TransportClient({ vehicles, assignments, drivers }: { ve
                                     <DropdownMenuItem onSelect={() => { setSelectedVehicle(vehicle); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
-                            </TableCell>
+                            </TableCell>}
                             </TableRow>
                         ))
                         ) : (
-                        <TableRow><TableCell colSpan={5} className="h-24 text-center">No vehicles found. Get started by adding a vehicle.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={isAdmin ? 5 : 4} className="h-24 text-center">No vehicles found. Get started by adding a vehicle.</TableCell></TableRow>
                         )}
                     </TableBody>
                     </Table>
@@ -264,9 +265,9 @@ export default function TransportClient({ vehicles, assignments, drivers }: { ve
         </Tabs>
       </div>
 
-      <VehicleDialog mode={dialogMode} vehicle={selectedVehicle ?? undefined} open={isVehicleDialogOpen} onOpenChange={setIsVehicleDialogOpen} />
+      {isAdmin && <VehicleDialog mode={dialogMode} vehicle={selectedVehicle ?? undefined} open={isVehicleDialogOpen} onOpenChange={setIsVehicleDialogOpen} />}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete <strong>{selectedVehicle?.name}</strong>. Any match assignments for this vehicle will also be removed.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
@@ -274,7 +275,7 @@ export default function TransportClient({ vehicles, assignments, drivers }: { ve
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Vehicle"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

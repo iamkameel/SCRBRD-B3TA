@@ -1,4 +1,5 @@
 
+
 import { getCompetitions } from '@/lib/actions/competitions';
 import { getSeasons } from '@/lib/actions/seasons';
 import { getDivisions } from '@/lib/actions/divisions';

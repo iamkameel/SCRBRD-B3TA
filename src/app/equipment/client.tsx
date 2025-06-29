@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -126,7 +127,7 @@ function AssignDialog({ item, players, open, onOpenChange }: { item: EquipmentIt
     );
 }
 
-export default function EquipmentClient({ inventory, assignments, players }: { inventory: EquipmentItem[], assignments: FullEquipmentAssignment[], players: Person[] }) {
+export default function EquipmentClient({ inventory, assignments, players, isAdmin }: { inventory: EquipmentItem[], assignments: FullEquipmentAssignment[], players: Person[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
@@ -181,19 +182,19 @@ export default function EquipmentClient({ inventory, assignments, players }: { i
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Equipment</h1><p className="text-muted-foreground">Manage your team's equipment inventory and assignments.</p></div>
-          <Button onClick={() => { setDialogMode('add'); setSelectedItem(null); setIsItemDialogOpen(true); }}><PlusCircle className="mr-2" />Add Item</Button>
+          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedItem(null); setIsItemDialogOpen(true); }}><PlusCircle className="mr-2" />Add Item</Button>}
         </header>
         
         <Tabs defaultValue="inventory">
             <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="inventory">Inventory</TabsTrigger><TabsTrigger value="assignments">Assignments</TabsTrigger></TabsList>
             <TabsContent value="inventory" className="mt-4"><Card><CardHeader><CardTitle>Inventory List</CardTitle><CardDescription>A list of all equipment items.</CardDescription></CardHeader>
                 <CardContent><Table>
-                    <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Size</TableHead><TableHead>Status</TableHead><TableHead>Assigned To</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Size</TableHead><TableHead>Status</TableHead><TableHead>Assigned To</TableHead>{isAdmin && <TableHead className="text-right">Actions</TableHead>}</TableRow></TableHeader>
                     <TableBody>{inventory.length > 0 ? (inventory.map((item) => (
                         <TableRow key={item.itemId}>
                             <TableCell className="font-medium">{item.name}</TableCell><TableCell>{item.type}</TableCell><TableCell>{item.size || '-'}</TableCell><TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>{item.status === 'Assigned' ? item.currentHolderName : <span className="text-muted-foreground">-</span>}</TableCell>
-                            <TableCell className="text-right"><DropdownMenu>
+                            {isAdmin && <TableCell className="text-right"><DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     {item.status === 'Available' && <DropdownMenuItem onSelect={() => { setSelectedItem(item); setIsAssignDialogOpen(true); }}><Redo className="mr-2" />Assign Item</DropdownMenuItem>}
@@ -201,9 +202,9 @@ export default function EquipmentClient({ inventory, assignments, players }: { i
                                     <DropdownMenuItem onSelect={() => { setSelectedItem(item); setDialogMode('edit'); setIsItemDialogOpen(true); }}><Edit className="mr-2" />Edit Details</DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => { setSelectedItem(item); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2" />Delete Item</DropdownMenuItem>
                                 </DropdownMenuContent></DropdownMenu>
-                            </TableCell>
+                            </TableCell>}
                         </TableRow>
-                    ))) : (<TableRow><TableCell colSpan={6} className="h-24 text-center">No equipment found. Get started by adding an item.</TableCell></TableRow>)}
+                    ))) : (<TableRow><TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center">No equipment found. Get started by adding an item.</TableCell></TableRow>)}
                     </TableBody>
                 </Table></CardContent>
             </Card></TabsContent>
@@ -221,11 +222,11 @@ export default function EquipmentClient({ inventory, assignments, players }: { i
         </Tabs>
       </div>
 
-      <ItemDialog mode={dialogMode} item={selectedItem ?? undefined} open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen} />
-      {selectedItem && <AssignDialog item={selectedItem} players={players} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
+      {isAdmin && <ItemDialog mode={dialogMode} item={selectedItem ?? undefined} open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen} />}
+      {isAdmin && selectedItem && <AssignDialog item={selectedItem} players={players} open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen} />}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete <strong>{selectedItem?.name}</strong> and all its assignment history. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Item"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-      <AlertDialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Confirm Return</AlertDialogTitle><AlertDialogDescription>Are you sure you want to return <strong>{selectedItem?.name}</strong>? This will make it available for others to be assigned to.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleReturn} disabled={isPending}>{isPending ? "Returning..." : "Confirm Return"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete <strong>{selectedItem?.name}</strong> and all its assignment history. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Item"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
+      {isAdmin && <AlertDialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Confirm Return</AlertDialogTitle><AlertDialogDescription>Are you sure you want to return <strong>{selectedItem?.name}</strong>? This will make it available for others to be assigned to.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleReturn} disabled={isPending}>{isPending ? "Returning..." : "Confirm Return"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
     </>
   );
 }

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -164,7 +165,7 @@ function EditSchoolDialog({ school, open, onOpenChange }: { school: School, open
 }
 
 
-export default function SchoolsClient({ schools }: { schools: School[] }) {
+export default function SchoolsClient({ schools, isAdmin }: { schools: School[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   
@@ -207,7 +208,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
               Manage your schools and educational institutions.
             </p>
           </div>
-          <AddSchoolDialog />
+          {isAdmin && <AddSchoolDialog />}
         </header>
         <Card>
           <CardHeader>
@@ -220,7 +221,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Abbreviation</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -229,7 +230,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
                     <TableRow key={school.schoolId}>
                       <TableCell className="font-medium">{school.name}</TableCell>
                       <TableCell>{school.abbreviation}</TableCell>
-                      <TableCell className="text-right">
+                      {isAdmin && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -258,12 +259,12 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
+                    <TableCell colSpan={isAdmin ? 3 : 2} className="h-24 text-center">
                       No schools found. Get started by adding a school.
                     </TableCell>
                   </TableRow>
@@ -274,7 +275,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
         </Card>
       </div>
 
-      {selectedSchool && (
+      {isAdmin && selectedSchool && (
         <EditSchoolDialog
           school={selectedSchool}
           open={isEditDialogOpen}
@@ -285,7 +286,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
         />
       )}
       
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -305,7 +306,7 @@ export default function SchoolsClient({ schools }: { schools: School[] }) {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }
