@@ -542,7 +542,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
         </header>
 
         <Tabs defaultValue="scorecard">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList>
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
                 <TabsTrigger value="lineups" disabled={match.status === 'completed'}><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
@@ -823,3 +823,5 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     </>
   )
 }
+
+    
