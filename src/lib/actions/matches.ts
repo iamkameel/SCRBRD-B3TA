@@ -529,12 +529,20 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [],
     };
 
+    if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
+        throw new Error("Live scoring players are not set up.");
+    }
+
     const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
+    const runsScored = ball.runs ?? 0;
+    const isOddRun = runsScored % 2 !== 0;
 
     // Update score
     if (ball.runs) liveScore.runs += ball.runs;
     if (ball.event === 'W') {
-        liveScore.wickets++;
+        if (liveScore.wickets < 10) {
+            liveScore.wickets++;
+        }
     }
     if (ball.event === 'wd' || ball.event === 'nb') {
         liveScore.runs++; // Add 1 for the extra
@@ -543,12 +551,24 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     // Update current over history
     liveScore.currentOver.push(ball.event);
 
+    // Batsman rotation on odd runs
+    if (isLegalBall && isOddRun) {
+        [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
+            [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+    }
+
     // Update balls/overs
     if (isLegalBall) {
-        if (liveScore.balls === 5) {
+        const endOfOver = liveScore.balls === 5;
+        if (endOfOver) {
             liveScore.balls = 0;
             liveScore.overs++;
-            liveScore.currentOver = []; // Clear for next over
+            liveScore.currentOver = [];
+            // Swap batsmen for the new over, unless they already swapped from an odd run on the last ball.
+            if (!isOddRun) {
+                [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
+                    [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+            }
         } else {
             liveScore.balls++;
         }
@@ -558,3 +578,5 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     revalidatePath(`/matches/${matchId}`);
     return liveScore;
 }
+
+    
