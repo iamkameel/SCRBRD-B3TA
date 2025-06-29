@@ -85,18 +85,12 @@ export async function getUnconfirmedAssignmentsCount(): Promise<number> {
     const userId = await getUserId();
     if (!userId) return 0;
     
-    try {
-        const officialsQuery = query(
-            collectionGroup(db, 'officials'), 
-            where('userId', '==', userId),
-            where('confirmed', '==', false)
-        );
-        const snapshot = await getDocs(officialsQuery);
-        return snapshot.size;
-    } catch (error) {
-        console.error("Error fetching unconfirmed assignments count:", error);
-        // This catch block prevents the entire dashboard from crashing if the index is building.
-        // It will temporarily show 0 conflicts, which is better than a crash.
-        return 0;
-    }
+    // The order of `where` clauses should align with the index definition for clarity.
+    const officialsQuery = query(
+        collectionGroup(db, 'officials'), 
+        where('confirmed', '==', false),
+        where('userId', '==', userId)
+    );
+    const snapshot = await getDocs(officialsQuery);
+    return snapshot.size;
 }
