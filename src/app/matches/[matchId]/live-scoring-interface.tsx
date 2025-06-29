@@ -5,11 +5,11 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target } from 'lucide-react';
 import type { RosterMember, Match } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import { updateLivePlayersAction, recordBallAction } from '@/lib/actions/matches';
+import { updateLivePlayersAction, recordBallAction, endInningsAction } from '@/lib/actions/matches';
 import { generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 
@@ -50,12 +50,12 @@ export function LiveScoringInterface({
   const [isGeneratingUpdate, startUpdateGeneration] = React.useTransition();
   const [liveUpdateText, setLiveUpdateText] = React.useState<string | null>(null);
 
-  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [] };
+  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 };
   const batsmenOut = liveScore.batsmenOut || [];
   
-  // For this demo, let's assume Team A is always the batting team.
-  const battingTeamRoster = teamARoster;
-  const bowlingTeamRoster = teamBRoster;
+  const isFirstInnings = liveScore.liveInnings === 1;
+  const battingTeamRoster = isFirstInnings ? teamARoster : teamBRoster;
+  const bowlingTeamRoster = isFirstInnings ? teamBRoster : teamARoster;
 
   const onStrikeBatsmanId = liveScore.onStrikeBatsmanId;
   const nonStrikerBatsmanId = liveScore.nonStrikerBatsmanId;
@@ -65,7 +65,9 @@ export function LiveScoringInterface({
   const runRate = liveScore.overs + liveScore.balls / 6 > 0 ? (liveScore.runs / (liveScore.overs + liveScore.balls / 6)).toFixed(2) : '0.00';
 
   const isAllOut = liveScore.wickets >= 10;
+  const isOversFinished = liveScore.overs >= 20;
   const needsNewBatsman = !isAllOut && liveScore.wickets > 0 && !onStrikeBatsmanId;
+  const canEndInnings = isAllOut || isOversFinished;
 
   const availableOnStrikeBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId);
   const availableNonStrikers = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== onStrikeBatsmanId);
@@ -95,6 +97,17 @@ export function LiveScoringInterface({
         }
     });
   };
+
+  const handleEndInnings = () => {
+    startTransition(async () => {
+        try {
+            await endInningsAction(match.matchId);
+            toast({ title: "Innings Ended", description: "The second innings is ready to begin."});
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not end innings.", variant: "destructive" });
+        }
+    });
+  };
   
   const handleScore = (run: number) => {
     handleRecordBall(run === 0 ? '.' : run.toString(), run);
@@ -120,31 +133,49 @@ export function LiveScoringInterface({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Live Score</CardTitle>
-          <CardDescription>
-            {match.teamAName} is batting.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-6xl font-bold text-foreground">
-              {liveScore.runs} / {liveScore.wickets}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+            <CardHeader>
+            <CardTitle>Live Score</CardTitle>
+            <CardDescription>
+                {isFirstInnings ? teamARoster[0]?.personName.split(" ")[0] : teamBRoster[0]?.personName.split(" ")[0]} is batting.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div className="flex items-center justify-between">
+                <div className="text-6xl font-bold text-foreground">
+                {liveScore.runs} / {liveScore.wickets}
+                </div>
+                <div className="text-right">
+                <p className="text-3xl font-bold">
+                    {liveScore.overs}.{liveScore.balls}
+                </p>
+                <p className="text-sm text-muted-foreground">Overs</p>
+                </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold">
-                {liveScore.overs}.{liveScore.balls}
-              </p>
-              <p className="text-sm text-muted-foreground">Overs</p>
+            <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
+                <span>Run Rate: {runRate}</span>
+                <span>Projected: {+runRate > 0 ? Math.round(+runRate * 20) : 'N/A'}</span>
             </div>
-          </div>
-           <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-              <span>Run Rate: {runRate}</span>
-              <span>Projected: {+runRate > 0 ? Math.round(+runRate * 20) : 'N/A'}</span>
-            </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+        </Card>
+
+        {!isFirstInnings && match.firstInningsTotal && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Target /> Target Score</CardTitle>
+                    <CardDescription>
+                        To win, {teamBRoster[0]?.personName.split(" ")[0]} needs to score {match.firstInningsTotal + 1} runs.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-6xl font-bold text-foreground">
+                        {match.firstInningsTotal + 1}
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+      </div>
       
       <Card>
         <CardHeader><CardTitle>Player Selection</CardTitle></CardHeader>
@@ -175,6 +206,9 @@ export function LiveScoringInterface({
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
             <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
             <p className="mt-1 text-sm text-muted-foreground">All 10 wickets have fallen.</p>
+             <Button onClick={handleEndInnings} className="mt-4" disabled={isPending}>
+                {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
+            </Button>
         </Card>
       ) : needsNewBatsman ? (
         <Card className="p-8 text-center bg-yellow-50 dark:bg-yellow-900/30">
@@ -234,7 +268,9 @@ export function LiveScoringInterface({
                     <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
                     <CardContent className="flex gap-2">
                         <Button variant="secondary" className="w-full" disabled><Undo />Undo</Button>
-                        <Button variant="secondary" className="w-full" disabled>End Innings<ArrowRight /></Button>
+                         <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending}>
+                            {isFirstInnings ? "End Innings" : "End Match"} <ArrowRight />
+                        </Button>
                     </CardContent>
                 </Card>
             </div>

@@ -171,7 +171,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     fieldName: fieldSnap.data().name,
     dateTime: Timestamp.fromDate(dateTime),
     status: 'scheduled',
-    liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [] },
+    liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 },
     userId: userId,
     report: '',
     preview: '',
@@ -527,7 +527,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const match = matchSnap.data() as Match;
     const liveScore = match.liveScore || {
-        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [],
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1,
     };
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
@@ -585,4 +585,42 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     await updateDoc(matchRef, { liveScore });
     revalidatePath(`/matches/${matchId}`);
     return liveScore;
+}
+
+export async function endInningsAction(matchId: string) {
+    if (!userId) throw new Error("User not authenticated.");
+    const matchRef = doc(db, 'matches', matchId);
+    const matchSnap = await getDoc(matchRef);
+    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+        throw new Error("Match not found or permission denied.");
+    }
+    
+    const match = matchSnap.data() as Match;
+    const currentLiveScore = match.liveScore;
+
+    if (!currentLiveScore || currentLiveScore.liveInnings !== 1) {
+        // Here we could end the match, but for now we'll just handle 1st innings
+        return; 
+    }
+
+    // Reset for second innings
+    const newLiveScore = {
+        runs: 0,
+        wickets: 0,
+        overs: 0,
+        balls: 0,
+        currentOver: [],
+        batsmenOut: [],
+        liveInnings: 2,
+        onStrikeBatsmanId: undefined,
+        nonStrikerBatsmanId: undefined,
+        bowlerId: undefined,
+    };
+    
+    await updateDoc(matchRef, { 
+        liveScore: newLiveScore,
+        firstInningsTotal: currentLiveScore.runs,
+    });
+    
+    revalidatePath(`/matches/${matchId}`);
 }

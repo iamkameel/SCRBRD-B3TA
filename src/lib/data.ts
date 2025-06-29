@@ -129,6 +129,7 @@ export interface Match {
   result?: string;
   audioCommentaryUrl?: string;
   analysisReports?: { [teamId: string]: string; };
+  firstInningsTotal?: number;
   liveScore?: {
     runs: number;
     wickets: number;
@@ -139,6 +140,7 @@ export interface Match {
     nonStrikerBatsmanId?: string;
     bowlerId?: string;
     batsmenOut?: string[];
+    liveInnings?: 1 | 2;
   };
 }
 

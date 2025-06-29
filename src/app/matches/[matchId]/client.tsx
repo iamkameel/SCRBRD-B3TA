@@ -39,7 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
-import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction } from '@/lib/actions/analysis';
+import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
 import { Scorecard } from "./scorecard";
@@ -537,7 +537,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{match.fieldName}</span>
                     </div>
                 </div>
-                <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize h-fit">{match.status}</Badge>
+                <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className={cn("capitalize h-fit", match.status === 'live' && "bg-red-500 text-white animate-pulse")}>{match.status}</Badge>
             </div>
         </header>
 
