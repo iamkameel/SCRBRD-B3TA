@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db, auth } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { signOut } from 'firebase/auth';
 

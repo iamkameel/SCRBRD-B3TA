@@ -1,6 +1,5 @@
 
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -40,7 +39,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
             'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
-            'equipment', 'equipmentAssignments', 'sponsors', 'officials'
+            'equipment', 'equipmentAssignments', 'sponsors'
         ];
 
         for (const collName of collectionsToClear) {
@@ -289,19 +288,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 itemCount++;
             }
         }
-        
-        // Process Officials
-        if (sampleData.officials) {
-            for (const official of sampleData.officials) {
-                const { assignmentId: tempId, matchId: tempMatchId, ...officialData } = official;
-                const newMatchId = idMap.get(tempMatchId);
-                if (newMatchId) {
-                    const officialRef = doc(collection(db, 'matches', newMatchId, 'officials'));
-                    batch.set(officialRef, { ...officialData, userId });
-                    itemCount++;
-                }
-            }
-        }
 
         await batch.commit();
 
@@ -321,7 +307,6 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
     if (!userId) {
         return { success: false, message: "User not authenticated." };
     }
-
     if (!independentSubsets.includes(subsetName)) {
         return { success: false, message: `Individual deletion for ${subsetName} is not supported due to data dependencies. Please use the 'Delete All Data' function.` };
     }
