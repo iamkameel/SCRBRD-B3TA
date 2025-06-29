@@ -5,7 +5,7 @@ import { getMatches } from './matches';
 import { getTeams } from './teams';
 import type { Match, Team } from '@/lib/data';
 import { getUserId } from '@/lib/auth';
-import { collectionGroup, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface FixtureConflict {
@@ -85,12 +85,18 @@ export async function getUnconfirmedAssignmentsCount(): Promise<number> {
     const userId = await getUserId();
     if (!userId) return 0;
     
-    const officialsQuery = query(
-        collectionGroup(db, 'officials'), 
-        where('userId', '==', userId),
-        where('confirmed', '==', false)
-    );
+    const allMatches = await getMatches();
+    const scheduledMatches = allMatches.filter(m => m.status === 'scheduled');
 
-    const snapshot = await getDocs(officialsQuery);
-    return snapshot.size;
+    let unconfirmedCount = 0;
+    
+    for (const match of scheduledMatches) {
+        const officialsRef = collection(db, 'matches', match.matchId, 'officials');
+        // This query only has one 'where' clause, so it does not need a composite index.
+        const q = query(officialsRef, where('confirmed', '==', false));
+        const snapshot = await getDocs(q);
+        unconfirmedCount += snapshot.size;
+    }
+
+    return unconfirmedCount;
 }
