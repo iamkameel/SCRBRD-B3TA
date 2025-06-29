@@ -9,6 +9,7 @@ import MedicalDashboard from '@/app/dashboards/medical-dashboard';
 import CoachDashboard from '@/app/dashboards/coach-dashboard';
 import GuardianDashboard from '@/app/dashboards/guardian-dashboard';
 import GroundskeeperDashboard from '@/app/dashboards/groundskeeper-dashboard';
+import TrainerDashboard from '@/app/dashboards/trainer-dashboard';
 import { getPerson, getPlayers, getGuardianDashboardData } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 import { getCoachDashboardData, getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
@@ -34,7 +35,7 @@ export default async function DashboardPage() {
     return <AdminDashboard />;
   }
 
-  const medicalRoles = ['Doctor', 'Physio', 'First Aid', 'Trainer'];
+  const medicalRoles = ['Doctor', 'Physio', 'First Aid'];
   const isMedicalStaff = person.roles.some(role => medicalRoles.includes(role));
   
   const coachingRoles = ['Coach', 'Assistant Coach', 'Captain'];
@@ -42,6 +43,7 @@ export default async function DashboardPage() {
 
   const isGroundsKeeper = person.roles.includes('Grounds-Keeper');
   const isGuardian = person.roles.includes('Guardian');
+  const isTrainer = person.roles.includes('Trainer');
 
 
   // Use the activeRole to determine which dashboard to show
@@ -110,6 +112,11 @@ export default async function DashboardPage() {
     });
 
     return <GroundskeeperDashboard fields={assignedFields} matchesByField={matchesByField} />;
+  }
+
+  if (isTrainer && person.activeRole === 'Trainer') {
+    const players = await getPlayers().then(p => p.filter(player => player.roles.includes('Player')));
+    return <TrainerDashboard players={players} />;
   }
   
   if (isCoach && ['Coach', 'Assistant Coach', 'Captain'].includes(person.activeRole)) {

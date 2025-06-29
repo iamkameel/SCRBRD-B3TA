@@ -5,7 +5,9 @@ import {
     Swords,
     Wrench,
     Banknote,
-    Cog
+    Cog,
+    HeartPulse,
+    Dumbbell
 } from 'lucide-react';
 
 const adminTopLevelNavItems = [
@@ -196,6 +198,20 @@ const guardianNavGroups = [
     }
 ];
 
+const trainerTopLevelNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+];
+
+const trainerNavGroups = [
+     {
+        title: "Athletes",
+        icon: Dumbbell,
+        items: [
+            { href: '/people', label: 'Athlete Roster', icon: Users },
+        ]
+    }
+];
+
 
 export function getNavConfig(role: string) {
     switch (role) {
@@ -217,6 +233,8 @@ export function getNavConfig(role: string) {
             return { topLevel: groundskeeperTopLevelNavItems, groups: groundskeeperNavGroups };
         case 'Guardian':
             return { topLevel: guardianTopLevelNavItems, groups: guardianNavGroups };
+        case 'Trainer':
+            return { topLevel: trainerTopLevelNavItems, groups: trainerNavGroups };
         default:
              // Default to a safe, minimal navigation for any other roles
             return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
