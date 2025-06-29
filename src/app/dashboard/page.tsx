@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -40,11 +39,11 @@ export default function DashboardPage() {
     case 'Sportsmaster':
       return <SportsmasterDashboard />;
     case 'Coach':
+      return <CoachDashboard />;
+    case 'Player':
     case 'Assistant Coach':
     case 'Captain':
     case 'Team Manager':
-      return <CoachDashboard />;
-    case 'Player':
        return <PlayerDashboard />;
     case 'Umpire':
     case 'Scorer':
