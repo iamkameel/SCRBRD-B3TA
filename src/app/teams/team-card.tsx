@@ -20,10 +20,10 @@ interface TeamCardProps {
     team: Team;
     onEdit: () => void;
     onDelete: () => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }
 
-export function TeamCard({ team, onEdit, onDelete, isAdmin }: TeamCardProps) {
+export function TeamCard({ team, onEdit, onDelete, canManage }: TeamCardProps) {
     return (
         <Card className="flex flex-col h-full relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1.5 flex">
@@ -43,7 +43,7 @@ export function TeamCard({ team, onEdit, onDelete, isAdmin }: TeamCardProps) {
                             {team.schoolName}
                         </CardDescription>
                     </div>
-                     {isAdmin && <DropdownMenu>
+                     {canManage && <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>

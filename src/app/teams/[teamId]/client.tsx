@@ -190,9 +190,10 @@ interface TeamDetailsClientProps {
   people: Person[];
   teamStats: TeamStats;
   teamMatches: Match[];
+  canManage: boolean;
 }
 
-export default function TeamDetailsClient({ team, initialRoster, people, teamStats, teamMatches }: TeamDetailsClientProps) {
+export default function TeamDetailsClient({ team, initialRoster, people, teamStats, teamMatches, canManage }: TeamDetailsClientProps) {
   const { toast } = useToast();
   const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
@@ -252,12 +253,14 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div><CardTitle>Player Roster</CardTitle><CardDescription>The main squad of players for the team.</CardDescription></div>
-            <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Player</Button>
+            {canManage && <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Player</Button>}
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                <TableRow><TableHead>Name</TableHead><TableHead>Status</TableHead>
+                {canManage && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow>
               </TableHeader>
               <TableBody>
                 {playerRoster.length > 0 ? (
@@ -269,7 +272,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                         {member.isViceCaptain && <Badge variant="outline" className="ml-2">VC</Badge>}
                       </TableCell>
                       <TableCell><Badge variant="secondary" className="capitalize">{member.status.replace(/_/g, " ")}</Badge></TableCell>
-                      <TableCell className="text-right">
+                      {canManage && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -277,11 +280,11 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                             <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={3} className="h-24 text-center">No players assigned to this roster yet.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={canManage ? 3 : 2} className="h-24 text-center">No players assigned to this roster yet.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -291,12 +294,14 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div><CardTitle>Team Staff</CardTitle><CardDescription>Manage the coaches and support staff for this team.</CardDescription></div>
-            <Button onClick={() => setIsAddStaffDialogOpen(true)}><PlusCircle className="mr-2" />Add Staff</Button>
+            {canManage && <Button onClick={() => setIsAddStaffDialogOpen(true)}><PlusCircle className="mr-2" />Add Staff</Button>}
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+                <TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead>
+                {canManage && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow>
               </TableHeader>
               <TableBody>
                 {staffRoster.length > 0 ? (
@@ -304,7 +309,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                     <TableRow key={member.assignmentId}>
                       <TableCell className="font-medium"><Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link></TableCell>
                       <TableCell>{member.role}</TableCell>
-                      <TableCell className="text-right">
+                      {canManage && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -312,11 +317,11 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                             <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={3} className="h-24 text-center">No staff assigned to this team yet.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={canManage ? 3 : 2} className="h-24 text-center">No staff assigned to this team yet.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -381,7 +386,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         </Card>
       </div>
       
-      <AddAssignmentDialog 
+      {canManage && <AddAssignmentDialog 
         teamId={team.teamId} 
         people={people} 
         assignableRoles={PLAYER_ROLES} 
@@ -389,8 +394,8 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         onOpenChange={setIsAddPlayerDialogOpen} 
         title="Add Player to Roster" 
         description="Assign a new player to the team." 
-      />
-      <AddAssignmentDialog 
+      />}
+      {canManage && <AddAssignmentDialog 
         teamId={team.teamId} 
         people={people} 
         assignableRoles={STAFF_ROLES} 
@@ -398,9 +403,9 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         onOpenChange={setIsAddStaffDialogOpen}
         title="Add Staff to Team"
         description="Assign a new staff member to the team."
-      />
+      />}
 
-      {memberToEdit && (
+      {canManage && memberToEdit && (
         <EditAssignmentDialog
           teamId={team.teamId}
           member={memberToEdit}
@@ -412,7 +417,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         />
       )}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {canManage && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will remove <strong>{selectedMember?.personName}</strong> from the team. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
@@ -420,7 +425,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
             <AlertDialogAction onClick={handleRemove} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Member"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   )
 }

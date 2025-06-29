@@ -182,7 +182,7 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
 }
 
 
-export default function TeamsClient({ teams, schools, divisions, seasons, isAdmin }: { teams: Team[]; schools: School[]; divisions: Division[]; seasons: Season[], isAdmin: boolean }) {
+export default function TeamsClient({ teams, schools, divisions, seasons, canManage }: { teams: Team[]; schools: School[]; divisions: Division[]; seasons: Season[], canManage: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedTeam, setSelectedTeam] = React.useState<Team | null>(null);
@@ -285,7 +285,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons, isAdmi
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Teams</h1><p className="text-muted-foreground">Manage your cricket teams.</p></div>
-          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedTeam(null); setIsTeamDialogOpen(true); }}><PlusCircle className="mr-2" />Add Team</Button>}
+          {canManage && <Button onClick={() => { setDialogMode('add'); setSelectedTeam(null); setIsTeamDialogOpen(true); }}><PlusCircle className="mr-2" />Add Team</Button>}
         </header>
 
         <Card>
@@ -438,7 +438,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons, isAdmi
                         <SortableHeader column="divisionName">Division</SortableHeader>
                         <SortableHeader column="seasonName">Season</SortableHeader>
                         <SortableHeader column="teamClass">Class</SortableHeader>
-                        {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                        {canManage && <TableHead className="text-right">Actions</TableHead>}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -451,7 +451,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons, isAdmi
                         <TableCell>{team.divisionName}</TableCell>
                         <TableCell>{team.seasonName}</TableCell>
                         <TableCell>{team.teamClass}</TableCell>
-                        {isAdmin && <TableCell className="text-right">
+                        {canManage && <TableCell className="text-right">
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -463,7 +463,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons, isAdmi
                         </TableRow>
                     ))
                     ) : (
-                    <TableRow><TableCell colSpan={isAdmin ? 7 : 6} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={canManage ? 7 : 6} className="h-24 text-center">{filtersApplied ? "No teams found matching your filters." : "No teams found. Get started by adding a team."}</TableCell></TableRow>
                     )}
                 </TableBody>
                 </Table>
@@ -477,7 +477,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons, isAdmi
                                 team={team} 
                                 onEdit={() => { setSelectedTeam(team); setDialogMode('edit'); setIsTeamDialogOpen(true); }}
                                 onDelete={() => { setSelectedTeam(team); setIsDeleteDialogOpen(true); }}
-                                isAdmin={isAdmin}
+                                canManage={canManage}
                             />
                         ))
                     ) : (
@@ -496,9 +496,9 @@ export default function TeamsClient({ teams, schools, divisions, seasons, isAdmi
         </Card>
       </div>
 
-      {isAdmin && <TeamDialog mode={dialogMode} team={selectedTeam ?? undefined} schools={schools} divisions={divisions} seasons={seasons} open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen} />}
+      {canManage && <TeamDialog mode={dialogMode} team={selectedTeam ?? undefined} schools={schools} divisions={divisions} seasons={seasons} open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen} />}
 
-      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {canManage && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete <strong>{selectedTeam?.name}</strong>, its roster, and all of its associated matches.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
