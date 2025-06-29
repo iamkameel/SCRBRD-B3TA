@@ -43,11 +43,33 @@ export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => 
 });
 
 export const getPerson = cache(async (personId: string): Promise<Person | null> => {
+    if (!personId) return null;
     try {
         const personDocRef = doc(db, 'people', personId);
         const personSnap = await getDoc(personDocRef);
-        if (!personSnap.exists()) return null;
-        return { personId: personSnap.id, ...personSnap.data() } as Person;
+        if (!personSnap.exists()) {
+            return null;
+        }
+
+        const data = personSnap.data();
+        const roles = Array.isArray(data.roles) ? data.roles : [];
+        const activeRole = data.activeRole && roles.includes(data.activeRole) 
+            ? data.activeRole 
+            : (roles.length > 0 ? roles[0] : 'Spectator');
+
+        return {
+            personId: personSnap.id,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            roles: roles,
+            activeRole: activeRole,
+            phone: data.phone,
+            profileImageUrl: data.profileImageUrl,
+            assignedSchools: data.assignedSchools,
+            notificationPreferences: data.notificationPreferences || { email: true, push: false },
+        } as Person;
+
     } catch (error) {
         console.error(`Error fetching person with ID ${personId}:`, error);
         return null;
@@ -425,3 +447,4 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
     
     return dashboardData;
 });
+
