@@ -15,7 +15,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 export const getMatches = cache(async (): Promise<Match[]> => {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const matchesCollection = collection(db, 'matches');
@@ -49,7 +49,7 @@ export const getMatches = cache(async (): Promise<Match[]> => {
 });
 
 export const getMatch = cache(async (matchId: string): Promise<Match | null> => {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) return null;
   try {
     const matchDocRef = doc(db, 'matches', matchId);
@@ -82,7 +82,7 @@ const fixtureSchema = z.object({
 type FixtureFormValues = z.infer<typeof fixtureSchema>;
 
 export async function addMatchAction(data: FixtureFormValues) {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = fixtureSchema.safeParse(data);
 
@@ -142,43 +142,62 @@ export async function addMatchAction(data: FixtureFormValues) {
   checkClashes(snapshots[4], fieldNameTemp, 'field');
   // --- End of Clash Detection ---
 
-
-  const [teamASnap, teamBSnap, competition, fieldSnap] = await Promise.all([
+  let newMatchData: Omit<Match, 'matchId'>;
+  
+  const [teamASnap, teamBSnap, fieldSnap] = await Promise.all([
     getDoc(doc(db, 'teams', teamAId)),
     getDoc(doc(db, 'teams', teamBId)),
-    getCompetition(competitionId),
     getDoc(doc(db, 'fields', fieldId)),
   ]);
 
-  if (!teamASnap.exists() || teamASnap.data().userId !== userId ||
-      !teamBSnap.exists() || teamBSnap.data().userId !== userId ||
-      !competition ||
-      !fieldSnap.exists() || fieldSnap.data().userId !== userId) {
-    throw new Error("Invalid reference for one of the match entities. Ensure they belong to you.");
+  if (!teamASnap.exists() || !teamBSnap.exists() || !fieldSnap.exists()) {
+    throw new Error("Invalid team or field reference.");
   }
-  
-  const newMatchData = {
-    teamAId,
-    teamAName: teamASnap.data().name,
-    teamBId,
-    teamBName: teamBSnap.data().name,
-    competitionId: competition.competitionId,
-    competitionName: competition.name,
-    seasonId: competition.seasonId,
-    seasonName: competition.seasonName,
-    divisionId: competition.divisionId,
-    divisionName: competition.divisionName,
-    fieldId,
-    fieldName: fieldSnap.data().name,
-    dateTime: Timestamp.fromDate(dateTime),
-    status: 'scheduled',
-    liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 },
-    userId: userId,
-    report: '',
-    preview: '',
-    audioCommentaryUrl: '',
-    analysisReports: {},
-  };
+
+  if (competitionId === 'friendly') {
+    newMatchData = {
+      teamAId,
+      teamAName: teamASnap.data().name,
+      teamBId,
+      teamBName: teamBSnap.data().name,
+      fieldId,
+      fieldName: fieldSnap.data().name,
+      dateTime: Timestamp.fromDate(dateTime),
+      status: 'scheduled',
+      competitionName: 'Friendly Match',
+      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 },
+      userId: userId,
+      report: '',
+      preview: '',
+      audioCommentaryUrl: '',
+      analysisReports: {},
+    };
+  } else {
+    const competition = await getCompetition(competitionId);
+    if (!competition) throw new Error("Invalid competition reference.");
+    newMatchData = {
+      teamAId,
+      teamAName: teamASnap.data().name,
+      teamBId,
+      teamBName: teamBSnap.data().name,
+      competitionId: competition.competitionId,
+      competitionName: competition.name,
+      seasonId: competition.seasonId,
+      seasonName: competition.seasonName,
+      divisionId: competition.divisionId,
+      divisionName: competition.divisionName,
+      fieldId,
+      fieldName: fieldSnap.data().name,
+      dateTime: Timestamp.fromDate(dateTime),
+      status: 'scheduled',
+      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 },
+      userId: userId,
+      report: '',
+      preview: '',
+      audioCommentaryUrl: '',
+      analysisReports: {},
+    };
+  }
 
   let newMatchId: string;
   try {
@@ -196,7 +215,7 @@ export async function addMatchAction(data: FixtureFormValues) {
 }
 
 export async function updateMatchAction(matchId: string, data: FixtureFormValues) {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const validatedFields = fixtureSchema.safeParse(data);
 
@@ -212,32 +231,42 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
 
   const { teamAId, teamBId, competitionId, fieldId, dateTime } = validatedFields.data;
 
-  const [teamASnap, teamBSnap, competition, fieldSnap] = await Promise.all([
+  const [teamASnap, teamBSnap, fieldSnap] = await Promise.all([
     getDoc(doc(db, 'teams', teamAId)),
     getDoc(doc(db, 'teams', teamBId)),
-    getCompetition(competitionId),
     getDoc(doc(db, 'fields', fieldId)),
   ]);
 
-  if (!teamASnap.exists() || !teamBSnap.exists() || !competition || !fieldSnap.exists()) {
+  if (!teamASnap.exists() || !teamBSnap.exists() || !fieldSnap.exists()) {
       throw new Error("Invalid reference for one of the match entities.");
   }
+  
+  let updatedMatchData: Partial<Match>;
 
-  const updatedMatchData = {
-    teamAId,
-    teamAName: teamASnap.data().name,
-    teamBId,
-    teamBName: teamBSnap.data().name,
-    competitionId: competition.competitionId,
-    competitionName: competition.name,
-    seasonId: competition.seasonId,
-    seasonName: competition.seasonName,
-    divisionId: competition.divisionId,
-    divisionName: competition.divisionName,
-    fieldId,
-    fieldName: fieldSnap.data().name,
-    dateTime: Timestamp.fromDate(dateTime),
-  };
+  if (competitionId === 'friendly' || !competitionId) {
+    updatedMatchData = {
+        teamAId, teamAName: teamASnap.data().name,
+        teamBId, teamBName: teamBSnap.data().name,
+        fieldId, fieldName: fieldSnap.data().name,
+        dateTime,
+        competitionId: undefined, competitionName: "Friendly Match",
+        seasonId: undefined, seasonName: undefined,
+        divisionId: undefined, divisionName: undefined,
+    }
+  } else {
+     const competition = await getCompetition(competitionId);
+     if (!competition) throw new Error("Invalid competition reference.");
+     updatedMatchData = {
+        teamAId, teamAName: teamASnap.data().name,
+        teamBId, teamBName: teamBSnap.data().name,
+        fieldId, fieldName: fieldSnap.data().name,
+        dateTime,
+        competitionId: competition.competitionId, competitionName: competition.name,
+        seasonId: competition.seasonId, seasonName: competition.seasonName,
+        divisionId: competition.divisionId, divisionName: competition.divisionName,
+     }
+  }
+
 
   try {
       await updateDoc(matchRef, updatedMatchData);
@@ -252,7 +281,7 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
 
 
 export const getMatchOfficials = cache(async (matchId: string): Promise<Official[]> => {
-  const userId = await getUserId();
+  const userId = getUserId();
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -292,7 +321,7 @@ type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
 
 export async function assignOfficialToMatchAction(matchId: string, data: AssignmentFormValues) {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
 
   const match = await getMatch(matchId);
@@ -349,7 +378,7 @@ export const getMatchLineup = cache(async (matchId: string, teamId: string): Pro
 const lineupSchema = z.object({ playerIds: z.array(z.string()) });
 
 export async function saveMatchLineupAction(matchId: string, teamId: string, playerIds: string[]) {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const match = await getMatch(matchId);
   if (!match) throw new Error("Match not found or you do not have permission to edit it.");
@@ -365,7 +394,7 @@ export async function saveMatchLineupAction(matchId: string, teamId: string, pla
 }
 
 export async function removeOfficialFromMatchAction(matchId: string, assignmentId: string) {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or you do not have permission to edit it.");
@@ -379,7 +408,7 @@ export async function removeOfficialFromMatchAction(matchId: string, assignmentI
 }
 
 export async function deleteMatchAction(matchId: string) {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -432,7 +461,7 @@ export const getScorecard = cache(async (matchId: string): Promise<{ innings1: I
 });
 
 export async function saveScorecard(matchId: string, scorecardData: { innings1: Innings; innings2: Innings }, potmData: PlayerOfTheMatch) {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   const match = await getMatch(matchId);
   if (!match) throw new Error("Match not found or permission denied.");
@@ -482,7 +511,7 @@ export async function saveScorecard(matchId: string, scorecardData: { innings1: 
 }
 
 export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]> => {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) return [];
   if (!fieldId) return [];
 
@@ -509,7 +538,7 @@ export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]>
 
 // LIVE SCORING ACTIONS
 export async function updateLivePlayersAction(matchId: string, updates: { onStrikeBatsmanId?: string; nonStrikerBatsmanId?: string; bowlerId?: string; }) {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -527,7 +556,7 @@ export async function updateLivePlayersAction(matchId: string, updates: { onStri
 }
 
 export async function recordBallAction(matchId: string, ball: { runs?: number, event: string }) {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
     const matchRef = doc(db, 'matches', matchId);
@@ -598,7 +627,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 }
 
 export async function undoLastBallAction(matchId: string) {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -620,7 +649,7 @@ export async function undoLastBallAction(matchId: string) {
 }
 
 export async function endInningsAction(matchId: string) {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
@@ -682,7 +711,7 @@ export async function endInningsAction(matchId: string) {
 }
 
 export const getOfficialAssignmentsForPerson = cache(async (personId: string): Promise<(Official & { matchId: string; matchName: string; dateTime: Date; })[]> => {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId || !personId) return [];
     try {
         const assignmentsQuery = query(collectionGroup(db, 'officials'), where("personId", "==", personId));

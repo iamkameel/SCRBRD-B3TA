@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -6,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { CalendarIcon, ArrowLeft, Info } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -21,9 +22,10 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, Competition, Field, Season, Division } from "@/lib/data";
 import { addMatchAction } from "@/lib/actions/matches";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const fixtureSchema = z.object({
-  competitionId: z.string({ required_error: "Please select a competition." }),
+  competitionId: z.string({ required_error: "Please select a competition or 'Friendly'." }),
   teamAId: z.string({ required_error: "Please select the home team." }),
   teamBId: z.string({ required_error: "Please select the away team." }),
   fieldId: z.string({ required_error: "Please select a field." }),
@@ -53,8 +55,6 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const [autoSelectedSeason, setAutoSelectedSeason] = React.useState<Season | null>(null);
-  const [autoSelectedDivisionName, setAutoSelectedDivisionName] = React.useState<string | null>(null);
 
   const form = useForm<FixtureFormValues>({
     resolver: zodResolver(fixtureSchema),
@@ -68,44 +68,54 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
   const teamAId = form.watch('teamAId');
   const teamBId = form.watch('teamBId');
   
-  React.useEffect(() => {
-    if (selectedDate) {
-        const matchingSeason = seasons.find(s => 
-            s.active && selectedDate >= s.startDate && selectedDate <= s.endDate
-        );
-        setAutoSelectedSeason(matchingSeason || null);
-    } else {
-        setAutoSelectedSeason(null);
-    }
-    form.resetField('competitionId');
-    form.resetField('teamAId');
-    form.resetField('teamBId');
-    setAutoSelectedDivisionName(null);
-  }, [selectedDate, seasons, form]);
-
-  React.useEffect(() => {
-    if (selectedCompetitionId) {
-        const competition = competitions.find(c => c.competitionId === selectedCompetitionId);
-        setAutoSelectedDivisionName(competition ? competition.divisionName : null);
-    } else {
-        setAutoSelectedDivisionName(null);
-    }
-    form.resetField('teamAId');
-    form.resetField('teamBId');
-  }, [selectedCompetitionId, competitions, form]);
+  const isFriendly = selectedCompetitionId === 'friendly';
 
   const availableCompetitions = React.useMemo(() => {
-    if (!autoSelectedSeason) return [];
-    return competitions.filter(c => c.seasonId === autoSelectedSeason.seasonId);
-  }, [autoSelectedSeason, competitions]);
+    if (!selectedDate) return [];
+    const activeSeason = seasons.find(s => 
+        s.active && selectedDate >= s.startDate && selectedDate <= s.endDate
+    );
+    if (!activeSeason) return [];
+    return competitions.filter(c => c.seasonId === activeSeason.seasonId);
+  }, [selectedDate, seasons, competitions]);
 
   const eligibleTeams = React.useMemo(() => {
+    if (isFriendly) return teams; // All teams are eligible for friendlies
     if (!selectedCompetitionId) return [];
+
     const competition = competitions.find(c => c.competitionId === selectedCompetitionId);
-    const teamIdsInCompetition = competition?.teamIds || [];
-    if (teamIdsInCompetition.length === 0) return [];
-    return teams.filter(t => teamIdsInCompetition.includes(t.teamId));
-  }, [selectedCompetitionId, competitions, teams]);
+    if (!competition) return [];
+
+    const teamIdsInCompetition = competition.teamIds || [];
+    if (teamIdsInCompetition.length > 0) {
+        return teams.filter(t => teamIdsInCompetition.includes(t.teamId));
+    }
+    
+    // Fallback if no teams are assigned to the competition: filter by season and division
+    return teams.filter(t => t.seasonId === competition.seasonId && t.divisionId === competition.divisionId);
+  }, [isFriendly, selectedCompetitionId, competitions, teams]);
+  
+  const autoSelectedSeason = React.useMemo(() => {
+    if (isFriendly || !selectedDate) return null;
+    return seasons.find(s => s.active && selectedDate >= s.startDate && selectedDate <= s.endDate) || null;
+  }, [isFriendly, selectedDate, seasons]);
+
+  const autoSelectedDivisionName = React.useMemo(() => {
+    if (isFriendly || !selectedCompetitionId) return null;
+    const competition = competitions.find(c => c.competitionId === selectedCompetitionId);
+    return competition ? competition.divisionName : null;
+  }, [isFriendly, selectedCompetitionId, competitions]);
+
+
+  React.useEffect(() => {
+    form.resetField('competitionId');
+  }, [selectedDate, form]);
+
+  React.useEffect(() => {
+    form.resetField('teamAId');
+    form.resetField('teamBId');
+  }, [selectedCompetitionId, form]);
+
 
   function onSubmit(data: FixtureFormValues) {
     startTransition(async () => {
@@ -113,16 +123,8 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
         const [hours, minutes] = data.time.split(':').map(Number);
         const combinedDateTime = new Date(data.dateTime);
         combinedDateTime.setHours(hours, minutes, 0, 0);
-
-        const finalData = {
-            competitionId: data.competitionId,
-            teamAId: data.teamAId,
-            teamBId: data.teamBId,
-            fieldId: data.fieldId,
-            dateTime: combinedDateTime
-        };
         
-        await addMatchAction(finalData);
+        await addMatchAction({ ...data, dateTime: combinedDateTime });
         
         toast({
           title: "Fixture Created",
@@ -171,18 +173,30 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
                     <FormField control={form.control} name="time" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>2. Match Time</FormLabel><FormControl><Input type="time" className="w-full" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
                 
-                 <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>3. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !autoSelectedSeason}><FormControl><SelectTrigger><SelectValue placeholder={!autoSelectedSeason ? "Select a date first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.divisionName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>3. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDate}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDate ? "Select a date first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent><SelectItem value="friendly">-- Friendly Match --</SelectItem>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.divisionName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                 
+                {isFriendly && (
+                    <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Friendly Mode</AlertTitle>
+                        <AlertDescription>
+                            You’ve selected a Friendly match. Opponents, age divisions, and classifications can be mixed.
+                        </AlertDescription>
+                    </Alert>
+                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                      <FormLabel>Auto-Selected Season</FormLabel>
-                      <div className={cn("flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted px-3 py-2 text-sm",!autoSelectedSeason && "text-muted-foreground")}>{autoSelectedSeason ? autoSelectedSeason.name : "Waiting for date..."}</div>
-                  </div>
-                   <div className="space-y-2">
-                      <FormLabel>Auto-Selected Division</FormLabel>
-                      <div className={cn("flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted px-3 py-2 text-sm", !autoSelectedDivisionName && "text-muted-foreground")}>{autoSelectedDivisionName || "Waiting for competition..."}</div>
-                  </div>
-                </div>
+                {!isFriendly && (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <FormLabel>Auto-Selected Season</FormLabel>
+                            <div className={cn("flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted px-3 py-2 text-sm",!autoSelectedSeason && "text-muted-foreground")}>{autoSelectedSeason ? autoSelectedSeason.name : "Waiting for date..."}</div>
+                        </div>
+                        <div className="space-y-2">
+                            <FormLabel>Auto-Selected Division</FormLabel>
+                            <div className={cn("flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted px-3 py-2 text-sm", !autoSelectedDivisionName && "text-muted-foreground")}>{autoSelectedDivisionName || "Waiting for competition..."}</div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>4. Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />

@@ -51,7 +51,7 @@ import { MatchCalendar } from "./match-calendar";
 const fixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
   teamBId: z.string({ required_error: "Please select the away team." }),
-  competitionId: z.string({ required_error: "Please select a competition." }),
+  competitionId: z.string().optional(), // Optional for friendlies
   fieldId: z.string({ required_error: "Please select a field." }),
   dateTime: z.date({ required_error: "A date for the match is required." }),
   time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Invalid time format. Please use HH:MM." }),
@@ -118,7 +118,7 @@ function EditMatchDialog({ match, teams, competitions, fields, open, onOpenChang
                     <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl><SelectContent>{teams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl><SelectContent>{teams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>Competition</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a competition" /></SelectTrigger></FormControl><SelectContent>{competitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.seasonName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>Competition</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a competition" /></SelectTrigger></FormControl><SelectContent><SelectItem value="friendly">Friendly Match</SelectItem>{competitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.seasonName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="fieldId" render={({ field }) => (<FormItem><FormLabel>Venue / Field</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger></FormControl><SelectContent>{fields.map((field) => (<SelectItem key={field.fieldId} value={field.fieldId}>{field.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <FormField control={form.control} name="dateTime" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Match Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : (<span>Pick a date</span>)}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
@@ -192,7 +192,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter.length === 0 || statusFilter.includes(match.status);
-    const matchesCompetition = competitionFilter.length === 0 || competitionFilter.includes(match.competitionId);
+    const matchesCompetition = competitionFilter.length === 0 || competitionFilter.includes(match.competitionId || "friendly");
     return matchesSearch && matchesStatus && matchesCompetition;
   });
 
@@ -322,7 +322,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                                     <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
                                         <span className="truncate">
                                             {competitionFilter.length === 0 && "Select competitions..."}
-                                            {competitionFilter.length === 1 && competitions.find(c => c.competitionId === competitionFilter[0])?.name}
+                                            {competitionFilter.length === 1 && (competitions.find(c => c.competitionId === competitionFilter[0])?.name || "Friendly")}
                                             {competitionFilter.length > 1 && `${competitionFilter.length} competitions selected`}
                                         </span>
                                         <ChevronDown className="h-4 w-4 opacity-50" />
@@ -330,6 +330,8 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56">
                                     <DropdownMenuLabel>Filter by Competition</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuCheckboxItem checked={competitionFilter.includes("friendly")} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...competitionFilter, "friendly"] : competitionFilter.filter(id => id !== "friendly"); setCompetitionFilter(newFilters); }}>Friendly</DropdownMenuCheckboxItem>
                                     <DropdownMenuSeparator />
                                     {competitions.map(comp => (
                                     <DropdownMenuCheckboxItem

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -10,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Match } from '@/lib/data';
 
 export function MatchCalendar({ matches }: { matches: Match[] }) {
-  const [date, setDate] = React.useState<Date | undefined>();
+  const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -28,7 +29,7 @@ export function MatchCalendar({ matches }: { matches: Match[] }) {
   }, [matches]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2">
         <Card>
             <CardContent className="p-0 flex justify-center">
