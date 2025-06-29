@@ -17,13 +17,14 @@ import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handsh
 import { cn } from "@/lib/utils";
 import { getTransactions } from "@/lib/actions/financials";
 import { getSponsors } from "@/lib/actions/sponsors";
-import { getVehicles } from "@/lib/actions/transport";
+import { getVehicles, getAllTransportAssignments } from "@/lib/actions/transport";
 import { getEquipment } from "@/lib/actions/equipment";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getFixtureConflicts } from '@/lib/actions/alerts';
+import { Progress } from '@/components/ui/progress';
 
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
@@ -47,6 +48,21 @@ const StatCardLink = ({ href, ...props }: React.ComponentProps<typeof StatCard> 
   </Link>
 );
 
+function ResourceStat({ icon: Icon, label, value, total, indicatorClassName }: { icon: React.ElementType, label: string, value: number, total: number, indicatorClassName?: string }) {
+    const percentage = total > 0 ? (value / total) * 100 : 0;
+    return (
+        <div>
+            <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 font-medium">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span>{label}</span>
+                </div>
+                <span className="text-muted-foreground">{value} / {total}</span>
+            </div>
+            <Progress value={percentage} className="h-2 mt-2" indicatorClassName={indicatorClassName} />
+        </div>
+    );
+}
 
 export default async function AdminDashboard() {
   const [
@@ -62,6 +78,7 @@ export default async function AdminDashboard() {
     allEquipment,
     allCompetitions,
     conflicts,
+    allTransportAssignments,
   ] = await Promise.all([
     getMatches(),
     getLeaderboards(),
@@ -75,17 +92,26 @@ export default async function AdminDashboard() {
     getEquipment(),
     getCompetitions(),
     getFixtureConflicts(),
+    getAllTransportAssignments(),
   ]);
 
   const today = new Date();
   const liveMatches = allMatches.filter(m => m.status === 'live');
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
   const upcomingToday = allMatches.filter(m => 
     m.status === 'scheduled' && 
-    new Date(m.dateTime).toDateString() === today.toDateString()
+    new Date(m.dateTime) >= todayStart &&
+    new Date(m.dateTime) <= todayEnd
   );
+  
   const completedToday = allMatches.filter(m =>
     m.status === 'completed' &&
-    new Date(m.dateTime).toDateString() === today.toDateString()
+    new Date(m.dateTime) >= todayStart &&
+    new Date(m.dateTime) <= todayEnd
   );
 
   const fieldsInUse = new Set(liveMatches.map(m => m.fieldId));
@@ -98,7 +124,17 @@ export default async function AdminDashboard() {
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  }
+  };
+  
+  const transportToday = allTransportAssignments.filter(a => {
+      const assignmentDate = new Date(a.dateTime);
+      return assignmentDate >= todayStart && assignmentDate <= todayEnd;
+  });
+
+  const equipmentByStatus = allEquipment.reduce((acc, item) => {
+      acc[item.status] = (acc[item.status] || 0) + 1;
+      return acc;
+  }, {} as Record<string, number>);
 
   return (
     <div className="flex flex-col gap-8">
@@ -107,31 +143,23 @@ export default async function AdminDashboard() {
         <p className="text-muted-foreground">Welcome to your cricket league command center.</p>
       </header>
         
-        {/* Critical Alerts Zone */}
-        <div className="space-y-2">
-            {conflicts.length > 0 && (
-                <Alert variant="destructive" className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                    <AlertTriangle className="h-4 w-4 !text-red-600 dark:!text-red-400" />
-                    <AlertTitle className="font-semibold">Fixture Conflicts</AlertTitle>
-                    <AlertDescription className="flex justify-between items-center">
-                        <span>There are {conflicts.length} conflicts that need resolution.</span>
-                        <Button asChild size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">
-                            <Link href="/matches">Resolve Now</Link>
-                        </Button>
-                    </AlertDescription>
-                </Alert>
-            )}
-             <Alert className="border-yellow-500/50 bg-yellow-500/10 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
-                <AlertTriangle className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
-                <AlertTitle className="font-semibold">Umpire Reviews</AlertTitle>
-                <AlertDescription className="flex justify-between items-center">
-                    <span>There are 0 overdue umpire reviews.</span>
-                    <Button size="sm" variant="outline" className="border-yellow-500/50 hover:bg-yellow-500/20">Review Queue</Button>
-                </AlertDescription>
-            </Alert>
-        </div>
+        {conflicts.length > 0 && (
+            <div className="space-y-2">
+                {conflicts.map((conflict, index) => (
+                     <Alert key={index} variant="destructive" className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+                        <AlertTriangle className="h-4 w-4 !text-red-600 dark:!text-red-400" />
+                        <AlertTitle className="font-semibold">{conflict.type} Conflict Detected</AlertTitle>
+                        <AlertDescription className="flex justify-between items-center">
+                            <span>{conflict.message}</span>
+                            <Button asChild size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">
+                                <Link href="/matches">Resolve Now</Link>
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
+                ))}
+            </div>
+        )}
 
-        {/* KPI Cards Zone */}
         <Card>
             <CardHeader><CardTitle>League Overview</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -170,7 +198,6 @@ export default async function AdminDashboard() {
         </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Main Content Area */}
         <div className="lg:col-span-2 grid grid-cols-1 gap-8">
           
           <Card>
@@ -180,7 +207,7 @@ export default async function AdminDashboard() {
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="live">Live Matches ({liveMatches.length})</TabsTrigger>
                   <TabsTrigger value="upcoming">Upcoming Today ({upcomingToday.length})</TabsTrigger>
-                  <TabsTrigger value="results">Results ({completedToday.length})</TabsTrigger>
+                  <TabsTrigger value="results">Results Today ({completedToday.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="live" className="mt-4">
                   {liveMatches.length > 0 ? (
@@ -234,7 +261,6 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Right Sidebar */}
         <div className="lg:col-span-1 space-y-8">
           <Card>
             <CardHeader><CardTitle>Top Performers</CardTitle><CardDescription>Season leaders in key categories.</CardDescription></CardHeader>
@@ -250,6 +276,35 @@ export default async function AdminDashboard() {
                   {topWicketTakers.map(player => (<div key={player.personId} className="flex items-center gap-2 mt-2"><div className="font-bold w-4 text-center text-xs"></div><div><Link className="font-semibold text-sm hover:underline" href={`/people/${player.personId}`}>{player.firstName} {player.lastName}</Link></div><div className="ml-auto font-bold text-sm">{player.stats.wicketsTaken}</div></div>))}
                 </TabsContent>
               </Tabs>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+                <CardTitle>Resource Utilization</CardTitle>
+                <CardDescription>A snapshot of key resource allocation.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <ResourceStat 
+                    icon={MapPin} 
+                    label="Fields In Use" 
+                    value={fieldsInUse.size} 
+                    total={allFields.length} 
+                    indicatorClassName="bg-red-500" 
+                />
+                <ResourceStat 
+                    icon={Bus} 
+                    label="Transport Assigned Today" 
+                    value={transportToday.length} 
+                    total={allVehicles.length}
+                    indicatorClassName="bg-blue-500" 
+                />
+                <ResourceStat 
+                    icon={Backpack} 
+                    label="Equipment Assigned" 
+                    value={equipmentByStatus['Assigned'] || 0} 
+                    total={allEquipment.length}
+                    indicatorClassName="bg-yellow-500" 
+                />
             </CardContent>
           </Card>
           <DreamTeamCard />
@@ -286,9 +341,3 @@ export default async function AdminDashboard() {
     </div>
   );
 }
-    
-
-
-
-
-
