@@ -56,6 +56,10 @@ const fieldSchema = z.object({
   contactPerson: z.string().optional(),
   contactPhone: z.string().optional(),
   notes: z.string().optional(),
+  coordinates: z.object({
+      lat: z.coerce.number().min(-90).max(90).optional(),
+      lon: z.coerce.number().min(-180).max(180).optional(),
+  }).optional(),
 });
 
 type FieldFormValues = z.infer<typeof fieldSchema>;
@@ -129,7 +133,14 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                     <FormField control={form.control} name="alias" render={({ field }) => (<FormItem><FormLabel>Alias (Optional)</FormLabel><FormControl><Input placeholder="e.g. The Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
                 <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address (Optional)</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                
+                <h3 className="text-sm font-medium text-muted-foreground pt-2">Location</h3>
+                <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={form.control} name="coordinates.lat" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-29.318" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="coordinates.lon" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="29.96" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             </div>
             <Separator />
@@ -171,8 +182,8 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                         <FormLabel>Assigned Grounds-Keepers</FormLabel>
                         <FormDescription>Select the staff responsible for this field.</FormDescription>
                         <ScrollArea className="h-40 w-full rounded-lg border p-4">
-                        {groundkeepers.length > 0 ? (
-                            groundkeepers.map((person) => (
+                        {groundskeepers.length > 0 ? (
+                            groundskeepers.map((person) => (
                                 <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
                             ))
                         ) : (

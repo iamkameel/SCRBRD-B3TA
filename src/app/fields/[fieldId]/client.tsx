@@ -3,6 +3,7 @@
 'use client';
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import Link from 'next/link';
 import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize } from 'lucide-react';
 import type { Field, Match } from '@/lib/data';
@@ -12,6 +13,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
+
+const FieldMap = dynamic(() => import('./field-map'), { 
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-muted animate-pulse rounded-md" />
+});
 
 export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
     const [isClient, setIsClient] = React.useState(false);
@@ -27,8 +33,8 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
         </div>
     );
     
-    const ListItem = ({ children }: { children: React.ReactNode }) => (
-        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {children}</li>
+    const ListItem = ({ children, itemKey }: { children: React.ReactNode; itemKey: string; }) => (
+        <li key={itemKey} className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {children}</li>
     );
     
     const InfoBlock = ({ label, value, icon: Icon }: { label: string, value?: string, icon: React.ElementType }) => {
@@ -79,7 +85,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                     <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Facilities</h4>
                                     {field.facilities && field.facilities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`} itemKey={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No facilities listed.</p>)}
                                 </div>
@@ -87,7 +93,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                      <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Amenities</h4>
                                     {field.amenities && field.amenities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.amenities.map((a, i) => <ListItem key={`${a}-${i}`}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.amenities.map((a, i) => <ListItem key={`${a}-${i}`} itemKey={`${a}-${i}`}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No amenities listed.</p>)}
                                 </div>
@@ -165,6 +171,16 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                     </Card>
                 </div>
                 <div className="lg:col-span-1 space-y-8">
+                     {field.coordinates?.lat && field.coordinates?.lon && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Map Location</CardTitle>
+                            </CardHeader>
+                            <CardContent className="h-80 w-full p-0">
+                                <FieldMap coords={field.coordinates} fieldName={field.name} />
+                            </CardContent>
+                        </Card>
+                    )}
                     <Card>
                         <CardHeader>
                             <CardTitle>Venue Operations</CardTitle>

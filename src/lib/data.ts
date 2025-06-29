@@ -56,6 +56,10 @@ export interface Field {
   contactPerson?: string;
   contactPhone?: string;
   notes?: string;
+  coordinates?: {
+    lat: number;
+    lon: number;
+  };
 }
 
 export interface Team {

@@ -35,6 +35,7 @@ export async function getFields(): Promise<Field[]> {
         contactPerson: data.contactPerson,
         contactPhone: data.contactPhone,
         notes: data.notes,
+        coordinates: data.coordinates,
       };
 
       const assignmentsCol = collection(db, 'fields', docSnapshot.id, 'assignments');
@@ -93,6 +94,7 @@ export async function getField(fieldId: string): Promise<Field | null> {
       contactPerson: data.contactPerson,
       contactPhone: data.contactPhone,
       notes: data.notes,
+      coordinates: data.coordinates,
     };
 
     const assignmentsCol = collection(db, 'fields', fieldId, 'assignments');
@@ -137,6 +139,10 @@ const fieldActionSchema = z.object({
   contactPerson: z.string().optional(),
   contactPhone: z.string().optional(),
   notes: z.string().optional(),
+  coordinates: z.object({
+      lat: z.coerce.number().min(-90).max(90).optional(),
+      lon: z.coerce.number().min(-180).max(180).optional(),
+  }).optional(),
 });
 
 type FieldFormValues = z.infer<typeof fieldActionSchema>;
@@ -169,7 +175,7 @@ export async function addFieldAction(data: FieldFormValues) {
 
   if (!validatedFields.success) throw new Error('Invalid field data.');
   
-  const { assignments, ...fieldData } = validatedFields.data;
+  const { assignments, coordinates, ...fieldData } = validatedFields.data;
   
   let schoolName = '';
   if (fieldData.schoolId) {
@@ -185,6 +191,7 @@ export async function addFieldAction(data: FieldFormValues) {
       ...fieldData,
       schoolId: fieldData.schoolId === ' ' ? '' : fieldData.schoolId,
       schoolName: schoolName || null,
+      coordinates: (coordinates && coordinates.lat && coordinates.lon) ? coordinates : null,
       userId: userId,
   });
 
@@ -211,7 +218,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
 
     if (!validatedFields.success) throw new Error('Invalid field data.');
 
-    const { fieldId, assignments, ...updateData } = validatedFields.data;
+    const { fieldId, assignments, coordinates, ...updateData } = validatedFields.data;
     const fieldDocRef = doc(db, 'fields', fieldId);
 
     const fieldSnap = await getDoc(fieldDocRef);
@@ -231,6 +238,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
         ...updateData,
         schoolId: updateData.schoolId === ' ' ? '' : updateData.schoolId,
         schoolName: schoolName || null,
+        coordinates: (coordinates && coordinates.lat && coordinates.lon) ? coordinates : null,
     });
 
     await syncAssignments(batch, fieldId, assignments);
