@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -14,6 +13,7 @@ import MedicalDashboard from '@/app/dashboards/medical-dashboard';
 import SportsmasterDashboard from '@/app/dashboards/sportsmaster-dashboard';
 import TrainerDashboard from '@/app/dashboards/trainer-dashboard';
 import UmpireScorerDashboard from '@/app/dashboards/umpire-scorer-dashboard';
+import SpectatorDashboard from '@/app/dashboards/spectator-dashboard';
 
 export default function DashboardPage() {
   const { person, loading } = useAuth();
@@ -57,8 +57,10 @@ export default function DashboardPage() {
     case 'Doctor':
     case 'Physiotherapist':
       return <MedicalDashboard />;
+    case 'Spectator':
+      return <SpectatorDashboard />;
     default:
       // A safe default for any other roles
-      return <CoachDashboard />;
+      return <SpectatorDashboard />;
   }
 }

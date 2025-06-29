@@ -212,6 +212,21 @@ const trainerNavGroups = [
     }
 ];
 
+const spectatorTopLevelNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+];
+
+const spectatorNavGroups = [
+    {
+        title: "Explore",
+        icon: Trophy,
+        items: [
+            { href: '/matches', label: 'All Matches', icon: ClipboardList },
+            { href: '/rankings', label: 'Rankings', icon: Trophy },
+        ]
+    }
+];
+
 
 export function getNavConfig(role: string) {
     switch (role) {
@@ -235,8 +250,10 @@ export function getNavConfig(role: string) {
             return { topLevel: guardianTopLevelNavItems, groups: guardianNavGroups };
         case 'Trainer':
             return { topLevel: trainerTopLevelNavItems, groups: trainerNavGroups };
+        case 'Spectator':
+            return { topLevel: spectatorTopLevelNavItems, groups: spectatorNavGroups };
         default:
              // Default to a safe, minimal navigation for any other roles
-            return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
+            return { topLevel: spectatorTopLevelNavItems, groups: spectatorNavGroups };
     }
 }
