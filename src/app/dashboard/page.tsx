@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -14,6 +15,7 @@ import SportsmasterDashboard from '@/app/dashboards/sportsmaster-dashboard';
 import TrainerDashboard from '@/app/dashboards/trainer-dashboard';
 import UmpireScorerDashboard from '@/app/dashboards/umpire-scorer-dashboard';
 import SpectatorDashboard from '@/app/dashboards/spectator-dashboard';
+import PlayerDashboard from '@/app/dashboards/player-dashboard';
 
 export default function DashboardPage() {
   const { person, loading } = useAuth();
@@ -30,7 +32,7 @@ export default function DashboardPage() {
     );
   }
 
-  const role = person.activeRole || person.roles[0] || 'Player';
+  const role = person.activeRole || person.roles[0] || 'Spectator';
 
   switch (role) {
     case 'Admin':
@@ -40,8 +42,10 @@ export default function DashboardPage() {
     case 'Coach':
     case 'Assistant Coach':
     case 'Captain':
-    case 'Player': // Player dashboard is similar to Coach for now
+    case 'Team Manager':
       return <CoachDashboard />;
+    case 'Player':
+       return <PlayerDashboard />;
     case 'Umpire':
     case 'Scorer':
       return <UmpireScorerDashboard />;

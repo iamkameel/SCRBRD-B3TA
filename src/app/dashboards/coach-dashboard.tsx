@@ -38,6 +38,7 @@ function StatItem({ label, value }: { label: string, value: string | number }) {
 }
 
 function CoachDashboardInternal({ data }: CoachDashboardProps) {
+  const { person } = useAuth();
   const { team, nextMatch, recentMatches, teamStats, leaderboards } = data;
 
   if (!team || !teamStats) {
@@ -45,12 +46,12 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
       <div className="flex flex-col gap-8">
         <header>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Coach Dashboard</h1>
-          <p className="text-muted-foreground">Welcome, Coach!</p>
+          <p className="text-muted-foreground">Welcome, {person?.activeRole || 'Coach'}!</p>
         </header>
         <Card>
           <CardHeader>
             <CardTitle>No Team Assignment Found</CardTitle>
-            <CardDescription>You are not currently assigned to a team as a coach. Please contact your administrator.</CardDescription>
+            <CardDescription>You are not currently assigned to a team in a coaching capacity. Please contact your administrator.</CardDescription>
           </CardHeader>
         </Card>
       </div>

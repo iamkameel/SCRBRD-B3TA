@@ -80,7 +80,7 @@ export async function getTeamLeaderboard(teamId: string): Promise<{ topRunScorer
 
 export async function getCoachDashboardData(personId: string) {
     const assignments = await getPersonTeamAssignments(personId);
-    const coachAssignment = assignments.find(a => ['Coach', 'Assistant Coach', 'Captain'].includes(a.role));
+    const coachAssignment = assignments.find(a => ['Coach', 'Assistant Coach', 'Captain', 'Team Manager'].includes(a.role));
 
     if (!coachAssignment) {
         return { team: null, nextMatch: null, recentMatches: [], teamStats: null, leaderboards: { topRunScorers: [], topWicketTakers: [] } };
@@ -99,6 +99,30 @@ export async function getCoachDashboardData(personId: string) {
     const recentMatches = allMatches.filter(m => m.status === 'completed').sort((a,b) => b.dateTime.getTime() - a.dateTime.getTime()).slice(0, 3);
     
     return { team, nextMatch, recentMatches, teamStats, leaderboards };
+}
+
+export async function getPlayerDashboardData(personId: string) {
+    const assignments = await getPersonTeamAssignments(personId);
+    const playerAssignment = assignments.find(a => ['Player', 'Captain', 'Vice-Captain'].includes(a.role));
+
+    const playerStats = await getPlayerStats(personId);
+
+    if (!playerAssignment) {
+        return { team: null, nextMatch: null, playerStats };
+    }
+    
+    const teamId = playerAssignment.teamId;
+    const [team, allMatches] = await Promise.all([
+        getTeam(teamId),
+        getTeamMatches(teamId),
+    ]);
+
+    const now = new Date();
+    const nextMatch = allMatches
+        .filter(m => m.status === 'scheduled' && m.dateTime >= now)
+        .sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime())[0] || null;
+    
+    return { team, nextMatch, playerStats };
 }
 
 

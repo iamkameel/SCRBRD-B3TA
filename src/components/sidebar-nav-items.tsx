@@ -126,8 +126,8 @@ const playerCoachNavGroups = [
         title: "My Teams",
         icon: Users,
         items: [
-            { href: '/teams', label: 'Team Hub', icon: Users },
-            { href: '/people', label: 'Rosters', icon: User },
+            { href: '/teams', label: 'Team Hubs', icon: Users },
+            { href: '/people', label: 'My Profile', icon: User },
         ]
     },
     {
@@ -235,10 +235,12 @@ export function getNavConfig(role: string) {
         case 'Sportsmaster':
             return { topLevel: adminTopLevelNavItems, groups: sportsmasterNavGroups };
         case 'Coach':
-        case 'Player':
+        case 'Assistant Coach':
         case 'Captain':
-        case 'Vice-Captain':
+        case 'Team Manager':
             return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
+        case 'Player':
+             return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
         case 'Umpire':
         case 'Scorer':
             return { topLevel: officialTopLevelNavItems, groups: officialNavGroups };
