@@ -18,7 +18,8 @@ export default async function TeamsPage() {
   ]);
   
   const user = userId ? await getPerson(userId) : null;
-  const canManage = user?.roles.includes('Admin') || user?.roles.includes('Sportsmaster') ?? false;
+  const canManage = (user?.roles.includes('Admin') || user?.roles.includes('Sportsmaster')) ?? false;
 
   return <TeamsClient teams={teams} schools={schools} divisions={divisions} seasons={seasons} canManage={canManage} />;
 }
+
