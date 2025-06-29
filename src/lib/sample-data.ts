@@ -1,5 +1,6 @@
 
 
+
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -168,6 +169,11 @@ export const sampleData = {
         { matchId: 'match_5', teamAId: 'team_1', teamBId: 'team_4', competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(2), status: 'completed', winnerTeamId: 'team_1', result: 'Michaelhouse won by 15 runs' },
         { matchId: 'match_6', teamAId: 'team_2', teamBId: 'team_3', competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(1), status: 'completed', winnerTeamId: 'team_2', result: 'Hilton won by 5 wickets' },
         { matchId: 'match_7', teamAId: 'team_1', teamBId: 'team_2', competitionId: 'comp_3', round: 2, fieldId: 'field_12', dateTime: futureDate(14), status: 'scheduled' },
+    ],
+    officials: [
+        { assignmentId: 'off_1', matchId: 'match_3', personId: 'staff_1', role: 'Umpire', confirmed: true },
+        { assignmentId: 'off_2', matchId: 'match_4', personId: 'staff_2', role: 'Scorer', confirmed: false },
+        { assignmentId: 'off_3', matchId: 'match_4', personId: 'staff_1', role: 'Umpire', confirmed: false },
     ],
 };
 

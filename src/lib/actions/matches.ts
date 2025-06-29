@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -282,6 +283,7 @@ export async function updateMatchAction(matchId: string, data: FixtureFormValues
 
 export const getMatchOfficials = cache(async (matchId: string): Promise<Official[]> => {
   const userId = await getUserId();
+  if (!userId) return [];
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -301,6 +303,7 @@ export const getMatchOfficials = cache(async (matchId: string): Promise<Official
         assignmentId: officialDoc.id, personId: officialData.personId,
         personName: `${personData.firstName} ${personData.lastName}`,
         role: officialData.role, confirmed: officialData.confirmed || false,
+        userId: personData.userId,
       };
     });
 
@@ -350,7 +353,7 @@ export async function assignOfficialToMatchAction(matchId: string, data: Assignm
     if (!existingAssignment.empty) {
       throw new Error("This person is already assigned to the match.");
     }
-    await addDoc(officialsCol, { personId, role, confirmed: false });
+    await addDoc(officialsCol, { personId, role, confirmed: false, userId });
   } catch (error) {
     console.error("Error assigning official to match: ", error);
     if (error instanceof Error) { throw error; }
@@ -738,6 +741,7 @@ export const getOfficialAssignmentsForPerson = cache(async (personId: string): P
                 personName: `${person.firstName} ${person.lastName}`,
                 role: assignmentData.role,
                 confirmed: assignmentData.confirmed,
+                userId: userId,
             }
         });
         const results = (await Promise.all(assignmentsPromises)).filter((a): a is any => a !== null);

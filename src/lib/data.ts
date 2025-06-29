@@ -1,5 +1,6 @@
 
 
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -14,6 +15,7 @@ export interface Person {
     email: boolean;
     push: boolean;
   };
+  userId?: string;
 }
 
 export interface School {
@@ -154,6 +156,7 @@ export interface Official {
   personName: string;
   role: string;
   confirmed: boolean;
+  userId: string;
 }
 
 // Scorecard related types

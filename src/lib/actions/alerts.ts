@@ -4,6 +4,9 @@
 import { getMatches } from './matches';
 import { getTeams } from './teams';
 import type { Match, Team } from '@/lib/data';
+import { getUserId } from '@/lib/auth';
+import { collectionGroup, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export interface FixtureConflict {
     type: 'Field' | 'Team';
@@ -12,6 +15,9 @@ export interface FixtureConflict {
 }
 
 export async function getFixtureConflicts(): Promise<FixtureConflict[]> {
+    const userId = await getUserId();
+    if (!userId) return [];
+
     const [allMatches, allTeams] = await Promise.all([
         getMatches(),
         getTeams()
@@ -73,4 +79,18 @@ export async function getFixtureConflicts(): Promise<FixtureConflict[]> {
     }
 
     return conflicts;
+}
+
+export async function getUnconfirmedAssignmentsCount(): Promise<number> {
+    const userId = await getUserId();
+    if (!userId) return 0;
+    
+    const officialsQuery = query(
+        collectionGroup(db, 'officials'), 
+        where('userId', '==', userId),
+        where('confirmed', '==', false)
+    );
+
+    const snapshot = await getDocs(officialsQuery);
+    return snapshot.size;
 }

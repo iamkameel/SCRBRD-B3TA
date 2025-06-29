@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -39,7 +40,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
             'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
-            'equipment', 'equipmentAssignments', 'sponsors'
+            'equipment', 'equipmentAssignments', 'sponsors', 'officials'
         ];
 
         for (const collName of collectionsToClear) {
@@ -288,6 +289,19 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 itemCount++;
             }
         }
+        
+        // Process Officials
+        if (sampleData.officials) {
+            for (const official of sampleData.officials) {
+                const { assignmentId: tempId, matchId: tempMatchId, ...officialData } = official;
+                const newMatchId = idMap.get(tempMatchId);
+                if (newMatchId) {
+                    const officialRef = doc(collection(db, 'matches', newMatchId, 'officials'));
+                    batch.set(officialRef, { ...officialData, userId });
+                    itemCount++;
+                }
+            }
+        }
 
         await batch.commit();
 
@@ -381,7 +395,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
         const batch = writeBatch(db);
         let count = 0;
         
-        for (const item of sampleData[collectionName as Exclude<keyof typeof sampleData, 'teams' | 'matches' | 'competitions' | 'equipmentAssignments' | 'fieldAssignments'>]) {
+        for (const item of sampleData[collectionName as Exclude<keyof typeof sampleData, 'teams' | 'matches' | 'competitions' | 'equipmentAssignments' | 'fieldAssignments' | 'officials'>]) {
             let idKey: string;
             if (subsetName === 'People') idKey = 'personId';
             else if (subsetName === 'Financials') idKey = 'transactionId';

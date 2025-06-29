@@ -13,7 +13,7 @@ import { getFields } from "@/lib/actions/fields";
 import { format } from "date-fns";
 import { TeamStandingsChart, TopRunScorersChart, TopWicketTakersChart } from "../dashboard-charts";
 import { DreamTeamCard } from "../dream-team-card";
-import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database } from 'lucide-react';
+import { AlertTriangle, ClipboardList, BarChart, Users, MapPin, Landmark, Handshake, Bus, Backpack, Scale, ArrowRight, UserCog, Database, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { getTransactions } from "@/lib/actions/financials";
 import { getSponsors } from "@/lib/actions/sponsors";
@@ -23,7 +23,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { getFixtureConflicts } from '@/lib/actions/alerts';
+import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 import { Progress } from '@/components/ui/progress';
 
 
@@ -79,6 +79,7 @@ export default async function AdminDashboard() {
     allCompetitions,
     conflicts,
     allTransportAssignments,
+    unconfirmedAssignmentsCount,
   ] = await Promise.all([
     getMatches(),
     getLeaderboards(),
@@ -93,6 +94,7 @@ export default async function AdminDashboard() {
     getCompetitions(),
     getFixtureConflicts(),
     getAllTransportAssignments(),
+    getUnconfirmedAssignmentsCount(),
   ]);
 
   const today = new Date();
@@ -143,22 +145,36 @@ export default async function AdminDashboard() {
         <p className="text-muted-foreground">Welcome to your cricket league command center.</p>
       </header>
         
-        {conflicts.length > 0 && (
-            <div className="space-y-2">
-                {conflicts.map((conflict, index) => (
-                     <Alert key={index} variant="destructive" className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                        <AlertTriangle className="h-4 w-4 !text-red-600 dark:!text-red-400" />
-                        <AlertTitle className="font-semibold">{conflict.type} Conflict Detected</AlertTitle>
-                        <AlertDescription className="flex justify-between items-center">
-                            <span>{conflict.message}</span>
-                            <Button asChild size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">
-                                <Link href="/matches">Resolve Now</Link>
-                            </Button>
-                        </AlertDescription>
-                    </Alert>
-                ))}
-            </div>
-        )}
+        <div className="space-y-2">
+             {unconfirmedAssignmentsCount > 0 && (
+                <Alert variant="warning">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle className="font-semibold">Pending Confirmations</AlertTitle>
+                    <AlertDescription className="flex justify-between items-center">
+                        <span>{unconfirmedAssignmentsCount} official assignment(s) are awaiting confirmation.</span>
+                        <Button asChild size="sm" variant="outline" className="border-accent/50 hover:bg-accent/20">
+                            <Link href="/matches">View Matches</Link>
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            )}
+            {conflicts.length > 0 && (
+                <div className="space-y-2">
+                    {conflicts.map((conflict, index) => (
+                        <Alert key={index} variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle className="font-semibold">{conflict.type} Conflict Detected</AlertTitle>
+                            <AlertDescription className="flex justify-between items-center">
+                                <span>{conflict.message}</span>
+                                <Button asChild size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">
+                                    <Link href="/matches">Resolve Now</Link>
+                                </Button>
+                            </AlertDescription>
+                        </Alert>
+                    ))}
+                </div>
+            )}
+        </div>
 
         <Card>
             <CardHeader><CardTitle>League Overview</CardTitle></CardHeader>
