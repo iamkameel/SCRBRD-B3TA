@@ -1,16 +1,21 @@
 
+'use client';
+
+import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Stethoscope } from 'lucide-react';
 import type { Match } from "@/lib/data";
+import { useAuth } from '@/lib/auth-context';
+import { getMatches } from '@/lib/actions/matches';
+import DashboardSkeleton from '@/app/loading';
 
-interface MedicalDashboardProps {
-  matches: Match[];
-}
+function MedicalDashboardInternal({ matches }: { matches: Match[] }) {
+  const [isClient, setIsClient] = React.useState(false);
+  React.useEffect(() => { setIsClient(true); }, []);
 
-export default function MedicalDashboard({ matches }: MedicalDashboardProps) {
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -45,7 +50,7 @@ export default function MedicalDashboard({ matches }: MedicalDashboardProps) {
                         {match.teamAName} vs {match.teamBName}
                       </Link>
                     </TableCell>
-                    <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
+                    <TableCell>{isClient ? format(match.dateTime, "PPP p") : '...'}</TableCell>
                     <TableCell>{match.fieldName}</TableCell>
                     <TableCell>{match.competitionName}</TableCell>
                   </TableRow>
@@ -64,4 +69,30 @@ export default function MedicalDashboard({ matches }: MedicalDashboardProps) {
       </Card>
     </div>
   );
+}
+
+export default function MedicalDashboard() {
+  const { person } = useAuth();
+  const [matches, setMatches] = React.useState<Match[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (person) { // Medical staff needs to be logged in.
+      getMatches().then(allMatches => {
+        const upcoming = allMatches
+            .filter(m => m.status === 'scheduled' || m.status === 'live')
+            .sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
+        setMatches(upcoming);
+        setLoading(false);
+      });
+    } else if (person === null) {
+        setLoading(false);
+    }
+  }, [person]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  return <MedicalDashboardInternal matches={matches} />;
 }
