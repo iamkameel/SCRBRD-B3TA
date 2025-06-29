@@ -16,14 +16,15 @@ import { getPerson } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 
 export default async function AdminDashboard() {
-  const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings, userId] = await Promise.all([
+  const userId = await getUserId();
+
+  const [recentMatches, { topRunScorers, topWicketTakers }, teamStandings, user] = await Promise.all([
     getMatches().then(matches => matches.slice(0, 5)),
     getLeaderboards(),
     getTeamStandings(),
-    getUserId()
+    userId ? getPerson(userId) : Promise.resolve(null),
   ]);
 
-  const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.includes('Admin') ?? false;
 
   return (
