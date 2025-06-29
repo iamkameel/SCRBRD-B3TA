@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
 import type { Match, Official, Innings, PlayerOfTheMatch } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
@@ -534,16 +534,14 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         throw new Error("Live scoring players are not set up.");
     }
     
-    // Deep copy the current state BEFORE any modifications
     const previousLiveScore = JSON.parse(JSON.stringify(currentLiveScore));
 
-    const liveScore = currentLiveScore; // work on the mutable object
+    const liveScore = currentLiveScore; 
 
     const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
     const runsScored = ball.runs ?? 0;
     const isOddRun = runsScored % 2 !== 0;
 
-    // Update score
     if (ball.runs) liveScore.runs += ball.runs;
     if (ball.event === 'W') {
         if (liveScore.wickets < 10) {
@@ -554,30 +552,26 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                 }
                 liveScore.batsmenOut.push(liveScore.onStrikeBatsmanId);
             }
-            liveScore.onStrikeBatsmanId = undefined; // Clear the on-strike batsman
+            liveScore.onStrikeBatsmanId = undefined; 
         }
     }
     if (ball.event === 'wd' || ball.event === 'nb') {
-        liveScore.runs++; // Add 1 for the extra
+        liveScore.runs++;
     }
     
-    // Update current over history
     liveScore.currentOver.push(ball.event);
 
-    // Batsman rotation on odd runs
     if (isLegalBall && isOddRun) {
         [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
             [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
     }
 
-    // Update balls/overs
     if (isLegalBall) {
         const endOfOver = liveScore.balls === 5;
         if (endOfOver) {
             liveScore.balls = 0;
             liveScore.overs++;
             liveScore.currentOver = [];
-            // Swap batsmen for the new over, unless they already swapped from an odd run on the last ball.
             if (!isOddRun) {
                 [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
                     [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
@@ -629,18 +623,9 @@ export async function endInningsAction(matchId: string) {
     }
 
     if (currentLiveScore.liveInnings === 1) {
-        // Ending the first innings
         const newLiveScore = {
-            runs: 0,
-            wickets: 0,
-            overs: 0,
-            balls: 0,
-            currentOver: [],
-            batsmenOut: [],
-            liveInnings: 2,
-            onStrikeBatsmanId: undefined,
-            nonStrikerBatsmanId: undefined,
-            bowlerId: undefined,
+            runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2,
+            onStrikeBatsmanId: undefined, nonStrikerBatsmanId: undefined, bowlerId: undefined,
         };
         
         await updateDoc(matchRef, { 
@@ -651,7 +636,6 @@ export async function endInningsAction(matchId: string) {
         return { message: "First innings ended. Second innings is ready." };
 
     } else if (currentLiveScore.liveInnings === 2) {
-        // Ending the second innings and the match
         const firstInningsRuns = match.firstInningsTotal || 0;
         const secondInningsRuns = currentLiveScore.runs;
 
@@ -660,12 +644,12 @@ export async function endInningsAction(matchId: string) {
         let winnerTeamName: string | null = null;
 
         if (secondInningsRuns > firstInningsRuns) {
-            winnerTeamId = match.teamBId; // Team B is batting second
+            winnerTeamId = match.teamBId; 
             winnerTeamName = match.teamBName;
             const wicketsRemaining = 10 - currentLiveScore.wickets;
             result = `${winnerTeamName} won by ${wicketsRemaining} wickets`;
         } else if (firstInningsRuns > secondInningsRuns) {
-            winnerTeamId = match.teamAId; // Team A batted first
+            winnerTeamId = match.teamAId; 
             winnerTeamName = match.teamAName;
             const margin = firstInningsRuns - secondInningsRuns;
             result = `${winnerTeamName} won by ${margin} runs`;
@@ -674,14 +658,50 @@ export async function endInningsAction(matchId: string) {
         }
         
         await updateDoc(matchRef, {
-            status: 'completed',
-            winnerTeamId,
-            result,
-            liveScore: null, // Clear live score data
+            status: 'completed', winnerTeamId, result,
+            liveScore: null, previousLiveScore: null,
         });
 
         revalidatePath(`/matches/${matchId}`);
-        revalidatePath('/'); // For dashboard updates
+        revalidatePath('/');
         return { message: "Match completed!" };
     }
 }
+
+export const getOfficialAssignmentsForPerson = cache(async (personId: string): Promise<(Official & { matchId: string; matchName: string; dateTime: Date; })[]> => {
+    if (!userId || !personId) return [];
+    try {
+        const assignmentsQuery = query(collectionGroup(db, 'officials'), where("personId", "==", personId));
+        const snapshot = await getDocs(assignmentsQuery);
+        if (snapshot.empty) return [];
+
+        const assignmentsPromises = snapshot.docs.map(async (docSnap) => {
+            const assignmentData = docSnap.data();
+            const matchRef = docSnap.ref.parent.parent; 
+            if (!matchRef) return null;
+            
+            const person = await getPerson(personId);
+            if (!person || person.userId !== userId) return null;
+
+            const match = await getMatch(matchRef.id);
+            if (!match || match.status !== 'scheduled' || match.userId !== userId) return null;
+            
+            return {
+                assignmentId: docSnap.id,
+                matchId: match.matchId,
+                matchName: `${match.teamAName} vs ${match.teamBName}`,
+                dateTime: match.dateTime,
+                personId: assignmentData.personId,
+                personName: `${person.firstName} ${person.lastName}`,
+                role: assignmentData.role,
+                confirmed: assignmentData.confirmed,
+            }
+        });
+        const results = (await Promise.all(assignmentsPromises)).filter((a): a is any => a !== null);
+        return results.sort((a: any, b: any) => a.dateTime.getTime() - b.dateTime.getTime());
+
+    } catch (error) {
+        console.error("Error fetching official assignments:", error);
+        return [];
+    }
+});

@@ -1,8 +1,9 @@
+
 {
   "indexes": [
     {
       "collectionGroup": "equipmentAssignments",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "itemId",
@@ -16,7 +17,7 @@
     },
     {
       "collectionGroup": "familyLinks",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "childId",
@@ -30,7 +31,7 @@
     },
     {
       "collectionGroup": "familyLinks",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "parentId",
@@ -131,6 +132,26 @@
         {
           "fieldPath": "roles",
           "arrayConfig": "CONTAINS"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "officials",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "personId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "transportAssignments",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "driverId",
+          "order": "ASCENDING"
         }
       ]
     }

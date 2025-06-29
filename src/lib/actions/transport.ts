@@ -1,10 +1,11 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, collectionGroup } from 'firebase/firestore';
 import type { Vehicle, Person, TransportAssignment, FullTransportAssignment } from '@/lib/data';
 import { getMatch, getMatches } from './matches';
 import { getPerson } from './players';
@@ -176,6 +177,48 @@ export const getAllTransportAssignments = cache(async (): Promise<FullTransportA
     
     return allAssignments.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
 });
+
+export const getAssignmentsForDriver = cache(async (personId: string): Promise<FullTransportAssignment[]> => {
+    if (!userId || !personId) return [];
+    try {
+        const assignmentsQuery = query(collectionGroup(db, 'transportAssignments'), where("driverId", "==", personId));
+        const snapshot = await getDocs(assignmentsQuery);
+        if (snapshot.empty) return [];
+
+        const assignmentsPromises = snapshot.docs.map(async (docSnap) => {
+            const assignmentData = docSnap.data();
+            const matchRef = docSnap.ref.parent.parent;
+            if (!matchRef) return null;
+
+            const match = await getMatch(matchRef.id);
+            if (!match || match.status !== 'scheduled' || match.userId !== userId) return null;
+
+            const vehicleSnap = await getDoc(doc(db, 'vehicles', assignmentData.vehicleId));
+            if (!vehicleSnap.exists()) return null;
+
+            const driver = await getPerson(personId);
+            if (!driver) return null;
+            
+            return {
+                assignmentId: docSnap.id,
+                matchId: match.matchId,
+                matchName: `${match.teamAName} vs ${match.teamBName}`,
+                dateTime: match.dateTime,
+                vehicleId: assignmentData.vehicleId,
+                vehicleName: vehicleSnap.data().name,
+                vehicleType: vehicleSnap.data().type,
+                driverId: personId,
+                driverName: `${driver.firstName} ${driver.lastName}`
+            };
+        });
+        const results = (await Promise.all(assignmentsPromises)).filter((a): a is FullTransportAssignment => a !== null);
+        return results.sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
+    } catch(error) {
+        console.error("Error fetching driver assignments:", error);
+        return [];
+    }
+});
+
 
 const transportAssignmentSchema = z.object({
   vehicleId: z.string({ required_error: "Please select a vehicle." }),
