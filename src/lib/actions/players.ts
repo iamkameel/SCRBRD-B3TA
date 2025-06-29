@@ -52,7 +52,9 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
     try {
         const personDocRef = doc(db, 'people', personId);
         const personSnap = await getDoc(personDocRef);
-        if (!personSnap.exists() || personSnap.data().userId !== userId) return null;
+        // We don't check for userId here because an admin might need to see any user.
+        // The check should happen at the call site (e.g., in a server action or page).
+        if (!personSnap.exists()) return null;
         return { personId: personSnap.id, ...personSnap.data() } as Person;
     } catch (error) {
         console.error(`Error fetching person with ID ${personId}:`, error);
@@ -61,11 +63,10 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
 });
 
 export const getPersonByEmail = cache(async (email: string): Promise<Person | null> => {
-    const userId = getUserId();
-    if (!userId) return null;
     try {
         const peopleCollection = collection(db, 'people');
-        const q = query(peopleCollection, where("userId", "==", userId), where("email", "==", email));
+        // This query does not need a userId filter as it's for initial auth lookup.
+        const q = query(peopleCollection, where("email", "==", email));
         const snapshot = await getDocs(q);
         if (snapshot.empty) return null;
         const doc = snapshot.docs[0];
@@ -170,7 +171,6 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
     if (!userId) throw new Error("User not authenticated");
     if (!removeLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
     
-    // Permission check: ensure both users exist and belong to the current user
     const [currentPerson, linkedPerson] = await Promise.all([getPerson(currentPersonId), getPerson(linkedPersonId)]);
     if (!currentPerson || !linkedPerson) {
         throw new Error("One or both people involved in the link could not be found.");

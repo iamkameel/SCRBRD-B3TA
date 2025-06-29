@@ -20,7 +20,7 @@ export default async function RootLayout({
 }>) {
   // In a real app, this would get the logged-in user's identity
   // For this demo, we'll fetch the hardcoded admin user
-  const userId = getUserId();
+  const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
 
   return (

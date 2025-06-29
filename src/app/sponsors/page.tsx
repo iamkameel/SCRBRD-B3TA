@@ -8,7 +8,7 @@ import { getUserId } from '@/lib/auth';
 export default async function SponsorsPage() {
   const sponsors = await getSponsors();
 
-  const userId = getUserId();
+  const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.includes('Admin') ?? false;
 

@@ -8,7 +8,7 @@ import { getUserId } from '@/lib/auth';
 export default async function FinancialsPage() {
   const transactions = await getTransactions();
 
-  const userId = getUserId();
+  const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.includes('Admin') ?? false;
 

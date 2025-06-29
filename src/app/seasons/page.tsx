@@ -1,4 +1,5 @@
 
+
 import { getSeasons } from '@/lib/actions/seasons';
 import SeasonsClient from './client';
 import { getPerson } from '@/lib/actions/players';
@@ -7,7 +8,7 @@ import { getUserId } from '@/lib/auth';
 export default async function SeasonsPage() {
   const seasons = await getSeasons();
   
-  const userId = getUserId();
+  const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.includes('Admin') ?? false;
 
