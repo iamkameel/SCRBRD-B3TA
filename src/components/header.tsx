@@ -25,13 +25,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { navItems } from './sidebar-nav-items';
+import { topLevelNavItems, navGroups } from './sidebar-nav-items';
 import { cn } from '@/lib/utils';
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import { useAuth } from '@/lib/auth-context';
 import { updateActiveRoleAction } from '@/lib/actions/players';
 import { signOutAction } from '@/lib/actions/auth';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from './ui/scroll-area';
 
 function RoleSwitcher() {
     const { user, person } = useAuth();
@@ -48,8 +55,6 @@ function RoleSwitcher() {
             try {
                 await updateActiveRoleAction(user.uid, role);
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
-                // We use router.refresh() to force a server-side re-render of the layout and children
-                // to apply new role-based permissions on the server.
                 router.refresh();
             } catch (error) {
                 toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });
@@ -84,6 +89,13 @@ export function Header() {
     const pathname = usePathname();
     const activeRole = person?.activeRole;
 
+    const defaultOpenItems = React.useMemo(() => 
+        navGroups
+        .filter(group => group.items.some(item => pathname.startsWith(item.href)))
+        .map(group => group.title),
+        [pathname]
+    );
+
     const handleSignOut = async () => {
       await signOutAction();
       router.push('/login');
@@ -101,34 +113,71 @@ export function Header() {
                 <SheetContent side="left" className="flex flex-col p-0">
                     <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     <SheetDescription className="sr-only">A list of pages to navigate through the application.</SheetDescription>
-                    <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
-                        <Link href="/" className="flex items-center gap-2 font-bold">
+                    <div className="flex h-16 items-center px-6 border-b">
+                        <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
                           <CricketIcon className="h-6 w-6 text-primary" />
                           <span>SCRBRD</span>
                         </Link>
                     </div>
-                    <nav className="grid gap-2 p-4 text-base font-medium">
-                        {navItems.map((item) => {
-                            if (item.adminOnly && activeRole !== 'Admin') {
-                                return null;
-                            }
-                            const isActive = (item.href === '/' && pathname === '/') || (item.href !== '/' && pathname.startsWith(item.href));
-                            return (
-                                <SheetClose asChild key={item.label}>
-                                    <Link
-                                    href={item.href}
-                                    className={cn(
-                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:text-foreground",
-                                        isActive && "bg-muted text-foreground"
-                                    )}
-                                    >
-                                    <item.icon className="h-4 w-4" />
-                                    {item.label}
-                                    </Link>
-                                </SheetClose>
-                            );
-                        })}
-                    </nav>
+                    <ScrollArea className="flex-1">
+                        <nav className="grid gap-1 p-4 text-base font-medium">
+                            {topLevelNavItems.map((item) => {
+                                const isActive = pathname === item.href;
+                                return (
+                                    <SheetClose asChild key={item.label}>
+                                        <Link
+                                        href={item.href}
+                                        className={cn(
+                                            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:text-foreground text-base font-semibold",
+                                            isActive && "bg-muted text-foreground"
+                                        )}
+                                        >
+                                        <item.icon className="h-4 w-4" />
+                                        {item.label}
+                                        </Link>
+                                    </SheetClose>
+                                );
+                            })}
+                            
+                            <Accordion type="multiple" defaultValue={defaultOpenItems} className="w-full">
+                                {navGroups.map((group) => {
+                                    if (group.adminOnly && activeRole !== 'Admin') return null;
+                                    const visibleItems = group.items.filter(item => !(item.adminOnly && activeRole !== 'Admin'));
+                                    if (visibleItems.length === 0) return null;
+                                    
+                                    return (
+                                        <AccordionItem value={group.title} key={group.title} className="border-b-0">
+                                            <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all hover:bg-accent hover:text-foreground hover:no-underline [&[data-state=open]]:bg-accent [&[data-state=open]]:text-foreground font-normal">
+                                                <group.icon className="h-4 w-4" />
+                                                <span className="flex-1 text-left">{group.title}</span>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pl-8 pt-1 pb-0">
+                                                <div className="flex flex-col gap-1">
+                                                    {visibleItems.map((item) => {
+                                                        const isActive = pathname.startsWith(item.href);
+                                                        return (
+                                                            <SheetClose asChild key={item.label}>
+                                                                <Link
+                                                                    href={item.href}
+                                                                    className={cn(
+                                                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
+                                                                        isActive && "bg-accent text-foreground"
+                                                                    )}
+                                                                >
+                                                                    <item.icon className="h-4 w-4" />
+                                                                    {item.label}
+                                                                </Link>
+                                                            </SheetClose>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    );
+                                })}
+                            </Accordion>
+                        </nav>
+                    </ScrollArea>
                 </SheetContent>
             </Sheet>
 

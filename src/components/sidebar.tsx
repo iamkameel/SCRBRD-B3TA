@@ -5,13 +5,27 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CricketIcon } from '@/components/icons/cricket-icon';
 import { cn } from '@/lib/utils';
-import { navItems } from './sidebar-nav-items';
+import { topLevelNavItems, navGroups } from './sidebar-nav-items';
 import { useAuth } from '@/lib/auth-context';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from './ui/scroll-area';
 
 export function Sidebar() {
   const { person } = useAuth();
   const pathname = usePathname();
   const activeRole = person?.activeRole;
+
+  const defaultOpenItems = React.useMemo(() => 
+    navGroups
+      .filter(group => group.items.some(item => pathname.startsWith(item.href)))
+      .map(group => group.title),
+    [pathname]
+  );
 
   return (
     <aside className="w-64 flex-col fixed inset-y-0 z-50 bg-sidebar text-sidebar-foreground border-r border-sidebar-border hidden md:flex">
@@ -21,27 +35,65 @@ export function Sidebar() {
           <span>SCRBRD</span>
         </Link>
       </div>
-      <nav className="flex flex-col gap-1 p-4">
-        {navItems.map((item) => {
-          if (item.adminOnly && activeRole !== 'Admin') {
-            return null;
-          }
-          const isActive = (item.href === '/dashboard' && pathname === '/dashboard') || (item.href !== '/dashboard' && item.href !== '/' && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <ScrollArea className="flex-1">
+        <nav className="flex flex-col gap-1 p-2">
+          {topLevelNavItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            )
+          })}
+          
+          <Accordion type="multiple" defaultValue={defaultOpenItems} className="w-full">
+              {navGroups.map((group) => {
+                  if (group.adminOnly && activeRole !== 'Admin') {
+                      return null;
+                  }
+                  const visibleItems = group.items.filter(item => !(item.adminOnly && activeRole !== 'Admin'));
+                  if (visibleItems.length === 0) return null;
+
+                  return (
+                      <AccordionItem value={group.title} key={group.title} className="border-b-0">
+                          <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:no-underline [&[data-state=open]]:bg-sidebar-accent">
+                               <group.icon className="h-4 w-4" />
+                               <span className="flex-1 text-left font-normal">{group.title}</span>
+                          </AccordionTrigger>
+                          <AccordionContent className="pl-4 pt-1 pb-0">
+                              <div className="flex flex-col gap-1">
+                                  {visibleItems.map((item) => {
+                                      const isActive = pathname.startsWith(item.href);
+                                      return (
+                                          <Link
+                                              key={item.label}
+                                              href={item.href}
+                                              className={cn(
+                                                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                                  isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                                              )}
+                                          >
+                                              <item.icon className="h-4 w-4" />
+                                              {item.label}
+                                          </Link>
+                                      );
+                                  })}
+                              </div>
+                          </AccordionContent>
+                      </AccordionItem>
+                  )
+              })}
+          </Accordion>
+        </nav>
+      </ScrollArea>
     </aside>
   );
 }
