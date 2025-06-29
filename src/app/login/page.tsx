@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { sendPasswordResetEmailAction } from '@/lib/actions/auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
+  const [isResetting, startResetTransition] = React.useTransition();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -49,6 +51,27 @@ export default function LoginPage() {
     });
   };
 
+  const handlePasswordReset = () => {
+    const email = form.getValues('email');
+    if (!email) {
+        toast({ title: "Email Required", description: "Please enter your email address to reset the password.", variant: "destructive" });
+        return;
+    }
+
+    startResetTransition(async () => {
+        try {
+            await sendPasswordResetEmailAction(email);
+            toast({ title: "Check Your Email", description: `A password reset link has been sent to ${email}.` });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: error instanceof Error ? error.message : "Could not send reset email.",
+                variant: "destructive",
+            });
+        }
+    });
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/50">
       <Card className="w-full max-w-md">
@@ -66,7 +89,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="m@example.com" {...field} disabled={isPending} />
+                      <Input type="email" placeholder="m@example.com" {...field} disabled={isPending || isResetting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -77,15 +100,26 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <div className="flex items-center">
+                      <FormLabel>Password</FormLabel>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="ml-auto h-auto p-0 text-sm"
+                        onClick={handlePasswordReset}
+                        disabled={isResetting || isPending}
+                      >
+                        Forgot Password?
+                      </Button>
+                    </div>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isPending} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isPending || isResetting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isPending}>
+              <Button type="submit" className="w-full" disabled={isPending || isResetting}>
                 {isPending ? "Signing in..." : "Sign In"}
               </Button>
             </form>
