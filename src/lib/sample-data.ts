@@ -86,7 +86,7 @@ export const sampleData = {
     ],
     people: [
         // Admin & Staff
-        { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin', 'Sportsmaster'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
         { personId: 'p_kameel', firstName: 'Kameel', lastName: 'Kalyan', email: 'kameel@maverickdesign.co.za', roles: ['Sportsmaster'], activeRole: 'Sportsmaster', assignedSchools: ['school_1', 'school_2'], notificationPreferences: { email: true, push: false } },
         { personId: 'staff_5', firstName: 'Paddy', lastName: 'Upton', email: 'paddy.upton@schooladmin.com', roles: ['School Admin'], activeRole: 'School Admin', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
         { personId: 'staff_1', firstName: 'John', lastName: 'Doe', email: 'john.doe@umpire.com', roles: ['Umpire', 'Scorer'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
