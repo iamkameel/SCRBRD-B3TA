@@ -93,38 +93,6 @@ export const getPersonLinks = cache(async (personId: string): Promise<{ guardian
     }
 });
 
-export const getPersonTeamAssignments = cache(async (personId: string): Promise<PlayerTeamAssignment[]> => {
-    if (!await getPerson(personId)) return [];
-
-    const assignments: PlayerTeamAssignment[] = [];
-    const teamsCollection = collection(db, 'teams');
-    const q = query(teamsCollection);
-
-    try {
-        const teamsSnapshot = await getDocs(q);
-        for (const teamDoc of teamsSnapshot.docs) {
-            const rosterCol = collection(db, 'teams', teamDoc.id, 'roster');
-            const rosterQuery = query(rosterCol, where("personId", "==", personId));
-            const rosterSnapshot = await getDocs(rosterQuery);
-
-            if (!rosterSnapshot.empty) {
-                const rosterData = rosterSnapshot.docs[0].data();
-                assignments.push({
-                    teamId: teamDoc.id,
-                    teamName: teamDoc.data().name,
-                    role: rosterData.role,
-                    status: rosterData.status,
-                });
-            }
-        }
-    } catch (error) {
-        console.error(`Error fetching team assignments for person ${personId}:`, error);
-        return [];
-    }
-
-    return assignments;
-});
-
 const addLinkSchema = z.object({
   currentPersonId: z.string(), linkedPersonId: z.string(), relationship: z.enum(["guardian", "child"]),
 });

@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
-import type { Team, RosterMember, TeamStats, Match, Innings } from '@/lib/data';
+import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment } from '@/lib/data';
 import { getPerson } from './players';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
@@ -355,4 +355,36 @@ export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => 
     console.error(`Error fetching matches for team ${teamId}:`, error);
     return [];
   }
+});
+
+export const getPersonTeamAssignments = cache(async (personId: string): Promise<PlayerTeamAssignment[]> => {
+    if (!await getPerson(personId)) return [];
+
+    const assignments: PlayerTeamAssignment[] = [];
+    const teamsCollection = collection(db, 'teams');
+    const q = query(teamsCollection);
+
+    try {
+        const teamsSnapshot = await getDocs(q);
+        for (const teamDoc of teamsSnapshot.docs) {
+            const rosterCol = collection(db, 'teams', teamDoc.id, 'roster');
+            const rosterQuery = query(rosterCol, where("personId", "==", personId));
+            const rosterSnapshot = await getDocs(rosterQuery);
+
+            if (!rosterSnapshot.empty) {
+                const rosterData = rosterSnapshot.docs[0].data();
+                assignments.push({
+                    teamId: teamDoc.id,
+                    teamName: teamDoc.data().name,
+                    role: rosterData.role,
+                    status: rosterData.status,
+                });
+            }
+        }
+    } catch (error) {
+        console.error(`Error fetching team assignments for person ${personId}:`, error);
+        return [];
+    }
+
+    return assignments;
 });
