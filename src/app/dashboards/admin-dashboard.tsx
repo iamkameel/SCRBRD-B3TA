@@ -23,6 +23,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getFixtureConflicts } from '@/lib/actions/alerts';
 
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
@@ -60,6 +61,7 @@ export default async function AdminDashboard() {
     allVehicles,
     allEquipment,
     allCompetitions,
+    conflicts,
   ] = await Promise.all([
     getMatches(),
     getLeaderboards(),
@@ -72,6 +74,7 @@ export default async function AdminDashboard() {
     getVehicles(),
     getEquipment(),
     getCompetitions(),
+    getFixtureConflicts(),
   ]);
 
   const today = new Date();
@@ -106,14 +109,18 @@ export default async function AdminDashboard() {
         
         {/* Critical Alerts Zone */}
         <div className="space-y-2">
-            <Alert variant="destructive" className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                <AlertTriangle className="h-4 w-4 !text-red-600 dark:!text-red-400" />
-                <AlertTitle className="font-semibold">Fixture Conflicts</AlertTitle>
-                <AlertDescription className="flex justify-between items-center">
-                    <span>There are 0 conflicts that need resolution.</span>
-                    <Button size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">Resolve Now</Button>
-                </AlertDescription>
-            </Alert>
+            {conflicts.length > 0 && (
+                <Alert variant="destructive" className="border-red-500/50 bg-red-500/10 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+                    <AlertTriangle className="h-4 w-4 !text-red-600 dark:!text-red-400" />
+                    <AlertTitle className="font-semibold">Fixture Conflicts</AlertTitle>
+                    <AlertDescription className="flex justify-between items-center">
+                        <span>There are {conflicts.length} conflicts that need resolution.</span>
+                        <Button asChild size="sm" variant="outline" className="border-red-500/50 hover:bg-red-500/20">
+                            <Link href="/matches">Resolve Now</Link>
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            )}
              <Alert className="border-yellow-500/50 bg-yellow-500/10 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
                 <AlertTriangle className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
                 <AlertTitle className="font-semibold">Umpire Reviews</AlertTitle>
@@ -179,7 +186,7 @@ export default async function AdminDashboard() {
                   {liveMatches.length > 0 ? (
                     <Table>
                         <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-                        <TableBody>{liveMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant="destructive" className="capitalize animate-pulse">{match.status}</Badge></TableCell></TableRow>))}</TableBody>
+                        <TableBody>{liveMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant="destructive" className={cn("capitalize", match.status === 'live' && "bg-red-500 text-white animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
                     </Table>
                   ) : <p className="text-center text-muted-foreground py-8">No matches are currently live.</p>}
                 </TabsContent>
@@ -280,6 +287,7 @@ export default async function AdminDashboard() {
   );
 }
     
+
 
 
 
