@@ -728,7 +728,7 @@ export async function endInningsAction(matchId: string) {
     }
 }
 
-export const getOfficialAssignmentsForPerson = cache(async (personId: string): Promise<(Official & { matchId: string; matchName: string; dateTime: Date; })[]> => {
+export const getOfficialAssignmentsForPerson = cache(async (personId: string): Promise<(Official & { matchId: string; matchName: string; dateTime: Date; status: MatchStatus; })[]> => {
     const userId = await getUserId();
     if (!userId || !personId) return [];
     try {
@@ -742,13 +742,14 @@ export const getOfficialAssignmentsForPerson = cache(async (personId: string): P
             if (!matchRef) return null;
             
             const match = await getMatch(matchRef.id);
-            if (!match || match.status !== 'scheduled') return null;
+            if (!match) return null;
             
             return {
                 assignmentId: docSnap.id,
                 matchId: match.matchId,
                 matchName: `${match.teamAName} vs ${match.teamBName}`,
                 dateTime: match.dateTime,
+                status: match.status,
                 personId: assignmentData.personId,
                 personName: (await getPerson(assignmentData.personId))?.firstName + ' ' + (await getPerson(assignmentData.personId))?.lastName,
                 role: assignmentData.role,
