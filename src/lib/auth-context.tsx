@@ -46,12 +46,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const unsub = onSnapshot(doc(db, 'people', user.uid), (doc) => {
         if (doc.exists()) {
           setPerson({ personId: doc.id, ...doc.data() } as Person);
-          setLoading(false); // We have the profile, we're done loading.
+        } else {
+          // Handle case where user exists in Auth but not in 'people' collection
+          setPerson(null);
         }
-        // If the doc doesn't exist yet (e.g., during signup),
-        // we intentionally do nothing and keep `loading` as `true`.
-        // The `onSnapshot` listener will fire again once the profile document is created,
-        // at which point `doc.exists()` will be true and loading will be set to false.
+        setLoading(false); // We have checked for a profile, so we're done loading.
       });
       return () => unsub();
     }
