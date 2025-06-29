@@ -526,13 +526,18 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
     
     const match = matchSnap.data() as Match;
-    const liveScore = match.liveScore || {
+    const currentLiveScore = match.liveScore || {
         runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1,
     };
 
-    if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
+    if (!currentLiveScore.onStrikeBatsmanId || !currentLiveScore.nonStrikerBatsmanId || !currentLiveScore.bowlerId) {
         throw new Error("Live scoring players are not set up.");
     }
+    
+    // Deep copy the current state BEFORE any modifications
+    const previousLiveScore = JSON.parse(JSON.stringify(currentLiveScore));
+
+    const liveScore = currentLiveScore; // work on the mutable object
 
     const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
     const runsScored = ball.runs ?? 0;
@@ -582,9 +587,30 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         }
     }
 
-    await updateDoc(matchRef, { liveScore });
+    await updateDoc(matchRef, { liveScore, previousLiveScore });
     revalidatePath(`/matches/${matchId}`);
     return liveScore;
+}
+
+export async function undoLastBallAction(matchId: string) {
+    if (!userId) throw new Error("User not authenticated.");
+    const matchRef = doc(db, 'matches', matchId);
+    const matchSnap = await getDoc(matchRef);
+    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+        throw new Error("Match not found or permission denied.");
+    }
+
+    const match = matchSnap.data() as Match;
+    if (!match.previousLiveScore) {
+        throw new Error("No action to undo.");
+    }
+
+    await updateDoc(matchRef, {
+        liveScore: match.previousLiveScore,
+        previousLiveScore: null,
+    });
+
+    revalidatePath(`/matches/${matchId}`);
 }
 
 export async function endInningsAction(matchId: string) {

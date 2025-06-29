@@ -103,6 +103,19 @@ export interface PlayerOfTheMatch {
   justification: string;
 }
 
+export interface LiveScore {
+    runs: number;
+    wickets: number;
+    overs: number;
+    balls: number;
+    currentOver: string[];
+    onStrikeBatsmanId?: string;
+    nonStrikerBatsmanId?: string;
+    bowlerId?: string;
+    batsmenOut?: string[];
+    liveInnings?: 1 | 2;
+}
+
 export interface Match {
   matchId: string;
   teamAId: string;
@@ -130,18 +143,8 @@ export interface Match {
   audioCommentaryUrl?: string;
   analysisReports?: { [teamId: string]: string; };
   firstInningsTotal?: number;
-  liveScore?: {
-    runs: number;
-    wickets: number;
-    overs: number;
-    balls: number;
-    currentOver: string[];
-    onStrikeBatsmanId?: string;
-    nonStrikerBatsmanId?: string;
-    bowlerId?: string;
-    batsmenOut?: string[];
-    liveInnings?: 1 | 2;
-  };
+  liveScore?: LiveScore;
+  previousLiveScore?: LiveScore;
 }
 
 export interface Official {

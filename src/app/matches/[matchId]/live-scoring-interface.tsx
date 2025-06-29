@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -9,7 +10,7 @@ import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target } from '
 import type { RosterMember, Match } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import { updateLivePlayersAction, recordBallAction, endInningsAction } from '@/lib/actions/matches';
+import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction } from '@/lib/actions/matches';
 import { generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 
@@ -68,6 +69,7 @@ export function LiveScoringInterface({
   const isOversFinished = liveScore.overs >= 20;
   const needsNewBatsman = !isAllOut && liveScore.wickets > 0 && !onStrikeBatsmanId;
   const canEndInnings = isAllOut || isOversFinished;
+  const canUndo = !!match.previousLiveScore;
 
   const availableOnStrikeBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId);
   const availableNonStrikers = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== onStrikeBatsmanId);
@@ -130,6 +132,17 @@ export function LiveScoringInterface({
         }
     });
   }
+
+  const handleUndo = () => {
+    startTransition(async () => {
+        try {
+            await undoLastBallAction(match.matchId);
+            toast({ title: "Action Undone", description: "The last recorded ball has been removed."});
+        } catch(error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not undo action.", variant: "destructive" });
+        }
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -266,10 +279,14 @@ export function LiveScoringInterface({
                 </Card>
                  <Card>
                     <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
-                    <CardContent className="flex gap-2">
-                        <Button variant="secondary" className="w-full" disabled><Undo />Undo</Button>
+                    <CardContent className="flex flex-col gap-2">
+                        <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending}>
+                            <Undo className="mr-2 h-4 w-4" />
+                            Undo Last Ball
+                        </Button>
                          <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending}>
-                            {isFirstInnings ? "End Innings" : "End Match"} <ArrowRight />
+                            {isFirstInnings ? "End Innings" : "End Match"}
+                            <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </CardContent>
                 </Card>
