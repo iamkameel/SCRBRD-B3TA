@@ -27,7 +27,7 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) {
         return { success: false, message: "User not authenticated." };
     }
@@ -83,7 +83,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     try {
@@ -303,7 +303,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
 }
 
 export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) {
         return { success: false, message: "User not authenticated." };
     }
@@ -367,7 +367,7 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
 }
 
 export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     
     if (!independentSubsets.includes(subsetName)) {

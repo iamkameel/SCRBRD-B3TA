@@ -10,7 +10,7 @@ import { getUserId } from '@/lib/auth';
 export default async function UserManagementPage() {
     // In a real app, you would fetch users here from your auth provider.
     // For this demo, we are connecting it to the people in the database.
-    const userId = await getUserId();
+    const userId = getUserId();
     const user = userId ? await getPerson(userId) : null;
 
     // Role-based access control check

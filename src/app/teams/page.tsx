@@ -16,7 +16,7 @@ export default async function TeamsPage() {
     getSeasons(),
   ]);
   
-  const userId = await getUserId();
+  const userId = getUserId();
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.includes('Admin') ?? false;
 

@@ -10,7 +10,7 @@ import MedicalDashboard from './dashboards/medical-dashboard';
 import { getUserId } from '@/lib/auth';
 
 export default async function DashboardPage() {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) {
     // In a real app, you might redirect to a login page.
     // For now, we'll default to the admin dashboard for guests.
