@@ -2,15 +2,12 @@ import { db } from '@/lib/firebase';
 import { cache } from 'react';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 
-// This function now specifically finds the user with the email 'admin@scrbrd.app'
-// to serve as the default user for server-side operations.
-// This is a stand-in for a proper session management system.
-// NOTE: This means all server actions will run as this admin user,
-// regardless of who is logged in through the UI.
+// This function determines the acting user for server-side rendering and actions.
+// It's a stand-in for a proper session management system.
 export const getUserId = cache(async (): Promise<string | null> => {
   try {
     const peopleRef = collection(db, 'people');
-    // Find the specific user with the email 'admin@scrbrd.app'.
+    // 1. Prioritize finding the specific user with the email 'admin@scrbrd.app'.
     const q = query(peopleRef, where('email', '==', 'admin@scrbrd.app'), limit(1));
     const snapshot = await getDocs(q);
 
@@ -19,11 +16,23 @@ export const getUserId = cache(async (): Promise<string | null> => {
       return snapshot.docs[0].id;
     }
     
-    // Fallback if the user is not found
-    console.warn("Default admin user 'admin@scrbrd.app' not found in the database.");
+    // 2. Fallback: If the default admin is not found, find the first available admin.
+    console.warn("Default admin user 'admin@scrbrd.app' not found. Searching for any admin user.");
+    const adminQuery = query(peopleRef, where('roles', 'array-contains', 'Admin'), limit(1));
+    const adminSnapshot = await getDocs(adminQuery);
+
+    if (!adminSnapshot.empty) {
+        const adminId = adminSnapshot.docs[0].id;
+        console.log(`Found fallback admin user with ID: ${adminId}`);
+        return adminId;
+    }
+    
+    // 3. If no admins are found at all.
+    console.error("No admin user found in the database. Server actions may fail.");
     return null;
+
   } catch (error) {
-    console.error("Error fetching admin user ID for 'admin@scrbrd.app':", error);
+    console.error("Error fetching admin user ID:", error);
     return null;
   }
 });
