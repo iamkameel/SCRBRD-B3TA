@@ -39,6 +39,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ScrollArea } from './ui/scroll-area';
+import { ROLE_GROUPS } from '@/lib/roles';
 
 function RoleSwitcher() {
     const { person } = useAuth();
@@ -66,6 +67,8 @@ function RoleSwitcher() {
         });
     };
     
+    const userRoles = new Set(person.roles);
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -74,13 +77,27 @@ function RoleSwitcher() {
                     <ChevronDown className="w-4 h-4 ml-1" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Switch Active Role</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+            <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuRadioGroup value={person.activeRole} onValueChange={handleRoleChange}>
-                    {person.roles.map((role) => (
-                        <DropdownMenuRadioItem key={role} value={role}>{role}</DropdownMenuRadioItem>
-                    ))}
+                    <DropdownMenuLabel>Switch Active Role</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {ROLE_GROUPS.map(group => {
+                        const userRolesInGroup = group.roles.filter(role => userRoles.has(role.id));
+                        if (userRolesInGroup.length === 0) return null;
+
+                        return (
+                            <React.Fragment key={group.group}>
+                                <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-xs font-bold uppercase tracking-wider">
+                                    {group.group}
+                                </DropdownMenuLabel>
+                                {userRolesInGroup.map(role => (
+                                    <DropdownMenuRadioItem key={role.id} value={role.id} className="capitalize">
+                                        {role.label}
+                                    </DropdownMenuRadioItem>
+                                ))}
+                            </React.Fragment>
+                        );
+                    })}
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>
