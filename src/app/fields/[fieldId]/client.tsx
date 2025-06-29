@@ -5,7 +5,7 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from 'next/link';
-import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star } from 'lucide-react';
 import type { Field, Match } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const FieldMap = dynamic(() => import('./field-map'), { 
     ssr: false,
@@ -37,7 +38,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
         <li key={itemKey} className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {children}</li>
     );
     
-    const InfoBlock = ({ label, value, icon: Icon }: { label: string, value?: string, icon: React.ElementType }) => {
+    const InfoBlock = ({ label, value, icon: Icon }: { label: string, value?: string | number, icon: React.ElementType }) => {
         if (!value) return null;
         return (
             <div className="flex items-start gap-3">
@@ -105,6 +106,40 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                             </div>
                         </CardContent>
                     </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Surface Condition</CardTitle></CardHeader>
+                        <CardContent>
+                            {field.surfaceCondition ? (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold">Overall Rating:</p>
+                                        <div className="flex items-center">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={cn("h-5 w-5", i < field.surfaceCondition!.rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                                            ))}
+                                        </div>
+                                        <span className="font-bold">{field.surfaceCondition.rating}/5</span>
+                                    </div>
+                                    {field.surfaceCondition.details && Object.keys(field.surfaceCondition.details).length > 0 && (
+                                        <div>
+                                            <h4 className="font-semibold mt-4 mb-2">Details:</h4>
+                                            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                                {Object.entries(field.surfaceCondition.details).map(([key, value]) => (
+                                                    <li key={key}>
+                                                        <span className="font-medium text-foreground">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</span> {value}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {field.notes && <InfoBlock label="Groundskeeper Notes" value={field.notes} icon={FileText} />}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No surface condition data available.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Upcoming Matches</CardTitle>
@@ -189,20 +224,8 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                            <InfoBlock label="Contact Person" value={field.contactPerson} icon={User} />
                            <InfoBlock label="Contact Phone" value={field.contactPhone} icon={Phone} />
                            
-                           {(field.contactPerson || field.contactPhone) && field.notes && <Separator />}
-
-                            {field.notes && (
-                                <div className="flex items-start gap-3">
-                                    <FileText className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
-                                    <div>
-                                        <p className="font-semibold">Condition Notes</p>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{field.notes}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                             {!(field.contactPerson || field.contactPhone || field.notes) && (
-                                <p className="text-sm text-muted-foreground text-center py-4">No contact or notes available.</p>
+                             {!(field.contactPerson || field.contactPhone) && (
+                                <p className="text-sm text-muted-foreground text-center py-4">No contact information available.</p>
                              )}
                         </CardContent>
                     </Card>

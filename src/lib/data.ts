@@ -40,6 +40,11 @@ export interface FieldAssignment {
   personName: string;
 }
 
+export interface SurfaceCondition {
+  rating: number; // 1-5
+  details?: Record<string, string | number>;
+}
+
 export interface Field {
   fieldId: string;
   name: string;
@@ -56,6 +61,7 @@ export interface Field {
   contactPerson?: string;
   contactPhone?: string;
   notes?: string;
+  surfaceCondition?: SurfaceCondition;
   coordinates?: {
     lat: number;
     lon: number;

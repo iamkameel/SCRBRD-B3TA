@@ -35,6 +35,7 @@ export async function getFields(): Promise<Field[]> {
         contactPerson: data.contactPerson,
         contactPhone: data.contactPhone,
         notes: data.notes,
+        surfaceCondition: data.surfaceCondition,
         coordinates: data.coordinates,
       };
 
@@ -94,6 +95,7 @@ export async function getField(fieldId: string): Promise<Field | null> {
       contactPerson: data.contactPerson,
       contactPhone: data.contactPhone,
       notes: data.notes,
+      surfaceCondition: data.surfaceCondition,
       coordinates: data.coordinates,
     };
 
@@ -139,6 +141,10 @@ const fieldActionSchema = z.object({
   contactPerson: z.string().optional(),
   contactPhone: z.string().optional(),
   notes: z.string().optional(),
+  surfaceCondition: z.object({
+      rating: z.coerce.number().min(1).max(5),
+      details: z.record(z.string()).optional(),
+  }).optional(),
   coordinates: z.object({
       lat: z.coerce.number().min(-90).max(90).optional(),
       lon: z.coerce.number().min(-180).max(180).optional(),
