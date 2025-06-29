@@ -541,12 +541,12 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             </div>
         </header>
 
-        <Tabs defaultValue="scorecard">
-            <TabsList>
+        <Tabs defaultValue="scorecard" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
                 <TabsTrigger value="lineups" disabled={match.status === 'completed'}><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
-                <TabsTrigger value="logistics"><Settings className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
+                <TabsTrigger value="logistics"><Bus className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
             </TabsList>
 
             <TabsContent value="scorecard" className="mt-4">
@@ -647,150 +647,158 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                 </div>
             </TabsContent>
 
-            <TabsContent value="analysis" className="mt-4 space-y-4">
-                 {match.status === 'scheduled' && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div><CardTitle>Match Preview</CardTitle><CardDescription>An AI-generated preview of the upcoming match.</CardDescription></div>
-                                <Button onClick={handleGeneratePreview} disabled={isGeneratingPreview || !match.teamBId}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingPreview ? 'animate-spin' : ''}`} />{isGeneratingPreview ? "Generating..." : (match.preview ? "Regenerate" : "Generate")}</Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>{match.preview ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.preview}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No preview has been generated for this match yet.</p><p className="text-xs">Click the button above to generate one with AI.</p></div>)}</CardContent>
-                    </Card>
-                )}
-                 {match.status === 'completed' && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div><CardTitle>Match Report</CardTitle><CardDescription>A detailed, journalistic report of the match highlights.</CardDescription></div>
-                                <div className="flex items-center gap-2">
-                                    {match.report && (
-                                        <Button variant="outline" onClick={handleDownloadReport}>
-                                            <Download className="mr-2 h-4 w-4" />
-                                            Download
+            <TabsContent value="analysis" className="mt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                    <div className="space-y-4">
+                        {match.status === 'scheduled' && (
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div><CardTitle>Match Preview</CardTitle><CardDescription>An AI-generated preview of the upcoming match.</CardDescription></div>
+                                        <Button onClick={handleGeneratePreview} disabled={isGeneratingPreview || !match.teamBId}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingPreview ? 'animate-spin' : ''}`} />{isGeneratingPreview ? "Generating..." : (match.preview ? "Regenerate" : "Generate")}</Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>{match.preview ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.preview}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No preview has been generated for this match yet.</p><p className="text-xs">Click the button above to generate one with AI.</p></div>)}</CardContent>
+                            </Card>
+                        )}
+                        {match.status === 'completed' && (
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div><CardTitle>Match Report</CardTitle><CardDescription>A detailed, journalistic report of the match highlights.</CardDescription></div>
+                                        <div className="flex items-center gap-2">
+                                            {match.report && (
+                                                <Button variant="outline" onClick={handleDownloadReport}>
+                                                    <Download className="mr-2 h-4 w-4" />
+                                                    Download
+                                                </Button>
+                                            )}
+                                            {innings1 && (<Button onClick={handleGenerateReport} disabled={isGeneratingReport}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingReport ? 'animate-spin' : ''}`} />{isGeneratingReport ? "Generating..." : (match.report ? "Regenerate" : "Generate")}</Button>)}
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>{match.report ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.report}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No report has been generated for this match yet.</p>{innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}{!innings1 && <p className="text-xs">A report can be generated once a scorecard exists.</p>}</div>)}</CardContent>
+                            </Card>
+                        )}
+                        {match.playerOfTheMatch && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Player of the Match</CardTitle>
+                                    <CardDescription>AI-selected most valuable player for this match.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center gap-4">
+                                        <Award className="h-10 w-10 text-accent flex-shrink-0" />
+                                        <div>
+                                            <p className="text-xl font-bold">{match.playerOfTheMatch.name}</p>
+                                            <p className="text-sm text-muted-foreground">{match.playerOfTheMatch.teamName}</p>
+                                        </div>
+                                    </div>
+                                    <p className="mt-4 text-sm text-foreground/80 whitespace-pre-wrap">{match.playerOfTheMatch.justification}</p>
+                                </CardContent>
+                            </Card>
+                        )}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Audio Commentary</CardTitle>
+                                        <CardDescription>An AI-generated audio highlight reel of the match.</CardDescription>
+                                    </div>
+                                    {match.status === 'completed' && innings1 && (
+                                        <Button onClick={handleGenerateCommentary} disabled={isGeneratingCommentary}>
+                                            <PlayCircle className={`mr-2 h-4 w-4 ${isGeneratingCommentary ? 'animate-spin' : ''}`} />
+                                            {isGeneratingCommentary ? "Generating..." : (match.audioCommentaryUrl ? "Regenerate" : "Generate")}
                                         </Button>
                                     )}
-                                    {innings1 && (<Button onClick={handleGenerateReport} disabled={isGeneratingReport}><RefreshCcw className={`mr-2 h-4 w-4 ${isGeneratingReport ? 'animate-spin' : ''}`} />{isGeneratingReport ? "Generating..." : (match.report ? "Regenerate" : "Generate")}</Button>)}
                                 </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>{match.report ? (<p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.report}</p>) : (<div className="text-center text-muted-foreground py-8"><p>No report has been generated for this match yet.</p>{innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}{!innings1 && <p className="text-xs">A report can be generated once a scorecard exists.</p>}</div>)}</CardContent>
-                    </Card>
-                )}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Opposition Analysis</CardTitle>
-                        <CardDescription>Generate a strategic scouting report on either team.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {(match.status === 'scheduled' && match.teamBId) &&
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Button 
-                                    onClick={() => handleGenerateAnalysis(match.teamBId)} 
-                                    disabled={isGeneratingAnalysis}
-                                    variant="outline"
-                                >
-                                    {(isGeneratingAnalysis && analyzedTeamId === match.teamBId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                    Analyze {match.teamBName}
-                                </Button>
-                                <Button 
-                                    onClick={() => handleGenerateAnalysis(match.teamAId)} 
-                                    disabled={isGeneratingAnalysis}
-                                    variant="outline"
-                                >
-                                    {(isGeneratingAnalysis && analyzedTeamId === match.teamAId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                    Analyze {match.teamAName}
-                                </Button>
-                            </div>
-                        }
-                        <div className="space-y-4">
-                            {match.analysisReports?.[match.teamAId] && (
-                                <div className="border p-4 rounded-md bg-muted/50">
-                                    <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamAName}</h3>
-                                    <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamAId]}</p>
+                            </CardHeader>
+                            <CardContent>
+                                {match.audioCommentaryUrl ? (
+                                    <audio controls className="w-full">
+                                        <source src={match.audioCommentaryUrl} type="audio/wav" />
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                ) : (
+                                    <div className="text-center text-muted-foreground py-8">
+                                        <p>No audio commentary has been generated yet.</p>
+                                        {match.status === 'completed' && innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}
+                                        {match.status !== 'completed' && <p className="text-xs">Commentary can be generated for completed matches.</p>}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Opposition Analysis</CardTitle>
+                                <CardDescription>Generate a strategic scouting report on either team.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {(match.status === 'scheduled' && match.teamBId) &&
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Button 
+                                            onClick={() => handleGenerateAnalysis(match.teamBId)} 
+                                            disabled={isGeneratingAnalysis}
+                                            variant="outline"
+                                        >
+                                            {(isGeneratingAnalysis && analyzedTeamId === match.teamBId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                            Analyze {match.teamBName}
+                                        </Button>
+                                        <Button 
+                                            onClick={() => handleGenerateAnalysis(match.teamAId)} 
+                                            disabled={isGeneratingAnalysis}
+                                            variant="outline"
+                                        >
+                                            {(isGeneratingAnalysis && analyzedTeamId === match.teamAId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                            Analyze {match.teamAName}
+                                        </Button>
+                                    </div>
+                                }
+                                <div className="space-y-4">
+                                    {match.analysisReports?.[match.teamAId] && (
+                                        <div className="border p-4 rounded-md bg-muted/50">
+                                            <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamAName}</h3>
+                                            <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamAId]}</p>
+                                        </div>
+                                    )}
+                                    {match.analysisReports?.[match.teamBId] && (
+                                        <div className="border p-4 rounded-md bg-muted/50">
+                                            <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamBName}</h3>
+                                            <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamBId]}</p>
+                                        </div>
+                                    )}
+                                    {Object.keys(match.analysisReports || {}).length === 0 && (
+                                        <div className="text-center text-muted-foreground py-8">
+                                            <p>No analysis has been generated yet.</p>
+                                            {match.status === 'scheduled' && match.teamBId && <p className="text-xs">Click a button above to generate a scouting report.</p>}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                            {match.analysisReports?.[match.teamBId] && (
-                                <div className="border p-4 rounded-md bg-muted/50">
-                                    <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamBName}</h3>
-                                    <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamBId]}</p>
-                                </div>
-                            )}
-                            {Object.keys(match.analysisReports || {}).length === 0 && (
-                                <div className="text-center text-muted-foreground py-8">
-                                    <p>No analysis has been generated yet.</p>
-                                    {match.status === 'scheduled' && match.teamBId && <p className="text-xs">Click a button above to generate a scouting report.</p>}
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-                {match.playerOfTheMatch && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Player of the Match</CardTitle>
-                            <CardDescription>AI-selected most valuable player for this match.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center gap-4">
-                                <Award className="h-10 w-10 text-accent flex-shrink-0" />
-                                <div>
-                                    <p className="text-xl font-bold">{match.playerOfTheMatch.name}</p>
-                                    <p className="text-sm text-muted-foreground">{match.playerOfTheMatch.teamName}</p>
-                                </div>
-                            </div>
-                            <p className="mt-4 text-sm text-foreground/80 whitespace-pre-wrap">{match.playerOfTheMatch.justification}</p>
-                        </CardContent>
-                    </Card>
-                )}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between"><div><CardTitle>Weather Forecast</CardTitle><CardDescription>AI-generated forecast for the match day and location.</CardDescription></div><Button onClick={handleGetForecast} disabled={isFetchingForecast}>{isFetchingForecast ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcw className="mr-2 h-4 w-4" />}{isFetchingForecast ? "Fetching..." : (forecast ? "Refresh" : "Get Forecast")}</Button></div>
-                    </CardHeader>
-                    <CardContent>{!forecast ? (<div className="text-center text-muted-foreground py-8"><p>No weather forecast available.</p><p className="text-xs">Click the button above to fetch the forecast.</p></div>) : (<div><p className="text-sm text-foreground/80 mb-4">{forecast.summary}</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm"><div className="flex items-center gap-2 p-3 rounded-md border"><WeatherIcon condition={forecast.details.condition} className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Condition</span><span className="font-semibold">{forecast.details.condition}</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><Thermometer className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Temperature</span><span className="font-semibold">{forecast.details.temperature}°C</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><CloudRain className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Precipitation</span><span className="font-semibold">{forecast.details.precipitationChance}%</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><Wind className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Wind</span><span className="font-semibold">{forecast.details.windSpeed} km/h</span></div></div></div></div>)}</CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Audio Commentary</CardTitle>
-                                <CardDescription>An AI-generated audio highlight reel of the match.</CardDescription>
-                            </div>
-                            {match.status === 'completed' && innings1 && (
-                                <Button onClick={handleGenerateCommentary} disabled={isGeneratingCommentary}>
-                                    <PlayCircle className={`mr-2 h-4 w-4 ${isGeneratingCommentary ? 'animate-spin' : ''}`} />
-                                    {isGeneratingCommentary ? "Generating..." : (match.audioCommentaryUrl ? "Regenerate" : "Generate")}
-                                </Button>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {match.audioCommentaryUrl ? (
-                            <audio controls className="w-full">
-                                <source src={match.audioCommentaryUrl} type="audio/wav" />
-                                Your browser does not support the audio element.
-                            </audio>
-                        ) : (
-                            <div className="text-center text-muted-foreground py-8">
-                                <p>No audio commentary has been generated yet.</p>
-                                {match.status === 'completed' && innings1 && <p className="text-xs">Click the button above to generate one with AI.</p>}
-                                {match.status !== 'completed' && <p className="text-xs">Commentary can be generated for completed matches.</p>}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between"><div><CardTitle>Weather Forecast</CardTitle><CardDescription>AI-generated forecast for the match day and location.</CardDescription></div><Button onClick={handleGetForecast} disabled={isFetchingForecast}>{isFetchingForecast ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcw className="mr-2 h-4 w-4" />}{isFetchingForecast ? "Fetching..." : (forecast ? "Refresh" : "Get Forecast")}</Button></div>
+                            </CardHeader>
+                            <CardContent>{!forecast ? (<div className="text-center text-muted-foreground py-8"><p>No weather forecast available.</p><p className="text-xs">Click the button above to fetch the forecast.</p></div>) : (<div><p className="text-sm text-foreground/80 mb-4">{forecast.summary}</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm"><div className="flex items-center gap-2 p-3 rounded-md border"><WeatherIcon condition={forecast.details.condition} className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Condition</span><span className="font-semibold">{forecast.details.condition}</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><Thermometer className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Temperature</span><span className="font-semibold">{forecast.details.temperature}°C</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><CloudRain className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Precipitation</span><span className="font-semibold">{forecast.details.precipitationChance}%</span></div></div><div className="flex items-center gap-2 p-3 rounded-md border"><Wind className="h-6 w-6 text-primary"/><div className="flex flex-col"><span className="text-muted-foreground text-xs">Wind</span><span className="font-semibold">{forecast.details.windSpeed} km/h</span></div></div></div></div>)}</CardContent>
+                        </Card>
+                    </div>
+                </div>
             </TabsContent>
 
-            <TabsContent value="logistics" className="mt-4 space-y-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Transport &amp; Logistics</CardTitle><CardDescription>Manage vehicles and drivers assigned to this match.</CardDescription></div><AssignTransportDialog matchId={match.matchId} vehicles={vehicles} drivers={drivers} transportAssignments={transportAssignments} /></CardHeader>
-                    <CardContent><Table><TableHeader><TableRow><TableHead>Vehicle</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{transportAssignments.length > 0 ? (transportAssignments.map(t => (<TableRow key={t.assignmentId}><TableCell className="font-medium">{t.vehicleName}</TableCell><TableCell>{t.vehicleType}</TableCell><TableCell>{t.driverName}</TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedTransport(t); setIsDeleteTransportDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No transport assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Match Officials</CardTitle><CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription></div><AssignOfficialDialog matchId={match.matchId} people={people.filter(p => !initialOfficials.some(o => o.personId === p.personId) && (p.roles.includes('Umpire') || p.roles.includes('Scorer')))} /></CardHeader>
-                    <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{initialOfficials.length > 0 ? (initialOfficials.map(official => (<TableRow key={official.assignmentId}><TableCell className="font-medium">{official.personName}</TableCell><TableCell>{official.role}</TableCell><TableCell><Badge variant={official.confirmed ? 'secondary' : 'outline'}>{official.confirmed ? 'Confirmed' : 'Pending'}</Badge></TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteOfficialDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No officials assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
-                </Card>
+            <TabsContent value="logistics" className="mt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Transport &amp; Logistics</CardTitle><CardDescription>Manage vehicles and drivers assigned to this match.</CardDescription></div><AssignTransportDialog matchId={match.matchId} vehicles={vehicles} drivers={drivers} transportAssignments={transportAssignments} /></CardHeader>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Vehicle</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{transportAssignments.length > 0 ? (transportAssignments.map(t => (<TableRow key={t.assignmentId}><TableCell className="font-medium">{t.vehicleName}</TableCell><TableCell>{t.vehicleType}</TableCell><TableCell>{t.driverName}</TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedTransport(t); setIsDeleteTransportDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No transport assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Match Officials</CardTitle><CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription></div><AssignOfficialDialog matchId={match.matchId} people={people.filter(p => !initialOfficials.some(o => o.personId === p.personId) && (p.roles.includes('Umpire') || p.roles.includes('Scorer')))} /></CardHeader>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{initialOfficials.length > 0 ? (initialOfficials.map(official => (<TableRow key={official.assignmentId}><TableCell className="font-medium">{official.personName}</TableCell><TableCell>{official.role}</TableCell><TableCell><Badge variant={official.confirmed ? 'secondary' : 'outline'}>{official.confirmed ? 'Confirmed' : 'Pending'}</Badge></TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteOfficialDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No officials assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
+                    </Card>
+                </div>
             </TabsContent>
         </Tabs>
       </div>
@@ -823,5 +831,3 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     </>
   )
 }
-
-    
