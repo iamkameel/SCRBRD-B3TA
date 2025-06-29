@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      // We set loading to false here initially to unblock public pages
+      // If the user logs out, we can stop loading immediately.
       if (!firebaseUser) {
         setPerson(null);
         setLoading(false);
@@ -39,16 +39,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
+    // This effect runs when `user` changes.
+    // It's only for fetching the profile.
     if (user) {
-      // If we have a user, subscribe to their Firestore document
+      setLoading(true); // Start loading when we have a user but no profile yet
       const unsub = onSnapshot(doc(db, 'people', user.uid), (doc) => {
         if (doc.exists()) {
           setPerson({ personId: doc.id, ...doc.data() } as Person);
-        } else {
-          // This can happen if the user exists in Auth but not in Firestore
-          setPerson(null);
+          setLoading(false); // We have the profile, we're done loading.
         }
-        setLoading(false);
+        // If the doc doesn't exist yet (e.g., during signup),
+        // we intentionally do nothing and keep `loading` as `true`.
+        // The `onSnapshot` listener will fire again once the profile document is created,
+        // at which point `doc.exists()` will be true and loading will be set to false.
       });
       return () => unsub();
     }
