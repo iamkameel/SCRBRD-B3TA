@@ -110,11 +110,31 @@ const sportsmasterNavGroups = [
     },
 ];
 
-const playerCoachTopLevelNavItems = [
+const coachNavGroups = [
+    {
+        title: "Team Management",
+        icon: Users,
+        items: [
+            { href: '/teams', label: 'Manage Roster', icon: Users },
+            { href: '/matches', label: 'Fixtures & Results', icon: ClipboardList },
+        ]
+    },
+    {
+        title: "Analysis & Strategy",
+        icon: Trophy,
+        items: [
+            { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
+            { href: '/rankings', label: 'Leaderboards', icon: Trophy },
+            { href: '/people', label: 'Player Profiles', icon: User },
+        ]
+    }
+];
+
+const playerTopLevelNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
 
-const playerCoachNavGroups = [
+const playerNavGroups = [
     {
         title: "My Matches",
         icon: Swords,
@@ -235,12 +255,13 @@ export function getNavConfig(role: string) {
         case 'Sportsmaster':
             return { topLevel: adminTopLevelNavItems, groups: sportsmasterNavGroups };
         case 'Coach':
+            return { topLevel: playerTopLevelNavItems, groups: coachNavGroups };
         case 'Assistant Coach':
         case 'Captain':
         case 'Team Manager':
-            return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
+            return { topLevel: playerTopLevelNavItems, groups: playerNavGroups };
         case 'Player':
-             return { topLevel: playerCoachTopLevelNavItems, groups: playerCoachNavGroups };
+             return { topLevel: playerTopLevelNavItems, groups: playerNavGroups };
         case 'Umpire':
         case 'Scorer':
             return { topLevel: officialTopLevelNavItems, groups: officialNavGroups };
