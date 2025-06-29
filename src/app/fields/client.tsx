@@ -86,17 +86,36 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
 
   const form = useForm<FieldFormValues>({
     resolver: zodResolver(fieldSchema),
-    defaultValues: mode === 'edit' && field ? 
-        { ...field, schoolId: field.schoolId || ' ', assignments: field.assignments?.map(a => a.personId) || [] } : 
-        { name: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [] },
+    defaultValues: {
+      name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [],
+      contactPerson: "", contactPhone: "", notes: "", location: "", size: ""
+    }
   });
 
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && field) {
-        form.reset({ ...field, schoolId: field.schoolId || ' ', assignments: field.assignments?.map(a => a.personId) || [] });
+        form.reset({
+          name: field.name,
+          alias: field.alias || '',
+          schoolId: field.schoolId || ' ',
+          status: field.status,
+          pitchType: field.pitchType || 'Natural Turf',
+          facilities: field.facilities || [],
+          assignments: field.assignments?.map(a => a.personId) || [],
+          location: field.location || '',
+          size: field.size || '',
+          amenities: field.amenities || [],
+          contactPerson: field.contactPerson || '',
+          contactPhone: field.contactPhone || '',
+          notes: field.notes || '',
+          coordinates: {
+              lat: field.coordinates?.lat,
+              lon: field.coordinates?.lon
+          },
+        });
       } else {
-        form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "" });
+        form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "", location: "", size: "", coordinates: { lat: undefined, lon: undefined } });
       }
     }
   }, [field, mode, open, form]);
@@ -136,8 +155,8 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                 <h3 className="text-sm font-medium text-muted-foreground pt-2">Location</h3>
                 <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="coordinates.lat" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-29.318" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="coordinates.lon" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="29.96" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="coordinates.lat" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-29.318" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="coordinates.lon" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="29.96" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
 
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -382,7 +401,7 @@ export default function FieldsClient({ fields, schools, groundskeepers }: { fiel
         </Card>
       </div>
 
-      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundkeepers} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
+      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundskeepers} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
