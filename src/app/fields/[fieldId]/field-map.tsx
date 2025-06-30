@@ -1,6 +1,7 @@
 
 'use client';
 
+import { memo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -32,7 +33,7 @@ interface FieldMapProps {
     fieldName: string;
 }
 
-export default function FieldMap({ coords, fieldName }: FieldMapProps) {
+const FieldMap = memo(function FieldMapComponent({ coords, fieldName }: FieldMapProps) {
     const position: [number, number] = [coords.lat, coords.lon];
 
     return (
@@ -46,4 +47,6 @@ export default function FieldMap({ coords, fieldName }: FieldMapProps) {
             </Marker>
         </MapContainer>
     );
-}
+});
+
+export default FieldMap;
