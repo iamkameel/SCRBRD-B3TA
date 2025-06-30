@@ -141,6 +141,12 @@ const assignmentSchema = z.object({
 export async function addPlayerToRosterAction(teamId: string, data: z.infer<typeof assignmentSchema>) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+
+  const user = await getPerson(userId);
+  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+      throw new Error("You do not have permission to modify team rosters.");
+  }
+  
   if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
   if (!await getPerson(data.personId)) throw new Error("Person not found or permission denied.");
   if (!assignmentSchema.safeParse(data).success) throw new Error('Invalid assignment data.');
@@ -165,6 +171,12 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
 export async function removeRosterAssignmentAction(teamId: string, assignmentId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to modify team rosters.");
+    }
+    
     if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
     try {
         await deleteDoc(doc(db, 'teams', teamId, 'roster', assignmentId));
@@ -187,6 +199,12 @@ const updateAssignmentSchema = z.object({
 export async function updateRosterAssignmentAction(data: z.infer<typeof updateAssignmentSchema>) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  
+  const user = await getPerson(userId);
+  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+      throw new Error("You do not have permission to modify team rosters.");
+  }
+
   const validated = updateAssignmentSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid assignment data.');
   
@@ -230,6 +248,12 @@ async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: 
 export async function addTeamAction(data: z.infer<typeof teamSchema>) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+
+  const user = await getPerson(userId);
+  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+      throw new Error("You do not have permission to add teams.");
+  }
+  
   const validated = teamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
   const { name, alias, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
@@ -254,6 +278,12 @@ const updateTeamSchema = teamSchema.extend({ teamId: z.string() });
 export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+
+  const user = await getPerson(userId);
+  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+      throw new Error("You do not have permission to update teams.");
+  }
+
   const validated = updateTeamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
   const { teamId, name, alias, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
@@ -280,7 +310,7 @@ export async function deleteTeamAction(teamId: string) {
     if (!userId) throw new Error("User not authenticated");
 
     const user = await getPerson(userId);
-    if (!user?.roles.includes('Admin')) {
+    if (!user?.roles.includes('Admin') && !user.roles.includes('Sportsmaster')) {
         throw new Error("You do not have permission to delete teams.");
     }
     
@@ -302,7 +332,7 @@ export async function deleteTeamAction(teamId: string) {
 
     for (const matchDoc of uniqueMatches) {
         const matchRef = matchDoc.ref;
-        const subcollections = ['lineups', 'officials', 'scorecards'];
+        const subcollections = ['lineups', 'officials', 'scorecards', 'transportAssignments'];
         for (const sub of subcollections) {
             const subColRef = collection(db, 'matches', matchDoc.id, sub);
             const subColSnap = await getDocs(subColRef);
