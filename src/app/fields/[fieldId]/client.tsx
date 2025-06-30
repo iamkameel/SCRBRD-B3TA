@@ -207,7 +207,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                             <CardHeader>
                                 <CardTitle>Map Location</CardTitle>
                             </CardHeader>
-                            <CardContent className="h-80 w-full p-0">
+                            <CardContent className="h-80 w-full p-0 relative">
                                 <FieldMap coords={field.coordinates} fieldName={field.name} />
                             </CardContent>
                         </Card>
