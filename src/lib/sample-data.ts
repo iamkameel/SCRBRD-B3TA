@@ -15,7 +15,7 @@ const pastDate = (days: number) => {
     return date.toISOString();
 }
 
-export const sampleData = {
+const sampleDataPrecursor = {
     schools: [
         { schoolId: 'school_1', name: 'Michaelhouse', abbreviation: 'MHS', motto: 'Quis ut Deus?', establishmentYear: 1896, principal: 'Antony Clark', logoUrl: 'https://placehold.co/100x100.png', location: 'Balgowan, KwaZulu-Natal', phone: '+27 33 234 1000', website: 'https://www.michaelhouse.org/', brandColors: { primary: '#00205B', secondary: '#FFFFFF' }, socialMedia: { facebook: 'https://www.facebook.com/Michaelhouse.Life/', instagram: 'https://www.instagram.com/michaelhouse.life/' } },
         { schoolId: 'school_2', name: 'Hilton College', abbreviation: 'HC', motto: 'Orando et Laborando', establishmentYear: 1872, principal: 'George Harris', logoUrl: 'https://placehold.co/100x100.png', location: 'Hilton, KwaZulu-Natal', phone: '+27 33 383 0100', website: 'https://www.hiltoncollege.com/', brandColors: { primary: '#A50034', secondary: '#FFFFFF' } },
@@ -173,45 +173,118 @@ export const sampleData = {
     familyLinks: [
         { linkId: 'link_1', parentId: 'p_54', childId: 'p_1' },
     ],
-    competitions: [
-        { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
-        { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress', teamIds: ['team_5'] },
-        { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
-    ],
-    teams: [
-        { teamId: 'team_1', name: 'Michaelhouse 1st XI', schoolId: 'school_1', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: [
+};
+
+const generateTeams = () => {
+    const teams = [];
+    const teamNameMap = {};
+    let teamIdCounter = 1;
+
+    const openClasses = ['1st XI', '2nd XI', '3rd XI', '4th XI', '5th XI', '6th XI'];
+    const ageGroupClasses = ['A', 'B', 'C', 'D', 'E'];
+    const ageGroupDivisions = sampleDataPrecursor.divisions.filter(d => d.name !== 'Open');
+
+    sampleDataPrecursor.schools.forEach(school => {
+        const openDivision = sampleDataPrecursor.divisions.find(d => d.name === 'Open');
+        if (openDivision) {
+            openClasses.forEach(teamClass => {
+                const teamId = `team_${teamIdCounter++}`;
+                const teamName = `${school.name} ${teamClass}`;
+                teams.push({
+                    teamId: teamId,
+                    name: teamName,
+                    schoolId: school.schoolId,
+                    divisionId: openDivision.divisionId,
+                    seasonId: 'season_1',
+                    teamClass: teamClass,
+                    roster: []
+                });
+                teamNameMap[teamName] = teamId;
+            });
+        }
+
+        ageGroupDivisions.forEach(division => {
+            ageGroupClasses.forEach(teamClass => {
+                const teamId = `team_${teamIdCounter++}`;
+                const formattedTeamClass = `${division.name.toUpperCase()}${teamClass}`;
+                const teamName = `${school.name} ${formattedTeamClass}`;
+                teams.push({
+                    teamId: teamId,
+                    name: teamName,
+                    schoolId: school.schoolId,
+                    divisionId: division.divisionId,
+                    seasonId: 'season_1',
+                    teamClass: formattedTeamClass,
+                    roster: []
+                });
+                teamNameMap[teamName] = teamId;
+            });
+        });
+    });
+
+    const originalRosters = {
+        'Michaelhouse 1st XI': [
             ...Array.from({length: 11}, (_, i) => ({ personId: `p_${i + 1}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
             { personId: 'p_12', role: 'Coach', status: 'active' },
             { personId: 'p_49', role: 'Team Manager', status: 'active' },
-        ]},
-        { teamId: 'team_2', name: 'Hilton 1st XI', schoolId: 'school_2', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: [
+        ],
+        'Hilton College 1st XI': [
             ...Array.from({length: 11}, (_, i) => ({ personId: `p_${i + 13}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
             { personId: 'p_24', role: 'Coach', status: 'active' },
             { personId: 'p_50', role: 'Assistant Coach', status: 'active' },
-        ]},
-        { teamId: 'team_3', name: 'Maritzburg 1st XI', schoolId: 'school_3', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 25}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
-        { teamId: 'team_4', name: 'DHS 1st XI', schoolId: 'school_4', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 37}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
-        { teamId: 'team_5', name: 'Maritzburg U16A', schoolId: 'school_3', divisionId: 'div_u16', seasonId: 'season_1', teamClass: 'U16A', roster: [
+        ],
+        'Maritzburg College 1st XI': Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 25}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
+        'Durban High School 1st XI': Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 37}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
+        'Maritzburg College U16A': [
             ...Array.from({length: 11}, (_, i) => ({ personId: `p_u16_${i + 1}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
             { personId: 'p_u16_coach', role: 'Coach', status: 'active' },
-        ]},
-    ],
-    matches: [
-        { matchId: 'match_1', teamAId: 'team_1', teamBId: 'team_2', competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed' },
-        { matchId: 'match_2', teamAId: 'team_3', teamBId: 'team_4', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed' },
-        { matchId: 'match_3', teamAId: 'team_1', teamBId: 'team_3', competitionId: 'comp_1', fieldId: 'field_1', dateTime: futureDate(7), status: 'scheduled' },
-        { matchId: 'match_4', teamAId: 'team_2', teamBId: 'team_4', competitionId: 'comp_1', fieldId: 'field_2', dateTime: futureDate(10), status: 'scheduled' },
-        // Coastal Cup Matches
-        { matchId: 'match_5', teamAId: 'team_1', teamBId: 'team_4', competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(2), status: 'completed', winnerTeamId: 'team_1', result: 'Michaelhouse won by 15 runs' },
-        { matchId: 'match_6', teamAId: 'team_2', teamBId: 'team_3', competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(1), status: 'completed', winnerTeamId: 'team_2', result: 'Hilton won by 5 wickets' },
-        { matchId: 'match_7', teamAId: 'team_1', teamBId: 'team_2', competitionId: 'comp_3', round: 2, fieldId: 'field_12', dateTime: futureDate(14), status: 'scheduled' },
-    ],
-    officials: [
-        { assignmentId: 'off_1', matchId: 'match_3', personId: 'staff_1', role: 'Umpire', confirmed: true },
-        { assignmentId: 'off_2', matchId: 'match_4', personId: 'staff_2', role: 'Scorer', confirmed: false },
-        { assignmentId: 'off_3', matchId: 'match_4', personId: 'staff_1', role: 'Umpire', confirmed: false },
-    ],
+        ],
+    };
+
+    teams.forEach(team => {
+        if (originalRosters[team.name]) {
+            team.roster = originalRosters[team.name];
+        }
+    });
+
+    return { teams, teamNameMap };
 };
+
+const { teams, teamNameMap } = generateTeams();
+
+const getTeamId = (name) => teamNameMap[name] || null;
+
+const competitions = [
+    { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: [getTeamId('Michaelhouse 1st XI'), getTeamId('Hilton College 1st XI'), getTeamId('Maritzburg College 1st XI'), getTeamId('Durban High School 1st XI')] },
+    { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress', teamIds: [getTeamId('Maritzburg College U16A')] },
+    { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: [getTeamId('Michaelhouse 1st XI'), getTeamId('Hilton College 1st XI'), getTeamId('Maritzburg College 1st XI'), getTeamId('Durban High School 1st XI')] },
+];
+
+const matches = [
+    { matchId: 'match_1', teamAId: getTeamId('Michaelhouse 1st XI'), teamBId: getTeamId('Hilton College 1st XI'), competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed' },
+    { matchId: 'match_2', teamAId: getTeamId('Maritzburg College 1st XI'), teamBId: getTeamId('Durban High School 1st XI'), competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed' },
+    { matchId: 'match_3', teamAId: getTeamId('Michaelhouse 1st XI'), teamBId: getTeamId('Maritzburg College 1st XI'), competitionId: 'comp_1', fieldId: 'field_1', dateTime: futureDate(7), status: 'scheduled' },
+    { matchId: 'match_4', teamAId: getTeamId('Hilton College 1st XI'), teamBId: getTeamId('Durban High School 1st XI'), competitionId: 'comp_1', fieldId: 'field_2', dateTime: futureDate(10), status: 'scheduled' },
+    // Coastal Cup Matches
+    { matchId: 'match_5', teamAId: getTeamId('Michaelhouse 1st XI'), teamBId: getTeamId('Durban High School 1st XI'), competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(2), status: 'completed', winnerTeamId: getTeamId('Michaelhouse 1st XI'), result: 'Michaelhouse won by 15 runs' },
+    { matchId: 'match_6', teamAId: getTeamId('Hilton College 1st XI'), teamBId: getTeamId('Maritzburg College 1st XI'), competitionId: 'comp_3', round: 1, fieldId: 'field_12', dateTime: pastDate(1), status: 'completed', winnerTeamId: getTeamId('Hilton College 1st XI'), result: 'Hilton won by 5 wickets' },
+    { matchId: 'match_7', teamAId: getTeamId('Michaelhouse 1st XI'), teamBId: getTeamId('Hilton College 1st XI'), competitionId: 'comp_3', round: 2, fieldId: 'field_12', dateTime: futureDate(14), status: 'scheduled' },
+];
+
+const officials = [
+    { assignmentId: 'off_1', matchId: 'match_3', personId: 'staff_1', role: 'Umpire', confirmed: true },
+    { assignmentId: 'off_2', matchId: 'match_4', personId: 'staff_2', role: 'Scorer', confirmed: false },
+    { assignmentId: 'off_3', matchId: 'match_4', personId: 'staff_1', role: 'Umpire', confirmed: false },
+];
+
+export const sampleData = {
+    ...sampleDataPrecursor,
+    teams,
+    competitions,
+    matches,
+    officials
+};
+
 
 export const sampleScorecardData = {
     "match_1": {
@@ -252,7 +325,7 @@ export const sampleScorecardData = {
             extras: { total: 16, details: "(w 8, nb 2, b 4, lb 2)" },
         },
         innings2: {
-            teamName: "Hilton 1st XI", totalRuns: 175, wickets: 9, overs: 20,
+            teamName: "Hilton College 1st XI", totalRuns: 175, wickets: 9, overs: 20,
             battingCard: [
                 { name: "Virat Kohli", status: "c. Buttler b. Archer", runs: 55, balls: 40, fours: 6, sixes: 1, strikeRate: 137.50 },
                 { name: "Rohit Sharma", status: "b. Wood", runs: 5, balls: 8, fours: 1, sixes: 0, strikeRate: 62.50 },
@@ -289,11 +362,11 @@ export const sampleScorecardData = {
     "match_2": {
         playerOfTheMatch: {
             name: "Shaheen Afridi",
-            teamName: "DHS 1st XI",
+            teamName: "Durban High School 1st XI",
             justification: "For an exceptional opening spell, taking 4 wickets for just 18 runs, which dismantled the opposition's top order and set the foundation for a convincing victory.",
         },
         innings1: {
-            teamName: "Maritzburg 1st XI", totalRuns: 145, wickets: 10, overs: 19.4,
+            teamName: "Maritzburg College 1st XI", totalRuns: 145, wickets: 10, overs: 19.4,
             battingCard: [
                 { name: "Kane Williamson", status: "b. Afridi", runs: 15, balls: 12, fours: 2, sixes: 0, strikeRate: 125.00 },
                 { name: "Martin Guptill", status: "c. Rizwan b. Afridi", runs: 2, balls: 5, fours: 0, sixes: 0, strikeRate: 40.00 },
@@ -329,7 +402,7 @@ export const sampleScorecardData = {
             extras: { total: 15, details: "(w 5, nb 2, b 4, lb 4)" },
         },
         innings2: {
-            teamName: "DHS 1st XI", totalRuns: 146, wickets: 3, overs: 18.2,
+            teamName: "Durban High School 1st XI", totalRuns: 146, wickets: 3, overs: 18.2,
             battingCard: [
                 { name: "Babar Azam", status: "not out", runs: 68, balls: 55, fours: 8, sixes: 1, strikeRate: 123.64 },
                 { name: "Mohammad Rizwan", status: "c. Latham b. Boult", runs: 25, balls: 20, fours: 3, sixes: 1, strikeRate: 125.00 },
@@ -358,27 +431,28 @@ export const sampleScorecardData = {
         },
     },
     "match_5": {
-        playerOfTheMatch: { name: "Babar Azam", teamName: "DHS 1st XI", justification: "A captain's knock of 75 not out saw his team home in a tricky run chase."},
+        playerOfTheMatch: { name: "Babar Azam", teamName: "Durban High School 1st XI", justification: "A captain's knock of 75 not out saw his team home in a tricky run chase."},
         innings1: {
             teamName: "Michaelhouse 1st XI", totalRuns: 165, wickets: 8, overs: 20,
             battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
         },
         innings2: {
-            teamName: "DHS 1st XI", totalRuns: 166, wickets: 5, overs: 19.1,
+            teamName: "Durban High School 1st XI", totalRuns: 166, wickets: 5, overs: 19.1,
             battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
         }
     },
     "match_6": {
-        playerOfTheMatch: { name: "Virat Kohli", teamName: "Hilton 1st XI", justification: "A magnificent century (102 off 60) laid the platform for a dominant victory."},
+        playerOfTheMatch: { name: "Virat Kohli", teamName: "Hilton College 1st XI", justification: "A magnificent century (102 off 60) laid the platform for a dominant victory."},
         innings1: {
-            teamName: "Hilton 1st XI", totalRuns: 205, wickets: 4, overs: 20,
+            teamName: "Hilton College 1st XI", totalRuns: 205, wickets: 4, overs: 20,
             battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
         },
         innings2: {
-            teamName: "Maritzburg 1st XI", totalRuns: 150, wickets: 9, overs: 20,
+            teamName: "Maritzburg College 1st XI", totalRuns: 150, wickets: 9, overs: 20,
             battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 0, details: ''}
         }
     }
 };
 
     
+
