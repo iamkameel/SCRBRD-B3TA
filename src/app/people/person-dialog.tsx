@@ -68,35 +68,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
   ];
   const showSchoolAssignment = selectedRoles?.some(role => rolesRequiringSchoolAssignment.includes(role));
 
-  const getAssignableRoles = React.useCallback((currentUserRole?: string) => {
-    if (!currentUserRole) return [];
-    
-    const allRoleGroups = ROLE_GROUPS;
-
-    switch (currentUserRole) {
-        case 'Admin':
-            return allRoleGroups;
-        case 'Sportsmaster':
-            return [
-                { group: 'Administrative', roles: allRoleGroups.flatMap(g => g.roles).filter(r => r.id === 'School Admin') },
-                { group: 'Officials & Ground Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Umpire', 'Scorer'].includes(r.id)) }
-            ].filter(g => g.roles.length > 0);
-        case 'School Admin':
-             return [
-                { group: 'Team Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Coach', 'Assistant Coach'].includes(r.id)) },
-                { group: 'Support & Medical', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aider'].includes(r.id)) },
-                { group: 'Officials & Ground Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Grounds-Keeper', 'Driver'].includes(r.id)) }
-            ].filter(g => g.roles.length > 0);
-        case 'Coach':
-            return [
-                { group: 'Team Staff', roles: allRoleGroups.flatMap(g => g.roles).filter(r => ['Assistant Coach', 'Captain'].includes(r.id)) }
-            ];
-        default:
-            return [];
-    }
-  }, []);
-
-  const assignableRoles = getAssignableRoles(currentUser?.activeRole);
+  const canAssignRoles = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster') || currentUser?.roles.includes('School Admin');
 
   React.useEffect(() => {
     if (open) {
@@ -171,9 +143,9 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                   <FormLabel>Roles</FormLabel>
                   <FormDescription>Assign at least one role. Selecting certain roles will reveal further assignment options.</FormDescription>
                 </div>
-                {assignableRoles.length === 0 && <p className="text-sm text-destructive">You do not have permission to assign roles.</p>}
+                {!canAssignRoles && <p className="text-sm text-destructive">You do not have permission to assign roles.</p>}
                 <div className="space-y-4">
-                  {assignableRoles.map((group) => (
+                  {ROLE_GROUPS.map((group) => (
                     <div key={group.group}>
                       <h4 className="font-medium text-sm text-muted-foreground mb-2">{group.group}</h4>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border p-4 rounded-md">
@@ -186,7 +158,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                                  if (newRoles && !newRoles.includes(form.getValues('activeRole'))) {
                                      form.setValue('activeRole', newRoles[0]);
                                  }
-                              }} disabled={isPending} /></FormControl>
+                              }} disabled={isPending || !canAssignRoles} /></FormControl>
                               <FormLabel className="font-normal">{item.label}</FormLabel>
                             </FormItem>
                           )} />
@@ -208,7 +180,8 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                             <FormLabel>School Assignments</FormLabel>
                             <FormDescription>Select the schools this user will manage.</FormDescription>
                             <ScrollArea className="h-40 w-full rounded-lg border p-4">
-                                {schools.map((school) => (
+                               {schools.length > 0 ? (
+                                schools.map((school) => (
                                     <FormField
                                         key={school.schoolId}
                                         control={form.control}
@@ -238,7 +211,10 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                                             </FormItem>
                                         )}
                                     />
-                                ))}
+                                ))
+                               ) : (
+                                <p className="text-center text-sm text-muted-foreground">No schools available to assign. Add schools on the Schools page.</p>
+                               )}
                             </ScrollArea>
                             <FormMessage />
                         </FormItem>
