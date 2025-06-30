@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown, Building } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +40,7 @@ import { deletePlayerAction } from '@/lib/actions/players';
 import { PersonCard } from "./person-card";
 import { ROLE_GROUPS } from "@/lib/roles";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { AssignSchoolDialog } from "./assign-school-dialog";
 
 
 const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.PersonDialog), {
@@ -56,8 +56,10 @@ export default function PeopleClient({ people, user, schools }: { people: Person
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
+  const [personToAssign, setPersonToAssign] = React.useState<Person | null>(null);
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isPersonDialogOpen, setIsPersonDialogOpen] = React.useState(false);
+  const [isAssignSchoolDialogOpen, setIsAssignSchoolDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   // View, Pagination, Filtering, and Sorting state
@@ -69,7 +71,8 @@ export default function PeopleClient({ people, user, schools }: { people: Person
   const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   
-  const isAdmin = user?.roles.includes('Admin') ?? false;
+  const canManage = user?.roles.some(role => ['Admin', 'Sportsmaster', 'Team Manager'].includes(role)) ?? false;
+  const canEditUsers = user?.roles.includes('Admin') ?? false;
 
   const filteredPeople = React.useMemo(() => {
     return people.filter(person => {
@@ -164,7 +167,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">People</h1><p className="text-muted-foreground">Manage your roster of players, coaches, and officials.</p></div>
-          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add Person</Button>}
+          {canEditUsers && <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add Person</Button>}
         </header>
 
         <Card>
@@ -271,7 +274,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                     <SortableHeader column="name">Name</SortableHeader>
                     <SortableHeader column="email">Email</SortableHeader>
                     <TableHead>Roles</TableHead>
-                    {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                    {canManage && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -306,19 +309,21 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                                 )}
                             </div>
                         </TableCell>
-                        {isAdmin && <TableCell className="text-right">
+                        {canManage && <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => { setSelectedPerson(person); setDialogMode('edit'); setIsPersonDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => { setSelectedPerson(person); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                              {canEditUsers && <DropdownMenuItem onSelect={() => { setSelectedPerson(person); setDialogMode('edit'); setIsPersonDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit Profile</DropdownMenuItem>}
+                              <DropdownMenuItem onSelect={() => { setPersonToAssign(person); setIsAssignSchoolDialogOpen(true); }}><Building className="mr-2 h-4 w-4" /> Assign to School</DropdownMenuItem>
+                              {canEditUsers && <DropdownMenuSeparator />}
+                              {canEditUsers && <DropdownMenuItem onSelect={() => { setSelectedPerson(person); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>}
                       </TableRow>
                     ))
                   ) : (
-                    <TableRow><TableCell colSpan={isAdmin ? 4 : 3} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={canManage ? 4 : 3} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -332,7 +337,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                                 person={person} 
                                 onEdit={() => { setSelectedPerson(person); setDialogMode('edit'); setIsPersonDialogOpen(true); }}
                                 onDelete={() => { setSelectedPerson(person); setIsDeleteDialogOpen(true); }}
-                                isAdmin={isAdmin}
+                                canManage={canEditUsers}
                             />
                         ))
                     ) : (
@@ -352,8 +357,20 @@ export default function PeopleClient({ people, user, schools }: { people: Person
       </div>
 
       {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} currentUser={user} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} schools={schools} />}
+      
+      {canManage && personToAssign && (
+        <AssignSchoolDialog 
+            person={personToAssign}
+            schools={schools}
+            open={isAssignSchoolDialogOpen}
+            onOpenChange={(open) => {
+                setIsAssignSchoolDialogOpen(open);
+                if (!open) setPersonToAssign(null);
+            }}
+        />
+      )}
 
-      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {canEditUsers && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>

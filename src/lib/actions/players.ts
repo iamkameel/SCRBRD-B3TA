@@ -541,3 +541,37 @@ export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> 
     return [];
   }
 });
+
+
+export async function assignPersonToSchoolsAction(personId: string, schoolIds: string[]) {
+  const currentUserId = await getUserId();
+  if (!currentUserId) throw new Error("You must be logged in to perform this action.");
+
+  const currentUser = await getPerson(currentUserId);
+  const permittedRoles = ['Admin', 'Sportsmaster', 'Team Manager'];
+  if (!currentUser || !currentUser.roles.some(role => permittedRoles.includes(role))) {
+      throw new Error("You do not have permission to perform this action.");
+  }
+
+  if (!personId || !Array.isArray(schoolIds)) {
+      throw new Error("Invalid data provided for assignment.");
+  }
+
+  const personRef = doc(db, 'people', personId);
+  const personSnap = await getDoc(personRef);
+  if (!personSnap.exists()) {
+    throw new Error("Person not found.");
+  }
+
+  try {
+    await updateDoc(personRef, {
+        assignedSchools: schoolIds
+    });
+  } catch (error) {
+    console.error("Error updating school assignments:", error);
+    throw new Error("Could not update school assignments.");
+  }
+
+  revalidatePath('/people');
+  revalidatePath(`/people/${personId}`);
+}

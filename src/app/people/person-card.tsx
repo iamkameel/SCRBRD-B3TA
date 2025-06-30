@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -17,10 +18,10 @@ interface PersonCardProps {
     person: Person;
     onEdit: () => void;
     onDelete: () => void;
-    isAdmin: boolean;
+    canManage: boolean;
 }
 
-export function PersonCard({ person, onEdit, onDelete, isAdmin }: PersonCardProps) {
+export function PersonCard({ person, onEdit, onDelete, canManage }: PersonCardProps) {
     return (
         <Card>
             <CardHeader>
@@ -39,7 +40,7 @@ export function PersonCard({ person, onEdit, onDelete, isAdmin }: PersonCardProp
                             <CardDescription className="truncate">{person.email}</CardDescription>
                         </div>
                     </div>
-                     {isAdmin && <DropdownMenu>
+                     {canManage && <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 -mr-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
