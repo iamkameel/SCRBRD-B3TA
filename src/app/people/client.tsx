@@ -32,6 +32,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +52,7 @@ import { PersonCard } from "./person-card";
 import { ROLE_GROUPS } from "@/lib/roles";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AssignSchoolDialog } from "./assign-school-dialog";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -97,7 +105,7 @@ function BulkAssignTeamDialog({ personIds, teams, open, onOpenChange, onSuccess 
                             name="teamId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <Label>Team</Label>
+                                    <FormLabel>Team</FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl>
                                         <SelectContent>{teams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent>
