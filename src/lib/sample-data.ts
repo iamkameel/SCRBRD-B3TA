@@ -93,11 +93,11 @@ export const sampleData = {
         { personId: 'staff_2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@umpire.com', roles: ['Umpire'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_3', firstName: 'Mark', lastName: 'Taylor', email: 'mark.t@ground.com', roles: ['Grounds-Keeper', 'Driver'], activeRole: 'Grounds-Keeper', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_4', firstName: 'Lisa', lastName: 'Sthalekar', email: 'lisa.s@ground.com', roles: ['Grounds-Keeper'], activeRole: 'Grounds-Keeper', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_49', firstName: 'Eoin', lastName: 'Morgan', email: 'eoin.m@example.com', roles: ['Team Manager'], activeRole: 'Team Manager', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_50', firstName: 'Anil', lastName: 'Kumble', email: 'anil.k@example.com', roles: ['Assistant Coach'], activeRole: 'Assistant Coach', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_49', firstName: 'Eoin', lastName: 'Morgan', email: 'eoin.m@example.com', roles: ['Team Manager'], activeRole: 'Team Manager', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_50', firstName: 'Anil', lastName: 'Kumble', email: 'anil.k@example.com', roles: ['Assistant Coach'], activeRole: 'Assistant Coach', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_51', firstName: 'Sarah', lastName: 'Connor', email: 'sarah.c@school.com', roles: ['School Admin'], activeRole: 'School Admin', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
-        { personId: 'p_52', firstName: 'Eva', lastName: 'Carneiro', email: 'eva.c@medical.com', roles: ['Doctor', 'First Aid'], activeRole: 'Doctor', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_53', firstName: 'Gary', lastName: 'Lewin', email: 'gary.l@medical.com', roles: ['Physiotherapist', 'Trainer'], activeRole: 'Physiotherapist', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_52', firstName: 'Eva', lastName: 'Carneiro', email: 'eva.c@medical.com', roles: ['Doctor', 'First Aid'], activeRole: 'Doctor', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_53', firstName: 'Gary', lastName: 'Lewin', email: 'gary.l@medical.com', roles: ['Physiotherapist', 'Trainer'], activeRole: 'Physiotherapist', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_54', firstName: 'Robert', lastName: 'Anderson', email: 'robert.a@example.com', roles: ['Guardian'], activeRole: 'Guardian', notificationPreferences: { email: true, push: false } },
         
         // Michaelhouse Players & Coach
@@ -112,7 +112,7 @@ export const sampleData = {
         { personId: 'p_9', firstName: 'Adil', lastName: 'Rashid', email: 'adil.r@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_10', firstName: 'Jofra', lastName: 'Archer', email: 'jofra.a@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_11', firstName: 'Sam', lastName: 'Curran', email: 'sam.c@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_12', firstName: 'Trevor', lastName: 'Bayliss', email: 'trevor.b@coach.com', roles: ['Coach'], activeRole: 'Coach', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_12', firstName: 'Trevor', lastName: 'Bayliss', email: 'trevor.b@coach.com', roles: ['Coach'], activeRole: 'Coach', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
 
         // Hilton College Players & Coach
         { personId: 'p_13', firstName: 'Virat', lastName: 'Kohli', email: 'virat.k@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', profileImageUrl: 'https://placehold.co/400x400.png', notificationPreferences: { email: true, push: false } },
@@ -126,7 +126,7 @@ export const sampleData = {
         { personId: 'p_21', firstName: 'Shikhar', lastName: 'Dhawan', email: 'shikhar.d@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_22', firstName: 'Yuzvendra', lastName: 'Chahal', email: 'yuzvendra.c@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_23', firstName: 'Suryakumar', lastName: 'Yadav', email: 'suryakumar.y@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_24', firstName: 'Ravi', lastName: 'Shastri', email: 'ravi.s@coach.com', roles: ['Coach', 'Driver'], activeRole: 'Coach', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_24', firstName: 'Ravi', lastName: 'Shastri', email: 'ravi.s@coach.com', roles: ['Coach', 'Driver'], activeRole: 'Coach', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
         
         // Maritzburg College Players
         { personId: 'p_25', firstName: 'Kane', lastName: 'Williamson', email: 'kane.w@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
@@ -140,7 +140,7 @@ export const sampleData = {
         { personId: 'p_33', firstName: 'Lockie', lastName: 'Ferguson', email: 'lockie.f@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_34', firstName: 'Martin', lastName: 'Guptill', email: 'martin.g@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_35', firstName: 'Ish', lastName: 'Sodhi', email: 'ish.s@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_36', firstName: 'Gary', lastName: 'Stead', email: 'gary.s@coach.com', roles: ['Coach'], activeRole: 'Coach', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_36', firstName: 'Gary', lastName: 'Stead', email: 'gary.s@coach.com', roles: ['Coach'], activeRole: 'Coach', assignedSchools: ['school_3'], notificationPreferences: { email: true, push: false } },
 
         // DHS Players
         { personId: 'p_37', firstName: 'Babar', lastName: 'Azam', email: 'babar.a@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
@@ -154,7 +154,7 @@ export const sampleData = {
         { personId: 'p_45', firstName: 'Shoaib', lastName: 'Malik', email: 'shoaib.m@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_46', firstName: 'Iftikhar', lastName: 'Ahmed', email: 'iftikhar.a@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_47', firstName: 'Naseem', lastName: 'Shah', email: 'naseem.s@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_48', firstName: 'Mickey', lastName: 'Arthur', email: 'mickey.a@coach.com', roles: ['Coach'], activeRole: 'Coach', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_48', firstName: 'Mickey', lastName: 'Arthur', email: 'mickey.a@coach.com', roles: ['Coach'], activeRole: 'Coach', assignedSchools: ['school_4'], notificationPreferences: { email: true, push: false } },
         
         // Maritzburg College U16 Players & Coach
         { personId: 'p_u16_1', firstName: 'Aiden', lastName: 'Markram', email: 'aiden.m@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
@@ -168,7 +168,7 @@ export const sampleData = {
         { personId: 'p_u16_9', firstName: 'Temba', lastName: 'Bavuma', email: 'temba.b@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_u16_10', firstName: 'Keshav', lastName: 'Maharaj', email: 'keshav.m@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_u16_11', firstName: 'Tabraiz', lastName: 'Shamsi', email: 'tabraiz.s@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
-        { personId: 'p_u16_coach', firstName: 'Jacques', lastName: 'Kallis', email: 'jacques.k@coach.com', roles: ['Coach'], activeRole: 'Coach', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_coach', firstName: 'Jacques', lastName: 'Kallis', email: 'jacques.k@coach.com', roles: ['Coach'], activeRole: 'Coach', assignedSchools: ['school_3'], notificationPreferences: { email: true, push: false } },
     ],
     familyLinks: [
         { linkId: 'link_1', parentId: 'p_54', childId: 'p_1' },
