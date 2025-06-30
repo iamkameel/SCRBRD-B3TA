@@ -1,4 +1,3 @@
-
 import {
     LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database,
     Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack,
@@ -171,6 +170,13 @@ const officialNavGroups = [
         icon: ClipboardList,
         items: [
             { href: '/matches', label: 'All Matches', icon: ClipboardList },
+        ]
+    },
+    {
+        title: "Tools",
+        icon: Wrench,
+        items: [
+            { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
         ]
     }
 ];

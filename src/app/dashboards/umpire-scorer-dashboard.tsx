@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Check, Clock, RadioTower, ArrowRight, ClipboardList } from 'lucide-react';
+import { Check, Clock, RadioTower, ArrowRight, ClipboardList, Camera } from 'lucide-react';
 import type { Official, MatchStatus } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -97,6 +97,24 @@ function UmpireScorerDashboardInternal({ assignments }: UmpireScorerDashboardInt
             </AlertDescription>
         </Alert>
       )}
+
+      <Card>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <Camera /> AI Umpire Review
+              </CardTitle>
+              <CardDescription>
+                  Have a close call? Upload an image of an LBW appeal to get a simulated third umpire decision.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <Button asChild>
+                  <Link href="/umpire-review">
+                      Go to Umpire Review <ArrowRight className="ml-2" />
+                  </Link>
+              </Button>
+          </CardContent>
+      </Card>
       
       <Tabs defaultValue="upcoming">
         <TabsList className="grid w-full grid-cols-3">
