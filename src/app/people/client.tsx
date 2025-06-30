@@ -6,6 +6,8 @@ import * as React from "react";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown, Building, Users } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -45,7 +47,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Person, School, Team } from "@/lib/data";
+import type { Person, School, Team, Division } from "@/lib/data";
 import { deletePlayerAction } from '@/lib/actions/players';
 import { bulkAssignPeopleToTeamAction } from '@/lib/actions/teams';
 import { PersonCard } from "./person-card";
@@ -53,8 +55,6 @@ import { ROLE_GROUPS } from "@/lib/roles";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AssignSchoolDialog } from "./assign-school-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Checkbox } from "@/components/ui/checkbox";
 
 
@@ -71,62 +71,168 @@ const bulkAssignTeamSchema = z.object({
   teamId: z.string({ required_error: "Please select a team." }),
 });
 
-function BulkAssignTeamDialog({ personIds, teams, open, onOpenChange, onSuccess }: { personIds: string[], teams: Team[], open: boolean, onOpenChange: (open: boolean) => void, onSuccess: () => void }) {
-    const { toast } = useToast();
-    const [isPending, startTransition] = React.useTransition();
-    const form = useForm<z.infer<typeof bulkAssignTeamSchema>>({
-        resolver: zodResolver(bulkAssignTeamSchema),
-    });
+function BulkAssignTeamDialog({
+  personIds,
+  teams,
+  schools,
+  divisions,
+  open,
+  onOpenChange,
+  onSuccess,
+}: {
+  personIds: string[];
+  teams: Team[];
+  schools: School[];
+  divisions: Division[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+  const form = useForm<z.infer<typeof bulkAssignTeamSchema>>({
+    resolver: zodResolver(bulkAssignTeamSchema),
+  });
 
-    function onSubmit(data: z.infer<typeof bulkAssignTeamSchema>) {
-        startTransition(async () => {
-            try {
-                await bulkAssignPeopleToTeamAction(data.teamId, personIds);
-                toast({ title: "Assignment Successful", description: `${personIds.length} people have been added to the team.` });
-                onSuccess();
-                onOpenChange(false);
-            } catch (error) {
-                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not assign people.", variant: "destructive" });
-            }
-        });
-    }
+  const [selectedSchoolId, setSelectedSchoolId] = React.useState<string | null>(null);
+  const [selectedDivisionId, setSelectedDivisionId] = React.useState<string | null>(null);
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Assign to Team</DialogTitle>
-                    <DialogDescription>Assign the selected {personIds.length} people to a team with the 'Player' role.</DialogDescription>
-                </DialogHeader>
-                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="teamId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Team</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl>
-                                        <SelectContent>{teams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button type="submit" disabled={isPending}>{isPending ? "Assigning..." : "Assign to Team"}</Button>
-                        </DialogFooter>
-                    </form>
-                 </Form>
-            </DialogContent>
-        </Dialog>
+  const filteredTeams = React.useMemo(() => {
+    if (!selectedSchoolId || !selectedDivisionId) return [];
+    return teams.filter(
+      (team) => team.schoolId === selectedSchoolId && team.divisionId === selectedDivisionId
     );
+  }, [teams, selectedSchoolId, selectedDivisionId]);
+
+  React.useEffect(() => {
+    if (open) {
+      form.reset();
+      setSelectedSchoolId(null);
+      setSelectedDivisionId(null);
+    }
+  }, [open, form]);
+
+  function handleSchoolChange(schoolId: string) {
+    setSelectedSchoolId(schoolId);
+    setSelectedDivisionId(null);
+    form.resetField('teamId');
+  }
+
+  function handleDivisionChange(divisionId: string) {
+    setSelectedDivisionId(divisionId);
+    form.resetField('teamId');
+  }
+
+  function onSubmit(data: z.infer<typeof bulkAssignTeamSchema>) {
+    startTransition(async () => {
+      try {
+        await bulkAssignPeopleToTeamAction(data.teamId, personIds);
+        toast({ title: "Assignment Successful", description: `${personIds.length} people have been added to the team.` });
+        onSuccess();
+        onOpenChange(false);
+      } catch (error) {
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not assign people.", variant: "destructive" });
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign to Team</DialogTitle>
+          <DialogDescription>
+            Assign the selected {personIds.length} people to a team with the 'Player' role.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label>School</Label>
+              <Select
+                onValueChange={handleSchoolChange}
+                value={selectedSchoolId ?? ""}
+                disabled={isPending}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a school" />
+                </SelectTrigger>
+                <SelectContent>
+                  {schools.map((s) => (
+                    <SelectItem key={s.schoolId} value={s.schoolId}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Division</Label>
+              <Select
+                onValueChange={handleDivisionChange}
+                value={selectedDivisionId ?? ""}
+                disabled={isPending || !selectedSchoolId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={!selectedSchoolId ? "Select school first" : "Select a division"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {divisions.map((d) => (
+                    <SelectItem key={d.divisionId} value={d.divisionId}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="teamId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Team</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value ?? ""}
+                    disabled={isPending || !selectedDivisionId}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={!selectedDivisionId ? "Select division first" : "Select a team"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {filteredTeams.map((t) => (
+                        <SelectItem key={t.teamId} value={t.teamId}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending || !form.formState.isValid}>
+                {isPending ? "Assigning..." : "Assign to Team"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 
-export default function PeopleClient({ people, user, schools, teams }: { people: Person[], user: Person | null, schools: School[], teams: Team[] }) {
+
+export default function PeopleClient({ people, user, schools, teams, divisions }: { people: Person[], user: Person | null, schools: School[], teams: Team[], divisions: Division[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
@@ -541,7 +647,17 @@ export default function PeopleClient({ people, user, schools, teams }: { people:
         />
       )}
 
-      {canManage && <BulkAssignTeamDialog personIds={selectedRowKeys} teams={teams} open={isBulkAssignTeamDialogOpen} onOpenChange={setIsBulkAssignTeamDialogOpen} onSuccess={() => setSelectedRowKeys([])} />}
+      {canManage && (
+        <BulkAssignTeamDialog
+            personIds={selectedRowKeys}
+            teams={teams}
+            schools={schools}
+            divisions={divisions}
+            open={isBulkAssignTeamDialogOpen}
+            onOpenChange={setIsBulkAssignTeamDialogOpen}
+            onSuccess={() => setSelectedRowKeys([])}
+        />
+      )}
 
       {canEditUsers && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
