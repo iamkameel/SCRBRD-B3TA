@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import type { Competition, Team, FixtureConflict, Person, StandingTeam, LeaderboardPlayer, Match } from '@/lib/data';
 import { getSportsmasterDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
+import { useAuth } from '@/lib/auth-context';
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -48,6 +49,7 @@ interface SportsmasterDashboardData {
 }
 
 export default function SportsmasterDashboard() {
+  const { person } = useAuth();
   const [data, setData] = React.useState<SportsmasterDashboardData | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -96,9 +98,9 @@ export default function SportsmasterDashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Sportsmaster Dashboard</h1>
-        <p className="text-muted-foreground">Strategic oversight for your assigned schools and districts.</p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">Sportsmaster Dashboard</h1>
+        <p className="text-sm opacity-90">Strategic oversight for your assigned schools and districts.</p>
       </header>
         
         <div className="space-y-2">
@@ -174,16 +176,6 @@ export default function SportsmasterDashboard() {
                         <div className="flex-1">
                             <h3 className="font-semibold">Personnel Management</h3>
                             <p className="text-sm text-muted-foreground">View all registered people.</p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
-                    </div>
-                </Link>
-                 <Link href="/data-management" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
-                    <div className="flex items-center gap-4">
-                        <Database className="w-8 h-8 text-muted-foreground shrink-0" />
-                        <div className="flex-1">
-                            <h3 className="font-semibold">Data Management</h3>
-                            <p className="text-sm text-muted-foreground">Migrate or clear data.</p>
                         </div>
                         <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
                     </div>

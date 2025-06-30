@@ -13,15 +13,13 @@ import { getAssignmentsForDriver } from '@/lib/actions/transport';
 import DashboardSkeleton from '@/app/loading';
 
 function DriverDashboardInternal({ assignments }: { assignments: FullTransportAssignment[] }) {
+  const { person } = useAuth();
+  
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Driver Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Your upcoming transport duties.
-        </p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">Driver Dashboard</h1>
+        <p className="text-sm opacity-90">Welcome, {person?.firstName}! Here are your upcoming transport duties.</p>
       </header>
       <Card>
         <CardHeader>

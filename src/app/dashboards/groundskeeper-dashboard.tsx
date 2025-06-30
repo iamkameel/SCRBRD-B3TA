@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -53,7 +54,8 @@ function FieldStatusSelector({ fieldId, currentStatus }: { fieldId: string, curr
 }
 
 function GroundskeeperDashboardInternal({ fields, matchesByField }: GroundskeeperDashboardProps) {
-
+  const { person } = useAuth();
+  
   const getStatusBadge = (status: Field['status']) => {
       switch(status) {
           case 'Available': return <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">{status}</Badge>;
@@ -65,13 +67,9 @@ function GroundskeeperDashboardInternal({ fields, matchesByField }: Groundskeepe
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Grounds-Keeper Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your assigned fields and view upcoming schedules.
-        </p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">Grounds-Keeper Dashboard</h1>
+        <p className="text-sm opacity-90">Manage your assigned fields and view upcoming schedules.</p>
       </header>
       
       {fields.length > 0 ? (

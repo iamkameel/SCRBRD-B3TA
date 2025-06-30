@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -71,6 +72,7 @@ interface UmpireScorerDashboardInternalProps {
 }
 
 function UmpireScorerDashboardInternal({ assignments }: UmpireScorerDashboardInternalProps) {
+  const { person } = useAuth();
   const now = new Date();
 
   const liveAssignments = assignments.filter(a => a.status === 'live');
@@ -79,13 +81,9 @@ function UmpireScorerDashboardInternal({ assignments }: UmpireScorerDashboardInt
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Officials Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Your upcoming match assignments and tasks.
-        </p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">Officials Dashboard</h1>
+        <p className="text-sm opacity-90">Your upcoming match assignments and tasks.</p>
       </header>
 
       {liveAssignments.length > 0 && (

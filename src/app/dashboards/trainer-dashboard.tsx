@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -18,15 +19,13 @@ interface TrainerDashboardInternalProps {
 }
 
 function TrainerDashboardInternal({ players }: TrainerDashboardInternalProps) {
+  const { person } = useAuth();
+  
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Trainer Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Manage fitness programs and track athlete progress.
-        </p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">Trainer Dashboard</h1>
+        <p className="text-sm opacity-90">Manage fitness programs and track athlete progress.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

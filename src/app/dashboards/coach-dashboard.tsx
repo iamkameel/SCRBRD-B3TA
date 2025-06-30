@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Calendar, Users, BarChart2, ClipboardList, Target, Medal } from 'lucide-react';
+import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight } from 'lucide-react';
 import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { getCoachDashboardData } from '@/lib/actions/dashboard';
@@ -45,9 +45,9 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
   if (!team || !teamStats) {
     return (
       <div className="flex flex-col gap-8">
-        <header>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Coach Dashboard</h1>
-          <p className="text-muted-foreground">Welcome, {person?.activeRole || 'Coach'}!</p>
+        <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold">Coach Dashboard</h1>
+            <p className="text-sm opacity-90">Welcome, {person?.activeRole || 'Coach'}!</p>
         </header>
         <Card>
           <CardHeader>
@@ -61,9 +61,9 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{team.name}</h1>
-        <p className="text-muted-foreground">Your command center for team performance and development.</p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">{team.name}</h1>
+        <p className="text-sm opacity-90">Your command center for team performance and development.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">

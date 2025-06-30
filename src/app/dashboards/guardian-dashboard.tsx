@@ -71,15 +71,13 @@ function ChildCard({ child, teamName, nextMatch }: { child: Person, teamName: st
 }
 
 function GuardianDashboardInternal({ data }: GuardianDashboardProps) {
+  const { person } = useAuth();
+  
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Guardian Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Your family's schedule and team communications at a glance.
-        </p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">Guardian Dashboard</h1>
+        <p className="text-sm opacity-90">Your family's schedule and team communications at a glance.</p>
       </header>
 
       {data.length > 0 ? (

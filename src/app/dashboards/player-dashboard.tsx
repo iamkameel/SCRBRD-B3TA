@@ -22,7 +22,7 @@ interface PlayerDashboardProps {
 
 function StatItem({ label, value }: { label: string, value: string | number }) {
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center text-center">
             <p className="font-bold text-2xl text-primary">{value}</p>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
         </div>
@@ -36,9 +36,9 @@ function PlayerDashboardInternal({ data }: PlayerDashboardProps) {
   if (!team) {
     return (
       <div className="flex flex-col gap-8">
-        <header>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Player Dashboard</h1>
-          <p className="text-muted-foreground">Welcome, {person?.firstName || 'Player'}!</p>
+        <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold">Player Dashboard</h1>
+            <p className="text-sm opacity-90">Welcome, {person?.firstName || 'Player'}!</p>
         </header>
         <Card>
           <CardHeader>
@@ -52,9 +52,9 @@ function PlayerDashboardInternal({ data }: PlayerDashboardProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Player Dashboard</h1>
-        <p className="text-muted-foreground">Your hub for personal stats and upcoming fixtures.</p>
+      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold">Player Dashboard</h1>
+        <p className="text-sm opacity-90">Your hub for personal stats and upcoming fixtures for {team.name}.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
