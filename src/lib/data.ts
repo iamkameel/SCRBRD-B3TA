@@ -237,10 +237,13 @@ export interface TeamStats {
 }
 
 export interface PlayerTeamAssignment {
+  assignmentId: string;
   teamId: string;
   teamName: string;
   role: string;
   status: string;
+  isCaptain: boolean;
+  isViceCaptain: boolean;
 }
 
 export interface Vehicle {

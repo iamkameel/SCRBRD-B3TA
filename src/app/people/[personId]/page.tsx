@@ -5,19 +5,22 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import PersonDetailsClient from './client';
 import { getPerson, getPersonLinks, getPlayers } from '@/lib/actions/players';
-import { getPersonTeamAssignments } from '@/lib/actions/teams';
+import { getPersonTeamAssignments, getTeams } from '@/lib/actions/teams';
 import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import { Button } from '@/components/ui/button';
+import { getUserId } from '@/lib/auth';
 
 export default async function PersonDetailsPage({ params }: { params: { personId: string } }) {
   
-  const [person, { guardians, children }, allPeople, playerStats, teamAssignments, matchHistory] = await Promise.all([
+  const [person, { guardians, children }, allPeople, playerStats, teamAssignments, matchHistory, allTeams, userId] = await Promise.all([
     getPerson(params.personId),
     getPersonLinks(params.personId),
     getPlayers(),
     getPlayerStats(params.personId),
     getPersonTeamAssignments(params.personId),
     getPlayerMatchHistory(params.personId),
+    getTeams(),
+    getUserId(),
   ]);
 
   if (!person) {
@@ -32,6 +35,9 @@ export default async function PersonDetailsPage({ params }: { params: { personId
     );
   }
 
+  const currentUser = userId ? await getPerson(userId) : null;
+  const canManage = (currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster')) ?? false;
+
   // Filter out the current person and anyone already linked
   const existingLinkIds = new Set([
       person.personId,
@@ -39,6 +45,7 @@ export default async function PersonDetailsPage({ params }: { params: { personId
       ...children.map(c => c.personId)
   ]);
   const availablePeople = allPeople.filter(p => !existingLinkIds.has(p.personId));
+  const availableTeams = allTeams.filter(t => !teamAssignments.some(a => a.teamId === t.teamId));
 
   return (
     <PersonDetailsClient 
@@ -49,6 +56,8 @@ export default async function PersonDetailsPage({ params }: { params: { personId
         availablePeople={availablePeople}
         teamAssignments={teamAssignments}
         matchHistory={matchHistory}
+        allTeams={availableTeams}
+        canManage={canManage}
     />
   );
 }

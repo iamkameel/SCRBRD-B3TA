@@ -166,6 +166,7 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
     throw new Error("Could not add player to roster.");
   }
   revalidatePath(`/teams/${teamId}`);
+  revalidatePath(`/people/${data.personId}`);
 }
 
 export async function removeRosterAssignmentAction(teamId: string, assignmentId: string) {
@@ -177,14 +178,23 @@ export async function removeRosterAssignmentAction(teamId: string, assignmentId:
         throw new Error("You do not have permission to modify team rosters.");
     }
     
-    if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
+    const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found or permission denied.");
+
+    const assignmentRef = doc(db, 'teams', teamId, 'roster', assignmentId);
+    const assignmentSnap = await getDoc(assignmentRef);
+    if (!assignmentSnap.exists()) throw new Error("Assignment not found.");
+    
+    const personId = assignmentSnap.data().personId;
+
     try {
-        await deleteDoc(doc(db, 'teams', teamId, 'roster', assignmentId));
+        await deleteDoc(assignmentRef);
     } catch (error) {
         console.error("Error removing roster assignment:", error);
         throw new Error("Could not remove player from roster.");
     }
     revalidatePath(`/teams/${teamId}`);
+    revalidatePath(`/people/${personId}`);
 }
 
 const updateAssignmentSchema = z.object({
@@ -212,8 +222,13 @@ export async function updateRosterAssignmentAction(data: z.infer<typeof updateAs
   
   if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
 
+  const assignmentRef = doc(db, 'teams', teamId, 'roster', assignmentId);
+  const assignmentSnap = await getDoc(assignmentRef);
+  if (!assignmentSnap.exists()) throw new Error("Assignment not found.");
+  
+  const personId = assignmentSnap.data().personId;
+
   try {
-    const assignmentRef = doc(db, 'teams', teamId, 'roster', assignmentId);
     await updateDoc(assignmentRef, updateData);
   } catch (error) {
     console.error("Error updating roster assignment:", error);
@@ -221,6 +236,7 @@ export async function updateRosterAssignmentAction(data: z.infer<typeof updateAs
   }
   
   revalidatePath(`/teams/${teamId}`);
+  revalidatePath(`/people/${personId}`);
 }
 
 const teamSchema = z.object({
@@ -410,10 +426,13 @@ export const getPersonTeamAssignments = cache(async (personId: string): Promise<
             if (!rosterSnapshot.empty) {
                 const rosterData = rosterSnapshot.docs[0].data();
                 assignments.push({
+                    assignmentId: rosterSnapshot.docs[0].id,
                     teamId: teamDoc.id,
                     teamName: teamDoc.data().name,
                     role: rosterData.role,
                     status: rosterData.status,
+                    isCaptain: rosterData.isCaptain ?? false,
+                    isViceCaptain: rosterData.isViceCaptain ?? false,
                 });
             }
         }
