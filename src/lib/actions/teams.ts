@@ -93,12 +93,15 @@ export const getTeamStats = cache(async (teamId: string): Promise<TeamStats> => 
         totalRunsScored: 0, totalWicketsTaken: 0, netRunRate: 0.0
     };
 
+    const userId = await getUserId();
+    if (!userId) return defaultStats;
+
     const team = await getTeam(teamId);
     if (!team) return defaultStats;
 
     const matchesCollection = collection(db, 'matches');
-    const teamAQuery = query(matchesCollection, where("status", "==", "completed"), where("teamAId", "==", teamId));
-    const teamBQuery = query(matchesCollection, where("status", "==", "completed"), where("teamBId", "==", teamId));
+    const teamAQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamAId", "==", teamId));
+    const teamBQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamBId", "==", teamId));
     
     const [teamAMatchesSnapshot, teamBMatchesSnapshot] = await Promise.all([getDocs(teamAQuery), getDocs(teamBQuery)]);
     const allMatches = [...teamAMatchesSnapshot.docs, ...teamBMatchesSnapshot.docs];
