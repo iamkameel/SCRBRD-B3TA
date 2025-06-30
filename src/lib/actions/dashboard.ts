@@ -1,8 +1,9 @@
 
+
 'use server';
 
 import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict, FullTransportAssignment, TrainingSession, Season, Division, School, AssignmentRequest } from '@/lib/data';
-import { getPlayers, getPerson } from './players';
+import { getPlayers, getPerson, getPersonLinks } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
 import { getFieldsForGroundskeeper, getFields } from './fields';
@@ -18,6 +19,7 @@ import { getSeasons } from './seasons';
 import { getDivisions } from './divisions';
 import { getSchools } from './schools';
 import { getPendingAssignmentRequests } from './requests';
+import { cache } from 'react';
 
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
@@ -257,3 +259,32 @@ export async function getGroundskeeperDashboardData(personId: string) {
     
     return { fields, matchesByField };
 }
+
+export const getGuardianDashboardData = cache(async (personId: string): Promise<{ child: Person, teamName: string, nextMatch: Match | null }[]> => {
+    const { children } = await getPersonLinks(personId);
+    if (children.length === 0) return [];
+    
+    const dashboardData = await Promise.all(
+        children.map(async (child) => {
+            const assignments = await getPersonTeamAssignments(child.personId);
+            const primaryTeamAssignment = assignments.find(a => a.role === 'Player');
+            const teamName = primaryTeamAssignment ? primaryTeamAssignment.teamName : 'No Team Assigned';
+            
+            let nextMatch: Match | null = null;
+            if (primaryTeamAssignment) {
+                const teamMatches = await getTeamMatches(primaryTeamAssignment.teamId);
+                nextMatch = teamMatches
+                    .filter(m => m.status === 'scheduled' && m.dateTime >= new Date())
+                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0] || null;
+            }
+            
+            return {
+                child,
+                teamName,
+                nextMatch,
+            };
+        })
+    );
+    
+    return dashboardData;
+});

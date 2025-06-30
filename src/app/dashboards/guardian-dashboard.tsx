@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -10,7 +11,7 @@ import { format } from "date-fns";
 import { Calendar, Clock, MapPin, MessageSquare, IndianRupee, User, ArrowRight } from 'lucide-react';
 import type { Person, Match } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
-import { getGuardianDashboardData } from '@/lib/actions/players';
+import { getGuardianDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 
 interface GuardianDashboardData {

@@ -6,14 +6,13 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId } from 'firebase/firestore';
-import type { Person, PlayerTeamAssignment, PlayerDevelopmentPlanOutput, Match } from '@/lib/data';
+import type { Person, PlayerDevelopmentPlanOutput, Match } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
-import { getTeamMatches } from './teams';
 
 export const getPlayers = cache(async (): Promise<Person[]> => {
   const userId = await getUserId();
@@ -501,35 +500,6 @@ export async function updateActiveRoleAction(personId: string, role: string) {
     throw new Error("Could not update active role.");
   }
 }
-
-export const getGuardianDashboardData = cache(async (personId: string): Promise<{ child: Person, teamName: string, nextMatch: Match | null }[]> => {
-    const { children } = await getPersonLinks(personId);
-    if (children.length === 0) return [];
-    
-    const dashboardData = await Promise.all(
-        children.map(async (child) => {
-            const assignments = await getPersonTeamAssignments(child.personId);
-            const primaryTeamAssignment = assignments.find(a => a.role === 'Player');
-            const teamName = primaryTeamAssignment ? primaryTeamAssignment.teamName : 'No Team Assigned';
-            
-            let nextMatch: Match | null = null;
-            if (primaryTeamAssignment) {
-                const teamMatches = await getTeamMatches(primaryTeamAssignment.teamId);
-                nextMatch = teamMatches
-                    .filter(m => m.status === 'scheduled' && m.dateTime >= new Date())
-                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0] || null;
-            }
-            
-            return {
-                child,
-                teamName,
-                nextMatch,
-            };
-        })
-    );
-    
-    return dashboardData;
-});
 
 export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> => {
   const userId = await getUserId();
