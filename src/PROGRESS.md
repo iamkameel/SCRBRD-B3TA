@@ -1,3 +1,4 @@
+
 # Project Progress: Towards Market Leadership
 
 This document tracks our progress against the "Next Steps" roadmap. We've made significant strides, especially in building out our advanced AI capabilities and improving core usability with advanced filtering.
@@ -18,7 +19,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 -   [x] **7. Predictive Player Performance**: **Complete.** AI can now forecast a player's likely performance in an upcoming match.
 -   [x] **9. Natural Language Query for Stats**: **Complete.** Users can ask plain-English questions about stats and receive AI-generated answers.
--   [x] **10. Dynamic In-Match Strategy Suggestions**: **Complete.** The live scoring analysis now provides tactical advice.
+-   [ ] **10. Dynamic In-Match Strategy Suggestions**: Not Started.
 -   [ ] **6. AI Scouting Assistant**: Not Started.
 -   [ ] **8. Automated Highlight Reels**: Not Started.
 
