@@ -9,17 +9,15 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getMatch } from '@/lib/actions/matches';
 import { getWeatherForecast } from '@/ai/tools/weather-tool';
-import { GetMatchForecastOutputSchema, type GetMatchForecastOutput } from '@/ai/schemas';
+import { GetMatchForecastOutputSchema, WeatherDetailsSchema, type GetMatchForecastOutput } from '@/ai/schemas';
 import { format } from 'date-fns';
 
-const getMatchForecastPrompt = ai.definePrompt({
-    name: 'matchForecastPrompt',
+const summarizeWeatherPrompt = ai.definePrompt({
+    name: 'summarizeWeatherPrompt',
     system: `You are a helpful cricket match assistant. 
-Your goal is to provide a weather forecast for the user's match.
-Use the provided getWeatherForecast tool to get the weather data for the specified location and date.
-Based on the data you receive from the tool, provide a concise, one-sentence summary of the forecast.
-Also return the detailed weather data you received.`,
-    tools: [getWeatherForecast],
+    Based on the provided JSON weather data, provide a concise, one-sentence summary of the forecast.
+    Also return the detailed weather data you received, unchanged.`,
+    input: { schema: z.object({ details: WeatherDetailsSchema }) },
     output: { schema: GetMatchForecastOutputSchema },
 });
 
@@ -36,9 +34,14 @@ const getMatchForecastFlow = ai.defineFlow(
         throw new Error('Match not found.');
     }
     
-    const { output } = await getMatchForecastPrompt(
-        `Please get the weather forecast for a match at ${match.fieldName} on ${format(match.dateTime, 'yyyy-MM-dd')}.`
-    );
+    // 1. Call the "tool" function directly to get weather data
+    const weatherDetails = await getWeatherForecast({
+        location: match.fieldName,
+        date: format(match.dateTime, 'yyyy-MM-dd'),
+    });
+
+    // 2. Call the summarization prompt
+    const { output } = await summarizeWeatherPrompt({ details: weatherDetails });
 
     return output!;
   }
