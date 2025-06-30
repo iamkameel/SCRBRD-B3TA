@@ -2,8 +2,8 @@
 'use client';
 
 import * as React from "react";
-import dynamic from "next/dynamic";
 import Link from 'next/link';
+import { format } from "date-fns";
 import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star } from 'lucide-react';
 import type { Field, Match } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +12,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-
-const FieldMap = dynamic(() => import('./field-map'), { 
-    ssr: false,
-    loading: () => <div className="h-full w-full bg-muted animate-pulse rounded-md" />
-});
-
 
 export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
     const upcomingMatches = matches.filter(m => m.status === 'scheduled');
@@ -202,16 +196,6 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                     </Card>
                 </div>
                 <div className="lg:col-span-1 space-y-8">
-                     {field.coordinates?.lat && field.coordinates?.lon && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Map Location</CardTitle>
-                            </CardHeader>
-                            <CardContent className="h-80 w-full p-0 relative">
-                                <FieldMap coords={field.coordinates} fieldName={field.name} />
-                            </CardContent>
-                        </Card>
-                    )}
                     <Card>
                         <CardHeader>
                             <CardTitle>Venue Operations</CardTitle>
