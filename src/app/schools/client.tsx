@@ -37,11 +37,13 @@ import { addSchoolAction, updateSchoolAction, deleteSchoolAction } from '@/lib/a
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
   abbreviation: z.string().optional(),
   motto: z.string().optional(),
-  establishmentYear: z.coerce.number().int().min(1000).max(new Date().getFullYear()).optional().or(z.literal('')),
+  establishmentYear: z.coerce.number().int().min(1000).max(CURRENT_YEAR).optional().or(z.literal('')),
   principal: z.string().optional(),
   socialMedia: z.object({
     facebook: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
