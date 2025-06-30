@@ -68,6 +68,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
   
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
+  const [schoolFilter, setSchoolFilter] = React.useState<string[]>([]);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   
   const canManage = user?.roles.some(role => ['Admin', 'Sportsmaster', 'Team Manager'].includes(role)) ?? false;
@@ -79,9 +80,10 @@ export default function PeopleClient({ people, user, schools }: { people: Person
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
       const matchesRole = roleFilters.length === 0 || roleFilters.some(role => person.roles.includes(role));
-      return matchesSearch && matchesRole;
+      const matchesSchool = schoolFilter.length === 0 || schoolFilter.some(schoolId => person.assignedSchools?.includes(schoolId));
+      return matchesSearch && matchesRole && matchesSchool;
     });
-  }, [people, searchQuery, roleFilters]);
+  }, [people, searchQuery, roleFilters, schoolFilter]);
 
   const sortedPeople = React.useMemo(() => {
     let sortableItems = [...filteredPeople];
@@ -109,12 +111,12 @@ export default function PeopleClient({ people, user, schools }: { people: Person
     return sortableItems;
   }, [filteredPeople, sortConfig, schools]);
 
-  const filtersApplied = searchQuery || roleFilters.length > 0;
+  const filtersApplied = searchQuery || roleFilters.length > 0 || schoolFilter.length > 0;
 
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, roleFilters, view, sortConfig]);
+  }, [searchQuery, roleFilters, schoolFilter, view, sortConfig]);
 
   // Pagination logic
   const paginatedPeople = sortedPeople.slice(
@@ -252,6 +254,51 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                         onSelect={() => setRoleFilters([])}
+                                        className="justify-center text-sm"
+                                        >
+                                        Clear filter
+                                        </DropdownMenuItem>
+                                    </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label>School</Label>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
+                                        <span className="truncate">
+                                            {schoolFilter.length === 0 && "Select schools..."}
+                                            {schoolFilter.length === 1 && schools.find(s => s.schoolId === schoolFilter[0])?.name}
+                                            {schoolFilter.length > 1 && `${schoolFilter.length} schools selected`}
+                                        </span>
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56">
+                                    <DropdownMenuLabel>Filter by School</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {schools.map(school => (
+                                    <DropdownMenuCheckboxItem
+                                        key={school.schoolId}
+                                        checked={schoolFilter.includes(school.schoolId)}
+                                        onSelect={(e) => e.preventDefault()}
+                                        onCheckedChange={checked => {
+                                            const newFilters = checked
+                                                ? [...schoolFilter, school.schoolId]
+                                                : schoolFilter.filter(id => id !== school.schoolId);
+                                            setSchoolFilter(newFilters);
+                                        }}
+                                    >
+                                        {school.name}
+                                    </DropdownMenuCheckboxItem>
+                                    ))}
+                                    {schoolFilter.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                        onSelect={() => setSchoolFilter([])}
                                         className="justify-center text-sm"
                                         >
                                         Clear filter
