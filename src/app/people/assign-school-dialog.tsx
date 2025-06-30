@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -24,14 +25,14 @@ export function AssignSchoolDialog({ person, schools, open, onOpenChange }: { pe
   const form = useForm<AssignSchoolFormValues>({
     resolver: zodResolver(assignSchoolSchema),
     defaultValues: {
-      schoolId: person?.assignedSchools?.[0] || "",
+      schoolId: person?.assignedSchools?.[0] || undefined,
     },
   });
 
   React.useEffect(() => {
     if (person) {
       form.reset({
-        schoolId: person.assignedSchools?.[0] || "",
+        schoolId: person.assignedSchools?.[0] || undefined,
       });
     }
   }, [person, form]);
@@ -63,14 +64,18 @@ export function AssignSchoolDialog({ person, schools, open, onOpenChange }: { pe
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>School</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
+                  <Select
+                    onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    value={field.value ?? 'none'}
+                    disabled={isPending}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a school" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">-- None --</SelectItem>
+                      <SelectItem value="none">-- None --</SelectItem>
                       {schools.map((school) => (
                         <SelectItem key={school.schoolId} value={school.schoolId}>
                           {school.name}

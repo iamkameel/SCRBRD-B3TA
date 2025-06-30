@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -54,9 +55,9 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
       ...person,
       phone: person.phone ?? '',
       profileImageUrl: person.profileImageUrl ?? '',
-      assignedSchoolId: person.assignedSchools?.[0] || '',
+      assignedSchoolId: person.assignedSchools?.[0] || undefined,
     } : {
-      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: "",
+      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: undefined,
     },
   });
   
@@ -71,11 +72,11 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
           ...person,
           phone: person.phone ?? '',
           profileImageUrl: person.profileImageUrl ?? '',
-          assignedSchoolId: person.assignedSchools?.[0] || '',
+          assignedSchoolId: person.assignedSchools?.[0] || undefined,
         });
       } else {
         form.reset({
-          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: "",
+          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: undefined,
         });
       }
     }
@@ -174,14 +175,18 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                   <FormDescription>
                     Assign this person to a primary school. This is required for most staff and player roles.
                   </FormDescription>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
+                  <Select
+                    onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    value={field.value ?? 'none'}
+                    disabled={isPending}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a school" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">-- None --</SelectItem>
+                      <SelectItem value="none">-- None --</SelectItem>
                       {schools.map((school) => (
                         <SelectItem key={school.schoolId} value={school.schoolId}>
                           {school.name}
