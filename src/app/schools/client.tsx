@@ -112,31 +112,29 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
           <DialogDescription>Enter the school's details across the tabs below.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Tabs defaultValue="general">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="branding">Branding</TabsTrigger>
               </TabsList>
-              <div className="py-4">
-                  <TabsContent value="general" className="space-y-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                  </TabsContent>
-                  <TabsContent value="contact" className="space-y-4">
-                     <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Academy Lane, Knowledgeton" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="e.g. +27 31 123 4567" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="e.g. https://www.school.com" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                  </TabsContent>
-                  <TabsContent value="branding" className="space-y-4">
-                    <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
-                  </TabsContent>
-              </div>
+              <TabsContent value="general" className="space-y-4 pt-4">
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+              </TabsContent>
+              <TabsContent value="contact" className="space-y-4 pt-4">
+                  <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Academy Lane, Knowledgeton" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="e.g. +27 31 123 4567" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="e.g. https://www.school.com" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+              </TabsContent>
+              <TabsContent value="branding" className="space-y-4 pt-4">
+                <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+              </TabsContent>
             </Tabs>
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
