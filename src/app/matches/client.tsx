@@ -165,6 +165,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
   const [competitionFilter, setCompetitionFilter] = React.useState<string[]>([]);
+  const [teamFilter, setTeamFilter] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -193,19 +194,22 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
     });
   };
   
+  const filteredMatches = React.useMemo(() => {
+    return matches.filter(match => {
+        const matchesSearch = `${match.teamAName} ${match.teamBName}`
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter.length === 0 || statusFilter.includes(match.status);
+        const matchesCompetition = competitionFilter.length === 0 || competitionFilter.includes(match.competitionId || "friendly");
+        const matchesTeam = teamFilter.length === 0 || teamFilter.some(teamId => teamId === match.teamAId || teamId === match.teamBId);
+        return matchesSearch && matchesStatus && matchesCompetition && matchesTeam;
+    });
+  }, [matches, searchQuery, statusFilter, competitionFilter, teamFilter]);
+
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, competitionFilter, view]);
+  }, [searchQuery, statusFilter, competitionFilter, teamFilter, view]);
 
-
-  const filteredMatches = matches.filter(match => {
-    const matchesSearch = `${match.teamAName} ${match.teamBName}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter.length === 0 || statusFilter.includes(match.status);
-    const matchesCompetition = competitionFilter.length === 0 || competitionFilter.includes(match.competitionId || "friendly");
-    return matchesSearch && matchesStatus && matchesCompetition;
-  });
 
   const paginatedMatches = filteredMatches.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -219,8 +223,15 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
     }
   };
 
-  const filtersApplied = searchQuery || statusFilter.length > 0 || competitionFilter.length > 0;
+  const filtersApplied = searchQuery || statusFilter.length > 0 || competitionFilter.length > 0 || teamFilter.length > 0;
   
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter([]);
+    setCompetitionFilter([]);
+    setTeamFilter([]);
+  }
+
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -262,15 +273,18 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                   </PopoverTrigger>
                   <PopoverContent className="w-80">
                     <div className="grid gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">Filter Matches</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Find matches by team, status, or competition.
-                        </p>
+                      <div className="flex items-center justify-between">
+                         <div className="space-y-2">
+                            <h4 className="font-medium leading-none">Filter Matches</h4>
+                            <p className="text-sm text-muted-foreground">
+                            Find matches by team, status, or competition.
+                            </p>
+                        </div>
+                        {filtersApplied && <Button variant="ghost" size="sm" onClick={clearFilters}>Clear</Button>}
                       </div>
                       <div className="grid gap-4">
                         <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="search-input">Team</Label>
+                          <Label htmlFor="search-input">Team Name</Label>
                           <Input
                             id="search-input"
                             placeholder="Team name..."
@@ -281,99 +295,34 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                         </div>
                         <div className="grid grid-cols-3 items-center gap-4">
                             <Label>Status</Label>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="col-span-2 h-8 justify-between font-normal capitalize">
-                                        <span className="truncate">
-                                            {statusFilter.length === 0 && "Select statuses..."}
-                                            {statusFilter.length === 1 && statusFilter[0]}
-                                            {statusFilter.length > 1 && `${statusFilter.length} statuses selected`}
-                                        </span>
-                                        <ChevronDown className="h-4 w-4 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56">
-                                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {MATCH_STATUSES.map(status => (
-                                    <DropdownMenuCheckboxItem
-                                        key={status}
-                                        checked={statusFilter.includes(status)}
-                                        onSelect={(e) => e.preventDefault()}
-                                        onCheckedChange={checked => {
-                                            const newFilters = checked
-                                                ? [...statusFilter, status]
-                                                : statusFilter.filter(id => id !== status);
-                                            setStatusFilter(newFilters);
-                                        }}
-                                        className="capitalize"
-                                    >
-                                        {status}
-                                    </DropdownMenuCheckboxItem>
-                                    ))}
-                                    {statusFilter.length > 0 && (
-                                    <>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem
-                                        onSelect={() => setStatusFilter([])}
-                                        className="justify-center text-sm"
-                                        >
-                                        Clear filter
-                                        </DropdownMenuItem>
-                                    </>
-                                    )}
+                            <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal capitalize"><span className="truncate">{statusFilter.length === 0 && "Select statuses..."}{statusFilter.length === 1 && statusFilter[0]}{statusFilter.length > 1 && `${statusFilter.length} statuses selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Status</DropdownMenuLabel><DropdownMenuSeparator />
+                                    {MATCH_STATUSES.map(status => (<DropdownMenuCheckboxItem key={status} checked={statusFilter.includes(status)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...statusFilter, status] : statusFilter.filter(id => id !== status); setStatusFilter(newFilters); }} className="capitalize">{status}</DropdownMenuCheckboxItem>))}
+                                    {statusFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setStatusFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
 
                         <div className="grid grid-cols-3 items-center gap-4">
                             <Label>Competition</Label>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
-                                        <span className="truncate">
-                                            {competitionFilter.length === 0 && "Select competitions..."}
-                                            {competitionFilter.length === 1 && (competitions.find(c => c.competitionId === competitionFilter[0])?.name || "Friendly")}
-                                            {competitionFilter.length > 1 && `${competitionFilter.length} competitions selected`}
-                                        </span>
-                                        <ChevronDown className="h-4 w-4 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56">
-                                    <DropdownMenuLabel>Filter by Competition</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuCheckboxItem checked={competitionFilter.includes("friendly")} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...competitionFilter, "friendly"] : competitionFilter.filter(id => id !== "friendly"); setCompetitionFilter(newFilters); }}>Friendly</DropdownMenuCheckboxItem>
-                                    <DropdownMenuSeparator />
-                                    {competitions.map(comp => (
-                                    <DropdownMenuCheckboxItem
-                                        key={comp.competitionId}
-                                        checked={competitionFilter.includes(comp.competitionId)}
-                                        onSelect={(e) => e.preventDefault()}
-                                        onCheckedChange={checked => {
-                                            const newFilters = checked
-                                                ? [...competitionFilter, comp.competitionId]
-                                                : competitionFilter.filter(id => id !== comp.competitionId);
-                                            setCompetitionFilter(newFilters);
-                                        }}
-                                    >
-                                        {comp.name}
-                                    </DropdownMenuCheckboxItem>
-                                    ))}
-                                    {competitionFilter.length > 0 && (
-                                    <>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem
-                                        onSelect={() => setCompetitionFilter([])}
-                                        className="justify-center text-sm"
-                                        >
-                                        Clear filter
-                                        </DropdownMenuItem>
-                                    </>
-                                    )}
+                            <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{competitionFilter.length === 0 && "Select competitions..."}{competitionFilter.length === 1 && (competitions.find(c => c.competitionId === competitionFilter[0])?.name || "Friendly")}{competitionFilter.length > 1 && `${competitionFilter.length} comps selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Competition</DropdownMenuLabel><DropdownMenuSeparator />
+                                    <DropdownMenuCheckboxItem checked={competitionFilter.includes("friendly")} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...competitionFilter, "friendly"] : competitionFilter.filter(id => id !== "friendly"); setCompetitionFilter(newFilters); }}>Friendly</DropdownMenuCheckboxItem><DropdownMenuSeparator />
+                                    {competitions.map(comp => (<DropdownMenuCheckboxItem key={comp.competitionId} checked={competitionFilter.includes(comp.competitionId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...competitionFilter, comp.competitionId] : competitionFilter.filter(id => id !== comp.competitionId); setCompetitionFilter(newFilters); }}>{comp.name}</DropdownMenuCheckboxItem>))}
+                                    {competitionFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setCompetitionFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
 
+                         <div className="grid grid-cols-3 items-center gap-4">
+                            <Label>Team</Label>
+                            <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{teamFilter.length === 0 && "Select teams..."}{teamFilter.length === 1 && teams.find(t => t.teamId === teamFilter[0])?.name}{teamFilter.length > 1 && `${teamFilter.length} teams selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Team</DropdownMenuLabel><DropdownMenuSeparator />
+                                    {teams.map(team => (<DropdownMenuCheckboxItem key={team.teamId} checked={teamFilter.includes(team.teamId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...teamFilter, team.teamId] : teamFilter.filter(id => id !== team.teamId); setTeamFilter(newFilters); }}>{team.name}</DropdownMenuCheckboxItem>))}
+                                    {teamFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setTeamFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                       </div>
                     </div>
                   </PopoverContent>
@@ -505,3 +454,4 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
     </>
   );
 }
+
