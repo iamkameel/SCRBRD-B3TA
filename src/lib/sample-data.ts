@@ -17,16 +17,16 @@ const pastDate = (days: number) => {
 
 export const sampleData = {
     schools: [
-        { schoolId: 'school_1', name: 'Michaelhouse', abbreviation: 'MHS' },
-        { schoolId: 'school_2', name: 'Hilton College', abbreviation: 'HC' },
-        { schoolId: 'school_3', name: 'Maritzburg College', abbreviation: 'MC' },
-        { schoolId: 'school_4', name: 'Durban High School', abbreviation: 'DHS' },
-        { schoolId: 'school_5', name: 'Glenwood High School', abbreviation: 'GHS' },
-        { schoolId: 'school_6', name: 'Westville Boys\' High School', abbreviation: 'WBHS' },
-        { schoolId: 'school_7', name: 'Kearsney College', abbreviation: 'KC' },
-        { schoolId: 'school_8', name: 'St Charles College', abbreviation: 'SCC' },
-        { schoolId: 'school_9', name: 'Northwood School', abbreviation: 'NS' },
-        { schoolId: 'school_10', name: 'Clifton School', abbreviation: 'CS' },
+        { schoolId: 'school_1', name: 'Michaelhouse', abbreviation: 'MHS', logoUrl: 'https://placehold.co/100x100.png', location: 'Balgowan, KwaZulu-Natal', phone: '+27 33 234 1000', website: 'https://www.michaelhouse.org/', brandColors: { primary: '#00205B', secondary: '#FFFFFF' } },
+        { schoolId: 'school_2', name: 'Hilton College', abbreviation: 'HC', logoUrl: 'https://placehold.co/100x100.png', location: 'Hilton, KwaZulu-Natal', phone: '+27 33 383 0100', website: 'https://www.hiltoncollege.com/', brandColors: { primary: '#A50034', secondary: '#FFFFFF' } },
+        { schoolId: 'school_3', name: 'Maritzburg College', abbreviation: 'MC', logoUrl: 'https://placehold.co/100x100.png', location: 'Pietermaritzburg, KwaZulu-Natal', phone: '+27 33 342 9376', website: 'https://maritzburgcollege.co.za/', brandColors: { primary: '#B22222', secondary: '#FFFFFF' } },
+        { schoolId: 'school_4', name: 'Durban High School', abbreviation: 'DHS', logoUrl: 'https://placehold.co/100x100.png', location: 'Musgrave, Durban', phone: '+27 31 277 1500', website: 'https://www.durbanhighschool.co.za/', brandColors: { primary: '#000080', secondary: '#FFD700' } },
+        { schoolId: 'school_5', name: 'Glenwood High School', abbreviation: 'GHS', logoUrl: 'https://placehold.co/100x100.png', location: 'Glenwood, Durban', phone: '+27 31 205 5241', website: 'https://www.glenwoodhighschool.co.za/', brandColors: { primary: '#008000', secondary: '#FFFFFF' } },
+        { schoolId: 'school_6', name: 'Westville Boys\' High School', abbreviation: 'WBHS', logoUrl: 'https://placehold.co/100x100.png', location: 'Westville, Durban', phone: '+27 31 267 1330', website: 'https://www.wbhs.co.za/', brandColors: { primary: '#1E90FF', secondary: '#FFFFFF' } },
+        { schoolId: 'school_7', name: 'Kearsney College', abbreviation: 'KC', logoUrl: 'https://placehold.co/100x100.png', location: 'Botha\'s Hill, Durban', phone: '+27 31 765 9600', website: 'https://www.kearsney.com/', brandColors: { primary: '#FF4500', secondary: '#1E90FF' } },
+        { schoolId: 'school_8', name: 'St Charles College', abbreviation: 'SCC', logoUrl: 'https://placehold.co/100x100.png', location: 'Pietermaritzburg, KwaZulu-Natal', phone: '+27 33 386 8235', website: 'https://www.scc.co.za/', brandColors: { primary: '#00008B', secondary: '#ADD8E6' } },
+        { schoolId: 'school_9', name: 'Northwood School', abbreviation: 'NS', logoUrl: 'https://placehold.co/100x100.png', location: 'Durban North, Durban', phone: '+27 31 563 6501', website: 'https://www.northwoodschool.co.za/', brandColors: { primary: '#004B8D', secondary: '#FFFFFF' } },
+        { schoolId: 'school_10', name: 'Clifton School', abbreviation: 'CS', logoUrl: 'https://placehold.co/100x100.png', location: 'Morningside, Durban', phone: '+27 31 312 2147', website: 'https://www.cliftonschool.co.za/', brandColors: { primary: '#800000', secondary: '#F0E68C' } },
     ],
     divisions: [
         { divisionId: 'div_open', name: 'Open' },
@@ -179,19 +179,19 @@ export const sampleData = {
         { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
     ],
     teams: [
-        { teamId: 'team_1', name: 'Michaelhouse 1st XI', schoolId: 'school_1', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#00205B', secondary: '#FFFFFF' }, roster: [
+        { teamId: 'team_1', name: 'Michaelhouse 1st XI', schoolId: 'school_1', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: [
             ...Array.from({length: 11}, (_, i) => ({ personId: `p_${i + 1}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
             { personId: 'p_12', role: 'Coach', status: 'active' },
             { personId: 'p_49', role: 'Team Manager', status: 'active' },
         ]},
-        { teamId: 'team_2', name: 'Hilton 1st XI', schoolId: 'school_2', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#FFFFFF', secondary: '#A50034' }, roster: [
+        { teamId: 'team_2', name: 'Hilton 1st XI', schoolId: 'school_2', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: [
             ...Array.from({length: 11}, (_, i) => ({ personId: `p_${i + 13}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
             { personId: 'p_24', role: 'Coach', status: 'active' },
             { personId: 'p_50', role: 'Assistant Coach', status: 'active' },
         ]},
-        { teamId: 'team_3', name: 'Maritzburg 1st XI', schoolId: 'school_3', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#B22222', secondary: '#FFFFFF' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 25}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
-        { teamId: 'team_4', name: 'DHS 1st XI', schoolId: 'school_4', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#000080', secondary: '#FFD700' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 37}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
-        { teamId: 'team_5', name: 'Maritzburg U16A', schoolId: 'school_3', divisionId: 'div_u16', seasonId: 'season_1', teamClass: 'U16A', teamColors: { primary: '#B22222', secondary: '#FFFFFF' }, roster: [
+        { teamId: 'team_3', name: 'Maritzburg 1st XI', schoolId: 'school_3', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 25}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
+        { teamId: 'team_4', name: 'DHS 1st XI', schoolId: 'school_4', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 37}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
+        { teamId: 'team_5', name: 'Maritzburg U16A', schoolId: 'school_3', divisionId: 'div_u16', seasonId: 'season_1', teamClass: 'U16A', roster: [
             ...Array.from({length: 11}, (_, i) => ({ personId: `p_u16_${i + 1}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
             { personId: 'p_u16_coach', role: 'Coach', status: 'active' },
         ]},

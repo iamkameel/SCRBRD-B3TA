@@ -11,7 +11,7 @@ import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,129 +33,114 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { School } from "@/lib/data";
 import { addSchoolAction, updateSchoolAction, deleteSchoolAction } from '@/lib/actions/schools';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
-// Schema based on competitions.schools
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
   abbreviation: z.string().optional(),
+  logoUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
+  website: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
+  phone: z.string().optional(),
+  location: z.string().optional(),
+  brandColors: z.object({
+    primary: z.string().regex(/^#[0-9a-fA-F]{6}$/, { message: "Must be a valid hex color." }).optional(),
+    secondary: z.string().regex(/^#[0-9a-fA-F]{6}$/, { message: "Must be a valid hex color." }).optional(),
+  }).optional(),
 });
+
 
 type SchoolFormValues = z.infer<typeof schoolSchema>;
 
-function AddSchoolDialog() {
-  const [open, setOpen] = React.useState(false);
+function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edit', school?: School, open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolSchema),
-    defaultValues: { name: "", abbreviation: "" },
-  });
-
-  function onSubmit(data: SchoolFormValues) {
-    startTransition(async () => {
-      try {
-        await addSchoolAction(data);
-        toast({
-          title: "School Added",
-          description: `${data.name} has been successfully created.`,
-        });
-        setOpen(false);
-        form.reset();
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Could not add school.",
-          variant: "destructive",
-        })
-      }
-    });
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2" />
-          Add School
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle>Add New School</DialogTitle>
-          <DialogDescription>
-            Enter the details for the new school.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <DialogFooter>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save School"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function EditSchoolDialog({ school, open, onOpenChange }: { school: School, open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = React.useTransition();
-
-  const form = useForm<SchoolFormValues>({
-    resolver: zodResolver(schoolSchema),
-    defaultValues: { name: school.name, abbreviation: school.abbreviation },
+    defaultValues: mode === 'edit' && school ? {
+        ...school,
+        logoUrl: school.logoUrl || '',
+        website: school.website || '',
+        phone: school.phone || '',
+        location: school.location || '',
+        brandColors: {
+            primary: school.brandColors?.primary || '#000000',
+            secondary: school.brandColors?.secondary || '#ffffff'
+        }
+    } : {
+      name: "", abbreviation: "", logoUrl: "", website: "", phone: "", location: "", brandColors: { primary: '#000000', secondary: '#ffffff' }
+    },
   });
 
   React.useEffect(() => {
-    if (school) {
-      form.reset({ name: school.name, abbreviation: school.abbreviation });
+    if (open) {
+      if (mode === 'edit' && school) {
+        form.reset({ 
+            ...school,
+            logoUrl: school.logoUrl || '', website: school.website || '', phone: school.phone || '', location: school.location || '',
+            brandColors: { primary: school.brandColors?.primary || '#000000', secondary: school.brandColors?.secondary || '#ffffff' }
+        });
+      } else {
+        form.reset({ name: "", abbreviation: "", logoUrl: "", website: "", phone: "", location: "", brandColors: { primary: '#000000', secondary: '#ffffff' } });
+      }
     }
-  }, [school, form]);
-
+  }, [school, mode, open, form]);
 
   function onSubmit(data: SchoolFormValues) {
     startTransition(async () => {
       try {
-        await updateSchoolAction({ schoolId: school.schoolId, ...data });
-        toast({
-          title: "School Updated",
-          description: `${data.name} has been successfully updated.`,
-        });
+        if (mode === 'edit' && school) {
+          await updateSchoolAction({ schoolId: school.schoolId, ...data });
+          toast({ title: "School Updated", description: `${data.name} has been successfully updated.` });
+        } else {
+          await addSchoolAction(data);
+          toast({ title: "School Added", description: `${data.name} has been successfully created.` });
+        }
         onOpenChange(false);
       } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Could not update school.",
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not save school.", variant: "destructive" });
       }
     });
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit School</DialogTitle>
-          <DialogDescription>
-            Update the details for this school. Click save when you're done.
-          </DialogDescription>
+          <DialogTitle>{mode === 'edit' ? 'Edit School' : 'Add New School'}</DialogTitle>
+          <DialogDescription>Enter the school's details across the tabs below.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Tabs defaultValue="general">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="contact">Contact</TabsTrigger>
+                <TabsTrigger value="branding">Branding</TabsTrigger>
+              </TabsList>
+              <div className="py-4">
+                  <TabsContent value="general" className="space-y-4">
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  </TabsContent>
+                  <TabsContent value="contact" className="space-y-4">
+                     <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Academy Lane, Knowledgeton" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="e.g. +27 31 123 4567" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="e.g. https://www.school.com" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  </TabsContent>
+                  <TabsContent value="branding" className="space-y-4">
+                    <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                  </TabsContent>
+              </div>
+            </Tabs>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancel</Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save Changes"}
-              </Button>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save School"}</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -170,7 +155,8 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
   const [isPending, startTransition] = React.useTransition();
   
   const [selectedSchool, setSelectedSchool] = React.useState<School | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isSchoolDialogOpen, setIsSchoolDialogOpen] = React.useState(false);
+  const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   const handleDelete = () => {
@@ -208,7 +194,7 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
               Manage your schools and educational institutions.
             </p>
           </div>
-          {isAdmin && <AddSchoolDialog />}
+          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedSchool(null); setIsSchoolDialogOpen(true); }}><PlusCircle className="mr-2" />Add School</Button>}
         </header>
         <Card>
           <CardHeader>
@@ -241,7 +227,8 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
                             <DropdownMenuItem
                               onSelect={() => {
                                 setSelectedSchool(school);
-                                setIsEditDialogOpen(true);
+                                setDialogMode('edit');
+                                setIsSchoolDialogOpen(true);
                               }}
                             >
                               <Edit className="mr-2 h-4 w-4" />
@@ -275,14 +262,12 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
         </Card>
       </div>
 
-      {isAdmin && selectedSchool && (
-        <EditSchoolDialog
-          school={selectedSchool}
-          open={isEditDialogOpen}
-          onOpenChange={(open) => {
-            setIsEditDialogOpen(open);
-            if (!open) setSelectedSchool(null);
-          }}
+      {isAdmin && (
+        <SchoolDialog
+          mode={dialogMode}
+          school={selectedSchool ?? undefined}
+          open={isSchoolDialogOpen}
+          onOpenChange={setIsSchoolDialogOpen}
         />
       )}
       

@@ -22,6 +22,14 @@ export interface School {
   schoolId: string;
   name: string;
   abbreviation?: string;
+  logoUrl?: string;
+  website?: string;
+  phone?: string;
+  location?: string;
+  brandColors?: {
+    primary: string;
+    secondary: string;
+  };
 }
 
 export interface Division {

@@ -275,8 +275,6 @@ const teamSchema = z.object({
   divisionId: z.string(),
   seasonId: z.string(),
   teamClass: z.string(),
-  primaryColor: z.string().optional(),
-  secondaryColor: z.string().optional(),
 });
 
 async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: string) {
@@ -288,8 +286,8 @@ async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: 
         throw new Error("Invalid selection for school, division, or season.");
     }
 
-    // Return the names for use in the new team document.
-    return snapshots.map(s => s.data()?.name);
+    // Return the data for use in the new team document.
+    return snapshots.map(s => s.data());
 }
 
 export async function addTeamAction(data: z.infer<typeof teamSchema>) {
@@ -303,15 +301,18 @@ export async function addTeamAction(data: z.infer<typeof teamSchema>) {
   
   const validated = teamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
-  const { name, alias, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
-  const [schoolName, divisionName, seasonName] = await validateTeamRefs(schoolId, divisionId, seasonId);
+  const { name, alias, schoolId, divisionId, seasonId, teamClass } = validated.data;
+  const [schoolData, divisionData, seasonData] = await validateTeamRefs(schoolId, divisionId, seasonId);
+
   try {
     await addDoc(collection(db, 'teams'), {
         name,
         alias: alias || '',
-        schoolId, schoolName, divisionId, divisionName, seasonId, seasonName,
+        schoolId, schoolName: schoolData?.name,
+        divisionId, divisionName: divisionData?.name,
+        seasonId, seasonName: seasonData?.name,
         teamClass,
-        teamColors: { primary: primaryColor || '#000000', secondary: secondaryColor || '#ffffff' },
+        teamColors: schoolData?.brandColors || { primary: '#000000', secondary: '#ffffff' },
         userId,
     });
   } catch (error) {
@@ -333,16 +334,18 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
 
   const validated = updateTeamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
-  const { teamId, name, alias, schoolId, divisionId, seasonId, teamClass, primaryColor, secondaryColor } = validated.data;
+  const { teamId, name, alias, schoolId, divisionId, seasonId, teamClass } = validated.data;
   if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
-  const [schoolName, divisionName, seasonName] = await validateTeamRefs(schoolId, divisionId, seasonId);
+  const [schoolData, divisionData, seasonData] = await validateTeamRefs(schoolId, divisionId, seasonId);
   try {
     await updateDoc(doc(db, 'teams', teamId), {
         name,
         alias: alias || '',
-        schoolId, schoolName, divisionId, divisionName, seasonId, seasonName,
+        schoolId, schoolName: schoolData?.name,
+        divisionId, divisionName: divisionData?.name,
+        seasonId, seasonName: seasonData?.name,
         teamClass,
-        teamColors: { primary: primaryColor, secondary: secondaryColor },
+        teamColors: schoolData?.brandColors || { primary: '#000000', secondary: '#ffffff' },
     });
   } catch (error) {
     console.error("Error updating team: ", error);
@@ -561,5 +564,4 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
 
     return eligiblePlayers;
 });
-
 

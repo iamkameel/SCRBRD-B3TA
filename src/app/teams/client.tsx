@@ -50,8 +50,6 @@ const teamSchema = z.object({
   divisionId: z.string({ required_error: "Please select a division." }),
   seasonId: z.string({ required_error: "Please select a season." }),
   teamClass: z.string({ required_error: "Please select a class." }),
-  primaryColor: z.string().optional(),
-  secondaryColor: z.string().optional(),
 });
 
 type TeamFormValues = z.infer<typeof teamSchema>;
@@ -74,9 +72,8 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
     resolver: zodResolver(teamSchema),
     defaultValues: mode === 'edit' && team ? {
       name: team.name, alias: team.alias, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
-      primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
     } : {
-      name: "", alias: "", primaryColor: "#000000", secondaryColor: "#ffffff",
+      name: "", alias: "",
     },
   });
   
@@ -108,8 +105,7 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
     if (open) {
       if (mode === 'edit' && team) {
         form.reset({
-          name: team.name, alias: team.alias, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass,
-          primaryColor: team.teamColors?.primary, secondaryColor: team.teamColors?.secondary
+          name: team.name, alias: team.alias, schoolId: team.schoolId, divisionId: team.divisionId, seasonId: team.seasonId, teamClass: team.teamClass
         });
       } else {
         const activeSeason = seasons.find(s => {
@@ -118,7 +114,6 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
         });
         form.reset({
           name: "", alias: "", schoolId: undefined, divisionId: undefined, seasonId: activeSeason?.seasonId, teamClass: undefined,
-          primaryColor: "#000000", secondaryColor: "#ffffff",
         });
       }
     }
@@ -161,14 +156,6 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
               <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                <FormField control={form.control} name="teamClass" render={({ field }) => (<FormItem><FormLabel>Class / Level</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending || !divisionId || eligibleClasses.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!divisionId ? "Select division first" : "Select a class"} /></SelectTrigger></FormControl><SelectContent>{eligibleClasses.map((cls) => (<SelectItem key={cls} value={cls}>{cls}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-            </div>
-             <Separator />
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Team Branding</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="primaryColor" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="secondaryColor" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
-                </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

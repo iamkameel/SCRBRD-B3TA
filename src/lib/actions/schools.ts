@@ -20,9 +20,8 @@ export const getSchools = cache(async (): Promise<School[]> => {
     const schoolSnapshot = await getDocs(schoolsCollection);
     const schoolsList = schoolSnapshot.docs.map(doc => ({
       schoolId: doc.id,
-      name: doc.data().name,
-      abbreviation: doc.data().abbreviation,
-    }));
+      ...doc.data(),
+    } as School));
     return schoolsList;
   } catch (error) {
     console.error("Error fetching schools:", error);
@@ -34,7 +33,16 @@ export const getSchools = cache(async (): Promise<School[]> => {
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
   abbreviation: z.string().optional(),
+  logoUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
+  website: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
+  phone: z.string().optional(),
+  location: z.string().optional(),
+  brandColors: z.object({
+    primary: z.string().optional(),
+    secondary: z.string().optional(),
+  }).optional(),
 });
+
 
 type SchoolFormValues = z.infer<typeof schoolSchema>;
 
@@ -48,13 +56,10 @@ export async function addSchoolAction(data: SchoolFormValues) {
   if (!validatedFields.success) {
     throw new Error('Invalid school name.');
   }
-
-  const { name, abbreviation } = validatedFields.data;
-
+  
   try {
     await addDoc(collection(db, 'schools'), {
-      name,
-      abbreviation: abbreviation || '',
+      ...validatedFields.data,
       userId: userId,
     });
   } catch (error) {
@@ -69,10 +74,8 @@ export async function addSchoolAction(data: SchoolFormValues) {
 }
 
 
-const updateSchoolSchema = z.object({
+const updateSchoolSchema = schoolSchema.extend({
   schoolId: z.string(),
-  name: z.string().min(1, { message: "School name is required." }),
-  abbreviation: z.string().optional(),
 });
 
 export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema>) {
@@ -84,7 +87,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
         throw new Error('Invalid school data.');
     }
     
-    const { schoolId, name, abbreviation } = validatedFields.data;
+    const { schoolId, ...updateData } = validatedFields.data;
     const schoolDocRef = doc(db, 'schools', schoolId);
 
     // Verify ownership
@@ -94,7 +97,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
     }
 
     try {
-        await updateDoc(schoolDocRef, { name, abbreviation: abbreviation || '' });
+        await updateDoc(schoolDocRef, updateData as { [key: string]: any });
     } catch (error) {
         console.error("Error updating school:", error);
         throw new Error("Could not update school.");
