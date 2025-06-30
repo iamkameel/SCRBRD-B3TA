@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from 'next/link';
-import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube, ClipboardList } from 'lucide-react';
 import type { School, Team, Person } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,12 +38,8 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
 };
 
 
-export default function SchoolDetailsClient({ school, teams, staff }: { school: School, teams: Team[], staff: Person[] }) {
+export default function SchoolDetailsClient({ school, teams, staff, players }: { school: School, teams: Team[], staff: Person[], players: Person[] }) {
     
-    // Note: Calculating total players would require fetching all team rosters, which can be slow.
-    // For this example, we show the number of teams and staff, which is more performant.
-    // A future improvement could be to aggregate player counts in a separate process.
-
     const socialLinks = school.socialMedia ? Object.entries(school.socialMedia).filter(([, link]) => link) : [];
 
     return (
@@ -67,9 +63,11 @@ export default function SchoolDetailsClient({ school, teams, staff }: { school: 
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-2 space-y-8">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <StatCard title="Teams" value={teams.length} icon={Users} />
-                        <StatCard title="Staff" value={staff.length} icon={User} />
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <StatCard title="Total Teams" value={teams.length} icon={Users} />
+                        <StatCard title="Active Players" value={players.length} icon={User} />
+                        <StatCard title="Total Staff" value={staff.length} icon={User} />
+                        <StatCard title="Fixtures This Season" value={0} icon={ClipboardList} />
                      </div>
 
                      <Tabs defaultValue="teams" className="w-full">

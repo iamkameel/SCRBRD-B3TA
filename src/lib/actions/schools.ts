@@ -5,10 +5,11 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { School, Person } from '@/lib/data';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId } from 'firebase/firestore';
+import type { School, Person, Team } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { getTeamRoster, getTeamsBySchool } from './teams';
 
 // This function now fetches data from Firestore for the current user
 export const getSchools = cache(async (): Promise<School[]> => {
@@ -54,13 +55,13 @@ const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
   abbreviation: z.string().optional(),
   motto: z.string().optional(),
-  establishmentYear: z.coerce.number().int().min(1000).max(new Date().getFullYear()).optional(),
+  establishmentYear: z.coerce.number().int().min(1000).max(new Date().getFullYear()).optional().or(z.literal('')),
   principal: z.string().optional(),
   socialMedia: z.object({
-    facebook: z.string().url().optional().or(z.literal('')),
-    twitter: z.string().url().optional().or(z.literal('')),
-    instagram: z.string().url().optional().or(z.literal('')),
-    youtube: z.string().url().optional().or(z.literal('')),
+    facebook: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    twitter: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    instagram: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    youtube: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
   }).optional(),
   logoUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
   website: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
@@ -178,4 +179,36 @@ export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> 
     console.error(`Error fetching staff for school ${schoolId}:`, error);
     return [];
   }
+});
+
+export const getSchoolPlayers = cache(async (schoolId: string): Promise<Person[]> => {
+    const teams = await getTeamsBySchool(schoolId);
+    const playerIds = new Set<string>();
+    for (const team of teams) {
+        const roster = await getTeamRoster(team.teamId);
+        for (const member of roster) {
+            if (member.role === 'Player') {
+                playerIds.add(member.personId);
+            }
+        }
+    }
+    
+    if (playerIds.size === 0) return [];
+
+    const people: Person[] = [];
+    const personIdChunks: string[][] = [];
+    const allPersonIds = Array.from(playerIds);
+    for (let i = 0; i < allPersonIds.length; i += 30) {
+        personIdChunks.push(allPersonIds.slice(i, i + 30));
+    }
+
+    for (const chunk of personIdChunks) {
+        if (chunk.length === 0) continue;
+        const peopleQuery = query(collection(db, 'people'), where(documentId(), 'in', chunk));
+        const peopleSnapshot = await getDocs(peopleQuery);
+        peopleSnapshot.forEach(doc => {
+            people.push({ personId: doc.id, ...doc.data() } as Person);
+        });
+    }
+    return people;
 });
