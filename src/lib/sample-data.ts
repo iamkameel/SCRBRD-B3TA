@@ -39,6 +39,13 @@ const sampleDataPrecursor = {
         { seasonId: 'season_1', name: '2024/25 Season', startDate: pastDate(30), endDate: futureDate(90), active: true },
         { seasonId: 'season_2', name: '2023/24 Season', startDate: pastDate(395), endDate: pastDate(275), active: false },
     ],
+    drills: [
+        { drillId: 'drill_1', name: 'Cover Drive Practice', description: 'Repetitive practice of the cover drive shot with a bowling machine.', category: 'Batting', duration: 20 },
+        { drillId: 'drill_2', name: 'Yorker Bowling', description: 'Bowlers aim to hit a target placed at the base of the stumps.', category: 'Bowling', duration: 30 },
+        { drillId: 'drill_3', name: 'High Catch Practice', description: 'Fielders practice taking high catches from various angles.', category: 'Fielding', duration: 25 },
+        { drillId: 'drill_4', name: 'Interval Sprints', description: 'Sprint training to improve running between the wickets.', category: 'Fitness', duration: 15 },
+        { drillId: 'drill_5', name: 'Field Setting Simulation', description: 'Tactical session on setting fields for different bowling types and match situations.', category: 'Tactical', duration: 45 },
+    ],
     fields: [
         // School-owned fields
         { fieldId: 'field_1', schoolId: 'school_1', name: 'John Medlicott Oval', alias: 'Main Oval', location: 'Michaelhouse, Balgowan', coordinates: { lat: -29.318, lon: 29.96 }, size: 'Full Size', pitchType: 'Natural Turf', facilities: ['pavilion', 'toilets', 'nets'], amenities: ['seating', 'changing_rooms'], status: 'Available', contactPerson: 'Mark Taylor', contactPhone: '555-0101', notes: 'Pristine condition with excellent drainage after rain.', surfaceCondition: { rating: 5, details: { "Grass Cover": "95%", "Moisture Level": "Ideal", "Firmness": "Good" } } },

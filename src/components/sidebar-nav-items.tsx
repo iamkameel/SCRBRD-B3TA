@@ -1,4 +1,5 @@
 
+
 import {
     LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database,
     Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack,
@@ -7,7 +8,8 @@ import {
     Banknote,
     Cog,
     HeartPulse,
-    Dumbbell
+    Dumbbell,
+    Target
 } from 'lucide-react';
 
 const adminTopLevelNavItems = [
@@ -82,6 +84,7 @@ const coachNavGroups = [
         items: [
             { href: '/teams', label: 'Manage Roster', icon: Users },
             { href: '/planner', label: 'Session Planner', icon: CalendarDays },
+            { href: '/drills', label: 'Drill Library', icon: Target },
             { href: '/matches', label: 'Fixtures & Results', icon: ClipboardList },
         ]
     },

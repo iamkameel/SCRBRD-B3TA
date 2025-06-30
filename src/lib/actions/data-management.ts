@@ -15,15 +15,16 @@ import { getSeasons, deleteSeasonAction } from './seasons';
 import { getFields, deleteFieldAction } from './fields';
 import { getCompetitions, deleteCompetitionAction } from './competitions';
 import { getEquipment, deleteEquipmentItemAction } from './equipment';
+import { getDrills, deleteDrillAction } from './drills';
 import { getUserId } from '@/lib/auth';
 
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
     'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches', 'Competitions': 'competitions',
-    'Financials': 'financials', 'Equipment': 'equipment',
+    'Financials': 'financials', 'Equipment': 'equipment', 'Drills': 'drills',
 } as const;
 export type SubsetName = keyof typeof collectionNameMap;
-const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment'];
+const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Drills'];
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
@@ -41,7 +42,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
             'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
-            'equipment', 'equipmentAssignments', 'sponsors', 'sessions'
+            'equipment', 'equipmentAssignments', 'sponsors', 'sessions', 'drills'
         ];
 
         for (const collName of collectionsToClear) {
@@ -108,12 +109,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const idKeyMap: { [key: string]: string } = {
             schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', fields: 'fieldId',
             people: 'personId', vehicles: 'vehicleId', financials: 'transactionId', equipment: 'itemId',
-            sponsors: 'sponsorId', competitions: 'competitionId',
+            sponsors: 'sponsorId', competitions: 'competitionId', drills: 'drillId',
         };
 
         const collectionsInOrder: (keyof typeof sampleData)[] = [
             'schools', 'divisions', 'seasons', 'people', 'vehicles', 
-            'financials', 'equipment', 'sponsors'
+            'financials', 'equipment', 'sponsors', 'drills'
         ];
         
         for (const collName of collectionsInOrder) {
@@ -355,6 +356,7 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
             'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
             'Equipment': getEquipment, 'Financials': async () => getDocs(query(collection(db, 'financials'), where("userId", "==", userId))).then(snap => snap.docs.map(d => ({...d.data(), transactionId: d.id}))),
             'Sponsors': async () => getDocs(query(collection(db, 'sponsors'), where("userId", "==", userId))).then(snap => snap.docs.map(d => ({...d.data(), sponsorId: d.id}))),
+            'Drills': getDrills,
         }[subsetName];
         
         let deleteAction: ((id: string) => Promise<any>) | undefined;
@@ -367,6 +369,7 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         else if (subsetName === 'Fields') deleteAction = deleteFieldAction;
         else if (subsetName === 'Competitions') deleteAction = deleteCompetitionAction;
         else if (subsetName === 'Equipment') deleteAction = deleteEquipmentItemAction;
+        else if (subsetName === 'Drills') deleteAction = deleteDrillAction;
         else if (['Financials', 'Sponsors'].includes(subsetName)) {
             const collName = collectionNameMap[subsetName as 'Financials' | 'Sponsors'];
             deleteAction = (id: string) => deleteDoc(doc(db, collName, id));
@@ -382,6 +385,7 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         else if (subsetName === 'Fields') idKey = 'fieldId';
         else if (subsetName === 'Competitions') idKey = 'competitionId';
         else if (subsetName === 'Equipment') idKey = 'itemId';
+        else if (subsetName === 'Drills') idKey = 'drillId';
         else if (subsetName === 'Financials') idKey = 'transactionId';
         else if (subsetName === 'Sponsors') idKey = 'sponsorId';
 
@@ -428,6 +432,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
             else if (subsetName === 'Equipment') idKey = 'itemId';
             else if (subsetName === 'Sponsors') idKey = 'sponsorId';
             else if (subsetName === 'Fields') idKey = 'fieldId';
+            else if (subsetName === 'Drills') idKey = 'drillId';
             else idKey = `${collectionName.slice(0, -1)}Id`;
             
             const { [idKey]: _, ...itemData } = item as any;
