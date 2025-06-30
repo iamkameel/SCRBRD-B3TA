@@ -26,7 +26,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 ### Category 3: Performance, Scalability & Production Readiness
 
--   [~] **14. User-Uploaded Asset Management**: **In Progress.** The system can handle AI-generated image uploads to cloud storage. The next step is to enable user uploads for logos.
+-   [~] **14. User-Uploaded Asset Management**: **In Progress.** The system can handle AI-generated image uploads and user uploads for school logos. The next step is to enable user uploads for team logos.
 -   [~] **15. Firestore Security & Indexing**: **In Progress.** Indexes are being added as new features require them. A full security rule audit is still pending.
 -   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started.
 -   [ ] **12. Comprehensive Testing Suite**: Not Started.

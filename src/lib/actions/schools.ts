@@ -4,8 +4,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { db, app } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import type { School, Person, Team } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
@@ -64,6 +65,7 @@ const schoolSchema = z.object({
     youtube: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
   }).optional(),
   logoUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
+  logoDataUri: z.string().optional(),
   website: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
   phone: z.string().optional(),
   location: z.string().optional(),
@@ -87,9 +89,25 @@ export async function addSchoolAction(data: SchoolFormValues) {
     throw new Error('Invalid school name.');
   }
   
+  const { logoDataUri, ...schoolData } = validatedFields.data;
+  
+  let finalLogoUrl = schoolData.logoUrl || '';
+
+  if (logoDataUri) {
+    const storage = getStorage(app);
+    const storageRef = ref(storage, `logos/schools/${schoolData.name.replace(/\s+/g, '-')}-${Date.now()}.png`);
+    const mimeType = logoDataUri.match(/data:(.*);/)?.[1] || 'image/png';
+    const base64Data = logoDataUri.split(',')[1];
+    
+    await uploadString(storageRef, base64Data, 'base64', { contentType: mimeType });
+    finalLogoUrl = await getDownloadURL(storageRef);
+  }
+
+
   try {
     await addDoc(collection(db, 'schools'), {
-      ...validatedFields.data,
+      ...schoolData,
+      logoUrl: finalLogoUrl,
       userId: userId,
     });
   } catch (error) {
@@ -117,17 +135,30 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
         throw new Error('Invalid school data.');
     }
     
-    const { schoolId, ...updateData } = validatedFields.data;
+    const { schoolId, logoDataUri, ...updateData } = validatedFields.data;
     const schoolDocRef = doc(db, 'schools', schoolId);
 
-    // Verify ownership
     const schoolSnap = await getDoc(schoolDocRef);
     if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) {
         throw new Error("School not found or you do not have permission to edit it.");
     }
+    
+    let finalLogoUrl = updateData.logoUrl || '';
+
+    if (logoDataUri) {
+        const storage = getStorage(app);
+        const storageRef = ref(storage, `logos/schools/${updateData.name.replace(/\s+/g, '-')}-${Date.now()}.png`);
+        const mimeType = logoDataUri.match(/data:(.*);/)?.[1] || 'image/png';
+        const base64Data = logoDataUri.split(',')[1];
+        
+        await uploadString(storageRef, base64Data, 'base64', { contentType: mimeType });
+        finalLogoUrl = await getDownloadURL(storageRef);
+    }
+    
+    const finalUpdateData = { ...updateData, logoUrl: finalLogoUrl };
 
     try {
-        await updateDoc(schoolDocRef, updateData as { [key: string]: any });
+        await updateDoc(schoolDocRef, finalUpdateData as { [key: string]: any });
     } catch (error) {
         console.error("Error updating school:", error);
         throw new Error("Could not update school.");

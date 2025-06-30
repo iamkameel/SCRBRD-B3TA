@@ -36,6 +36,8 @@ import type { School } from "@/lib/data";
 import { addSchoolAction, updateSchoolAction, deleteSchoolAction } from '@/lib/actions/schools';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -52,6 +54,7 @@ const schoolSchema = z.object({
     youtube: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
   }).optional(),
   logoUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
+  logoDataUri: z.string().optional(),
   website: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
   phone: z.string().optional(),
   location: z.string().optional(),
@@ -67,6 +70,7 @@ type SchoolFormValues = z.infer<typeof schoolSchema>;
 function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edit', school?: School, open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [logoPreview, setLogoPreview] = React.useState<string | null>(null);
 
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolSchema),
@@ -84,15 +88,33 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
             ...school,
             establishmentYear: school.establishmentYear || '',
         });
+        setLogoPreview(school.logoUrl || null);
       } else {
         form.reset({
             name: "", abbreviation: "", logoUrl: "", website: "", phone: "", location: "",
             motto: "", principal: "", socialMedia: { facebook: '', twitter: '', instagram: '', youtube: ''}, establishmentYear: '',
-            brandColors: { primary: '#000000', secondary: '#ffffff' }
+            brandColors: { primary: '#000000', secondary: '#ffffff' },
+            logoDataUri: "",
         });
+        setLogoPreview(null);
       }
     }
   }, [school, mode, open, form]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const dataUri = reader.result as string;
+            setLogoPreview(dataUri);
+            form.setValue('logoDataUri', dataUri);
+            form.setValue('logoUrl', '');
+        };
+        reader.readAsDataURL(file);
+    }
+  };
+
 
   function onSubmit(data: SchoolFormValues) {
     startTransition(async () => {
@@ -149,6 +171,27 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
                 <TabsContent value="branding" className="space-y-4">
                   <FormField control={form.control} name="motto" render={({ field }) => (<FormItem><FormLabel>Motto / Tagline (Optional)</FormLabel><FormControl><Input placeholder="e.g. Striving for Excellence" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  
+                  <div className="relative flex items-center justify-center text-sm text-muted-foreground"><Separator className="w-full" /><span className="absolute bg-popover px-2">OR</span></div>
+                  
+                  <FormItem>
+                      <FormLabel>Upload Logo File</FormLabel>
+                      <FormControl><Input type="file" accept="image/*" onChange={handleFileChange} disabled={isPending} /></FormControl>
+                      <FormMessage />
+                  </FormItem>
+
+                  {logoPreview && (
+                      <div className="flex flex-col items-center">
+                          <Label className="mb-2">Logo Preview</Label>
+                          <Avatar className="h-24 w-24">
+                              <AvatarImage src={logoPreview} alt="Logo Preview"/>
+                              <AvatarFallback>Logo</AvatarFallback>
+                          </Avatar>
+                      </div>
+                  )}
+
+                  <Separator />
+
                   <div className="grid grid-cols-2 gap-4">
                       <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? ''} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
                       <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? ''} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
