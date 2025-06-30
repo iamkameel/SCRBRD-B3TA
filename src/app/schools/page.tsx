@@ -6,11 +6,13 @@ import { getPerson } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 
 export default async function SchoolsPage() {
-  const schools = await getSchools();
-
-  const userId = await getUserId();
+  const [schools, userId] = await Promise.all([
+    getSchools(),
+    getUserId(),
+  ]);
+  
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.includes('Admin') ?? false;
+  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
 
-  return <SchoolsClient schools={schools} isAdmin={isAdmin} />;
+  return <SchoolsClient schools={schools} canManage={canManage} />;
 }

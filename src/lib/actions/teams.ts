@@ -201,6 +201,52 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
   revalidatePath(`/people/${data.personId}`);
 }
 
+const bulkAddPlayersSchema = z.object({
+    playerIds: z.array(z.string()).min(1, { message: "Please select at least one player." }),
+    status: z.string(),
+    isCaptain: z.boolean(),
+    isViceCaptain: z.boolean(),
+});
+export async function bulkAddPlayersToRosterAction(teamId: string, data: Omit<z.infer<typeof bulkAddPlayersSchema>, 'role'>) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found or permission denied.");
+
+    const validatedFields = bulkAddPlayersSchema.omit({ isCaptain: true, isViceCaptain: true }).safeParse(data);
+    if (!validatedFields.success) {
+        throw new Error("Invalid player data provided for bulk assignment.");
+    }
+
+    const { playerIds, status } = validatedFields.data;
+    const rosterCol = collection(db, 'teams', teamId, 'roster');
+    const existingRoster = await getTeamRoster(teamId);
+    const existingPlayerIds = new Set(existingRoster.map(p => p.personId));
+
+    const batch = writeBatch(db);
+    for (const personId of playerIds) {
+        if (!existingPlayerIds.has(personId)) {
+            const newRosterDoc = doc(rosterCol);
+            batch.set(newRosterDoc, {
+                personId,
+                role: 'Player',
+                status,
+                isCaptain: false,
+                isViceCaptain: false,
+            });
+        }
+    }
+    
+    try {
+        await batch.commit();
+    } catch(error) {
+        console.error("Error bulk adding players to roster:", error);
+        throw new Error("Could not add players to roster.");
+    }
+    revalidatePath(`/teams/${teamId}`);
+}
+
 export async function removeRosterAssignmentAction(teamId: string, assignmentId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");

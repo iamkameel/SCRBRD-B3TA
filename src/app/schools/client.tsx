@@ -168,7 +168,7 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
 }
 
 
-export default function SchoolsClient({ schools, isAdmin }: { schools: School[], isAdmin: boolean }) {
+export default function SchoolsClient({ schools, canManage }: { schools: School[], canManage: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   
@@ -212,7 +212,7 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
               Manage your schools and educational institutions.
             </p>
           </div>
-          {isAdmin && <Button onClick={() => { setDialogMode('add'); setSelectedSchool(null); setIsSchoolDialogOpen(true); }}><PlusCircle className="mr-2" />Add School</Button>}
+          {canManage && <Button onClick={() => { setDialogMode('add'); setSelectedSchool(null); setIsSchoolDialogOpen(true); }}><PlusCircle className="mr-2" />Add School</Button>}
         </header>
         <Card>
           <CardHeader>
@@ -225,7 +225,7 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Abbreviation</TableHead>
-                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                  {canManage && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -238,7 +238,7 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
                         </Link>
                       </TableCell>
                       <TableCell>{school.abbreviation}</TableCell>
-                      {isAdmin && <TableCell className="text-right">
+                      {canManage && <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -273,7 +273,7 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 3 : 2} className="h-24 text-center">
+                    <TableCell colSpan={canManage ? 3 : 2} className="h-24 text-center">
                       No schools found. Get started by adding a school.
                     </TableCell>
                   </TableRow>
@@ -284,7 +284,7 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
         </Card>
       </div>
 
-      {isAdmin && (
+      {canManage && (
         <SchoolDialog
           mode={dialogMode}
           school={selectedSchool ?? undefined}
@@ -293,7 +293,7 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
         />
       )}
       
-      {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {canManage && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>

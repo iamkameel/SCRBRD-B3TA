@@ -1,15 +1,27 @@
 
+
 'use client';
 
 import * as React from "react";
 import Link from 'next/link';
-import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube, ClipboardList } from 'lucide-react';
+import { useForm, useFieldArray } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube, ClipboardList, PlusCircle, Search } from 'lucide-react';
 import type { School, Team, Person } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { updateSchoolStaffAssignmentsAction } from "@/lib/actions/schools";
+import { useToast } from "@/hooks/use-toast";
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card>
@@ -37,12 +49,100 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
     );
 };
 
+const assignStaffSchema = z.object({
+  staff: z.array(z.object({
+    id: z.string(),
+    assigned: z.boolean(),
+  }))
+});
 
-export default function SchoolDetailsClient({ school, teams, staff, players }: { school: School, teams: Team[], staff: Person[], players: Person[] }) {
+function AssignStaffDialog({ school, allStaff, open, onOpenChange }: { school: School, allStaff: Person[], open: boolean, onOpenChange: (open: boolean) => void }) {
+    const { toast } = useToast();
+    const [searchTerm, setSearchTerm] = React.useState("");
+    const [isPending, startTransition] = React.useTransition();
     
-    const socialLinks = school.socialMedia ? Object.entries(school.socialMedia).filter(([, link]) => link) : [];
+    const currentlyAssignedIds = new Set(school.staff.map(s => s.personId));
+
+    const form = useForm<z.infer<typeof assignStaffSchema>>({
+        resolver: zodResolver(assignStaffSchema),
+        defaultValues: {
+            staff: allStaff.map(s => ({ id: s.personId, assigned: currentlyAssignedIds.has(s.personId) }))
+        },
+    });
+    
+    const { fields } = useFieldArray({ control: form.control, name: "staff" });
+    
+    const filteredStaff = React.useMemo(() => {
+        return allStaff.filter(person => 
+            `${person.firstName} ${person.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [allStaff, searchTerm]);
+    
+    const fieldMap = React.useMemo(() => new Map(fields.map((f, i) => [f.id, i])), [fields]);
+
+    function onSubmit(data: z.infer<typeof assignStaffSchema>) {
+        startTransition(async () => {
+            const assignedStaffIds = data.staff.filter(s => s.assigned).map(s => s.id);
+            try {
+                await updateSchoolStaffAssignmentsAction(school.schoolId, assignedStaffIds);
+                toast({ title: "Staff Updated", description: "School staff assignments have been saved." });
+                onOpenChange(false);
+            } catch (error) {
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not update staff.", variant: "destructive" });
+            }
+        });
+    }
 
     return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Manage Staff for {school.name}</DialogTitle>
+                    <DialogDescription>Select the staff members assigned to this school.</DialogDescription>
+                </DialogHeader>
+                 <Input placeholder="Search staff..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <ScrollArea className="h-72">
+                            <div className="space-y-2 p-1">
+                                {filteredStaff.map((person) => {
+                                    const fieldIndex = fieldMap.get(person.personId);
+                                    if (fieldIndex === undefined) return null;
+                                    return (
+                                        <FormField
+                                            key={person.personId}
+                                            control={form.control}
+                                            name={`staff.${fieldIndex}.assigned`}
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                                    <FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel>
+                                                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </ScrollArea>
+                        <Button type="submit" className="w-full" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save Assignments"}
+                        </Button>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+export default function SchoolDetailsClient({ school, teams, staff, players, allStaff }: { school: School; teams: Team[]; staff: Person[]; players: Person[]; allStaff: Person[] }) {
+    const [isAssignStaffDialogOpen, setIsAssignStaffDialogOpen] = React.useState(false);
+    
+    const socialLinks = school.socialMedia ? Object.entries(school.socialMedia).filter(([, link]) => link) : [];
+    
+    const schoolWithStaff = { ...school, staff };
+
+    return (
+        <>
         <div className="flex flex-col gap-8">
             <header>
                 <Link href="/schools" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -96,7 +196,13 @@ export default function SchoolDetailsClient({ school, teams, staff, players }: {
                         </TabsContent>
                          <TabsContent value="staff" className="mt-4">
                             <Card>
-                                <CardHeader><CardTitle>Assigned Staff</CardTitle><CardDescription>All staff members assigned to {school.name}.</CardDescription></CardHeader>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Assigned Staff</CardTitle>
+                                        <CardDescription>All staff members assigned to {school.name}.</CardDescription>
+                                    </div>
+                                    <Button size="sm" onClick={() => setIsAssignStaffDialogOpen(true)}><PlusCircle className="mr-2" />Manage Staff</Button>
+                                </CardHeader>
                                 <CardContent>
                                     <Table>
                                         <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Active Role</TableHead><TableHead>Email</TableHead></TableRow></TableHeader>
@@ -146,5 +252,7 @@ export default function SchoolDetailsClient({ school, teams, staff, players }: {
                 </div>
             </div>
         </div>
+        <AssignStaffDialog school={schoolWithStaff} allStaff={allStaff} open={isAssignStaffDialogOpen} onOpenChange={setIsAssignStaffDialogOpen} />
+        </>
     );
 }

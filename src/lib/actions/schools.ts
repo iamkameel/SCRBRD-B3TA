@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch } from 'firebase/firestore';
 import type { School, Person, Team } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
@@ -181,6 +181,7 @@ export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> 
   }
 });
 
+
 export const getSchoolPlayers = cache(async (schoolId: string): Promise<Person[]> => {
     const teams = await getTeamsBySchool(schoolId);
     const playerIds = new Set<string>();
@@ -212,3 +213,46 @@ export const getSchoolPlayers = cache(async (schoolId: string): Promise<Person[]
     }
     return people;
 });
+
+export async function updateSchoolStaffAssignmentsAction(schoolId: string, staffIdsToAssign: string[]) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const batch = writeBatch(db);
+    const peopleCollection = collection(db, 'people');
+    
+    // Get all staff currently assigned to this school
+    const currentStaffSnap = await getDocs(query(peopleCollection, where("assignedSchools", "array-contains", schoolId)));
+    const currentStaffIds = new Set(currentStaffSnap.docs.map(doc => doc.id));
+    const newStaffIds = new Set(staffIdsToAssign);
+
+    // Determine who to add and who to remove
+    const toAdd = staffIdsToAssign.filter(id => !currentStaffIds.has(id));
+    const toRemove = currentStaffSnap.docs.filter(doc => !newStaffIds.has(doc.id));
+
+    // Add new assignments
+    for (const personId of toAdd) {
+        const personRef = doc(peopleCollection, personId);
+        const personSnap = await getDoc(personRef);
+        if (personSnap.exists()) {
+            const currentSchools = personSnap.data().assignedSchools || [];
+            batch.update(personRef, { assignedSchools: [...new Set([...currentSchools, schoolId])] });
+        }
+    }
+
+    // Remove old assignments
+    for (const personDoc of toRemove) {
+        const personRef = personDoc.ref;
+        const currentSchools = personDoc.data().assignedSchools || [];
+        batch.update(personRef, { assignedSchools: currentSchools.filter((id: string) => id !== schoolId) });
+    }
+
+    try {
+        await batch.commit();
+    } catch (error) {
+        console.error("Error bulk updating staff assignments:", error);
+        throw new Error("Could not update staff assignments.");
+    }
+    
+    revalidatePath(`/schools/${schoolId}`);
+}

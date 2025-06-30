@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Team, Person, RosterMember, TeamStats, Match } from "@/lib/data";
-import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction, getEligiblePlayersForTeam } from '@/lib/actions/teams';
+import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction, getEligiblePlayersForTeam, bulkAddPlayersToRosterAction } from '@/lib/actions/teams';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -146,16 +146,21 @@ function AddStaffDialog({ teamId, teamSchoolId, people, assignableRoles, open, o
   );
 }
 
-function AddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boolean, onOpenChange: (open: boolean) => void }) {
+const bulkAddPlayersSchema = z.object({
+  playerIds: z.array(z.string()).min(1, { message: "Please select at least one player." }),
+  status: z.string().default('active'),
+});
+
+function BulkAddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boolean, onOpenChange: (open: boolean) => void }) {
     const { toast } = useToast();
     const [isSubmitting, startSubmitTransition] = React.useTransition();
     const [isLoading, setIsLoading] = React.useState(true);
     const [eligiblePlayers, setEligiblePlayers] = React.useState<(Person & { eligibilityContext: string })[]>([]);
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    const form = useForm<AssignmentFormValues>({
-        resolver: zodResolver(assignmentSchema),
-        defaultValues: { role: 'Player', isCaptain: false, isViceCaptain: false, status: "active" },
+    const form = useForm<z.infer<typeof bulkAddPlayersSchema>>({
+        resolver: zodResolver(bulkAddPlayersSchema),
+        defaultValues: { playerIds: [], status: "active" },
     });
 
     React.useEffect(() => {
@@ -163,7 +168,7 @@ function AddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boole
             setIsLoading(true);
             setEligiblePlayers([]);
             setSearchTerm('');
-            form.reset({ role: 'Player', isCaptain: false, isViceCaptain: false, status: 'active', personId: undefined });
+            form.reset({ playerIds: [], status: "active" });
 
             getEligiblePlayersForTeam(team.teamId)
                 .then(players => {
@@ -176,14 +181,14 @@ function AddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boole
     
     const filteredPlayers = eligiblePlayers.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    function onSubmit(data: AssignmentFormValues) {
+    function onSubmit(data: z.infer<typeof bulkAddPlayersSchema>) {
         startSubmitTransition(async () => {
             try {
-                await addPlayerToRosterAction(team.teamId, data);
-                toast({ title: "Player Added", description: `The player has been added to the team.` });
+                await bulkAddPlayersToRosterAction(team.teamId, data);
+                toast({ title: "Players Added", description: `${data.playerIds.length} player(s) have been added to the team.` });
                 onOpenChange(false);
             } catch (error) {
-                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not add player to roster.", variant: "destructive" });
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not add players to roster.", variant: "destructive" });
             }
         });
     }
@@ -191,10 +196,10 @@ function AddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boole
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
-                <DialogHeader><DialogTitle>Add Player to {team.name}</DialogTitle><DialogDescription>Select an eligible player to add to the roster.</DialogDescription></DialogHeader>
+                <DialogHeader><DialogTitle>Add Players to {team.name}</DialogTitle><DialogDescription>Select one or more eligible players to add to the roster.</DialogDescription></DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField control={form.control} name="personId" render={({ field }) => (
+                        <FormField control={form.control} name="playerIds" render={() => (
                             <FormItem>
                                 <FormLabel>Eligible Players</FormLabel>
                                 <div className="relative">
@@ -208,37 +213,52 @@ function AddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boole
                                             Loading eligible players...
                                         </div>
                                     ) : (
-                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="p-2 space-y-1">
+                                        <div className="p-2 space-y-1">
                                             {filteredPlayers.length > 0 ? filteredPlayers.map(p => (
-                                              <FormItem key={p.personId} className="flex items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-muted/50 has-[:checked]:bg-muted">
-                                                <FormControl>
-                                                  <RadioGroupItem value={p.personId} id={p.personId} />
-                                                </FormControl>
-                                                <FormLabel htmlFor={p.personId} className="font-normal w-full cursor-pointer">
-                                                    <p>{p.firstName} {p.lastName}</p>
-                                                    <p className="text-xs text-muted-foreground">{p.eligibilityContext}</p>
-                                                </FormLabel>
-                                              </FormItem>
+                                              <FormField
+                                                key={p.personId}
+                                                control={form.control}
+                                                name="playerIds"
+                                                render={({ field }) => {
+                                                  return (
+                                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 has-[:checked]:bg-muted">
+                                                      <FormControl>
+                                                        <Checkbox
+                                                          checked={field.value?.includes(p.personId)}
+                                                          onCheckedChange={(checked) => {
+                                                            return checked
+                                                              ? field.onChange([...field.value, p.personId])
+                                                              : field.onChange(
+                                                                  field.value?.filter(
+                                                                    (value) => value !== p.personId
+                                                                  )
+                                                                )
+                                                          }}
+                                                        />
+                                                      </FormControl>
+                                                      <FormLabel className="font-normal w-full cursor-pointer">
+                                                        <p>{p.firstName} {p.lastName}</p>
+                                                        <p className="text-xs text-muted-foreground">{p.eligibilityContext}</p>
+                                                      </FormLabel>
+                                                    </FormItem>
+                                                  )
+                                                }}
+                                              />
                                             )) : (
                                                 <p className="text-center text-sm text-muted-foreground p-4">No eligible players found.</p>
                                             )}
-                                        </RadioGroup>
+                                        </div>
                                     )}
                                 </ScrollArea>
                                 <FormMessage />
                             </FormItem>
                         )} />
 
-                        <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="active" disabled={isSubmitting}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                        
-                        <div className="flex items-center space-x-4 pt-2">
-                            <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
-                            <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
-                        </div>
+                        <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status for new players</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="active" disabled={isSubmitting}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Adding..." : "Add Player to Team"}</Button>
+                            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Adding..." : "Add Players to Team"}</Button>
                         </DialogFooter>
                     </form>
                 </Form>
@@ -403,7 +423,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div><CardTitle>Player Roster</CardTitle><CardDescription>The main squad of players for the team.</CardDescription></div>
-                    {canManage && <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Player</Button>}
+                    {canManage && <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Players</Button>}
                   </CardHeader>
                   <CardContent>
                     <Table>
@@ -530,7 +550,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         </Tabs>
       </div>
       
-      {canManage && <AddPlayerDialog 
+      {canManage && <BulkAddPlayerDialog 
         team={team}
         open={isAddPlayerDialogOpen} 
         onOpenChange={setIsAddPlayerDialogOpen} 
