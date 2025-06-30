@@ -14,10 +14,11 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const FieldMap = dynamic(() => import('./field-map'), { 
+const FieldMap = React.useMemo(() => dynamic(() => import('./field-map'), { 
     ssr: false,
     loading: () => <div className="h-full w-full bg-muted animate-pulse rounded-md" />
-});
+}), []);
+
 
 export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
     const upcomingMatches = matches.filter(m => m.status === 'scheduled');
