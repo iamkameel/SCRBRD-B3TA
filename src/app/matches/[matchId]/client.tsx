@@ -212,12 +212,12 @@ type LineupFormValues = z.infer<typeof lineupSchema>;
 interface LineupSelectionCardProps {
   teamId: string;
   teamName: string;
-  matchId: string;
+  match: Match;
   roster: RosterMember[];
   lineup: string[];
 }
 
-function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: LineupSelectionCardProps) {
+function LineupSelectionCard({ teamId, teamName, match, roster, lineup }: LineupSelectionCardProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -233,7 +233,7 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
   function onSubmit(data: LineupFormValues) {
     startTransition(async () => {
       try {
-        await saveMatchLineupAction(matchId, teamId, data.playerIds);
+        await saveMatchLineupAction(match.matchId, teamId, data.playerIds);
         toast({
           title: "Lineup Saved",
           description: `The lineup for ${teamName} has been updated.`,
@@ -252,7 +252,7 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
   function handleAutoSelect() {
     startAutoSelectTransition(async () => {
       try {
-        const { playerIds, justification } = await autoSelectLineupAction(matchId, teamId);
+        const { playerIds, justification } = await autoSelectLineupAction(match.matchId, teamId);
         form.setValue('playerIds', playerIds, { shouldValidate: true, shouldDirty: true });
         toast({ 
           title: "AI Lineup Suggested", 
@@ -287,32 +287,53 @@ function LineupSelectionCard({ teamId, teamName, matchId, roster, lineup }: Line
                 render={() => (
                   <FormItem className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {roster.map((member) => (
-                        <FormField
-                          key={member.personId}
-                          control={form.control}
-                          name="playerIds"
-                          render={({ field }) => (
-                            <FormItem key={member.personId} className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(member.personId)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, member.personId])
-                                      : field.onChange(field.value?.filter((id) => id !== member.personId));
-                                  }}
-                                  disabled={isPending || isAutoSelecting}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal flex flex-col">
-                                {member.personName}
-                                <span className="text-xs text-muted-foreground">{member.role}</span>
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                      ))}
+                      {roster.map((member) => {
+                         const availability = match.availability?.[member.personId];
+                         const availabilityStatus = availability?.status;
+                         let badgeVariant: "default" | "secondary" | "destructive" | "outline" | null | undefined = 'secondary';
+                         if (availabilityStatus === 'attending') badgeVariant = 'default';
+                         if (availabilityStatus === 'unavailable') badgeVariant = 'destructive';
+                         if (availabilityStatus === 'tentative') badgeVariant = 'outline';
+
+                        return (
+                            <FormField
+                            key={member.personId}
+                            control={form.control}
+                            name="playerIds"
+                            render={({ field }) => (
+                                <FormItem key={member.personId} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value?.includes(member.personId)}
+                                    onCheckedChange={(checked) => {
+                                        return checked
+                                        ? field.onChange([...field.value, member.personId])
+                                        : field.onChange(field.value?.filter((id) => id !== member.personId));
+                                    }}
+                                    disabled={isPending || isAutoSelecting}
+                                    />
+                                </FormControl>
+                                <div className="flex-1">
+                                    <FormLabel className="font-normal flex flex-col">
+                                    {member.personName}
+                                    <span className="text-xs text-muted-foreground">{member.role}</span>
+                                    </FormLabel>
+                                </div>
+                                {availabilityStatus && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Badge variant={badgeVariant} className="capitalize">{availabilityStatus}</Badge>
+                                            </TooltipTrigger>
+                                            {availability.note && <TooltipContent><p>{availability.note}</p></TooltipContent>}
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                                </FormItem>
+                            )}
+                            />
+                        )
+                      })}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -690,9 +711,9 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
 
             <TabsContent value="lineups" className="mt-4">
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} matchId={match.matchId} roster={teamARoster} lineup={teamALineup} />
+                    <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} match={match} roster={teamARoster} lineup={teamALineup} />
                     {match.teamBId ?
-                        <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} matchId={match.matchId} roster={teamBRoster} lineup={teamBLineup} />
+                        <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} match={match} roster={teamBRoster} lineup={teamBLineup} />
                         : <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
                     }
                 </div>

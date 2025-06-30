@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
@@ -171,6 +171,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       preview: '',
       audioCommentaryUrl: '',
       analysisReports: {},
+      availability: {},
     };
   } else {
     const competition = await getCompetition(competitionId);
@@ -196,6 +197,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       preview: '',
       audioCommentaryUrl: '',
       analysisReports: {},
+      availability: {},
     };
   }
 
@@ -795,3 +797,30 @@ export const getOfficialAssignmentsForPerson = cache(async (personId: string): P
         return [];
     }
 });
+
+
+export async function updatePlayerAvailabilityAction(matchId: string, status: AvailabilityStatus, note?: string) {
+  const userId = await getUserId();
+  if (!userId) throw new Error("User not authenticated.");
+
+  const matchRef = doc(db, 'matches', matchId);
+  const matchSnap = await getDoc(matchRef);
+
+  if (!matchSnap.exists()) {
+    throw new Error("Match not found.");
+  }
+  
+  const availabilityUpdate = {
+    [`availability.${userId}.status`]: status,
+    [`availability.${userId}.note`]: note || '',
+  };
+
+  try {
+    await updateDoc(matchRef, availabilityUpdate);
+    revalidatePath('/dashboard');
+    revalidatePath(`/matches/${matchId}`);
+  } catch (error) {
+    console.error("Error updating availability:", error);
+    throw new Error("Could not update availability.");
+  }
+}

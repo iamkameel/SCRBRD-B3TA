@@ -1,4 +1,5 @@
 
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -115,6 +116,7 @@ export interface RosterMember {
 }
 
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'postponed' | 'cancelled' | 'abandoned';
+export type AvailabilityStatus = 'attending' | 'unavailable' | 'tentative';
 
 export interface PlayerOfTheMatch {
   name: string;
@@ -172,6 +174,7 @@ export interface Match {
   liveScore?: LiveScore;
   previousLiveScore?: LiveScore;
   userId?: string;
+  availability?: { [personId: string]: { status: AvailabilityStatus; note?: string; } };
 }
 
 export interface Official {
