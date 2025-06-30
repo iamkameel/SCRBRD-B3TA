@@ -7,10 +7,13 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamStandingsChart } from "../dashboard-charts";
-import { AlertTriangle, Users, MapPin, AlertCircle, Shield } from 'lucide-react';
+import { AlertTriangle, Users, MapPin, AlertCircle, Shield, ClipboardList } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import type { Competition, Team, FixtureConflict, Person, StandingTeam, LeaderboardPlayer } from '@/lib/data';
+import { format, isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import type { Competition, Team, FixtureConflict, Person, StandingTeam, LeaderboardPlayer, Match } from '@/lib/data';
 import { getSportsmasterDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 
@@ -30,6 +33,7 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 interface SportsmasterDashboardData {
+    allMatches: Match[];
     allCompetitions: Competition[];
     allTeams: Team[];
     allPlayers: Person[];
@@ -62,6 +66,7 @@ export default function SportsmasterDashboard() {
   }
 
   const {
+    allMatches,
     allCompetitions,
     allTeams,
     allPlayers,
@@ -73,6 +78,21 @@ export default function SportsmasterDashboard() {
   } = data;
   
   const { topRunScorers, topWicketTakers } = leaderboards;
+
+  const today = new Date();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0));
+
+  const liveMatches = allMatches.filter(m => m.status === 'live');
+  
+  const todayMatches = allMatches.filter(m => isToday(m.dateTime))
+    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+  
+  const thisWeekMatches = allMatches.filter(m => 
+    isWithinInterval(m.dateTime, { start: todayStart, end: weekEnd })
+  ).sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
 
   return (
     <div className="flex flex-col gap-8">
@@ -111,6 +131,46 @@ export default function SportsmasterDashboard() {
                 </div>
             )}
         </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Operations Center</CardTitle>
+                <CardDescription>An overview of live, daily, and weekly match operations.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="live">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="live">Live Now ({liveMatches.length})</TabsTrigger>
+                  <TabsTrigger value="today">Today's Schedule ({todayMatches.length})</TabsTrigger>
+                  <TabsTrigger value="this_week">This Week ({thisWeekMatches.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="live" className="mt-4">
+                  {liveMatches.length > 0 ? (
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                        <TableBody>{liveMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant="destructive" className={cn("capitalize", match.status === 'live' && "text-white bg-red-500 animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
+                    </Table>
+                  ) : <p className="py-8 text-center text-muted-foreground">No matches are currently live.</p>}
+                </TabsContent>
+                <TabsContent value="today" className="mt-4">
+                  {todayMatches.length > 0 ? (
+                     <Table>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Time</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                        <TableBody>{todayMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'p')}</TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant={match.status === 'completed' ? 'secondary' : (match.status === 'live' ? 'destructive' : 'default')} className={cn("capitalize", match.status === 'live' && "text-white bg-red-500 animate-pulse")}>{match.status}</Badge></TableCell></TableRow>))}</TableBody>
+                    </Table>
+                  ) : <p className="py-8 text-center text-muted-foreground">No matches scheduled for today.</p>}
+                </TabsContent>
+                 <TabsContent value="this_week" className="mt-4">
+                  {thisWeekMatches.length > 0 ? (
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Date</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                        <TableBody>{thisWeekMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{format(match.dateTime, 'EEE, dd MMM p')}</TableCell><TableCell>{match.fieldName}</TableCell><TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell></TableRow>))}</TableBody>
+                    </Table>
+                  ) : <p className="py-8 text-center text-muted-foreground">No other matches scheduled for this week.</p>}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
 
         <Card>
             <CardHeader><CardTitle>Global Overview</CardTitle><CardDescription>High-level metrics across all schools and divisions you oversee.</CardDescription></CardHeader>

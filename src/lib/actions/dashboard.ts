@@ -143,6 +143,7 @@ export async function getAdminDashboardData(personId: string) {
 
 export async function getSportsmasterDashboardData() {
     const [
+        allMatches,
         allCompetitions,
         allTeams,
         allPlayers,
@@ -152,6 +153,7 @@ export async function getSportsmasterDashboardData() {
         teamStandings,
         leaderboards,
     ] = await Promise.all([
+        getMatches(),
         getCompetitions(),
         getTeams(),
         getPlayers(),
@@ -163,6 +165,7 @@ export async function getSportsmasterDashboardData() {
     ]);
 
     return {
+        allMatches,
         allCompetitions,
         allTeams,
         allPlayers,
