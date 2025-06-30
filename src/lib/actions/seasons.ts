@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -14,8 +15,8 @@ export const getSeasons = cache(async (): Promise<Season[]> => {
   if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
-    const q = query(seasonsCollection, where("userId", "==", userId));
-    const seasonSnapshot = await getDocs(q);
+    // Fetch all seasons, assuming a single-organization context.
+    const seasonSnapshot = await getDocs(seasonsCollection);
     const seasonsList = seasonSnapshot.docs.map(doc => {
       const data = doc.data();
       return {

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -15,8 +16,8 @@ export const getDivisions = cache(async (): Promise<Division[]> => {
   if (!userId) return [];
   try {
     const divisionsCollection = collection(db, 'divisions');
-    const q = query(divisionsCollection, where("userId", "==", userId));
-    const divisionSnapshot = await getDocs(q);
+    // Fetch all divisions, assuming a single-organization context.
+    const divisionSnapshot = await getDocs(divisionsCollection);
     const divisionsList = divisionSnapshot.docs.map(doc => ({
       divisionId: doc.id,
       name: doc.data().name,

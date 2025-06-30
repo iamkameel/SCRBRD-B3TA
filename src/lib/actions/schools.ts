@@ -16,8 +16,8 @@ export const getSchools = cache(async (): Promise<School[]> => {
   if (!userId) return [];
   try {
     const schoolsCollection = collection(db, 'schools');
-    const q = query(schoolsCollection, where("userId", "==", userId));
-    const schoolSnapshot = await getDocs(q);
+    // Fetch all schools, assuming a single-organization context.
+    const schoolSnapshot = await getDocs(schoolsCollection);
     const schoolsList = schoolSnapshot.docs.map(doc => ({
       schoolId: doc.id,
       name: doc.data().name,
