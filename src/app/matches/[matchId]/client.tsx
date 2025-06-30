@@ -6,7 +6,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -40,9 +40,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
-import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
+import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction, generatePlayerPerformanceForecastAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
-import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment } from "@/lib/data";
+import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecastOutput } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
@@ -392,10 +392,47 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [isGeneratingAnalysis, startAnalysisGeneration] = React.useTransition();
   const [analyzedTeamId, setAnalyzedTeamId] = React.useState<string | null>(null);
 
+  const [isGeneratingForecast, startForecastGeneration] = React.useTransition();
+  const [forecastedPlayer, setForecastedPlayer] = React.useState<string>('');
+  const [forecastResult, setForecastResult] = React.useState<PlayerPerformanceForecastOutput | null>(null);
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const playersInMatch = React.useMemo(() => {
+    const allPlayers = new Map<string, { name: string; teamName: string }>();
+    teamARoster.forEach(p => {
+        if (teamALineup.includes(p.personId)) {
+            allPlayers.set(p.personId, { name: p.personName, teamName: match.teamAName });
+        }
+    });
+    teamBRoster.forEach(p => {
+        if (teamBLineup.includes(p.personId)) {
+            allPlayers.set(p.personId, { name: p.personName, teamName: match.teamBName });
+        }
+    });
+    return Array.from(allPlayers.entries()).map(([id, data]) => ({ id, ...data }));
+  }, [teamARoster, teamBRoster, teamALineup, teamBLineup, match.teamAName, match.teamBName]);
+
+  const handleGenerateForecast = () => {
+    if (!forecastedPlayer) {
+        toast({ title: 'Player not selected', description: 'Please select a player to generate a forecast.', variant: 'destructive' });
+        return;
+    }
+    startForecastGeneration(async () => {
+        setForecastResult(null);
+        try {
+            const result = await generatePlayerPerformanceForecastAction({
+                playerId: forecastedPlayer,
+                matchId: match.matchId,
+            });
+            setForecastResult(result);
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate forecast.", variant: "destructive" });
+        }
+    });
+  };
 
   const handleRemoveOfficial = () => {
     if (!selectedOfficial) return;
@@ -744,6 +781,53 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         </Card>
                     </div>
                     <div className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>AI Performance Forecast</CardTitle>
+                                <CardDescription>Predict a player's performance based on their stats, form, and match conditions.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <Select onValueChange={setForecastedPlayer} value={forecastedPlayer}>
+                                        <SelectTrigger className="flex-1">
+                                            <SelectValue placeholder="Select a player from the lineup..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {playersInMatch.map(p => (
+                                                <SelectItem key={p.id} value={p.id}>{p.name} ({p.teamName})</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button onClick={handleGenerateForecast} disabled={isGeneratingForecast || !forecastedPlayer} className="w-full sm:w-auto">
+                                        <Wand2 className={`mr-2 h-4 w-4 ${isGeneratingForecast ? 'animate-spin' : ''}`} />
+                                        {isGeneratingForecast ? 'Forecasting...' : 'Get Forecast'}
+                                    </Button>
+                                </div>
+
+                                {isGeneratingForecast && (
+                                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                                        <Loader2 className="h-8 w-8 animate-spin" />
+                                        <p className="mt-2 text-sm">AI is analyzing the data...</p>
+                                    </div>
+                                )}
+
+                                {forecastResult && (
+                                    <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
+                                        <div className="flex items-center gap-4">
+                                            <BrainCircuit className="h-10 w-10 text-primary flex-shrink-0" />
+                                            <div>
+                                                <p className="font-bold text-xl">{forecastResult.predictedPerformance}</p>
+                                                <p className="text-sm text-muted-foreground">Predicted performance for {playersInMatch.find(p => p.id === forecastedPlayer)?.name}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-sm">Justification</h4>
+                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{forecastResult.justification}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                         <Card>
                             <CardHeader>
                                 <CardTitle>Opposition Analysis</CardTitle>

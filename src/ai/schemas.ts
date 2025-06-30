@@ -220,3 +220,35 @@ export const LiveMatchUpdateOutputSchema = z.object({
     tacticalSuggestions: z.array(z.string()).describe("A list of 2-3 brief, actionable tactical suggestions for the batting or bowling captain.").optional(),
 });
 export type LiveMatchUpdateOutput = z.infer<typeof LiveMatchUpdateOutputSchema>;
+
+// From generate-player-performance-forecast-flow.ts
+export const PlayerPerformanceForecastInputSchema = z.object({
+  playerId: z.string(),
+  matchId: z.string(),
+});
+export type PlayerPerformanceForecastInput = z.infer<typeof PlayerPerformanceForecastInputSchema>;
+
+export const PlayerPerformanceForecastOutputSchema = z.object({
+  predictedPerformance: z.string().describe("A quantitative prediction of the player's performance, e.g., '30-45 runs' or '1-2 wickets'."),
+  justification: z.string().describe("A multi-sentence justification for the prediction, referencing the player's form, opponent, and conditions."),
+});
+export type PlayerPerformanceForecastOutput = z.infer<typeof PlayerPerformanceForecastOutputSchema>;
+
+export const PlayerPerformanceForecastPromptInputSchema = z.object({
+  playerName: z.string(),
+  playerRole: z.string().describe("The player's primary role, e.g., Batsman, Bowler, All-rounder."),
+  playerStats: SimplifiedPlayerStatsSchema,
+  recentForm: z.array(z.object({
+    opponent: z.string(),
+    runsScored: z.number().optional(),
+    battingStatus: z.string().optional(),
+    wicketsTaken: z.number().optional(),
+    runsConceded: z.number().optional(),
+  })),
+  matchContext: z.object({
+    opponentName: z.string(),
+    venueName: z.string(),
+  }),
+  weatherForecast: GetMatchForecastOutputSchema,
+  opponentTeamStats: z.any().describe("JSON string of the opponent team's overall season stats."),
+});

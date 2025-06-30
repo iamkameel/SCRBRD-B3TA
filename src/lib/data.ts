@@ -414,3 +414,8 @@ export interface AssignmentRequest {
   reviewedAt?: Date;
   userId: string;
 }
+
+export interface PlayerPerformanceForecast {
+  predictedPerformance: string;
+  justification: string;
+}

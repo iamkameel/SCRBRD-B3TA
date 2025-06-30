@@ -17,8 +17,10 @@ import { generateOppositionAnalysis } from '@/ai/flows/generate-opposition-analy
 import { generateLiveMatchUpdate } from '@/ai/flows/generate-live-match-update-flow';
 import { getUserId } from '@/lib/auth';
 import { queryStats } from '@/ai/flows/stats-query-flow';
+import { generatePlayerPerformanceForecast } from '@/ai/flows/generate-player-performance-forecast-flow';
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput } from '@/ai/schemas';
+
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
@@ -301,5 +303,19 @@ export async function queryStatsAction(question: string): Promise<string> {
         console.error("Error querying stats:", error);
         if (error instanceof Error) throw error;
         throw new Error("The AI failed to answer your question.");
+    }
+}
+
+export async function generatePlayerPerformanceForecastAction(input: PlayerPerformanceForecastInput): Promise<PlayerPerformanceForecastOutput> {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    try {
+        const result = await generatePlayerPerformanceForecast(input);
+        return result;
+    } catch (error) {
+        console.error("Error generating player performance forecast:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("The AI failed to generate a performance forecast.");
     }
 }
