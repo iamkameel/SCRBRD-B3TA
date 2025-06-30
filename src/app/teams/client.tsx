@@ -197,6 +197,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
   
   // Filtering and Sorting state
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [schoolFilter, setSchoolFilter] = React.useState<string[]>([]);
   const [divisionFilter, setDivisionFilter] = React.useState<string[]>([]);
   const [seasonFilter, setSeasonFilter] = React.useState<string[]>([]);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
@@ -219,9 +220,10 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
 
   const filteredTeams = teams.filter(team => {
     const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSchool = schoolFilter.length === 0 || schoolFilter.includes(team.schoolId);
     const matchesDivision = divisionFilter.length === 0 || divisionFilter.includes(team.divisionId);
     const matchesSeason = seasonFilter.length === 0 || seasonFilter.includes(team.seasonId);
-    return matchesSearch && matchesDivision && matchesSeason;
+    return matchesSearch && matchesSchool && matchesDivision && matchesSeason;
   });
 
   const sortedTeams = React.useMemo(() => {
@@ -236,12 +238,12 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
     return sortableItems;
   }, [filteredTeams, sortConfig]);
 
-  const filtersApplied = searchQuery || divisionFilter.length > 0 || seasonFilter.length > 0;
+  const filtersApplied = searchQuery || schoolFilter.length > 0 || divisionFilter.length > 0 || seasonFilter.length > 0;
 
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, divisionFilter, seasonFilter, view, sortConfig]);
+  }, [searchQuery, schoolFilter, divisionFilter, seasonFilter, view, sortConfig]);
 
   // Pagination logic
   const paginatedTeams = sortedTeams.slice(
@@ -325,6 +327,51 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="col-span-2 h-8"
                             />
+                            </div>
+                            <div className="grid grid-cols-3 items-center gap-4">
+                                <Label>School</Label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
+                                            <span className="truncate">
+                                                {schoolFilter.length === 0 && "Select schools..."}
+                                                {schoolFilter.length === 1 && schools.find(s => s.schoolId === schoolFilter[0])?.name}
+                                                {schoolFilter.length > 1 && `${schoolFilter.length} schools selected`}
+                                            </span>
+                                            <ChevronDown className="h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-56">
+                                        <DropdownMenuLabel>Filter by School</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {schools.map(school => (
+                                        <DropdownMenuCheckboxItem
+                                            key={school.schoolId}
+                                            checked={schoolFilter.includes(school.schoolId)}
+                                            onSelect={(e) => e.preventDefault()}
+                                            onCheckedChange={checked => {
+                                                const newFilters = checked
+                                                    ? [...schoolFilter, school.schoolId]
+                                                    : schoolFilter.filter(id => id !== school.schoolId);
+                                                setSchoolFilter(newFilters);
+                                            }}
+                                        >
+                                            {school.name}
+                                        </DropdownMenuCheckboxItem>
+                                        ))}
+                                        {schoolFilter.length > 0 && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                            onSelect={() => setSchoolFilter([])}
+                                            className="justify-center text-sm"
+                                            >
+                                            Clear filter
+                                            </DropdownMenuItem>
+                                        </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                             <div className="grid grid-cols-3 items-center gap-4">
                                 <Label>Division</Label>
