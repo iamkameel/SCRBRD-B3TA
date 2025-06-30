@@ -2,9 +2,10 @@
 'use client';
 
 import * as React from "react";
-import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle, CheckCircle, AlertTriangle, User, Calendar, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,20 +31,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance, Team } from "@/lib/data";
 import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from "@/lib/actions/players";
 import { addPlayerToRosterAction, updateRosterAssignmentAction, removeRosterAssignmentAction } from "@/lib/actions/teams";
 import { AddLinkDialog } from "./add-link-dialog";
 import { PlayerDevelopmentCard } from "./player-development-card";
+import { ROLE_GROUPS } from "@/lib/roles";
 
 // --- Dialog for Assigning a Person to a NEW Team ---
 const assignTeamSchema = z.object({
@@ -177,7 +178,6 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
   
   const [isAssignTeamDialogOpen, setIsAssignTeamDialogOpen] = React.useState(false);
 
-
   const handleRemoveLink = () => {
     if (!selectedLink) return;
     startTransition(async () => {
@@ -222,6 +222,20 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
     });
   };
   
+  const groupedRoles = React.useMemo(() => {
+    const groups: { [key: string]: string[] } = {};
+    person.roles.forEach(roleId => {
+        const group = ROLE_GROUPS.find(g => g.roles.some(r => r.id === roleId));
+        if (group) {
+            if (!groups[group.group]) {
+                groups[group.group] = [];
+            }
+            groups[group.group].push(roleId);
+        }
+    });
+    return Object.entries(groups).map(([group, roles]) => ({ group, roles }));
+  }, [person.roles]);
+
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -229,74 +243,85 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
           <Link href="/people" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />Back to People
           </Link>
-          <div className="flex items-center gap-4">
-              <div className="relative">
-                <Avatar className="h-20 w-20">
-                    <AvatarImage src={person.profileImageUrl} />
-                    <AvatarFallback className="text-3xl">{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback>
-                </Avatar>
-                {canManage && (
-                    <TooltipProvider>
-                        <Tooltip><TooltipTrigger asChild>
-                            <Button 
-                                size="icon" variant="outline"
-                                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full border-2 border-background"
-                                onClick={handleGeneratePortrait} disabled={isGeneratingPortrait}
-                            >
-                                <Wand2 className={`h-4 w-4 ${isGeneratingPortrait ? 'animate-spin' : ''}`} />
-                                <span className="sr-only">Generate AI Portrait</span>
-                            </Button>
-                        </TooltipTrigger><TooltipContent><p>Generate AI Portrait</p></TooltipContent></Tooltip>
-                    </TooltipProvider>
-                )}
-              </div>
-              <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-foreground">{person.firstName} {person.lastName}</h1>
-                  <p className="text-muted-foreground">{person.email}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge>{person.activeRole}</Badge>
-                    {person.roles.length > 1 && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                              +{person.roles.length - 1} more
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <ul className="list-disc list-inside">
-                              {person.roles.filter(r => r !== person.activeRole).map(role => (
-                                <li key={role} className="capitalize">{role}</li>
-                              ))}
-                            </ul>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </div>
-              </div>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Avatar className="h-20 w-20">
+                      <AvatarImage src={person.profileImageUrl} />
+                      <AvatarFallback className="text-3xl">{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback>
+                  </Avatar>
+                  {canManage && (
+                      <Button 
+                          size="icon" variant="outline"
+                          className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full border-2 border-background"
+                          onClick={handleGeneratePortrait} disabled={isGeneratingPortrait}
+                      >
+                          <Wand2 className={`h-4 w-4 ${isGeneratingPortrait ? 'animate-spin' : ''}`} />
+                          <span className="sr-only">Generate AI Portrait</span>
+                      </Button>
+                  )}
+                </div>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">{person.firstName} {person.lastName}</h1>
+                    <p className="text-muted-foreground">{person.email}</p>
+                </div>
+            </div>
           </div>
         </header>
 
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Team Assignments</CardTitle>
-                    <CardDescription>A list of teams {person.firstName} is assigned to.</CardDescription>
-                </div>
-                 {canManage && <Button size="sm" onClick={() => setIsAssignTeamDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4"/>Assign to Team</Button>}
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Team</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead>
-                             {canManage && <TableHead className="text-right">Actions</TableHead>}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {teamAssignments.length > 0 ? (
-                            teamAssignments.map(assignment => (
+         <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="assignments">Roles & Assignments</TabsTrigger>
+                <TabsTrigger value="history">Match History</TabsTrigger>
+                <TabsTrigger value="development">Development</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview" className="mt-4">
+                <Card>
+                  <CardHeader><CardTitle>Player Statistics</CardTitle><CardDescription>Overall career statistics for all completed matches.</CardDescription></CardHeader>
+                  <CardContent className="space-y-6">
+                      <div>
+                          <h3 className="text-lg font-medium mb-4 text-primary">Batting</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                              <StatItem label="Matches" value={playerStats.matchesPlayed} /><StatItem label="Innings" value={playerStats.inningsBatted} /><StatItem label="Runs" value={playerStats.totalRuns} /><StatItem label="Highest" value={`${playerStats.highestScore}${playerStats.highestScoreNotOut ? '*' : ''}`} /><StatItem label="Average" value={playerStats.battingAverage.toFixed(2)} /><StatItem label="Strike Rate" value={playerStats.strikeRate.toFixed(2)} /><StatItem label="100s" value={playerStats.hundreds} /><StatItem label="50s" value={playerStats.fifties} />
+                          </div>
+                      </div>
+                      <Separator />
+                      <div>
+                          <h3 className="text-lg font-medium mb-4 text-primary">Bowling</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                              <StatItem label="Overs" value={playerStats.oversBowled} /><StatItem label="Wickets" value={playerStats.wicketsTaken} /><StatItem label="Average" value={playerStats.bowlingAverage.toFixed(2)} /><StatItem label="Economy" value={playerStats.economyRate.toFixed(2)} /><StatItem label="Maidens" value={playerStats.maidens} /><StatItem label="Best" value={playerStats.bestBowling} /><StatItem label="Runs Conceded" value={playerStats.runsConceded} />
+                          </div>
+                      </div>
+                  </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="assignments" className="mt-4 space-y-6">
+                <Card>
+                    <CardHeader><CardTitle>Assigned Roles</CardTitle><CardDescription>A summary of all roles assigned to this person.</CardDescription></CardHeader>
+                    <CardContent className="flex flex-wrap gap-4">
+                        {groupedRoles.map(({group, roles}) => (
+                            <div key={group}>
+                                <h3 className="font-semibold text-sm uppercase text-muted-foreground tracking-wider">{group}</h3>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                    {roles.map(role => <Badge key={role} className="capitalize">{role}</Badge>)}
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Team Assignments</CardTitle>
+                            <CardDescription>A list of teams {person.firstName} is assigned to.</CardDescription>
+                        </div>
+                        {canManage && <Button size="sm" onClick={() => setIsAssignTeamDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4"/>Assign to Team</Button>}
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader><TableRow><TableHead>Team</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead>{canManage && <TableHead className="text-right">Actions</TableHead>}</TableRow></TableHeader>
+                            <TableBody>{teamAssignments.length > 0 ? (teamAssignments.map(assignment => (
                                 <TableRow key={assignment.assignmentId}>
                                     <TableCell className="font-medium"><Link href={`/teams/${assignment.teamId}`} className="hover:underline">{assignment.teamName}</Link></TableCell>
                                     <TableCell>{assignment.role}</TableCell>
@@ -311,86 +336,46 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                                         </DropdownMenu>
                                     </TableCell>}
                                 </TableRow>
-                            ))
-                        ) : ( <TableRow><TableCell colSpan={canManage ? 4 : 3} className="h-24 text-center text-muted-foreground">Not assigned to any teams.</TableCell></TableRow> )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-              <div><CardTitle>Family Links</CardTitle><CardDescription>Guardians and children linked to {person.firstName}.</CardDescription></div>
-              {canManage && <AddLinkDialog currentPersonId={person.personId} availablePeople={availablePeople} />}
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-              <div>
-                  <h3 className="text-lg font-medium mb-2">Guardians</h3>
-                  <Table><TableHeader><TableRow><TableHead>Name</TableHead>{canManage && <TableHead className="text-right">Actions</TableHead>}</TableRow></TableHeader>
-                      <TableBody>
-                          {initialGuardians.length > 0 ? initialGuardians.map(g => (
-                              <TableRow key={g.personId}>
-                                  <TableCell><Link href={`/people/${g.personId}`} className="hover:underline">{g.firstName} {g.lastName}</Link></TableCell>
-                                  {canManage && <TableCell className="text-right">
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger>
-                                      <DropdownMenuContent><DropdownMenuItem onSelect={() => { setSelectedLink({linkedPerson: g, relationship: 'guardian'}); setIsDeleteLinkDialogOpen(true);}} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove Link</DropdownMenuItem></DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </TableCell>}
-                              </TableRow>
-                          )) : (<TableRow><TableCell colSpan={canManage ? 2 : 1} className="text-center text-muted-foreground h-24">No guardians linked.</TableCell></TableRow>)}
-                      </TableBody>
-                  </Table>
-              </div>
-              <div>
-                  <h3 className="text-lg font-medium mb-2">Children</h3>
-                  <Table><TableHeader><TableRow><TableHead>Name</TableHead>{canManage && <TableHead className="text-right">Actions</TableHead>}</TableRow></TableHeader>
-                      <TableBody>
-                          {initialChildren.length > 0 ? initialChildren.map(c => (
-                              <TableRow key={c.personId}>
-                                  <TableCell><Link href={`/people/${c.personId}`} className="hover:underline">{c.firstName} {c.lastName}</Link></TableCell>
-                                  {canManage && <TableCell className="text-right">
-                                     <DropdownMenu>
-                                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger>
-                                      <DropdownMenuContent><DropdownMenuItem onSelect={() => { setSelectedLink({linkedPerson: c, relationship: 'child'}); setIsDeleteLinkDialogOpen(true);}} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove Link</DropdownMenuItem></DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </TableCell>}
-                              </TableRow>
-                          )) : (<TableRow><TableCell colSpan={canManage ? 2 : 1} className="text-center text-muted-foreground h-24">No children linked.</TableCell></TableRow>)}
-                      </TableBody>
-                  </Table>
-              </div>
-          </CardContent>
-        </Card>
-
-        {person.roles.includes("Player") && (
-          <Card>
-              <CardHeader><CardTitle>Player Statistics</CardTitle><CardDescription>Overall career statistics for all completed matches.</CardDescription></CardHeader>
-              <CardContent className="space-y-6">
-                  <div>
-                      <h3 className="text-lg font-medium mb-4 text-primary">Batting</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                          <StatItem label="Matches" value={playerStats.matchesPlayed} /><StatItem label="Innings" value={playerStats.inningsBatted} /><StatItem label="Runs" value={playerStats.totalRuns} /><StatItem label="Highest" value={`${playerStats.highestScore}${playerStats.highestScoreNotOut ? '*' : ''}`} /><StatItem label="Average" value={playerStats.battingAverage.toFixed(2)} /><StatItem label="Strike Rate" value={playerStats.strikeRate.toFixed(2)} /><StatItem label="100s" value={playerStats.hundreds} /><StatItem label="50s" value={playerStats.fifties} />
-                      </div>
-                  </div>
-                  <Separator />
-                  <div>
-                      <h3 className="text-lg font-medium mb-4 text-primary">Bowling</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                          <StatItem label="Overs" value={playerStats.oversBowled} /><StatItem label="Wickets" value={playerStats.wicketsTaken} /><StatItem label="Average" value={playerStats.bowlingAverage.toFixed(2)} /><StatItem label="Economy" value={playerStats.economyRate.toFixed(2)} /><StatItem label="Maidens" value={playerStats.maidens} /><StatItem label="Best" value={playerStats.bestBowling} /><StatItem label="Runs Conceded" value={playerStats.runsConceded} />
-                      </div>
-                  </div>
-              </CardContent>
-          </Card>
-        )}
-
-        {person.roles.includes("Player") && matchHistory.length > 0 && (
-          <PlayerDevelopmentCard personId={person.personId} />
-        )}
+                            ))) : ( <TableRow><TableCell colSpan={canManage ? 4 : 3} className="h-24 text-center text-muted-foreground">Not assigned to any teams.</TableCell></TableRow> )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="history" className="mt-4">
+                <Card>
+                    <CardHeader><CardTitle>Recent Match History</CardTitle><CardDescription>A summary of the last 5 match performances.</CardDescription></CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Opponent</TableHead><TableHead>Batting</TableHead><TableHead>Bowling</TableHead></TableRow></TableHeader>
+                            <TableBody>
+                                {matchHistory.length > 0 ? (
+                                    matchHistory.map(perf => (
+                                        <TableRow key={perf.matchId}>
+                                            <TableCell>{format(perf.date, 'dd MMM yyyy')}</TableCell>
+                                            <TableCell><Link href={`/matches/${perf.matchId}`} className="hover:underline">{perf.opponent}</Link></TableCell>
+                                            <TableCell>{perf.battingStatus || 'DNB'}</TableCell>
+                                            <TableCell>{perf.wicketsTaken !== undefined && perf.runsConceded !== undefined ? `${perf.wicketsTaken}/${perf.runsConceded}` : 'DNB'}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No completed match history found.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="development" className="mt-4">
+                <PlayerDevelopmentCard personId={person.personId} />
+            </TabsContent>
+         </Tabs>
       </div>
 
       {canManage && <AssignTeamDialog person={person} teams={allTeams} open={isAssignTeamDialogOpen} onOpenChange={setIsAssignTeamDialogOpen} />}
       {canManage && assignmentToEdit && <EditTeamAssignmentDialog assignment={assignmentToEdit} open={isEditAssignmentDialogOpen} onOpenChange={setIsEditAssignmentDialogOpen} />}
+      
+      {canManage && <AddLinkDialog currentPersonId={person.personId} availablePeople={availablePeople} />}
 
       <AlertDialog open={isDeleteLinkDialogOpen} onOpenChange={setIsDeleteLinkDialogOpen}>
         <AlertDialogContent>

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -12,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { Person } from "@/lib/data";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PersonCardProps {
     person: Person;
@@ -49,12 +49,26 @@ export function PersonCard({ person, onEdit, onDelete, isAdmin }: PersonCardProp
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-wrap gap-1">
-                    {person.roles.map((role) => (
-                        <Badge key={role} variant="secondary" className="capitalize">
-                            {role}
-                        </Badge>
-                    ))}
+                <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="capitalize">{person.activeRole}</Badge>
+                    {person.roles.length > 1 && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground">
+                                    +{person.roles.length - 1} more
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <ul className="list-disc list-inside">
+                                    {person.roles.filter(r => r !== person.activeRole).map(role => (
+                                    <li key={role} className="capitalize">{role}</li>
+                                    ))}
+                                </ul>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    )}
                 </div>
             </CardContent>
         </Card>

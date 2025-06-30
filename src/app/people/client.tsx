@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -39,6 +38,9 @@ import type { Person, School } from "@/lib/data";
 import { deletePlayerAction } from '@/lib/actions/players';
 import { PersonCard } from "./person-card";
 import { ROLE_GROUPS } from "@/lib/roles";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
 
 const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.PersonDialog), {
   ssr: false,
@@ -281,13 +283,27 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                         </TableCell>
                         <TableCell>{person.email}</TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {person.roles.map((role) => (
-                              <Badge key={role} variant="secondary" className="capitalize">
-                                {role}
-                              </Badge>
-                            ))}
-                          </div>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="capitalize">{person.activeRole}</Badge>
+                                {person.roles.length > 1 && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground">
+                                                +{person.roles.length - 1}
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <ul className="list-disc list-inside">
+                                                {person.roles.filter(r => r !== person.activeRole).map(role => (
+                                                <li key={role} className="capitalize">{role}</li>
+                                                ))}
+                                            </ul>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                )}
+                            </div>
                         </TableCell>
                         {isAdmin && <TableCell className="text-right">
                           <DropdownMenu>
