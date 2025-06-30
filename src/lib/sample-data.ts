@@ -93,7 +93,13 @@ export const sampleData = {
         { personId: 'staff_2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@umpire.com', roles: ['Umpire'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_3', firstName: 'Mark', lastName: 'Taylor', email: 'mark.t@ground.com', roles: ['Grounds-Keeper', 'Driver'], activeRole: 'Grounds-Keeper', notificationPreferences: { email: true, push: false } },
         { personId: 'staff_4', firstName: 'Lisa', lastName: 'Sthalekar', email: 'lisa.s@ground.com', roles: ['Grounds-Keeper'], activeRole: 'Grounds-Keeper', notificationPreferences: { email: true, push: false } },
-
+        { personId: 'p_49', firstName: 'Eoin', lastName: 'Morgan', email: 'eoin.m@example.com', roles: ['Team Manager'], activeRole: 'Team Manager', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_50', firstName: 'Anil', lastName: 'Kumble', email: 'anil.k@example.com', roles: ['Assistant Coach'], activeRole: 'Assistant Coach', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_51', firstName: 'Sarah', lastName: 'Connor', email: 'sarah.c@school.com', roles: ['School Admin'], activeRole: 'School Admin', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_52', firstName: 'Eva', lastName: 'Carneiro', email: 'eva.c@medical.com', roles: ['Doctor', 'First Aid'], activeRole: 'Doctor', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_53', firstName: 'Gary', lastName: 'Lewin', email: 'gary.l@medical.com', roles: ['Physiotherapist', 'Trainer'], activeRole: 'Physiotherapist', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_54', firstName: 'Robert', lastName: 'Anderson', email: 'robert.a@example.com', roles: ['Guardian'], activeRole: 'Guardian', notificationPreferences: { email: true, push: false } },
+        
         // Michaelhouse Players & Coach
         { personId: 'p_1', firstName: 'James', lastName: 'Anderson', email: 'james.a@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', profileImageUrl: 'https://placehold.co/400x400.png', notificationPreferences: { email: true, push: false } },
         { personId: 'p_2', firstName: 'Ben', lastName: 'Stokes', email: 'ben.s@example.com', roles: ['Player', 'Vice-Captain'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
@@ -149,17 +155,46 @@ export const sampleData = {
         { personId: 'p_46', firstName: 'Iftikhar', lastName: 'Ahmed', email: 'iftikhar.a@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_47', firstName: 'Naseem', lastName: 'Shah', email: 'naseem.s@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
         { personId: 'p_48', firstName: 'Mickey', lastName: 'Arthur', email: 'mickey.a@coach.com', roles: ['Coach'], activeRole: 'Coach', notificationPreferences: { email: true, push: false } },
+        
+        // Maritzburg College U16 Players & Coach
+        { personId: 'p_u16_1', firstName: 'Aiden', lastName: 'Markram', email: 'aiden.m@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_2', firstName: 'Quinton', lastName: 'de Kock', email: 'quinton.d@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_3', firstName: 'Faf', lastName: 'du Plessis', email: 'faf.d@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_4', firstName: 'Kagiso', lastName: 'Rabada', email: 'kagiso.r@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_5', firstName: 'Anrich', lastName: 'Nortje', email: 'anrich.n@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_6', firstName: 'Lungi', lastName: 'Ngidi', email: 'lungi.n@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_7', firstName: 'David', lastName: 'Miller', email: 'david.m@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_8', firstName: 'Rassie', lastName: 'van der Dussen', email: 'rassie.v@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_9', firstName: 'Temba', lastName: 'Bavuma', email: 'temba.b@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_10', firstName: 'Keshav', lastName: 'Maharaj', email: 'keshav.m@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_11', firstName: 'Tabraiz', lastName: 'Shamsi', email: 'tabraiz.s@example.com', roles: ['Player'], activeRole: 'Player', notificationPreferences: { email: true, push: false } },
+        { personId: 'p_u16_coach', firstName: 'Jacques', lastName: 'Kallis', email: 'jacques.k@coach.com', roles: ['Coach'], activeRole: 'Coach', notificationPreferences: { email: true, push: false } },
+    ],
+    familyLinks: [
+        { linkId: 'link_1', parentId: 'p_54', childId: 'p_1' },
     ],
     competitions: [
         { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
-        { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress', teamIds: [] },
+        { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress', teamIds: ['team_5'] },
         { competitionId: 'comp_3', name: 'Coastal Cup', type: 'Cup', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['team_1', 'team_2', 'team_3', 'team_4'] },
     ],
     teams: [
-        { teamId: 'team_1', name: 'Michaelhouse 1st XI', schoolId: 'school_1', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#00205B', secondary: '#FFFFFF' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 1}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
-        { teamId: 'team_2', name: 'Hilton 1st XI', schoolId: 'school_2', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#FFFFFF', secondary: '#A50034' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 13}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
+        { teamId: 'team_1', name: 'Michaelhouse 1st XI', schoolId: 'school_1', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#00205B', secondary: '#FFFFFF' }, roster: [
+            ...Array.from({length: 11}, (_, i) => ({ personId: `p_${i + 1}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
+            { personId: 'p_12', role: 'Coach', status: 'active' },
+            { personId: 'p_49', role: 'Team Manager', status: 'active' },
+        ]},
+        { teamId: 'team_2', name: 'Hilton 1st XI', schoolId: 'school_2', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#FFFFFF', secondary: '#A50034' }, roster: [
+            ...Array.from({length: 11}, (_, i) => ({ personId: `p_${i + 13}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
+            { personId: 'p_24', role: 'Coach', status: 'active' },
+            { personId: 'p_50', role: 'Assistant Coach', status: 'active' },
+        ]},
         { teamId: 'team_3', name: 'Maritzburg 1st XI', schoolId: 'school_3', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#B22222', secondary: '#FFFFFF' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 25}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
         { teamId: 'team_4', name: 'DHS 1st XI', schoolId: 'school_4', divisionId: 'div_open', seasonId: 'season_1', teamClass: '1st XI', teamColors: { primary: '#000080', secondary: '#FFD700' }, roster: Array.from({length: 12}, (_, i) => ({ personId: `p_${i + 37}`, role: i < 11 ? 'Player' : 'Coach', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })) },
+        { teamId: 'team_5', name: 'Maritzburg U16A', schoolId: 'school_3', divisionId: 'div_u16', seasonId: 'season_1', teamClass: 'U16A', teamColors: { primary: '#B22222', secondary: '#FFFFFF' }, roster: [
+            ...Array.from({length: 11}, (_, i) => ({ personId: `p_u16_${i + 1}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
+            { personId: 'p_u16_coach', role: 'Coach', status: 'active' },
+        ]},
     ],
     matches: [
         { matchId: 'match_1', teamAId: 'team_1', teamBId: 'team_2', competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed' },

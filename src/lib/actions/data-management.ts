@@ -41,7 +41,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
             'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
-            'equipment', 'equipmentAssignments', 'sponsors'
+            'equipment', 'equipmentAssignments', 'sponsors', 'sessions'
         ];
 
         for (const collName of collectionsToClear) {
@@ -118,7 +118,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         
         for (const collName of collectionsInOrder) {
             for (const item of sampleData[collName]) {
-                const idKey = idKeyMap[collName];
+                const idKey = idKeyMap[collName as keyof typeof idKeyMap];
                 if (!idKey) throw new Error(`No idKey mapping for collection: ${collName}`);
                 
                 const tempId = item[idKey as keyof typeof item];
@@ -143,6 +143,26 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
         
+        // Process Family Links (after people are created)
+        if (sampleData.familyLinks) {
+            for (const link of sampleData.familyLinks) {
+                const { linkId: tempId, ...linkData } = link;
+                const newParentId = idMap.get(linkData.parentId);
+                const newChildId = idMap.get(linkData.childId);
+                
+                if (newParentId && newChildId) {
+                    const linkDocRef = doc(collection(db, 'familyLinks'));
+                    batch.set(linkDocRef, {
+                        parentId: newParentId,
+                        childId: newChildId,
+                        userId
+                    });
+                    idMap.set(tempId, linkDocRef.id);
+                    itemCount++;
+                }
+            }
+        }
+
         // Process Fields (now that schools exist)
         for (const item of sampleData.fields) {
             const { fieldId: tempId, ...itemData } = item;
@@ -401,7 +421,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
         const batch = writeBatch(db);
         let count = 0;
         
-        for (const item of sampleData[collectionName as Exclude<keyof typeof sampleData, 'teams' | 'matches' | 'competitions' | 'equipmentAssignments' | 'fieldAssignments' | 'officials'>]) {
+        for (const item of sampleData[collectionName as Exclude<keyof typeof sampleData, 'teams' | 'matches' | 'competitions' | 'equipmentAssignments' | 'fieldAssignments' | 'officials' | 'familyLinks'>]) {
             let idKey: string;
             if (subsetName === 'People') idKey = 'personId';
             else if (subsetName === 'Financials') idKey = 'transactionId';
