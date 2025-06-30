@@ -1,3 +1,4 @@
+
 'use client';
 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -34,18 +35,15 @@ interface FieldMapProps {
 export default function FieldMap({ coords, fieldName }: FieldMapProps) {
     const position: [number, number] = [coords.lat, coords.lon];
 
-    // Using a wrapper div helps prevent re-initialization issues with react-leaflet in development
     return (
-        <div style={{ height: '100%', width: '100%', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
-            <MapContainer center={position} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <Marker position={position}>
-                    <Popup>{fieldName}</Popup>
-                </Marker>
-            </MapContainer>
-        </div>
+        <MapContainer center={position} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={position}>
+                <Popup>{fieldName}</Popup>
+            </Marker>
+        </MapContainer>
     );
 }

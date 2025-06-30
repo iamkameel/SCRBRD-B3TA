@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -21,9 +20,6 @@ const FieldMap = dynamic(() => import('./field-map'), {
 });
 
 export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
-    const [isClient, setIsClient] = React.useState(false);
-    React.useEffect(() => { setIsClient(true) }, []);
-
     const upcomingMatches = matches.filter(m => m.status === 'scheduled');
     const pastMatches = matches.filter(m => m.status === 'completed');
 
@@ -160,7 +156,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                             <TableRow key={match.matchId}>
                                                 <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
                                                 <TableCell>{match.competitionName}</TableCell>
-                                                <TableCell className="text-right">{isClient ? format(match.dateTime, 'PPP') : ''}</TableCell>
+                                                <TableCell className="text-right">{format(match.dateTime, 'PPP')}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
@@ -192,7 +188,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                                             <TableRow key={match.matchId}>
                                                 <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
                                                 <TableCell>{match.result || 'Result N/A'}</TableCell>
-                                                <TableCell className="text-right">{isClient ? format(match.dateTime, 'PPP') : ''}</TableCell>
+                                                <TableCell className="text-right">{format(match.dateTime, 'PPP')}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
