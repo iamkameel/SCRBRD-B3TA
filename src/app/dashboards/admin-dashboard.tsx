@@ -43,7 +43,7 @@ function KpiCard({ title, value, description, href }: { title: string, value: st
             <Card className="transition-all hover:shadow-lg hover:-translate-y-1">
                 <CardHeader>
                     <CardDescription>{title}</CardDescription>
-                    <CardTitle className="text-4xl font-bold">{value}</CardTitle>
+                    <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold">{value}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="text-xs text-muted-foreground flex items-center justify-between">
@@ -142,10 +142,6 @@ export default function AdminDashboard() {
                 <div>
                     <h1 className="text-2xl font-bold">Admin Dashboard</h1>
                     <p className="text-sm opacity-90">{headerContext}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">Admin</p>
-                    <div className="w-8 h-8 bg-white/30 rounded-full"></div>
                 </div>
             </div>
         </header>
@@ -265,3 +261,5 @@ const AdminLink = ({href, icon: Icon, title}: {href: string, icon: React.Element
         <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
     </Link>
 )
+
+    
