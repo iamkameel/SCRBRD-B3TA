@@ -42,6 +42,7 @@ import type { Team, Person, RosterMember, TeamStats, Match } from "@/lib/data";
 import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction, getEligiblePlayersForTeam } from '@/lib/actions/teams';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -351,158 +352,178 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
     <>
       <div className="flex flex-col gap-8">
         <Link href="/teams" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back to Teams</Link>
-        <Card>
-          <CardHeader className="flex flex-row items-start justify-between">
-              <div>
-                <CardTitle>{team.name}</CardTitle>
-                <CardDescription>
-                  {team.alias && <span className="font-semibold text-foreground">{team.alias} &bull; </span>}
-                  {team.divisionName} &bull; {team.schoolName} &bull; {team.seasonName}
-                </CardDescription>
-              </div>
-              {team.teamColors && (
-              <div className="flex items-center gap-2">
-                  {team.teamColors.primary && (<TooltipProvider><Tooltip><TooltipTrigger asChild><div className="h-8 w-8 rounded-full border" style={{ backgroundColor: team.teamColors.primary }} /></TooltipTrigger><TooltipContent><p>Primary: {team.teamColors.primary}</p></TooltipContent></Tooltip></TooltipProvider>)}
-                  {team.teamColors.secondary && (<TooltipProvider><Tooltip><TooltipTrigger asChild><div className="h-8 w-8 rounded-full border" style={{ backgroundColor: team.teamColors.secondary }}/></TooltipTrigger><TooltipContent><p>Secondary: {team.teamColors.secondary}</p></TooltipContent></Tooltip></TooltipProvider>)}
-              </div>
-              )}
-          </CardHeader>
-        </Card>
+        <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    {team.teamColors && (
+                      <div className="relative h-16 w-16 rounded-full border-2 border-border flex items-center justify-center bg-muted">
+                        <div className="absolute h-full w-1/2 left-0 rounded-l-full" style={{ backgroundColor: team.teamColors.primary }} />
+                        <div className="absolute h-full w-1/2 right-0 rounded-r-full" style={{ backgroundColor: team.teamColors.secondary }}/>
+                      </div>
+                    )}
+                    <div>
+                      <h1 className="text-3xl font-bold tracking-tight text-foreground">{team.name}</h1>
+                      <p className="text-muted-foreground">
+                        {team.alias && <span className="font-semibold text-foreground">{team.alias} &bull; </span>}
+                        {team.divisionName} &bull; {team.schoolName} &bull; {team.seasonName}
+                      </p>
+                    </div>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Played</CardTitle></CardHeader>
+                    <CardContent><p className="text-2xl font-bold">{teamStats.matchesPlayed}</p></CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Won</CardTitle></CardHeader>
+                    <CardContent><p className="text-2xl font-bold">{teamStats.matchesWon}</p></CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Lost</CardTitle></CardHeader>
+                    <CardContent><p className="text-2xl font-bold">{teamStats.matchesLost}</p></CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">NRR</CardTitle></CardHeader>
+                    <CardContent><p className="text-2xl font-bold">{teamStats.netRunRate.toFixed(2)}</p></CardContent>
+                </Card>
+            </div>
+        </div>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div><CardTitle>Player Roster</CardTitle><CardDescription>The main squad of players for the team.</CardDescription></div>
-            {canManage && <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Player</Button>}
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Status</TableHead>
-                {canManage && <TableHead className="text-right">Actions</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {playerRoster.length > 0 ? (
-                  playerRoster.map(member => (
-                    <TableRow key={member.assignmentId}>
-                      <TableCell className="font-medium flex items-center gap-2">
-                        <Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link>
-                        {member.isCaptain && <Badge variant="outline" className="ml-2">C</Badge>}
-                        {member.isViceCaptain && <Badge variant="outline" className="ml-2">VC</Badge>}
-                      </TableCell>
-                      <TableCell><Badge variant="secondary" className="capitalize">{member.status.replace(/_/g, " ")}</Badge></TableCell>
-                      {canManage && <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setMemberToEdit(member); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={canManage ? 3 : 2} className="h-24 text-center">No players assigned to this roster yet.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div><CardTitle>Team Staff</CardTitle><CardDescription>Manage the coaches and support staff for this team.</CardDescription></div>
-            {canManage && <Button onClick={() => setIsAddStaffDialogOpen(true)}><PlusCircle className="mr-2" />Add Staff</Button>}
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead>
-                {canManage && <TableHead className="text-right">Actions</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {staffRoster.length > 0 ? (
-                  staffRoster.map(member => (
-                    <TableRow key={member.assignmentId}>
-                      <TableCell className="font-medium"><Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link></TableCell>
-                      <TableCell>{member.role}</TableCell>
-                      {canManage && <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => { setMemberToEdit(member); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={canManage ? 3 : 2} className="h-24 text-center">No staff assigned to this team yet.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>Match Schedule & Results</CardTitle>
-                <CardDescription>A list of all scheduled and completed matches for {team.name}.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Opponent</TableHead>
-                            <TableHead>Date & Time</TableHead>
-                            <TableHead>Venue</TableHead>
-                            <TableHead>Status</TableHead>
+        <Tabs defaultValue="roster">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="roster">Roster</TabsTrigger>
+                <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            </TabsList>
+            <TabsContent value="roster" className="mt-4 space-y-8">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div><CardTitle>Player Roster</CardTitle><CardDescription>The main squad of players for the team.</CardDescription></div>
+                    {canManage && <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Player</Button>}
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow><TableHead>Name</TableHead><TableHead>Status</TableHead>
+                        {canManage && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {teamMatches.length > 0 ? (
-                            teamMatches.map(match => {
-                                const opponentName = match.teamAId === team.teamId ? match.teamBName : match.teamAName;
-                                return (
-                                    <TableRow key={match.matchId}>
-                                        <TableCell className="font-medium">
-                                            <Link href={`/matches/${match.matchId}`} className="hover:underline">
-                                                vs {opponentName}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
-                                        <TableCell>{match.fieldName}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
-                                                {match.status}
-                                            </Badge>
+                      </TableHeader>
+                      <TableBody>
+                        {playerRoster.length > 0 ? (
+                          playerRoster.map(member => (
+                            <TableRow key={member.assignmentId}>
+                              <TableCell className="font-medium flex items-center gap-2">
+                                <Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link>
+                                {member.isCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline" className="text-amber-500 border-amber-500">C</Badge></TooltipTrigger><TooltipContent><p>Captain</p></TooltipContent></Tooltip></TooltipProvider>}
+                                {member.isViceCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline">VC</Badge></TooltipTrigger><TooltipContent><p>Vice-Captain</p></TooltipContent></TooltipProvider>}
+                              </TableCell>
+                              <TableCell><Badge variant="secondary" className="capitalize">{member.status.replace(/_/g, " ")}</Badge></TableCell>
+                              {canManage && <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => { setMemberToEdit(member); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow><TableCell colSpan={canManage ? 3 : 2} className="h-24 text-center">No players assigned to this roster yet.</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div><CardTitle>Team Staff</CardTitle><CardDescription>Manage the coaches and support staff for this team.</CardDescription></div>
+                    {canManage && <Button onClick={() => setIsAddStaffDialogOpen(true)}><PlusCircle className="mr-2" />Add Staff</Button>}
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead>
+                        {canManage && <TableHead className="text-right">Actions</TableHead>}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {staffRoster.length > 0 ? (
+                          staffRoster.map(member => (
+                            <TableRow key={member.assignmentId}>
+                              <TableCell className="font-medium"><Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link></TableCell>
+                              <TableCell>{member.role}</TableCell>
+                              {canManage && <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => { setMemberToEdit(member); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow><TableCell colSpan={canManage ? 3 : 2} className="h-24 text-center">No staff assigned to this team yet.</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="schedule" className="mt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Match Schedule & Results</CardTitle>
+                        <CardDescription>A list of all scheduled and completed matches for {team.name}.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Opponent</TableHead>
+                                    <TableHead>Date & Time</TableHead>
+                                    <TableHead>Venue</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {teamMatches.length > 0 ? (
+                                    teamMatches.map(match => {
+                                        const opponentName = match.teamAId === team.teamId ? match.teamBName : match.teamAName;
+                                        return (
+                                            <TableRow key={match.matchId}>
+                                                <TableCell className="font-medium">
+                                                    <Link href={`/matches/${match.matchId}`} className="hover:underline">
+                                                        vs {opponentName}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                                                <TableCell>{match.fieldName}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
+                                                        {match.status}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center">
+                                            No matches scheduled for this team yet.
                                         </TableCell>
                                     </TableRow>
-                                )
-                            })
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">
-                                    No matches scheduled for this team yet.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>Team Statistics</CardTitle><CardDescription>Overall performance for all completed matches in this season.</CardDescription></CardHeader>
-          <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                  <StatItem label="Played" value={teamStats.matchesPlayed} /><StatItem label="Won" value={teamStats.matchesWon} /><StatItem label="Lost" value={teamStats.matchesLost} /><StatItem label="Drawn" value={teamStats.matchesDrawn} /><StatItem label="Runs Scored" value={teamStats.totalRunsScored} /><StatItem label="Wickets Taken" value={teamStats.totalWicketsTaken} /><StatItem label="Net Run Rate" value={teamStats.netRunRate.toFixed(2)} />
-              </div>
-          </CardContent>
-        </Card>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
       
       {canManage && <AddPlayerDialog 
@@ -549,13 +570,4 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
       </AlertDialog>}
     </>
   )
-}
-
-function StatItem({ label, value }: { label: string, value: string | number }) {
-    return (
-        <div>
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="font-bold text-2xl text-foreground">{value}</p>
-        </div>
-    )
 }

@@ -253,7 +253,27 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
               <div>
                   <h1 className="text-3xl font-bold tracking-tight text-foreground">{person.firstName} {person.lastName}</h1>
                   <p className="text-muted-foreground">{person.email}</p>
-                  <div className="flex gap-2 mt-2">{person.roles.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}</div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge>{person.activeRole}</Badge>
+                    {person.roles.length > 1 && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
+                              +{person.roles.length - 1} more
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <ul className="list-disc list-inside">
+                              {person.roles.filter(r => r !== person.activeRole).map(role => (
+                                <li key={role} className="capitalize">{role}</li>
+                              ))}
+                            </ul>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
               </div>
           </div>
         </header>
