@@ -203,15 +203,28 @@ export default function CoachDashboard() {
 
   React.useEffect(() => {
     if (person?.personId) {
-      getCoachDashboardData(person.personId).then(fetchedData => {
-        setData(fetchedData);
+      getCoachDashboardData(person.personId)
+        .then(fetchedData => {
+            setData(fetchedData);
+            setLoading(false);
+        })
+        .catch(error => {
+            console.error("Failed to load coach dashboard data:", error);
+            setLoading(false); // Stop loading even if there's an error
+        });
+    } else if (person === null) {
+        // If there's definitely no user (not just loading), stop loading
         setLoading(false);
-      });
     }
   }, [person]);
 
-  if (loading || !data) {
+  if (loading) {
     return <DashboardSkeleton />;
+  }
+  
+  if (!data) {
+    // This handles the error case where data fetching failed or user is not a coach
+    return <CoachDashboardInternal data={{ team: null, nextMatch: null, recentMatches: [], teamStats: null, leaderboards: { topRunScorers: [], topWicketTakers: [] }, upcomingSessions: [] }} />;
   }
 
   return <CoachDashboardInternal data={data} />;
