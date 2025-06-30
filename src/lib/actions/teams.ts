@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
 import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment, Person, Division } from '@/lib/data';
-import { getPerson } from './players';
+import { getPlayers, getPerson } from './players';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { getDivisions } from './divisions';
@@ -499,23 +499,19 @@ const getClassRank = (className: string | undefined): number => {
 }
 
 export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(Person & { eligibilityContext: string })[]> => {
-    const userId = await getUserId();
-    if (!userId) return [];
-
     const [targetTeam, allTeams, allPeople] = await Promise.all([
         getTeam(teamId),
         getTeams(),
-        getPerson(userId).then(user => user?.roles.includes('Admin') ? getDocs(collection(db, 'people')).then(snap => snap.docs.map(d => ({ personId: d.id, ...d.data() } as Person))) : getDocs(query(collection(db, 'people'), where('userId', '==', userId))).then(snap => snap.docs.map(d => ({ personId: d.id, ...d.data() } as Person)))),
+        getPlayers(),
     ]);
     
     if (!targetTeam) return [];
 
-    // Create a map of all roster assignments for efficiency
     const rosterMap = new Map<string, { teamId: string; teamName: string; divisionName: string; teamClass: string; }>();
     for (const team of allTeams) {
         const roster = await getTeamRoster(team.teamId);
         for (const member of roster) {
-            if (member.role === 'Player' && !rosterMap.has(member.personId)) { // Prioritize first assignment found
+            if (member.role === 'Player' && !rosterMap.has(member.personId)) {
                 rosterMap.set(member.personId, { teamId: team.teamId, teamName: team.name, divisionName: team.divisionName, teamClass: team.teamClass || '' });
             }
         }
@@ -523,47 +519,39 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
     
     const targetTeamRosterIds = new Set((await getTeamRoster(teamId)).map(m => m.personId));
     const targetDivisionRank = getDivisionRank(targetTeam.divisionName);
-
     const eligiblePlayers: (Person & { eligibilityContext: string })[] = [];
 
     for (const person of allPeople) {
-        // Rule: Must be a player
         if (!person.roles.includes('Player')) continue;
-
-        // Rule: Exclude players already on the target team's roster
         if (targetTeamRosterIds.has(person.personId)) continue;
-        
-        const assignment = rosterMap.get(person.personId);
-        
-        // Unassigned players are not eligible
-        if (!assignment) continue;
-        
-        const playerTeam = allTeams.find(t => t.teamId === assignment.teamId);
-        if (!playerTeam) continue;
+        if (!person.assignedSchools?.includes(targetTeam.schoolId)) continue;
 
-        // Rule 1: School Membership Filter
-        if (playerTeam.schoolId !== targetTeam.schoolId) continue;
+        const currentAssignment = rosterMap.get(person.personId);
 
-        const playerDivisionRank = getDivisionRank(assignment.divisionName);
+        if (currentAssignment) {
+            const playerTeam = allTeams.find(t => t.teamId === currentAssignment.teamId);
+            if (!playerTeam) continue;
 
-        // Rule 2 & 4: Division & Class Hierarchy Filter
-        // Players cannot play down a division
-        if (playerDivisionRank > targetDivisionRank) {
-            continue;
-        }
-        
-        let eligibilityContext = `${assignment.teamName}`;
-        if (playerDivisionRank < targetDivisionRank) {
-            eligibilityContext += ` - Can play up`;
+            const playerDivisionRank = getDivisionRank(playerTeam.divisionName);
+
+            if (playerDivisionRank > targetDivisionRank) {
+                continue;
+            }
+
+            let eligibilityContext = `From ${playerTeam.name}`;
+            if (playerDivisionRank < targetDivisionRank) {
+                eligibilityContext += ` (can play up)`;
+            }
+            eligiblePlayers.push({ ...person, eligibilityContext });
         } else {
-            eligibilityContext += ` - Same division`;
+            const eligibilityContext = `Unassigned from any team`;
+            eligiblePlayers.push({ ...person, eligibilityContext });
         }
-        
-        eligiblePlayers.push({ ...person, eligibilityContext });
     }
 
     return eligiblePlayers;
 });
+
 
 export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> => {
   const userId = await getUserId();
