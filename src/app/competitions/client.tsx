@@ -408,8 +408,8 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
     });
   };
 
-  const SortableHeader = ({ column, children }: { column: SortableColumn, children: React.ReactNode }) => (
-    <TableHead>
+  const SortableHeader = ({ column, children, className }: { column: SortableColumn, children: React.ReactNode, className?: string }) => (
+    <TableHead className={className}>
         <Button variant="ghost" onClick={() => requestSort(column)} className="px-0 hover:bg-transparent">
             {children}
             {getSortIcon(column)}
@@ -527,10 +527,10 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                     <TableHeader>
                         <TableRow>
                             <SortableHeader column="name">Name</SortableHeader>
-                            <SortableHeader column="type">Type</SortableHeader>
-                            <TableHead>Class</TableHead>
-                            <SortableHeader column="seasonName">Season</SortableHeader>
-                            <SortableHeader column="divisionName">Division</SortableHeader>
+                            <SortableHeader column="type" className="hidden md:table-cell">Type</SortableHeader>
+                            <TableHead className="hidden md:table-cell">Class</TableHead>
+                            <SortableHeader column="seasonName" className="hidden md:table-cell">Season</SortableHeader>
+                            <SortableHeader column="divisionName" className="hidden md:table-cell">Division</SortableHeader>
                             <SortableHeader column="status">Status</SortableHeader>
                             {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
@@ -548,10 +548,10 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                     </div>
                                 )}
                             </TableCell>
-                            <TableCell>{comp.type}</TableCell>
-                            <TableCell>{comp.competitionClass || '-'}</TableCell>
-                            <TableCell>{comp.seasonName}</TableCell>
-                            <TableCell>{comp.divisionName}</TableCell>
+                            <TableCell className="hidden md:table-cell">{comp.type}</TableCell>
+                            <TableCell className="hidden md:table-cell">{comp.competitionClass || '-'}</TableCell>
+                            <TableCell className="hidden md:table-cell">{comp.seasonName}</TableCell>
+                            <TableCell className="hidden md:table-cell">{comp.divisionName}</TableCell>
                             <TableCell><Badge variant={comp.status === 'Completed' ? 'secondary' : (comp.status === 'In Progress' ? 'default' : 'outline')}>{comp.status}</Badge></TableCell>
                             {isAdmin && <TableCell className="text-right">
                             <DropdownMenu>

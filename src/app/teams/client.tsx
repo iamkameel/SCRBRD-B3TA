@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -164,7 +165,7 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
              <Separator />
             <div className="space-y-4">
                 <h3 className="text-sm font-medium text-muted-foreground">Team Branding</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="primaryColor" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="secondaryColor" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
@@ -271,8 +272,8 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
     return <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
-  const SortableHeader = ({ column, children }: { column: SortableColumn, children: React.ReactNode }) => (
-    <TableHead>
+  const SortableHeader = ({ column, children, className }: { column: SortableColumn, children: React.ReactNode, className?: string }) => (
+    <TableHead className={className}>
         <Button variant="ghost" onClick={() => requestSort(column)} className="px-0 hover:bg-transparent">
             {children}
             {getSortIcon(column)}
@@ -479,11 +480,11 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
                 <TableHeader>
                     <TableRow>
                         <SortableHeader column="name">Team Name</SortableHeader>
-                        <SortableHeader column="alias">Alias</SortableHeader>
-                        <SortableHeader column="schoolName">School</SortableHeader>
-                        <SortableHeader column="divisionName">Division</SortableHeader>
-                        <SortableHeader column="seasonName">Season</SortableHeader>
-                        <SortableHeader column="teamClass">Class</SortableHeader>
+                        <SortableHeader column="alias" className="hidden md:table-cell">Alias</SortableHeader>
+                        <SortableHeader column="schoolName" className="hidden lg:table-cell">School</SortableHeader>
+                        <SortableHeader column="divisionName" className="hidden md:table-cell">Division</SortableHeader>
+                        <SortableHeader column="seasonName" className="hidden lg:table-cell">Season</SortableHeader>
+                        <SortableHeader column="teamClass" className="hidden md:table-cell">Class</SortableHeader>
                         {canManage && <TableHead className="text-right">Actions</TableHead>}
                     </TableRow>
                 </TableHeader>
@@ -492,11 +493,11 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
                     paginatedTeams.map((team) => (
                         <TableRow key={team.teamId}>
                         <TableCell className="font-medium"><Link href={`/teams/${team.teamId}`} className="hover:underline">{team.name}</Link></TableCell>
-                        <TableCell>{team.alias || '-'}</TableCell>
-                        <TableCell>{team.schoolName}</TableCell>
-                        <TableCell>{team.divisionName}</TableCell>
-                        <TableCell>{team.seasonName}</TableCell>
-                        <TableCell>{team.teamClass}</TableCell>
+                        <TableCell className="hidden md:table-cell">{team.alias || '-'}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{team.schoolName}</TableCell>
+                        <TableCell className="hidden md:table-cell">{team.divisionName}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{team.seasonName}</TableCell>
+                        <TableCell className="hidden md:table-cell">{team.teamClass}</TableCell>
                         {canManage && <TableCell className="text-right">
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>

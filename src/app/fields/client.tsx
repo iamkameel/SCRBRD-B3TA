@@ -158,7 +158,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
                 <h3 className="text-base font-semibold text-foreground">Field Details</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="alias" render={({ field }) => (<FormItem><FormLabel>Alias (Optional)</FormLabel><FormControl><Input placeholder="e.g. The Oval" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
@@ -166,7 +166,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
                 
                 <h3 className="text-sm font-medium text-muted-foreground pt-2">Location</h3>
                 <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="coordinates.lat" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-29.318" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="coordinates.lon" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="29.96" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
@@ -176,7 +176,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
             <Separator />
              <div className="space-y-4">
                  <h3 className="text-base font-semibold text-foreground">Surface &amp; Condition</h3>
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="pitchType" render={({ field }) => (<FormItem><FormLabel>Pitch Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{PITCH_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="size" render={({ field }) => (<FormItem><FormLabel>Field Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger></FormControl><SelectContent>{FIELD_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                  </div>
@@ -203,7 +203,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
             <Separator />
             <div className="space-y-4">
                  <h3 className="text-base font-semibold text-foreground">Facilities &amp; Amenities</h3>
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <FormField control={form.control} name="facilities" render={() => (
                         <FormItem><FormLabel>Facilities</FormLabel><div className="space-y-2 rounded-lg border p-4">
                         {FACILITIES.map((item) => (<FormField key={item.id} control={form.control} name="facilities" render={({ field }) => { return (<FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))}} disabled={isPending}/></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)}}/>))}
@@ -221,7 +221,7 @@ function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange 
             <Separator />
              <div className="space-y-4">
                 <h3 className="text-base font-semibold text-foreground">Contact &amp; Staffing</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="contactPerson" render={({ field }) => (<FormItem><FormLabel>Contact Person</FormLabel><FormControl><Input placeholder="e.g. John Smith" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="contactPhone" render={({ field }) => (<FormItem><FormLabel>Contact Phone</FormLabel><FormControl><Input placeholder="e.g. 555-1234" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>

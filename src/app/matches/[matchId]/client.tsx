@@ -528,7 +528,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
             <Link href="/matches" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
                 <ArrowLeft className="mr-2 h-4 w-4" />Back to Matches
             </Link>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName || 'TBD'}</h1>
                     <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm">
@@ -538,7 +538,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{match.fieldName}</span>
                     </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-end gap-2 shrink-0">
                     <Badge
                         variant={
                             match.status === 'completed' ? 'secondary' :

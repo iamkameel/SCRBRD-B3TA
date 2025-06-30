@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -244,7 +245,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                                         onSelect={() => setRoleFilters([])}
                                         className="justify-center text-sm"
                                         >
-                                        Clear filters
+                                        Clear filter
                                         </DropdownMenuItem>
                                     </>
                                     )}
@@ -281,7 +282,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                           <Avatar><AvatarImage src={person.profileImageUrl} alt={`${person.firstName} ${person.lastName}`} /><AvatarFallback>{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback></Avatar>
                           <Link href={`/people/${person.personId}`} className="hover:underline">{person.firstName} {person.lastName}</Link>
                         </TableCell>
-                        <TableCell>{person.email}</TableCell>
+                        <TableCell className="truncate">{person.email}</TableCell>
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 <Badge variant="secondary" className="capitalize">{person.activeRole}</Badge>
