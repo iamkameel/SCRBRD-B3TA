@@ -9,11 +9,84 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight } from 'lucide-react';
-import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession } from '@/lib/data';
+import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession, School } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { getCoachDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
+import { getSchools } from '@/lib/actions/schools';
+import { getTeams } from '@/lib/actions/teams';
+import { createAssignmentRequestAction } from '@/lib/actions/requests';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from '@/hooks/use-toast';
+
+const requestSchema = z.object({
+  schoolId: z.string({ required_error: "Please select a school." }),
+  teamId: z.string({ required_error: "Please select a team." }),
+});
+type RequestFormValues = z.infer<typeof requestSchema>;
+
+function RequestAssignmentForm({ schools, teams }: { schools: School[], teams: Team[] }) {
+    const { toast } = useToast();
+    const [isPending, startTransition] = React.useTransition();
+    const form = useForm<RequestFormValues>({
+        resolver: zodResolver(requestSchema),
+    });
+    
+    const selectedSchoolId = form.watch('schoolId');
+    const availableTeams = React.useMemo(() => {
+        if (!selectedSchoolId) return [];
+        return teams.filter(t => t.schoolId === selectedSchoolId);
+    }, [selectedSchoolId, teams]);
+    
+    React.useEffect(() => {
+        form.resetField('teamId');
+    }, [selectedSchoolId, form]);
+
+    function onSubmit(data: RequestFormValues) {
+        startTransition(async () => {
+            try {
+                await createAssignmentRequestAction({ targetId: data.teamId, targetType: 'Team', role: 'Coach' });
+                toast({ title: "Request Sent", description: "Your assignment request has been sent to the Sportsmaster for approval."});
+            } catch (error) {
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not send request.", variant: "destructive" });
+            }
+        });
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Request Team Assignment</CardTitle>
+                <CardDescription>You are not currently assigned to a team. Select a school and team to request an assignment from the Sportsmaster.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField control={form.control} name="schoolId" render={({ field }) => (
+                            <FormItem><FormLabel>School</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school" /></SelectTrigger></FormControl>
+                                <SelectContent>{schools.map(s => <SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage />
+                            </FormItem>
+                        )}/>
+                        <FormField control={form.control} name="teamId" render={({ field }) => (
+                            <FormItem><FormLabel>Team</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSchoolId}>
+                                <FormControl><SelectTrigger><SelectValue placeholder={!selectedSchoolId ? 'Select a school first' : 'Select a team'} /></SelectTrigger></FormControl>
+                                <SelectContent>{availableTeams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage />
+                            </FormItem>
+                        )}/>
+                        <Button type="submit" disabled={isPending}>{isPending ? 'Sending...' : 'Send Request'}</Button>
+                    </form>
+                </Form>
+            </CardContent>
+        </Card>
+    )
+}
 
 interface CoachDashboardProps {
   data: {
@@ -26,6 +99,8 @@ interface CoachDashboardProps {
       topWicketTakers: LeaderboardPlayer[];
     };
     upcomingSessions: TrainingSession[];
+    allSchools?: School[];
+    allTeams?: Team[];
   }
 }
 
@@ -49,12 +124,7 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
             <h1 className="text-2xl font-bold">Coach Dashboard</h1>
             <p className="text-sm opacity-90">Welcome, {person?.activeRole || 'Coach'}!</p>
         </header>
-        <Card>
-          <CardHeader>
-            <CardTitle>No Team Assignment Found</CardTitle>
-            <CardDescription>You are not currently assigned to a team in a coaching capacity. Please contact your administrator.</CardDescription>
-          </CardHeader>
-        </Card>
+        <RequestAssignmentForm schools={data.allSchools || []} teams={data.allTeams || []} />
       </div>
     );
   }
@@ -205,8 +275,13 @@ export default function CoachDashboard() {
     if (person?.personId) {
       setLoading(true);
       getCoachDashboardData(person.personId)
-        .then(fetchedData => {
-            setData(fetchedData);
+        .then(async (fetchedData) => {
+            if (!fetchedData.team) {
+                const [allSchools, allTeams] = await Promise.all([getSchools(), getTeams()]);
+                setData({ ...fetchedData, allSchools, allTeams });
+            } else {
+                setData(fetchedData);
+            }
         })
         .catch(error => {
             console.error("Failed to load coach dashboard data:", error);
@@ -227,7 +302,7 @@ export default function CoachDashboard() {
   
   if (!data) {
     // This handles the error case where data fetching failed or the user is not a coach
-    return <CoachDashboardInternal data={{ team: null, nextMatch: null, recentMatches: [], teamStats: null, leaderboards: { topRunScorers: [], topWicketTakers: [] }, upcomingSessions: [] }} />;
+    return <CoachDashboardInternal data={{ team: null, nextMatch: null, recentMatches: [], teamStats: null, leaderboards: { topRunScorers: [], topWicketTakers: [] }, upcomingSessions: [], allSchools: [], allTeams: [] }} />;
   }
 
   return <CoachDashboardInternal data={data} />;

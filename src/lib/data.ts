@@ -398,3 +398,19 @@ export interface TrainingSession {
   notes?: string;
   userId?: string;
 }
+
+export interface AssignmentRequest {
+  requestId: string;
+  requesterId: string;
+  requesterName: string;
+  targetId: string;
+  targetName: string;
+  targetType: 'School' | 'Team';
+  role: string;
+  status: 'pending' | 'approved' | 'denied';
+  createdAt: Date;
+  reviewedBy?: string;
+  reviewedByName?: string;
+  reviewedAt?: Date;
+  userId: string;
+}

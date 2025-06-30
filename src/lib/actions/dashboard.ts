@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict, FullTransportAssignment, TrainingSession, Season, Division, School } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict, FullTransportAssignment, TrainingSession, Season, Division, School, AssignmentRequest } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
@@ -17,6 +17,7 @@ import { getSessionsByTeam } from './sessions';
 import { getSeasons } from './seasons';
 import { getDivisions } from './divisions';
 import { getSchools } from './schools';
+import { getPendingAssignmentRequests } from './requests';
 
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
@@ -164,6 +165,7 @@ export async function getSportsmasterDashboardData() {
         unconfirmedAssignmentsCount,
         teamStandings,
         leaderboards,
+        pendingRequests,
     ] = await Promise.all([
         getMatches(),
         getCompetitions(),
@@ -174,6 +176,7 @@ export async function getSportsmasterDashboardData() {
         getUnconfirmedAssignmentsCount(),
         getTeamStandings(),
         getLeaderboards(),
+        getPendingAssignmentRequests(),
     ]);
 
     return {
@@ -186,6 +189,7 @@ export async function getSportsmasterDashboardData() {
         unconfirmedAssignmentsCount,
         teamStandings,
         leaderboards,
+        pendingRequests,
     };
 }
 
