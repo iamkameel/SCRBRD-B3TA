@@ -9,6 +9,14 @@ import {
     Dumbbell
 } from 'lucide-react';
 
+const dataManagementGroup = {
+    title: "System Administration",
+    icon: Cog,
+    items: [
+        { href: '/data-management', label: 'Data Management', icon: Database },
+    ]
+};
+
 const adminTopLevelNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
@@ -67,7 +75,7 @@ const adminNavGroups = [
         adminOnly: true,
         items: [
             { href: '/user-management', label: 'User Management', icon: UserCog, adminOnly: true },
-            { href: '/data-management', label: 'Data Management', icon: Database, adminOnly: true },
+            { href: '/data-management', label: 'Data Management', icon: Database },
         ]
     }
 ];
@@ -107,6 +115,7 @@ const sportsmasterNavGroups = [
             { href: '/fields', label: 'Fields', icon: MapPin },
         ]
     },
+    dataManagementGroup,
 ];
 
 const coachNavGroups = [
@@ -127,7 +136,8 @@ const coachNavGroups = [
             { href: '/rankings', label: 'Leaderboards', icon: Trophy },
             { href: '/people', label: 'Player Profiles', icon: User },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 const playerTopLevelNavItems = [
@@ -157,7 +167,8 @@ const playerNavGroups = [
             { href: '/rankings', label: 'Leaderboards', icon: Trophy },
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 const officialTopLevelNavItems = [
@@ -178,7 +189,8 @@ const officialNavGroups = [
         items: [
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 const driverTopLevelNavItems = [
@@ -192,7 +204,8 @@ const driverNavGroups = [
         items: [
             { href: '/transport', label: 'My Schedule', icon: Bus },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 const groundskeeperTopLevelNavItems = [
@@ -206,7 +219,8 @@ const groundskeeperNavGroups = [
         items: [
             { href: '/fields', label: 'All Fields', icon: MapPin },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 const guardianTopLevelNavItems = [
@@ -222,7 +236,8 @@ const guardianNavGroups = [
             { href: '/teams', label: 'Teams', icon: Users },
             { href: '/people', label: 'Profiles', icon: User },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 const trainerTopLevelNavItems = [
@@ -236,7 +251,8 @@ const trainerNavGroups = [
         items: [
             { href: '/people', label: 'Athlete Roster', icon: Users },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 const spectatorTopLevelNavItems = [
@@ -251,7 +267,8 @@ const spectatorNavGroups = [
             { href: '/matches', label: 'All Matches', icon: ClipboardList },
             { href: '/rankings', label: 'Rankings', icon: Trophy },
         ]
-    }
+    },
+    dataManagementGroup,
 ];
 
 
