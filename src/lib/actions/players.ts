@@ -37,7 +37,7 @@ export const getPlayers = cache(async (): Promise<Person[]> => {
       }
   }
 
-  // Sportsmaster sees people from their assigned schools
+  // Sportsmaster sees people from their assigned schools.
   if (currentUser.activeRole === 'Sportsmaster') {
       if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
           return [];
@@ -243,13 +243,12 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
     revalidatePath(`/people/${linkedPersonId}`);
 }
 
-
-const playerSchema = z.object({
+const personSchema = z.object({
     firstName: z.string().min(1), lastName: z.string().min(1), email: z.string().email(),
     phone: z.string().optional(),
     profileImageUrl: z.string().url().optional().or(z.literal('')),
     roles: z.array(z.string()).min(1),
-    assignedSchools: z.array(z.string()).optional(),
+    assignedSchoolId: z.string().optional(),
     activeRole: z.string().optional(),
 });
 
@@ -273,8 +272,8 @@ function hasPermissionToAssign(assignerRoles: string[], targetRoles: string[]): 
     return targetRoles.every(target => allowedToAssign.has(target));
 }
 
-export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
-  const validated = playerSchema.safeParse(data);
+export async function addPlayerAction(data: z.infer<typeof personSchema>) {
+  const validated = personSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid person data.');
   
   const currentUserId = await getUserId();
@@ -286,10 +285,13 @@ export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
   if (!hasPermissionToAssign(currentUser.roles, data.roles)) {
     throw new Error("You do not have permission to assign one or more of the selected roles.");
   }
+  
+  const { assignedSchoolId, ...restOfData } = validated.data;
 
   try {
     await addDoc(collection(db, 'people'), { 
-      ...data, 
+      ...restOfData,
+      assignedSchools: assignedSchoolId ? [assignedSchoolId] : [],
       notificationPreferences: { email: true, push: false },
     });
   } catch (error) {
@@ -299,7 +301,7 @@ export async function addPlayerAction(data: z.infer<typeof playerSchema>) {
   revalidatePath('/people'); revalidatePath('/teams'); revalidatePath('/new-match');
 }
 
-const updatePlayerSchema = playerSchema.extend({ personId: z.string() });
+const updatePlayerSchema = personSchema.extend({ personId: z.string() });
 export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema>) {
   const validated = updatePlayerSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid person data.');
@@ -310,7 +312,7 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
   const currentUser = await getPerson(currentUserId);
   if (!currentUser) throw new Error("Could not verify your identity.");
   
-  const { personId, ...updateData } = validated.data;
+  const { personId, assignedSchoolId, ...updateData } = validated.data;
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
   if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
@@ -323,8 +325,13 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
       throw new Error("You do not have permission to assign one or more of the selected roles.");
   }
 
+  const updatePayload = {
+    ...updateData,
+    assignedSchools: assignedSchoolId ? [assignedSchoolId] : []
+  };
+
   try {
-    await updateDoc(personRef, updateData);
+    await updateDoc(personRef, updatePayload);
   } catch (error) {
     console.error("Error updating person:", error);
     throw new Error("Could not update person.");
@@ -543,7 +550,7 @@ export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> 
 });
 
 
-export async function assignPersonToSchoolsAction(personId: string, schoolIds: string[]) {
+export async function assignPersonToSchoolAction(personId: string, schoolId: string | null) {
   const currentUserId = await getUserId();
   if (!currentUserId) throw new Error("You must be logged in to perform this action.");
 
@@ -553,7 +560,7 @@ export async function assignPersonToSchoolsAction(personId: string, schoolIds: s
       throw new Error("You do not have permission to perform this action.");
   }
 
-  if (!personId || !Array.isArray(schoolIds)) {
+  if (!personId) {
       throw new Error("Invalid data provided for assignment.");
   }
 
@@ -565,11 +572,11 @@ export async function assignPersonToSchoolsAction(personId: string, schoolIds: s
 
   try {
     await updateDoc(personRef, {
-        assignedSchools: schoolIds
+        assignedSchools: schoolId ? [schoolId] : []
     });
   } catch (error) {
-    console.error("Error updating school assignments:", error);
-    throw new Error("Could not update school assignments.");
+    console.error("Error updating school assignment:", error);
+    throw new Error("Could not update school assignment.");
   }
 
   revalidatePath('/people');

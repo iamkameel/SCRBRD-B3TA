@@ -27,7 +27,7 @@ const personSchema = z.object({
   roles: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one role.",
   }),
-  assignedSchools: z.array(z.string()).optional(),
+  assignedSchoolId: z.string().optional(),
   activeRole: z.string().optional(),
 }).refine(data => {
     if (data.roles && data.roles.length > 0 && !data.activeRole) {
@@ -54,19 +54,13 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
       ...person,
       phone: person.phone ?? '',
       profileImageUrl: person.profileImageUrl ?? '',
-      assignedSchools: person.assignedSchools ?? [],
+      assignedSchoolId: person.assignedSchools?.[0] || '',
     } : {
-      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchools: [],
+      firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: "",
     },
   });
   
   const selectedRoles = form.watch('roles');
-  
-  const rolesRequiringSchoolAssignment = [
-    'Sportsmaster', 'School Admin', 'Coach', 'Assistant Coach', 'Team Manager',
-    'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid'
-  ];
-  const showSchoolAssignment = selectedRoles?.some(role => rolesRequiringSchoolAssignment.includes(role));
 
   const canAssignRoles = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster') || currentUser?.roles.includes('School Admin');
 
@@ -77,11 +71,11 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
           ...person,
           phone: person.phone ?? '',
           profileImageUrl: person.profileImageUrl ?? '',
-          assignedSchools: person.assignedSchools ?? [],
+          assignedSchoolId: person.assignedSchools?.[0] || '',
         });
       } else {
         form.reset({
-          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchools: [],
+          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: "",
         });
       }
     }
@@ -171,56 +165,34 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
               </FormItem>
             )} />
 
-            {showSchoolAssignment && (
-                <FormField
-                    control={form.control}
-                    name="assignedSchools"
-                    render={() => (
-                        <FormItem>
-                            <FormLabel>School Assignments</FormLabel>
-                            <FormDescription>Select the schools this user will manage.</FormDescription>
-                            <ScrollArea className="h-40 w-full rounded-lg border p-4">
-                               {schools.length > 0 ? (
-                                schools.map((school) => (
-                                    <FormField
-                                        key={school.schoolId}
-                                        control={form.control}
-                                        name="assignedSchools"
-                                        render={({ field }) => (
-                                            <FormItem
-                                                key={school.schoolId}
-                                                className="flex flex-row items-start space-x-3 space-y-0 mb-4"
-                                            >
-                                                <FormControl>
-                                                    <Checkbox
-                                                        checked={field.value?.includes(school.schoolId)}
-                                                        onCheckedChange={(checked) => {
-                                                            return checked
-                                                                ? field.onChange([...(field.value || []), school.schoolId])
-                                                                : field.onChange(
-                                                                    field.value?.filter(
-                                                                        (value) => value !== school.schoolId
-                                                                    )
-                                                                );
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    {school.name}
-                                                </FormLabel>
-                                            </FormItem>
-                                        )}
-                                    />
-                                ))
-                               ) : (
-                                <p className="text-center text-sm text-muted-foreground">No schools available to assign. Add schools on the Schools page.</p>
-                               )}
-                            </ScrollArea>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
+             <FormField
+              control={form.control}
+              name="assignedSchoolId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>School Assignment</FormLabel>
+                  <FormDescription>
+                    Assign this person to a primary school. This is required for most staff and player roles.
+                  </FormDescription>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a school" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">-- None --</SelectItem>
+                      {schools.map((school) => (
+                        <SelectItem key={school.schoolId} value={school.schoolId}>
+                          {school.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
                 control={form.control}
