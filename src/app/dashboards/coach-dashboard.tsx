@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Calendar, Users, BarChart2, ClipboardList, Target, Medal } from 'lucide-react';
-import type { Team, Match, TeamStats, LeaderboardPlayer } from '@/lib/data';
+import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { getCoachDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
@@ -25,6 +25,7 @@ interface CoachDashboardProps {
       topRunScorers: LeaderboardPlayer[];
       topWicketTakers: LeaderboardPlayer[];
     };
+    upcomingSessions: TrainingSession[];
   }
 }
 
@@ -39,7 +40,7 @@ function StatItem({ label, value }: { label: string, value: string | number }) {
 
 function CoachDashboardInternal({ data }: CoachDashboardProps) {
   const { person } = useAuth();
-  const { team, nextMatch, recentMatches, teamStats, leaderboards } = data;
+  const { team, nextMatch, recentMatches, teamStats, leaderboards, upcomingSessions } = data;
 
   if (!team || !teamStats) {
     return (
@@ -125,6 +126,24 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
           </Card>
         </div>
         <div className="lg:col-span-1 space-y-8">
+            <Card>
+              <CardHeader><CardTitle>Upcoming Sessions</CardTitle></CardHeader>
+              <CardContent>
+                {upcomingSessions.length > 0 ? (
+                  <ul className="space-y-3">
+                    {upcomingSessions.map(session => (
+                      <li key={session.sessionId}>
+                        <p className="font-semibold">{session.title}</p>
+                        <p className="text-sm text-muted-foreground">{format(session.date, 'PPP, p')}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground py-4">No sessions planned.</p>
+                )}
+                <Button asChild variant="outline" className="w-full mt-4"><Link href="/planner">Go to Planner</Link></Button>
+              </CardContent>
+            </Card>
             {/* Team Stats */}
             <Card>
                 <CardHeader><CardTitle>Season Snapshot</CardTitle></CardHeader>

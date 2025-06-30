@@ -116,6 +116,7 @@ const coachNavGroups = [
         icon: Users,
         items: [
             { href: '/teams', label: 'Manage Roster', icon: Users },
+            { href: '/planner', label: 'Session Planner', icon: CalendarDays },
             { href: '/matches', label: 'Fixtures & Results', icon: ClipboardList },
         ]
     },

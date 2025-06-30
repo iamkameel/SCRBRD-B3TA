@@ -348,3 +348,28 @@ export interface FullEquipmentAssignment {
   assignedDate: Date;
   returnedDate?: Date;
 }
+
+export interface Drill {
+  drillId: string;
+  name: string;
+  description: string;
+  category: 'Batting' | 'Bowling' | 'Fielding' | 'Fitness' | 'Tactical';
+  duration: number; // in minutes
+}
+
+export interface TrainingSession {
+  sessionId: string;
+  title: string;
+  date: Date;
+  teamId: string;
+  teamName: string;
+  focus: string[];
+  drills: {
+    drillId: string;
+    name: string;
+    duration: number;
+  }[];
+  attendance: { personId: string; attended: boolean }[];
+  notes?: string;
+  userId?: string;
+}
