@@ -795,4 +795,3 @@ export const getOfficialAssignmentsForPerson = cache(async (personId: string): P
         return [];
     }
 });
-
