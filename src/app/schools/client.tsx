@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Facebook, Twitter, Youtube, Instagram } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { School } from "@/lib/data";
@@ -40,13 +40,22 @@ import { Separator } from "@/components/ui/separator";
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
   abbreviation: z.string().optional(),
+  motto: z.string().optional(),
+  establishmentYear: z.coerce.number().int().min(1000).max(new Date().getFullYear()).optional().or(z.literal('')),
+  principal: z.string().optional(),
+  socialMedia: z.object({
+    facebook: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    twitter: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    instagram: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    youtube: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+  }).optional(),
   logoUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
   website: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
   phone: z.string().optional(),
   location: z.string().optional(),
   brandColors: z.object({
-    primary: z.string().regex(/^#[0-9a-fA-F]{6}$/, { message: "Must be a valid hex color." }).optional(),
-    secondary: z.string().regex(/^#[0-9a-fA-F]{6}$/, { message: "Must be a valid hex color." }).optional(),
+    primary: z.string().optional(),
+    secondary: z.string().optional(),
   }).optional(),
 });
 
@@ -59,31 +68,26 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
 
   const form = useForm<SchoolFormValues>({
     resolver: zodResolver(schoolSchema),
-    defaultValues: mode === 'edit' && school ? {
-        ...school,
-        logoUrl: school.logoUrl || '',
-        website: school.website || '',
-        phone: school.phone || '',
-        location: school.location || '',
-        brandColors: {
-            primary: school.brandColors?.primary || '#000000',
-            secondary: school.brandColors?.secondary || '#ffffff'
-        }
-    } : {
-      name: "", abbreviation: "", logoUrl: "", website: "", phone: "", location: "", brandColors: { primary: '#000000', secondary: '#ffffff' }
+    defaultValues: mode === 'edit' && school ? { ...school } : {
+        name: "", abbreviation: "", logoUrl: "", website: "", phone: "", location: "",
+        motto: "", principal: "", socialMedia: {}, establishmentYear: undefined,
+        brandColors: { primary: '#000000', secondary: '#ffffff' }
     },
   });
 
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && school) {
-        form.reset({ 
+        form.reset({
             ...school,
-            logoUrl: school.logoUrl || '', website: school.website || '', phone: school.phone || '', location: school.location || '',
-            brandColors: { primary: school.brandColors?.primary || '#000000', secondary: school.brandColors?.secondary || '#ffffff' }
+            establishmentYear: school.establishmentYear || '',
         });
       } else {
-        form.reset({ name: "", abbreviation: "", logoUrl: "", website: "", phone: "", location: "", brandColors: { primary: '#000000', secondary: '#ffffff' } });
+        form.reset({
+            name: "", abbreviation: "", logoUrl: "", website: "", phone: "", location: "",
+            motto: "", principal: "", socialMedia: { facebook: '', twitter: '', instagram: '', youtube: ''}, establishmentYear: '',
+            brandColors: { primary: '#000000', secondary: '#ffffff' }
+        });
       }
     }
   }, [school, mode, open, form]);
@@ -107,7 +111,7 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === 'edit' ? 'Edit School' : 'Add New School'}</DialogTitle>
           <DialogDescription>Enter the school's details across the tabs below.</DialogDescription>
@@ -120,22 +124,35 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="branding">Branding</TabsTrigger>
               </TabsList>
-              <TabsContent value="general" className="space-y-4 pt-4">
-                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-              </TabsContent>
-              <TabsContent value="contact" className="space-y-4 pt-4">
-                  <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Academy Lane, Knowledgeton" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="e.g. +27 31 123 4567" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="e.g. https://www.school.com" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-              </TabsContent>
-              <TabsContent value="branding" className="space-y-4 pt-4">
-                <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-              </TabsContent>
+              <div className="p-1">
+                <TabsContent value="general" className="space-y-4">
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="principal" render={({ field }) => (<FormItem><FormLabel>Principal / Headmaster (Optional)</FormLabel><FormControl><Input placeholder="e.g. Mr. John Smith" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="establishmentYear" render={({ field }) => (<FormItem><FormLabel>Year Established (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g. 1955" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                </TabsContent>
+                <TabsContent value="contact" className="space-y-4">
+                    <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Academy Lane, Knowledgeton" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="e.g. +27 31 123 4567" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="e.g. https://www.school.com" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <Separator />
+                    <h4 className="font-medium text-sm">Social Media (Optional)</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="socialMedia.facebook" render={({ field }) => (<FormItem><FormLabel className="flex items-center"><Facebook className="mr-2"/>Facebook</FormLabel><FormControl><Input placeholder="https://facebook.com/..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="socialMedia.twitter" render={({ field }) => (<FormItem><FormLabel className="flex items-center"><Twitter className="mr-2"/>Twitter / X</FormLabel><FormControl><Input placeholder="https://x.com/..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="socialMedia.instagram" render={({ field }) => (<FormItem><FormLabel className="flex items-center"><Instagram className="mr-2"/>Instagram</FormLabel><FormControl><Input placeholder="https://instagram.com/..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="socialMedia.youtube" render={({ field }) => (<FormItem><FormLabel className="flex items-center"><Youtube className="mr-2"/>YouTube</FormLabel><FormControl><Input placeholder="https://youtube.com/..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                </TabsContent>
+                <TabsContent value="branding" className="space-y-4">
+                  <FormField control={form.control} name="motto" render={({ field }) => (<FormItem><FormLabel>Motto / Tagline (Optional)</FormLabel><FormControl><Input placeholder="e.g. Striving for Excellence" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                  <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? ''} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? ''} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+                </TabsContent>
+              </div>
             </Tabs>
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

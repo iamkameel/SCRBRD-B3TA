@@ -22,6 +22,15 @@ export interface School {
   schoolId: string;
   name: string;
   abbreviation?: string;
+  motto?: string;
+  establishmentYear?: number;
+  principal?: string;
+  socialMedia?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+  };
   logoUrl?: string;
   website?: string;
   phone?: string;

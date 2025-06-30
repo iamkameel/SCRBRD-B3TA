@@ -1,8 +1,9 @@
+
 'use client';
 
 import * as React from "react";
 import Link from 'next/link';
-import { ArrowLeft, Building, Globe, Phone, Users, User, Palette } from 'lucide-react';
+import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 import type { School, Team, Person } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +23,7 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
     </Card>
 );
 
-const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string, href?: string }) => {
+const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | number, href?: string }) => {
     if (!value) return null;
     const content = href ? <Link href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{value}</Link> : <span>{value}</span>;
     return (
@@ -43,6 +44,8 @@ export default function SchoolDetailsClient({ school, teams, staff }: { school: 
     // For this example, we show the number of teams and staff, which is more performant.
     // A future improvement could be to aggregate player counts in a separate process.
 
+    const socialLinks = school.socialMedia ? Object.entries(school.socialMedia).filter(([, link]) => link) : [];
+
     return (
         <div className="flex flex-col gap-8">
             <header>
@@ -57,6 +60,7 @@ export default function SchoolDetailsClient({ school, teams, staff }: { school: 
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">{school.name}</h1>
                         {school.abbreviation && <p className="text-lg text-muted-foreground">{school.abbreviation}</p>}
+                        {school.motto && <p className="text-md italic text-muted-foreground mt-1">"{school.motto}"</p>}
                     </div>
                 </div>
             </header>
@@ -118,9 +122,19 @@ export default function SchoolDetailsClient({ school, teams, staff }: { school: 
                     <Card>
                         <CardHeader><CardTitle>School Information</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
+                           <InfoItem icon={User} label="Principal" value={school.principal} />
+                           <InfoItem icon={Calendar} label="Founded" value={school.establishmentYear} />
                            <InfoItem icon={Globe} label="Website" value={school.website} href={school.website} />
                            <InfoItem icon={Phone} label="Phone" value={school.phone} href={`tel:${school.phone}`} />
                            <InfoItem icon={Building} label="Location" value={school.location} />
+                           {socialLinks.length > 0 && (
+                             <div className="flex items-center gap-2 pt-2">
+                               {school.socialMedia?.facebook && <Link href={school.socialMedia.facebook} target="_blank" className="text-muted-foreground hover:text-foreground"><Facebook/></Link>}
+                               {school.socialMedia?.twitter && <Link href={school.socialMedia.twitter} target="_blank" className="text-muted-foreground hover:text-foreground"><Twitter/></Link>}
+                               {school.socialMedia?.instagram && <Link href={school.socialMedia.instagram} target="_blank" className="text-muted-foreground hover:text-foreground"><Instagram/></Link>}
+                               {school.socialMedia?.youtube && <Link href={school.socialMedia.youtube} target="_blank" className="text-muted-foreground hover:text-foreground"><Youtube/></Link>}
+                             </div>
+                           )}
                         </CardContent>
                     </Card>
                     <Card>

@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { School } from '@/lib/data';
+import type { School, Person } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
@@ -53,6 +53,15 @@ export const getSchool = cache(async (schoolId: string): Promise<School | null> 
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
   abbreviation: z.string().optional(),
+  motto: z.string().optional(),
+  establishmentYear: z.coerce.number().int().min(1000).max(new Date().getFullYear()).optional(),
+  principal: z.string().optional(),
+  socialMedia: z.object({
+    facebook: z.string().url().optional().or(z.literal('')),
+    twitter: z.string().url().optional().or(z.literal('')),
+    instagram: z.string().url().optional().or(z.literal('')),
+    youtube: z.string().url().optional().or(z.literal('')),
+  }).optional(),
   logoUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
   website: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
   phone: z.string().optional(),
