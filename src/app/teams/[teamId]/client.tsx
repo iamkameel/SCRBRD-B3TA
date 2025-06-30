@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -39,7 +39,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Team, Person, RosterMember, TeamStats, Match } from "@/lib/data";
-import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction } from '@/lib/actions/teams';
+import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction, getEligiblePlayersForTeam } from '@/lib/actions/teams';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2 } from "lucide-react";
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -57,9 +59,9 @@ type EditAssignmentFormValues = z.infer<typeof editAssignmentSchema>;
 const PLAYER_ROLES = ["Player"];
 const STAFF_ROLES = ["Coach", "Assistant Coach", "Team Manager", "Trainer", "Physio", "Scorer"];
 const TEAM_ASSIGNABLE_ROLES = [...PLAYER_ROLES, ...STAFF_ROLES];
-const STATUSES = ["active", "on_trial", "injured", "retired"];
+const STATUSES = ["active", "on_trial", "injured", "retired", "on_loan"];
 
-function AddAssignmentDialog({ teamId, teamSchoolId, people, assignableRoles, open, onOpenChange, title, description }: { teamId: string, teamSchoolId: string, people: Person[], assignableRoles: string[], open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
+function AddStaffDialog({ teamId, teamSchoolId, people, assignableRoles, open, onOpenChange, title, description }: { teamId: string, teamSchoolId: string, people: Person[], assignableRoles: string[], open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
@@ -141,6 +143,103 @@ function AddAssignmentDialog({ teamId, teamSchoolId, people, assignableRoles, op
       </DialogContent>
     </Dialog>
   );
+}
+
+function AddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boolean, onOpenChange: (open: boolean) => void }) {
+    const { toast } = useToast();
+    const [isSubmitting, startSubmitTransition] = React.useTransition();
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [eligiblePlayers, setEligiblePlayers] = React.useState<(Person & { eligibilityContext: string })[]>([]);
+    const [searchTerm, setSearchTerm] = React.useState('');
+
+    const form = useForm<AssignmentFormValues>({
+        resolver: zodResolver(assignmentSchema),
+        defaultValues: { role: 'Player', isCaptain: false, isViceCaptain: false, status: "active" },
+    });
+
+    React.useEffect(() => {
+        if (open) {
+            setIsLoading(true);
+            setEligiblePlayers([]);
+            setSearchTerm('');
+            form.reset({ role: 'Player', isCaptain: false, isViceCaptain: false, status: 'active', personId: undefined });
+
+            getEligiblePlayersForTeam(team.teamId)
+                .then(players => {
+                    setEligiblePlayers(players);
+                })
+                .catch(() => toast({ title: "Error", description: "Could not load eligible players.", variant: "destructive" }))
+                .finally(() => setIsLoading(false));
+        }
+    }, [open, team.teamId, toast, form]);
+    
+    const filteredPlayers = eligiblePlayers.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    function onSubmit(data: AssignmentFormValues) {
+        startSubmitTransition(async () => {
+            try {
+                await addPlayerToRosterAction(team.teamId, data);
+                toast({ title: "Player Added", description: `The player has been added to the team.` });
+                onOpenChange(false);
+            } catch (error) {
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not add player to roster.", variant: "destructive" });
+            }
+        });
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader><DialogTitle>Add Player to {team.name}</DialogTitle><DialogDescription>Select an eligible player to add to the roster.</DialogDescription></DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField control={form.control} name="personId" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Eligible Players</FormLabel>
+                                <div className="relative">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input placeholder="Search eligible players..." className="pl-8" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                                </div>
+                                <ScrollArea className="h-64 rounded-md border">
+                                    {isLoading ? (
+                                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Loading eligible players...
+                                        </div>
+                                    ) : (
+                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="p-2">
+                                            {filteredPlayers.length > 0 ? filteredPlayers.map(p => (
+                                                <Label key={p.personId} htmlFor={p.personId} className="flex items-start gap-3 rounded-md p-2 hover:bg-muted/50 cursor-pointer has-[:checked]:bg-muted">
+                                                    <FormControl><Input type="radio" name={field.name} id={p.personId} value={p.personId} checked={field.value === p.personId} onChange={field.onChange} className="sr-only" /></FormControl>
+                                                    <div>
+                                                        <p>{p.firstName} {p.lastName}</p>
+                                                        <p className="text-xs text-muted-foreground">{p.eligibilityContext}</p>
+                                                    </div>
+                                                </Label>
+                                            )) : (<p className="text-center text-sm text-muted-foreground p-4">No eligible players found.</p>)}
+                                        </RadioGroup>
+                                    )}
+                                </ScrollArea>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+
+                        <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="active" disabled={isSubmitting}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                        
+                        <div className="flex items-center space-x-4 pt-2">
+                            <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
+                            <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
+                        </div>
+
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Adding..." : "Add Player to Team"}</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
 }
 
 function EditAssignmentDialog({ teamId, member, open, onOpenChange }: { teamId: string; member: RosterMember; open: boolean; onOpenChange: (open: boolean) => void; }) {
@@ -406,19 +505,14 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         </Card>
       </div>
       
-      {canManage && <AddAssignmentDialog 
-        teamId={team.teamId}
-        teamSchoolId={team.schoolId} 
-        people={people} 
-        assignableRoles={PLAYER_ROLES} 
+      {canManage && <AddPlayerDialog 
+        team={team}
         open={isAddPlayerDialogOpen} 
         onOpenChange={setIsAddPlayerDialogOpen} 
-        title="Add Player to Roster" 
-        description="Assign a new player to the team." 
       />}
-      {canManage && <AddAssignmentDialog 
-        teamId={team.teamId} 
-        teamSchoolId={team.schoolId}
+      {canManage && <AddStaffDialog 
+        teamId={team.teamId}
+        teamSchoolId={team.schoolId} 
         people={people} 
         assignableRoles={STAFF_ROLES} 
         open={isAddStaffDialogOpen} 
