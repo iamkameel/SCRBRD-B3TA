@@ -60,7 +60,7 @@ export const getTeam = cache(async (teamId: string): Promise<Team | null> => {
     const teamDocRef = doc(db, 'teams', teamId);
     const teamSnap = await getDoc(teamDocRef);
     if (!teamSnap.exists()) return null;
-    return { teamId: teamSnap.id, ...doc.data() } as Team;
+    return { teamId: teamSnap.id, ...teamSnap.data() } as Team;
   } catch (error) {
     console.error(`Error fetching team with ID ${teamId}:`, error);
     return null;
@@ -561,4 +561,5 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
 
     return eligiblePlayers;
 });
+
 
