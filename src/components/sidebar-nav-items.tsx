@@ -1,3 +1,4 @@
+
 import {
     LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database,
     Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack,
@@ -8,14 +9,6 @@ import {
     HeartPulse,
     Dumbbell
 } from 'lucide-react';
-
-const dataManagementGroup = {
-    title: "System Administration",
-    icon: Cog,
-    items: [
-        { href: '/data-management', label: 'Data Management', icon: Database },
-    ]
-};
 
 const adminTopLevelNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -55,9 +48,9 @@ const adminNavGroups = [
         icon: Wrench,
         adminOnly: true,
         items: [
-            { href: '/fields', label: 'Fields', icon: MapPin, adminOnly: true },
-            { href: '/equipment', label: 'Equipment', icon: Backpack, adminOnly: true },
-            { href: '/transport', label: 'Transport', icon: Bus, adminOnly: true },
+            { href: '/fields', label: 'Fields', icon: MapPin },
+            { href: '/equipment', label: 'Equipment', icon: Backpack },
+            { href: '/transport', label: 'Transport', icon: Bus },
         ]
     },
     {
@@ -65,8 +58,8 @@ const adminNavGroups = [
         icon: Banknote,
         adminOnly: true,
         items: [
-            { href: '/sponsors', label: 'Sponsors', icon: Handshake, adminOnly: true },
-            { href: '/financials', label: 'Financials', icon: Landmark, adminOnly: true },
+            { href: '/sponsors', label: 'Sponsors', icon: Handshake },
+            { href: '/financials', label: 'Financials', icon: Landmark },
         ]
     },
     {
@@ -74,49 +67,13 @@ const adminNavGroups = [
         icon: Cog,
         adminOnly: true,
         items: [
-            { href: '/user-management', label: 'User Management', icon: UserCog, adminOnly: true },
+            { href: '/user-management', label: 'User Management', icon: UserCog },
             { href: '/data-management', label: 'Data Management', icon: Database },
         ]
     }
 ];
 
-const sportsmasterNavGroups = [
-    {
-        title: "League Structure",
-        icon: Trophy,
-        items: [
-            { href: '/competitions', label: 'Competitions', icon: Shield },
-            { href: '/seasons', label: 'Seasons', icon: CalendarDays },
-            { href: '/divisions', label: 'Divisions', icon: Medal },
-            { href: '/rankings', label: 'Rankings', icon: Trophy },
-        ]
-    },
-    {
-        title: "Match Operations",
-        icon: Swords,
-        items: [
-            { href: '/matches', label: 'All Matches', icon: ClipboardList },
-            { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
-        ]
-    },
-     {
-        title: "Participants",
-        icon: Users,
-        items: [
-            { href: '/teams', label: 'Teams', icon: Users },
-            { href: '/people', label: 'People', icon: User },
-            { href: '/schools', label: 'Schools', icon: Building },
-        ]
-    },
-    {
-        title: "Resources",
-        icon: Wrench,
-        items: [
-            { href: '/fields', label: 'Fields', icon: MapPin },
-        ]
-    },
-    dataManagementGroup,
-];
+const sportsmasterNavGroups = adminNavGroups.filter(g => !g.adminOnly);
 
 const coachNavGroups = [
     {
@@ -137,7 +94,6 @@ const coachNavGroups = [
             { href: '/people', label: 'Player Profiles', icon: User },
         ]
     },
-    dataManagementGroup,
 ];
 
 const playerTopLevelNavItems = [
@@ -168,7 +124,6 @@ const playerNavGroups = [
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
         ]
     },
-    dataManagementGroup,
 ];
 
 const officialTopLevelNavItems = [
@@ -190,7 +145,6 @@ const officialNavGroups = [
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
         ]
     },
-    dataManagementGroup,
 ];
 
 const driverTopLevelNavItems = [
@@ -205,7 +159,6 @@ const driverNavGroups = [
             { href: '/transport', label: 'My Schedule', icon: Bus },
         ]
     },
-    dataManagementGroup,
 ];
 
 const groundskeeperTopLevelNavItems = [
@@ -220,7 +173,6 @@ const groundskeeperNavGroups = [
             { href: '/fields', label: 'All Fields', icon: MapPin },
         ]
     },
-    dataManagementGroup,
 ];
 
 const guardianTopLevelNavItems = [
@@ -237,7 +189,6 @@ const guardianNavGroups = [
             { href: '/people', label: 'Profiles', icon: User },
         ]
     },
-    dataManagementGroup,
 ];
 
 const trainerTopLevelNavItems = [
@@ -252,7 +203,6 @@ const trainerNavGroups = [
             { href: '/people', label: 'Athlete Roster', icon: Users },
         ]
     },
-    dataManagementGroup,
 ];
 
 const spectatorTopLevelNavItems = [
@@ -268,7 +218,6 @@ const spectatorNavGroups = [
             { href: '/rankings', label: 'Rankings', icon: Trophy },
         ]
     },
-    dataManagementGroup,
 ];
 
 

@@ -1,8 +1,7 @@
 
-
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict, FullTransportAssignment, TrainingSession } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict, FullTransportAssignment, TrainingSession, Season, Division, School } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
@@ -15,6 +14,10 @@ import { getEquipment } from './equipment';
 import { getVehicles, getAllTransportAssignments } from './transport';
 import { getTransactions } from './financials';
 import { getSessionsByTeam } from './sessions';
+import { getSeasons } from './seasons';
+import { getDivisions } from './divisions';
+import { getSchools } from './schools';
+
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
     const players = await getPlayers();
@@ -100,6 +103,9 @@ export async function getAdminDashboardData(personId: string) {
         allVehicles,
         allEquipment,
         allCompetitions,
+        allSeasons,
+        allDivisions,
+        allSchools,
         conflicts,
         allTransportAssignments,
         unconfirmedAssignmentsCount,
@@ -116,6 +122,9 @@ export async function getAdminDashboardData(personId: string) {
         getVehicles(),
         getEquipment(),
         getCompetitions(),
+        getSeasons(),
+        getDivisions(),
+        getSchools(),
         getFixtureConflicts(),
         getAllTransportAssignments(),
         getUnconfirmedAssignmentsCount(),
@@ -134,6 +143,9 @@ export async function getAdminDashboardData(personId: string) {
         allVehicles,
         allEquipment,
         allCompetitions,
+        allSeasons,
+        allDivisions,
+        allSchools,
         conflicts,
         allTransportAssignments,
         unconfirmedAssignmentsCount,
