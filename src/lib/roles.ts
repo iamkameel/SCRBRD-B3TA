@@ -1,4 +1,5 @@
 
+
 export const ROLE_GROUPS = [
   { group: "Administrative", roles: [ { id: "Admin", label: "Admin" }, { id: "Sportsmaster", label: "Sportsmaster" }, { id: "School Admin", label: "School Admin" } ] },
   { group: "Team Staff", roles: [ { id: "Coach", label: "Coach" }, { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Captain", label: "Captain" }, { id: "Team Manager", label: "Team Manager" } ] },

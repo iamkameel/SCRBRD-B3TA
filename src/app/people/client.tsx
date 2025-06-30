@@ -38,18 +38,13 @@ import { Input } from "@/components/ui/input";
 import type { Person, School } from "@/lib/data";
 import { deletePlayerAction } from '@/lib/actions/players';
 import { PersonCard } from "./person-card";
+import { ROLE_GROUPS } from "@/lib/roles";
 
 const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.PersonDialog), {
   ssr: false,
 });
 
-const ALL_ROLES = [
-    { id: "Admin", label: "Admin" }, { id: "Sportsmaster", label: "Sportsmaster" }, { id: "School Admin", label: "School Admin" },
-    { id: "Coach", label: "Coach" }, { id: "Assistant Coach", label: "Assistant Coach" }, { id: "Captain", label: "Captain" }, { id: "Team Manager", label: "Team Manager" },
-    { id: "Player", label: "Player" }, { id: "Guardian", label: "Guardian" }, { id: "Spectator", label: "Spectator" },
-    { id: "Trainer", label: "Trainer" }, { id: "Physiotherapist", label: "Physiotherapist" }, { id: "Doctor", label: "Doctor" }, { id: "Chiropractor", label: "Chiropractor" }, { id: "Nutritionist", label: "Nutritionist" }, { id: "First Aider", label: "First Aider" },
-    { id: "Umpire", label: "Umpire" }, { id: "Scorer", label: "Scorer" }, { id: "Grounds-Keeper", label: "Grounds-Keeper" }, { id: "Driver", label: "Driver" },
-];
+const ALL_ROLES = ROLE_GROUPS.flatMap(group => group.roles);
 
 
 type SortableColumn = 'name' | 'email';
@@ -73,13 +68,15 @@ export default function PeopleClient({ people, user, schools }: { people: Person
   
   const isAdmin = user?.roles.includes('Admin') ?? false;
 
-  const filteredPeople = people.filter(person => {
-    const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilters.length === 0 || roleFilters.some(role => person.roles.includes(role));
-    return matchesSearch && matchesRole;
-  });
+  const filteredPeople = React.useMemo(() => {
+    return people.filter(person => {
+      const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesRole = roleFilters.length === 0 || roleFilters.some(role => person.roles.includes(role));
+      return matchesSearch && matchesRole;
+    });
+  }, [people, searchQuery, roleFilters]);
 
   const sortedPeople = React.useMemo(() => {
     let sortableItems = [...filteredPeople];
