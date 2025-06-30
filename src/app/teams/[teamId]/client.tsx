@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit, Search } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit, Search, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -41,7 +41,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { Team, Person, RosterMember, TeamStats, Match } from "@/lib/data";
 import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction, getEligiblePlayersForTeam } from '@/lib/actions/teams';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const assignmentSchema = z.object({
@@ -90,8 +90,8 @@ function AddStaffDialog({ teamId, teamSchoolId, people, assignableRoles, open, o
 
   const filteredPeople = React.useMemo(() => {
     if (!selectedRole) return [];
-    let peopleForRole = people.filter(p => p.roles.includes(selectedRole));
-    if (rolesRequiringSchoolAssignment.includes(selectedRole)) {
+    let peopleForRole = people.filter(p => p.roles.includes(selectedRole as string));
+    if (rolesRequiringSchoolAssignment.includes(selectedRole as string)) {
         peopleForRole = peopleForRole.filter(p => p.assignedSchools?.includes(teamSchoolId));
     }
     return peopleForRole;
@@ -208,16 +208,20 @@ function AddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: boole
                                             Loading eligible players...
                                         </div>
                                     ) : (
-                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="p-2">
+                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="p-2 space-y-1">
                                             {filteredPlayers.length > 0 ? filteredPlayers.map(p => (
-                                                <Label key={p.personId} htmlFor={p.personId} className="flex items-start gap-3 rounded-md p-2 hover:bg-muted/50 cursor-pointer has-[:checked]:bg-muted">
-                                                    <FormControl><Input type="radio" name={field.name} id={p.personId} value={p.personId} checked={field.value === p.personId} onChange={field.onChange} className="sr-only" /></FormControl>
-                                                    <div>
-                                                        <p>{p.firstName} {p.lastName}</p>
-                                                        <p className="text-xs text-muted-foreground">{p.eligibilityContext}</p>
-                                                    </div>
-                                                </Label>
-                                            )) : (<p className="text-center text-sm text-muted-foreground p-4">No eligible players found.</p>)}
+                                              <FormItem key={p.personId} className="flex items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-muted/50 has-[:checked]:bg-muted">
+                                                <FormControl>
+                                                  <RadioGroupItem value={p.personId} id={p.personId} />
+                                                </FormControl>
+                                                <FormLabel htmlFor={p.personId} className="font-normal w-full cursor-pointer">
+                                                    <p>{p.firstName} {p.lastName}</p>
+                                                    <p className="text-xs text-muted-foreground">{p.eligibilityContext}</p>
+                                                </FormLabel>
+                                              </FormItem>
+                                            )) : (
+                                                <p className="text-center text-sm text-muted-foreground p-4">No eligible players found.</p>
+                                            )}
                                         </RadioGroup>
                                     )}
                                 </ScrollArea>
@@ -415,7 +419,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                               <TableCell className="font-medium flex items-center gap-2">
                                 <Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link>
                                 {member.isCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline" className="text-amber-500 border-amber-500">C</Badge></TooltipTrigger><TooltipContent><p>Captain</p></TooltipContent></Tooltip></TooltipProvider>}
-                                {member.isViceCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline">VC</Badge></TooltipTrigger><TooltipContent><p>Vice-Captain</p></TooltipContent></TooltipProvider>}
+                                {member.isViceCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline">VC</Badge></TooltipTrigger><TooltipContent><p>Vice-Captain</p></TooltipContent></Tooltip></TooltipProvider>}
                               </TableCell>
                               <TableCell><Badge variant="secondary" className="capitalize">{member.status.replace(/_/g, " ")}</Badge></TableCell>
                               {canManage && <TableCell className="text-right">
