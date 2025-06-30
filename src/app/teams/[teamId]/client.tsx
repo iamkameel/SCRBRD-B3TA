@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -205,8 +204,8 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   
-  const playerRoster = initialRoster.filter(m => m.role === 'Player');
-  const staffRoster = initialRoster.filter(m => m.role !== 'Player');
+  const playerRoster = initialRoster.filter(m => PLAYER_ROLES.includes(m.role));
+  const staffRoster = initialRoster.filter(m => STAFF_ROLES.includes(m.role));
 
   React.useEffect(() => {
     setIsClient(true);
@@ -419,7 +418,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
 
       {canManage && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will remove <strong>{selectedMember?.personName}</strong> from the team. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><DialogTitle>Are you sure?</DialogTitle><AlertDialogDescription>This will remove <strong>{selectedMember?.personName}</strong> from the team. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedMember(null)} disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemove} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Member"}</AlertDialogAction>
