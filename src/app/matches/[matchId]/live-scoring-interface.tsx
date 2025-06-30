@@ -6,8 +6,8 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target } from 'lucide-react';
-import type { RosterMember, Match } from '@/lib/data';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb } from 'lucide-react';
+import type { RosterMember, Match, LiveMatchUpdateOutput } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction } from '@/lib/actions/matches';
@@ -50,7 +50,7 @@ export function LiveScoringInterface({
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [isGeneratingUpdate, startUpdateGeneration] = React.useTransition();
-  const [liveUpdate, setLiveUpdate] = React.useState<{winProbability: number, summary: string} | null>(null);
+  const [liveUpdate, setLiveUpdate] = React.useState<LiveMatchUpdateOutput | null>(null);
 
   const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 };
   const batsmenOut = liveScore.batsmenOut || [];
@@ -272,7 +272,7 @@ export function LiveScoringInterface({
                             </Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="min-h-[6rem] flex flex-col justify-center">
+                    <CardContent className="min-h-[10rem] flex flex-col justify-center">
                         {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
                         {!isGeneratingUpdate && liveUpdate && (
                             <div className="space-y-2">
@@ -282,6 +282,16 @@ export function LiveScoringInterface({
                                 </div>
                                 <Progress value={liveUpdate.winProbability} />
                                 <p className="text-xs text-muted-foreground text-center">{liveUpdate.summary}</p>
+                                {liveUpdate.tacticalSuggestions && liveUpdate.tacticalSuggestions.length > 0 && (
+                                    <div className="pt-4">
+                                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Lightbulb className="text-yellow-400" /> AI Suggestions</h4>
+                                        <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
+                                            {liveUpdate.tacticalSuggestions.map((suggestion, index) => (
+                                                <li key={index}>{suggestion}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Click "Analyze" for a win probability prediction.</p>}

@@ -217,5 +217,6 @@ export type LiveMatchUpdateInput = z.infer<typeof LiveMatchUpdateInputSchema>;
 export const LiveMatchUpdateOutputSchema = z.object({
     winProbability: z.number().min(0).max(100).describe("The batting team's win probability percentage (0-100)."),
     summary: z.string().describe("A very brief, one-sentence summary explaining the current win probability."),
+    tacticalSuggestions: z.array(z.string()).describe("A list of 2-3 brief, actionable tactical suggestions for the batting or bowling captain.").optional(),
 });
 export type LiveMatchUpdateOutput = z.infer<typeof LiveMatchUpdateOutputSchema>;
