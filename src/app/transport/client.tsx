@@ -150,7 +150,7 @@ export default function TransportClient({ vehicles, assignments, drivers, isAdmi
         
         <Tabs defaultValue="fleet">
             <div className="flex items-center justify-between mb-4">
-                <TabsList>
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="fleet">Vehicle Fleet</TabsTrigger>
                     <TabsTrigger value="drivers">Drivers</TabsTrigger>
                     <TabsTrigger value="assignments">Assignments</TabsTrigger>
