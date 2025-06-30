@@ -26,7 +26,7 @@ export const getTeams = cache(async (): Promise<Team[]> => {
   
   // Admin role sees all teams within their organization.
   if (activeRole === 'Admin') {
-     q = query(teamsCollection, where("userId", "==", userId));
+     q = query(teamsCollection);
   }
   // Sportsmaster role sees only teams from their assigned schools.
   else if (activeRole === 'Sportsmaster') {
@@ -36,13 +36,12 @@ export const getTeams = cache(async (): Promise<Team[]> => {
     // Firestore 'in' query is limited to 30 items. This should be sufficient for assigned schools.
     q = query(
       teamsCollection, 
-      where("userId", "==", userId), 
       where("schoolId", "in", currentUser.assignedSchools)
     );
   }
   // For other roles, they see all teams. This can be refined later if needed.
   else {
-      q = query(teamsCollection, where("userId", "==", userId));
+      q = query(teamsCollection);
   }
 
   try {
@@ -60,8 +59,8 @@ export const getTeam = cache(async (teamId: string): Promise<Team | null> => {
   try {
     const teamDocRef = doc(db, 'teams', teamId);
     const teamSnap = await getDoc(teamDocRef);
-    if (!teamSnap.exists() || teamSnap.data().userId !== userId) return null;
-    return { teamId: teamSnap.id, ...teamSnap.data() } as Team;
+    if (!teamSnap.exists()) return null;
+    return { teamId: teamSnap.id, ...doc.data() } as Team;
   } catch (error) {
     console.error(`Error fetching team with ID ${teamId}:`, error);
     return null;
@@ -89,9 +88,6 @@ export const getTeamRoster = cache(async (teamId: string): Promise<RosterMember[
 });
 
 export const getTeamStats = cache(async (teamId: string): Promise<TeamStats> => {
-    const userId = await getUserId();
-    if (!userId) return { matchesPlayed: 0, matchesWon: 0, matchesLost: 0, matchesDrawn: 0, totalRunsScored: 0, totalWicketsTaken: 0, netRunRate: 0.0 };
-
     const defaultStats: TeamStats = {
         matchesPlayed: 0, matchesWon: 0, matchesLost: 0, matchesDrawn: 0,
         totalRunsScored: 0, totalWicketsTaken: 0, netRunRate: 0.0
@@ -101,8 +97,8 @@ export const getTeamStats = cache(async (teamId: string): Promise<TeamStats> => 
     if (!team) return defaultStats;
 
     const matchesCollection = collection(db, 'matches');
-    const teamAQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamAId", "==", teamId));
-    const teamBQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamBId", "==", teamId));
+    const teamAQuery = query(matchesCollection, where("status", "==", "completed"), where("teamAId", "==", teamId));
+    const teamBQuery = query(matchesCollection, where("status", "==", "completed"), where("teamBId", "==", teamId));
     
     const [teamAMatchesSnapshot, teamBMatchesSnapshot] = await Promise.all([getDocs(teamAQuery), getDocs(teamBQuery)]);
     const allMatches = [...teamAMatchesSnapshot.docs, ...teamBMatchesSnapshot.docs];
@@ -284,13 +280,15 @@ const teamSchema = z.object({
 });
 
 async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: string) {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
     const refs = [doc(db, 'schools', schoolId), doc(db, 'divisions', divisionId), doc(db, 'seasons', seasonId)];
     const snapshots = await Promise.all(refs.map(ref => getDoc(ref)));
-    if (snapshots.some(snap => !snap.exists() || snap.data()?.userId !== userId)) {
+    
+    // Validate that all selected entities exist.
+    if (snapshots.some(snap => !snap.exists())) {
         throw new Error("Invalid selection for school, division, or season.");
     }
+
+    // Return the names for use in the new team document.
     return snapshots.map(s => s.data()?.name);
 }
 
@@ -373,8 +371,8 @@ export async function deleteTeamAction(teamId: string) {
 
     // 2. Find and delete associated matches and their subcollections
     const matchesCollection = collection(db, 'matches');
-    const teamAMatchesQuery = query(matchesCollection, where("userId", "==", userId), where("teamAId", "==", teamId));
-    const teamBMatchesQuery = query(matchesCollection, where("userId", "==", userId), where("teamBId", "==", teamId));
+    const teamAMatchesQuery = query(matchesCollection, where("teamAId", "==", teamId));
+    const teamBMatchesQuery = query(matchesCollection, where("teamBId", "==", teamId));
     const [teamAMatchesSnap, teamBMatchesSnap] = await Promise.all([ getDocs(teamAMatchesQuery), getDocs(teamBMatchesQuery) ]);
     const allMatches = [...teamAMatchesSnap.docs, ...teamBMatchesSnap.docs];
     const uniqueMatches = Array.from(new Map(allMatches.map(doc => [doc.id, doc])).values());
@@ -406,13 +404,11 @@ export async function deleteTeamAction(teamId: string) {
 }
 
 export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => {
-  const userId = await getUserId();
-  if (!userId) return [];
   if (!await getTeam(teamId)) return [];
 
   const matchesCollection = collection(db, 'matches');
-  const teamAQuery = query(matchesCollection, where("userId", "==", userId), where("teamAId", "==", teamId));
-  const teamBQuery = query(matchesCollection, where("userId", "==", userId), where("teamBId", "==", teamId));
+  const teamAQuery = query(matchesCollection, where("teamAId", "==", teamId));
+  const teamBQuery = query(matchesCollection, where("teamBId", "==", teamId));
 
   try {
     const [teamAMatchesSnap, teamBMatchesSnap] = await Promise.all([
@@ -565,3 +561,4 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
 
     return eligiblePlayers;
 });
+
