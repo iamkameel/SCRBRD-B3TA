@@ -11,13 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const FieldMap = React.useMemo(() => dynamic(() => import('./field-map'), { 
+const FieldMap = dynamic(() => import('./field-map'), { 
     ssr: false,
     loading: () => <div className="h-full w-full bg-muted animate-pulse rounded-md" />
-}), []);
+});
 
 
 export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
