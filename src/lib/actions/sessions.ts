@@ -174,3 +174,40 @@ export async function removeDrillFromSessionAction(sessionId: string, drillIdToR
     
     revalidatePath(`/planner/${sessionId}`);
 }
+
+const updateDrillsOrderSchema = z.object({
+    sessionId: z.string(),
+    drills: z.array(z.object({
+        drillId: z.string(),
+        name: z.string(),
+        duration: z.number(),
+    })),
+});
+
+export async function updateSessionDrillsOrderAction(data: z.infer<typeof updateDrillsOrderSchema>) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const validatedFields = updateDrillsOrderSchema.safeParse(data);
+    if (!validatedFields.success) {
+        throw new Error("Invalid data for updating drills order.");
+    }
+    
+    const { sessionId, drills } = validatedFields.data;
+
+    const sessionRef = doc(db, 'sessions', sessionId);
+    const sessionSnap = await getDoc(sessionRef);
+
+    if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
+        throw new Error("Session not found or you do not have permission.");
+    }
+    
+    try {
+        await updateDoc(sessionRef, { drills: drills });
+    } catch (error) {
+        console.error("Error updating drills order:", error);
+        throw new Error("Could not update session plan order.");
+    }
+
+    revalidatePath(`/planner/${sessionId}`);
+}

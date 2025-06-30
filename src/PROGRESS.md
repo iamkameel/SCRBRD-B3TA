@@ -7,7 +7,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 ### Category 1: Advanced Role-Specific Toolkits
 
 -   [x] **5. Advanced Filtering & Search**: **Complete.** Implemented multi-select filters and advanced search across People, Teams, and Matches.
--   [~] **1. Coach's Tactical Planner**: **In Progress.** The foundational Drill Library and Session Planner are built. The next phase is to create the visual drag-and-drop interface.
+-   [x] **1. Coach's Tactical Planner**: **Complete.** The Drill Library, Session Planner, and a drag-and-drop interface for reordering drills are now fully functional.
 -   [~] **2. Team Manager's Logistics Hub**: **In Progress.** A player availability (RSVP) system has been implemented.
 -   [ ] **3. Player & Captain Engagement Features**: Not Started.
 -   [ ] **4. Sportmaster's Strategic Calendar**: Not Started.
