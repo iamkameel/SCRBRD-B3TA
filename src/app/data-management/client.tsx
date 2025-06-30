@@ -39,10 +39,11 @@ const SUBSETS: { name: SubsetName }[] = [
     { name: 'Matches' },
     { name: 'Financials' },
     { name: 'Equipment' },
+    { name: 'Drills' },
 ];
 
 const INDEPENDENT_SUBSETS: SubsetName[] = [
-    'Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment'
+    'Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Drills'
 ];
 
 export default function DataManagementClient() {
