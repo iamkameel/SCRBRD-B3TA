@@ -1,64 +1,45 @@
+# Next Steps: Evolving to a Market-Leading Platform
 
-# Next Steps: 20 Critical Focus Areas
-
-This document outlines the 20 most critical features and refinements to focus on to evolve this application from a powerful beta into a production-ready, market-leading platform. They are categorized for clarity.
-
----
-
-### Category 1: Core Functionality & UX Refinements
-
-1.  **Full Live Scoring Implementation**: Build the complete ball-by-ball scoring interface. This is the application's most critical interactive feature, requiring a robust UI and real-time backend updates.
-
-2.  **User Authentication & Roles (RBAC)**: Replace the mock user system with a production-grade authentication provider (e.g., Firebase Authentication). Implement Role-Based Access Control to ensure users can only see and perform actions appropriate for their role (Admin, Coach, Scorer, Guardian).
-
-3.  **Visual Tournament Brackets**: For 'Knockout' and 'Series' competition types, create a visual bracket UI that automatically updates as matches are completed, clearly showing team progression.
-
-4.  **Head-to-Head Comparison UI**: Develop a dedicated feature allowing a user to select two players or two teams and see a side-by-side statistical comparison chart, highlighting key strengths and weaknesses.
-
-5.  **Advanced Filtering & Sorting**: Enhance all list views (People, Matches, Teams) with multi-select and combined filtering capabilities (e.g., find all 'Players' on 'Team A' who are also marked as 'on_trial').
+This document outlines the next critical features and refinements required to evolve this application into a premier, production-ready sports management platform. The original 20-point plan has been largely completed, and this new roadmap reflects a more ambitious future based on the solid foundation now in place.
 
 ---
 
-### Category 2: AI & Analytics Enhancements
+### Category 1: Advanced Role-Specific Toolkits
 
-6.  **AI Opposition Analysis**: Before a match, an AI agent could analyze the opponent's historical data to generate a scouting report, identifying key players and potential strategic weaknesses.
+1.  **Coach's Tactical Planner**: Build a dedicated "Session Planner" for coaches. This should include a library of pre-defined drills, the ability to create custom drills, and a visual interface to drag-and-drop them into a daily training schedule. This tool is the cornerstone of the "Coach as a Tactician" vision.
 
-7.  **AI-Powered Player Development Plans**: Create a flow where a player's performance data over time is analyzed to generate personalized training recommendations and drills.
+2.  **Team Manager's Logistics Hub**: Enhance the existing modules into a true logistics command center. This involves adding features for managing player availability (RSVPs), tracking digital forms (e.g., consent, medical waivers), and handling equipment/kit requests.
 
-8.  **AI Umpire Decision Review (Simulation)**: A "fun" but engaging feature where a user could upload a short video clip of a delivery, and a vision model provides a simulated "Umpire's Call" for an LBW appeal.
+3.  **Player & Captain Engagement Features**: Develop a "lineup confirmation" workflow where captains can view and acknowledge the selected team. Create a private feedback channel between coaches and individual players to support development goals.
 
-9.  **Live Match Win Probability**: During a live-scored match, use the current score, run rate, wickets in hand, and historical data to calculate and display a real-time win probability percentage for each team.
+4.  **Sportmaster's Strategic Calendar**: Create a high-level, multi-competition calendar view, potentially using a Gantt chart style. This will allow Sportmasters to orchestrate entire sporting calendars, de-conflict events across different divisions, and perform long-range planning.
 
-10. **Automated Written Match Reports**: Expand on the match summary feature to generate full, multi-paragraph journalistic match reports, including quotes and a detailed narrative of the game's turning points.
-
----
-
-### Category 3: Performance & Scalability
-
-11. **Firestore Indexing Strategy**: Proactively define composite indexes in Firestore for all common query patterns, especially those involving multiple `where` clauses and `orderBy` calls, to ensure high performance as data scales.
-
-12. **Image & Asset Optimization (CDN)**: Move user-uploaded and AI-generated images (like player portraits) to a dedicated cloud storage solution (e.g., Firebase Storage) and serve them via a CDN to improve load times and reduce data costs.
-
-13. **Code Splitting & Lazy Loading**: Rigorously review the app to ensure heavy components (e.g., complex charts, dialogs with many dependencies) are lazy-loaded to keep initial page loads fast.
-
-14. **Strategic Data Caching**: Implement caching strategies (server-side or client-side) for data that doesn't change often, such as School lists, Division names, or completed Season details, to minimize unnecessary database reads.
-
-15. **Offline Mode for Scoring (PWA)**: Convert the application into a Progressive Web App (PWA). The scoring module, in particular, should be able to function offline, queuing up match events and syncing them to Firestore once a connection is restored.
+5.  **Advanced Filtering & Search**: Implement multi-select filters and combined logic (e.g., "AND"/"OR" conditions) across all major list views (People, Matches, Teams) to allow for more powerful and granular data discovery.
 
 ---
 
-### Category 4: Logistics & Monetization
+### Category 2: Next-Generation AI & Analytics
 
-16. **Basic Financials Module**: Introduce features for league administrators to track team registration fees, player subscriptions, and other simple financial transactions.
+6.  **AI Scouting Assistant**: Allow coaches to upload video clips of potential recruits. The AI would analyze the player's technique (e.g., batting stance, bowling action) and provide an initial scouting report with key metrics and observations.
 
-17. **Sponsorship Management**: A dedicated module to upload sponsor logos and assign them to be displayed on specific team, competition, or match pages.
+7.  **Predictive Player Performance**: Use historical data to forecast a player's likely performance in an upcoming match, taking into account the specific opponent and known conditions (like weather or pitch type).
 
-18. **Push Notifications**: Implement real-time push notifications (e.g., using Firebase Cloud Messaging) for critical events like match start times, final results, or new transport assignments.
+8.  **Automated Highlight Reels**: Develop a flow where a full match video can be processed by an AI to identify key moments (wickets, boundaries, milestones). The AI would then automatically clip these events into a shareable highlight package.
 
-19. **Equipment Management**: A system for teams to track their inventory of cricket equipment (bats, pads, balls), assign items to players, and monitor their condition.
+9.  **Natural Language Query for Stats**: Implement a "Genkit Tool" that allows users to ask questions in plain English, such as "Who scored the most runs against Hilton College last season?" or "Show me all of Ben Stokes's scores over 50".
+
+10. **Dynamic In-Match Strategy Suggestions**: During live scoring, have the AI analyze the match situation (run rate, wickets in hand, opposition bowler stats) and proactively suggest tactical changes, such as "Consider bringing on a spin bowler, the pitch is showing signs of turn."
 
 ---
 
-### Category 5: Final Polish & Deployment
+### Category 3: Performance, Scalability & Production Readiness
 
-20. **Comprehensive Testing Suite**: Before a full production launch, develop a robust testing strategy including unit tests for critical functions, integration tests for server actions, and end-to-end tests (using a framework like Cypress or Playwright) for key user flows like creating a match and live scoring.
+11. **Progressive Web App (PWA) & Offline Scoring**: Convert the application into a PWA, with a primary focus on making the live scoring module fully functional offline. Match events should be queued locally and synced with Firestore automatically when a connection is restored. This is critical for reliability at grounds with poor connectivity.
+
+12. **Comprehensive Testing Suite**: Develop a robust testing strategy including unit tests (for functions like stats calculation), integration tests (for Server Actions), and end-to-end tests (for key user flows like creating a match and live scoring).
+
+13. **Push Notification System**: Implement a real-time push notification service (e.g., using Firebase Cloud Messaging) for critical events like match time changes, final results, new transport assignments, and new messages in a future communications hub.
+
+14. **User-Uploaded Asset Management**: Expand the use of cloud storage to handle user-uploaded assets like team logos and sponsor banners. Implement image optimization and a CDN strategy to ensure fast load times.
+
+15. **Firestore Security & Indexing**: Conduct a thorough review and implementation of granular Firestore security rules to ensure data is only accessible by authorized roles. Proactively define and deploy composite indexes for all common query patterns to maintain high performance as the data scales.
