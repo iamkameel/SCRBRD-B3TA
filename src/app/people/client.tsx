@@ -56,6 +56,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/comp
 import { AssignSchoolDialog } from "./assign-school-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.PersonDialog), {
@@ -148,7 +149,7 @@ function BulkAssignTeamDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label>School</Label>
+              <FormLabel>School</FormLabel>
               <Select
                 onValueChange={handleSchoolChange}
                 value={selectedSchoolId ?? ""}
@@ -168,7 +169,7 @@ function BulkAssignTeamDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Division</Label>
+              <FormLabel>Division</FormLabel>
               <Select
                 onValueChange={handleDivisionChange}
                 value={selectedDivisionId ?? ""}
@@ -250,6 +251,7 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
   const [schoolFilter, setSchoolFilter] = React.useState<string[]>([]);
+  const [assignmentFilter, setAssignmentFilter] = React.useState<'all' | 'assigned' | 'unassigned'>('all');
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   
   const canManage = user?.roles.some(role => ['Admin', 'Sportsmaster', 'Team Manager'].includes(role)) ?? false;
@@ -265,9 +267,13 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
         .includes(searchQuery.toLowerCase());
       const matchesRole = roleFilters.length === 0 || roleFilters.some(role => person.roles.includes(role));
       const matchesSchool = schoolFilter.length === 0 || schoolFilter.some(schoolId => person.assignedSchools?.includes(schoolId));
-      return matchesSearch && matchesRole && matchesSchool;
+      const matchesAssignment = 
+        assignmentFilter === 'all' ||
+        (assignmentFilter === 'assigned' && person.assignedSchools && person.assignedSchools.length > 0) ||
+        (assignmentFilter === 'unassigned' && (!person.assignedSchools || person.assignedSchools.length === 0));
+      return matchesSearch && matchesRole && matchesSchool && matchesAssignment;
     });
-  }, [people, searchQuery, roleFilters, schoolFilter]);
+  }, [people, searchQuery, roleFilters, schoolFilter, assignmentFilter]);
 
   const sortedPeople = React.useMemo(() => {
     let sortableItems = [...filteredPeople];
@@ -295,13 +301,13 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
     return sortableItems;
   }, [filteredPeople, sortConfig, schools]);
 
-  const filtersApplied = searchQuery || roleFilters.length > 0 || schoolFilter.length > 0;
+  const filtersApplied = searchQuery || roleFilters.length > 0 || schoolFilter.length > 0 || assignmentFilter !== 'all';
 
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
     setCurrentPage(1);
     setSelectedRowKeys([]);
-  }, [searchQuery, roleFilters, schoolFilter, view, sortConfig]);
+  }, [searchQuery, roleFilters, schoolFilter, assignmentFilter, view, sortConfig]);
 
   // Pagination logic
   const paginatedPeople = sortedPeople.slice(
@@ -498,6 +504,27 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label>Assignment</Label>
+                            <RadioGroup
+                                value={assignmentFilter}
+                                onValueChange={(value) => setAssignmentFilter(value as 'all' | 'assigned' | 'unassigned')}
+                                className="col-span-2 flex items-center space-x-2"
+                            >
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="all" id="r-all" />
+                                    <Label htmlFor="r-all" className="font-normal cursor-pointer">All</Label>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="assigned" id="r-assigned" />
+                                    <Label htmlFor="r-assigned" className="font-normal cursor-pointer">Assigned</Label>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="unassigned" id="r-unassigned" />
+                                    <Label htmlFor="r-unassigned" className="font-normal cursor-pointer">Unassigned</Label>
+                                </div>
+                            </RadioGroup>
                         </div>
                       </div>
                     </div>
