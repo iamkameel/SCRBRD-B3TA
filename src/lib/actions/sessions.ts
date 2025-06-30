@@ -4,8 +4,8 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
-import type { TrainingSession } from '@/lib/data';
+import { collection, query, where, getDocs, addDoc, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import type { TrainingSession, Drill } from '@/lib/data';
 import { getUserId } from '@/lib/auth';
 import { cache } from 'react';
 import { getTeam } from './teams';
@@ -71,4 +71,106 @@ export async function addSessionAction(data: z.infer<typeof sessionSchema>) {
 
     revalidatePath('/planner');
     revalidatePath('/dashboard');
+}
+
+export const getSession = cache(async (sessionId: string): Promise<TrainingSession | null> => {
+    const userId = await getUserId();
+    if (!userId) return null;
+    try {
+        const sessionDocRef = doc(db, 'sessions', sessionId);
+        const sessionSnap = await getDoc(sessionDocRef);
+        if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
+            return null;
+        }
+        const data = sessionSnap.data();
+        return {
+            sessionId: sessionSnap.id,
+            ...data,
+            date: (data.date as Timestamp).toDate(),
+        } as TrainingSession;
+    } catch (error) {
+        console.error(`Error fetching session with ID ${sessionId}:`, error);
+        return null;
+    }
+});
+
+
+const addDrillSchema = z.object({
+    sessionId: z.string(),
+    drillId: z.string(),
+});
+
+export async function addDrillToSessionAction(data: z.infer<typeof addDrillSchema>) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const validatedFields = addDrillSchema.safeParse(data);
+    if (!validatedFields.success) {
+        throw new Error("Invalid data.");
+    }
+    
+    const { sessionId, drillId } = validatedFields.data;
+
+    const sessionRef = doc(db, 'sessions', sessionId);
+    const [sessionSnap, drillSnap] = await Promise.all([
+        getDoc(sessionRef),
+        getDoc(doc(db, 'drills', drillId))
+    ]);
+
+    if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
+        throw new Error("Session not found or you do not have permission.");
+    }
+    if (!drillSnap.exists()) {
+        throw new Error("Drill not found.");
+    }
+
+    const sessionData = sessionSnap.data() as TrainingSession;
+    const drillData = { drillId: drillSnap.id, ...drillSnap.data() } as Drill;
+
+    if (sessionData.drills.some(d => d.drillId === drillId)) {
+        throw new Error("This drill is already in the session plan.");
+    }
+
+    const newDrillEntry = {
+        drillId: drillData.drillId,
+        name: drillData.name,
+        duration: drillData.duration,
+    };
+
+    try {
+        await updateDoc(sessionRef, {
+            drills: [...sessionData.drills, newDrillEntry]
+        });
+    } catch (error) {
+        console.error("Error adding drill to session:", error);
+        throw new Error("Could not add drill to session.");
+    }
+    
+    revalidatePath(`/planner/${sessionId}`);
+}
+
+export async function removeDrillFromSessionAction(sessionId: string, drillIdToRemove: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const sessionRef = doc(db, 'sessions', sessionId);
+    const sessionSnap = await getDoc(sessionRef);
+
+    if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
+        throw new Error("Session not found or you do not have permission.");
+    }
+
+    const sessionData = sessionSnap.data() as TrainingSession;
+    const updatedDrills = sessionData.drills.filter(d => d.drillId !== drillIdToRemove);
+
+    try {
+        await updateDoc(sessionRef, {
+            drills: updatedDrills
+        });
+    } catch (error) {
+        console.error("Error removing drill from session:", error);
+        throw new Error("Could not remove drill from session.");
+    }
+    
+    revalidatePath(`/planner/${sessionId}`);
 }

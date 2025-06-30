@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from 'date-fns';
 import { PlusCircle, Calendar, MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -160,25 +161,24 @@ export default function PlannerClient({ sessions, team }: { sessions: TrainingSe
             {team && sessions.length > 0 && (
                 <div className="space-y-4">
                     {sessions.map(session => (
-                        <Card key={session.sessionId}>
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle>{session.title}</CardTitle>
-                                        <CardDescription>{format(session.date, 'PPP, p')}</CardDescription>
+                        <Link href={`/planner/${session.sessionId}`} key={session.sessionId} className="block">
+                            <Card className="hover:bg-muted/50 transition-colors">
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle>{session.title}</CardTitle>
+                                            <CardDescription>{format(session.date, 'PPP, p')}</CardDescription>
+                                        </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" disabled>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-sm">Focus:</p>
-                                    {session.focus.map(f => <Badge key={f} variant="secondary">{f}</Badge>)}
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold text-sm">Focus:</p>
+                                        {session.focus.map(f => <Badge key={f} variant="secondary">{f}</Badge>)}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </Link>
                     ))}
                 </div>
             )}
