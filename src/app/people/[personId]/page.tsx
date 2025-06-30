@@ -1,5 +1,4 @@
 
-
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -11,14 +10,15 @@ import { Button } from '@/components/ui/button';
 import { getUserId } from '@/lib/auth';
 
 export default async function PersonDetailsPage({ params }: { params: { personId: string } }) {
+  const { personId } = params;
   
   const [person, { guardians, children }, allPeople, playerStats, teamAssignments, matchHistory, allTeams, userId] = await Promise.all([
-    getPerson(params.personId),
-    getPersonLinks(params.personId),
+    getPerson(personId),
+    getPersonLinks(personId),
     getPlayers(),
-    getPlayerStats(params.personId),
-    getPersonTeamAssignments(params.personId),
-    getPlayerMatchHistory(params.personId),
+    getPlayerStats(personId),
+    getPersonTeamAssignments(personId),
+    getPlayerMatchHistory(personId),
     getTeams(),
     getUserId(),
   ]);
