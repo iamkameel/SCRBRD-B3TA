@@ -59,7 +59,7 @@ const STAFF_ROLES = ["Coach", "Assistant Coach", "Team Manager", "Trainer", "Phy
 const TEAM_ASSIGNABLE_ROLES = [...PLAYER_ROLES, ...STAFF_ROLES];
 const STATUSES = ["active", "on_trial", "injured", "retired"];
 
-function AddAssignmentDialog({ teamId, people, assignableRoles, open, onOpenChange, title, description }: { teamId: string, people: Person[], assignableRoles: string[], open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
+function AddAssignmentDialog({ teamId, teamSchoolId, people, assignableRoles, open, onOpenChange, title, description }: { teamId: string, teamSchoolId: string, people: Person[], assignableRoles: string[], open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
 
@@ -68,17 +68,31 @@ function AddAssignmentDialog({ teamId, people, assignableRoles, open, onOpenChan
     defaultValues: { isCaptain: false, isViceCaptain: false, status: "active", role: assignableRoles[0] },
   });
   
+  const selectedRole = form.watch('role');
+
+  const rolesRequiringSchoolAssignment = ['Coach', 'Assistant Coach', 'Team Manager', 'Trainer', 'Physiotherapist'];
+
   React.useEffect(() => {
     if (open) {
       form.reset({
-        isCaptain: false,
-        isViceCaptain: false,
-        status: "active",
-        role: assignableRoles[0],
-        personId: undefined
+        isCaptain: false, isViceCaptain: false, status: "active",
+        role: assignableRoles[0], personId: undefined
       });
     }
   }, [open, assignableRoles, form]);
+
+  React.useEffect(() => {
+    form.resetField('personId');
+  }, [selectedRole, form]);
+
+  const filteredPeople = React.useMemo(() => {
+    if (!selectedRole) return [];
+    let peopleForRole = people.filter(p => p.roles.includes(selectedRole));
+    if (rolesRequiringSchoolAssignment.includes(selectedRole)) {
+        peopleForRole = peopleForRole.filter(p => p.assignedSchools?.includes(teamSchoolId));
+    }
+    return peopleForRole;
+  }, [people, selectedRole, teamSchoolId]);
 
   function onSubmit(data: AssignmentFormValues) {
     startTransition(async () => {
@@ -98,13 +112,20 @@ function AddAssignmentDialog({ teamId, people, assignableRoles, open, onOpenChan
         <DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>{description}</DialogDescription></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="personId" render={({ field }) => (<FormItem><FormLabel>Person</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger></FormControl><SelectContent>{people.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            
             {assignableRoles.length > 1 ? (
               <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{assignableRoles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             ) : (
               <div><Label>Role</Label><Input value={assignableRoles[0]} disabled /></div>
             )}
+            
+            <FormField control={form.control} name="personId" render={({ field }) => (
+                <FormItem><FormLabel>Person</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedRole}>
+                        <FormControl><SelectTrigger><SelectValue placeholder={!selectedRole ? "Select a role first" : "Select a person"} /></SelectTrigger></FormControl>
+                        <SelectContent>{filteredPeople.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}</SelectContent>
+                    </Select><FormMessage />
+                </FormItem>
+            )} />
             
             <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="active" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             
@@ -386,7 +407,8 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
       </div>
       
       {canManage && <AddAssignmentDialog 
-        teamId={team.teamId} 
+        teamId={team.teamId}
+        teamSchoolId={team.schoolId} 
         people={people} 
         assignableRoles={PLAYER_ROLES} 
         open={isAddPlayerDialogOpen} 
@@ -396,6 +418,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
       />}
       {canManage && <AddAssignmentDialog 
         teamId={team.teamId} 
+        teamSchoolId={team.schoolId}
         people={people} 
         assignableRoles={STAFF_ROLES} 
         open={isAddStaffDialogOpen} 
