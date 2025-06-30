@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId } from 'firebase/firestore';
 import type { Person, PlayerTeamAssignment, PlayerDevelopmentPlanOutput, Match } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
@@ -16,8 +16,84 @@ import { getUserId } from '@/lib/auth';
 import { getTeamMatches } from './teams';
 
 export const getPlayers = cache(async (): Promise<Person[]> => {
+  const userId = await getUserId();
+  if (!userId) return [];
+
+  const currentUser = await getPerson(userId);
+  if (!currentUser) return [];
+
+  const peopleCollection = collection(db, 'people');
+  
+  // Admin sees all people.
+  if (currentUser.activeRole === 'Admin') {
+      try {
+        const peopleSnapshot = await getDocs(peopleCollection);
+        return peopleSnapshot.docs.map(doc => ({
+          personId: doc.id, ...doc.data()
+        } as Person));
+      } catch (error) {
+        console.error("Error fetching all people for admin:", error);
+        return [];
+      }
+  }
+
+  // Sportsmaster sees people from their assigned schools
+  if (currentUser.activeRole === 'Sportsmaster') {
+      if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
+          return [];
+      }
+      
+      try {
+        const peopleIds = new Set<string>();
+
+        // 1. Get people directly assigned to the schools (staff)
+        const staffQuery = query(peopleCollection, where('assignedSchools', 'array-contains-any', currentUser.assignedSchools));
+        const staffSnapshot = await getDocs(staffQuery);
+        staffSnapshot.forEach(doc => {
+            peopleIds.add(doc.id);
+        });
+        
+        // 2. Get teams for the sportsmaster's schools
+        const teams = await getDocs(query(collection(db, 'teams'), where("schoolId", "in", currentUser.assignedSchools)));
+
+        // 3. Get all people from the rosters of these teams
+        for (const teamDoc of teams.docs) {
+            const rosterSnapshot = await getDocs(collection(db, 'teams', teamDoc.id, 'roster'));
+            rosterSnapshot.forEach(doc => {
+                peopleIds.add(doc.data().personId);
+            });
+        }
+
+        // 4. Fetch all unique people documents
+        if (peopleIds.size === 0) {
+            return [];
+        }
+
+        const personIdChunks: string[][] = [];
+        const allPersonIds = Array.from(peopleIds);
+        for (let i = 0; i < allPersonIds.length; i += 30) {
+            personIdChunks.push(allPersonIds.slice(i, i + 30));
+        }
+
+        const people: Person[] = [];
+        for (const chunk of personIdChunks) {
+            if (chunk.length === 0) continue;
+            const peopleQuery = query(peopleCollection, where(documentId(), 'in', chunk));
+            const peopleSnapshot = await getDocs(peopleQuery);
+            peopleSnapshot.forEach(doc => {
+                people.push({ personId: doc.id, ...doc.data() } as Person);
+            });
+        }
+        return people;
+
+      } catch (error) {
+        console.error("Error fetching people for sportsmaster:", error);
+        return [];
+      }
+  }
+  
+  // Default behavior for other roles: fetch all people.
   try {
-    const peopleCollection = collection(db, 'people');
     const peopleSnapshot = await getDocs(peopleCollection);
     return peopleSnapshot.docs.map(doc => ({
       personId: doc.id, ...doc.data()
