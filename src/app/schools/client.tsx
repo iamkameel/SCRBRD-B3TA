@@ -3,6 +3,7 @@
 'use client';
 
 import * as React from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -113,7 +114,7 @@ function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add' | 'edi
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <Tabs defaultValue="general">
+            <Tabs defaultValue="general" className="space-y-4">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
@@ -212,7 +213,11 @@ export default function SchoolsClient({ schools, isAdmin }: { schools: School[],
                 {schools.length > 0 ? (
                   schools.map((school) => (
                     <TableRow key={school.schoolId}>
-                      <TableCell className="font-medium">{school.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/schools/${school.schoolId}`} className="hover:underline">
+                          {school.name}
+                        </Link>
+                      </TableCell>
                       <TableCell>{school.abbreviation}</TableCell>
                       {isAdmin && <TableCell className="text-right">
                         <DropdownMenu>

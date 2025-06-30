@@ -258,7 +258,7 @@ function hasPermissionToAssign(assignerRoles: string[], targetRoles: string[]): 
 
     const permissions: { [key: string]: string[] } = {
         'Sportsmaster': ['School Admin', 'Umpire', 'Scorer'],
-        'School Admin': ['Coach', 'Assistant Coach', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aider', 'Grounds-Keeper', 'Driver'],
+        'School Admin': ['Coach', 'Assistant Coach', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid', 'Grounds-Keeper', 'Driver'],
         'Coach': ['Assistant Coach', 'Captain']
     };
 
@@ -524,3 +524,20 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
     return dashboardData;
 });
 
+export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> => {
+  const userId = await getUserId();
+  if (!userId) return [];
+  try {
+    const peopleCollection = collection(db, 'people');
+    const q = query(peopleCollection, where("userId", "==", userId), where("assignedSchools", "array-contains", schoolId));
+    const staffSnapshot = await getDocs(q);
+    const staffList = staffSnapshot.docs.map(doc => ({
+      personId: doc.id,
+      ...doc.data()
+    } as Person));
+    return staffList;
+  } catch (error) {
+    console.error(`Error fetching staff for school ${schoolId}:`, error);
+    return [];
+  }
+});

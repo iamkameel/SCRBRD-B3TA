@@ -30,6 +30,26 @@ export const getSchools = cache(async (): Promise<School[]> => {
   }
 });
 
+export const getSchool = cache(async (schoolId: string): Promise<School | null> => {
+  const userId = await getUserId();
+  if (!userId) return null;
+  try {
+    const schoolDocRef = doc(db, 'schools', schoolId);
+    const schoolSnap = await getDoc(schoolDocRef);
+    if (!schoolSnap.exists()) {
+      return null;
+    }
+    return {
+      schoolId: schoolSnap.id,
+      ...schoolSnap.data(),
+    } as School;
+  } catch (error) {
+    console.error(`Error fetching school with ID ${schoolId}:`, error);
+    return null;
+  }
+});
+
+
 const schoolSchema = z.object({
   name: z.string().min(1, { message: "School name is required." }),
   abbreviation: z.string().optional(),
@@ -132,3 +152,21 @@ export async function deleteSchoolAction(schoolId: string) {
   revalidatePath('/schools');
   revalidatePath('/teams');
 }
+
+export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> => {
+  const userId = await getUserId();
+  if (!userId) return [];
+  try {
+    const peopleCollection = collection(db, 'people');
+    const q = query(peopleCollection, where("userId", "==", userId), where("assignedSchools", "array-contains", schoolId));
+    const staffSnapshot = await getDocs(q);
+    const staffList = staffSnapshot.docs.map(doc => ({
+      personId: doc.id,
+      ...doc.data()
+    } as Person));
+    return staffList;
+  } catch (error) {
+    console.error(`Error fetching staff for school ${schoolId}:`, error);
+    return [];
+  }
+});

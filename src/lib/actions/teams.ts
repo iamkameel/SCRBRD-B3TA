@@ -565,3 +565,20 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
     return eligiblePlayers;
 });
 
+export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> => {
+  const userId = await getUserId();
+  if (!userId) return [];
+  try {
+    const teamsCollection = collection(db, 'teams');
+    const q = query(teamsCollection, where("userId", "==", userId), where("schoolId", "==", schoolId));
+    const teamSnapshot = await getDocs(q);
+    const teamsList = teamSnapshot.docs.map(doc => ({
+      teamId: doc.id,
+      ...doc.data(),
+    } as Team));
+    return teamsList;
+  } catch (error) {
+    console.error(`Error fetching teams for school ${schoolId}:`, error);
+    return [];
+  }
+});
