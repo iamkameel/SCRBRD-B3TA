@@ -11,12 +11,12 @@ import { cache } from 'react';
 import { getTeam } from './teams';
 
 export const getSessionsByTeam = cache(async (teamId: string): Promise<TrainingSession[]> => {
-    const userId = await getUserId();
-    if (!userId) return [];
     if (!teamId) return [];
     
     try {
-        const q = query(collection(db, 'sessions'), where("userId", "==", userId), where("teamId", "==", teamId));
+        // A team's sessions should be visible to any authorized user, not just the creator.
+        // The query is now scoped only by teamId.
+        const q = query(collection(db, 'sessions'), where("teamId", "==", teamId));
         const snapshot = await getDocs(q);
         const sessions = snapshot.docs.map(doc => {
             const data = doc.data();
