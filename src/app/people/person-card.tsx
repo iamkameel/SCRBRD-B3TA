@@ -1,27 +1,29 @@
 
-
 'use client';
 
 import * as React from "react";
 import Link from "next/link";
-import { MoreHorizontal, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Building } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import type { Person } from "@/lib/data";
+import type { Person, School } from "@/lib/data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PersonCardProps {
     person: Person;
+    schools: School[];
     onEdit: () => void;
     onDelete: () => void;
     canManage: boolean;
 }
 
-export function PersonCard({ person, onEdit, onDelete, canManage }: PersonCardProps) {
+export function PersonCard({ person, schools, onEdit, onDelete, canManage }: PersonCardProps) {
+    const assignedSchool = schools.find(s => s.schoolId === person.assignedSchools?.[0]);
+    
     return (
         <Card>
             <CardHeader>
@@ -50,6 +52,12 @@ export function PersonCard({ person, onEdit, onDelete, canManage }: PersonCardPr
                 </div>
             </CardHeader>
             <CardContent>
+                {assignedSchool && (
+                    <div className="flex items-center gap-2 mb-2">
+                        <Building className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">{assignedSchool.name}</p>
+                    </div>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className="capitalize">{person.activeRole}</Badge>
                     {person.roles.length > 1 && (

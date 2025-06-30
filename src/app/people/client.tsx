@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -50,7 +49,7 @@ const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.Per
 const ALL_ROLES = ROLE_GROUPS.flatMap(group => group.roles);
 
 
-type SortableColumn = 'name' | 'email';
+type SortableColumn = 'name' | 'email' | 'schoolName';
 
 export default function PeopleClient({ people, user, schools }: { people: Person[], user: Person | null, schools: School[] }) {
   const { toast } = useToast();
@@ -89,19 +88,26 @@ export default function PeopleClient({ people, user, schools }: { people: Person
     sortableItems.sort((a, b) => {
         let aValue: string;
         let bValue: string;
-        if (sortConfig.key === 'name') {
+
+        if (sortConfig.key === 'schoolName') {
+            const schoolA = schools.find(s => s.schoolId === a.assignedSchools?.[0]);
+            const schoolB = schools.find(s => s.schoolId === b.assignedSchools?.[0]);
+            aValue = schoolA?.name?.toLowerCase() ?? '';
+            bValue = schoolB?.name?.toLowerCase() ?? '';
+        } else if (sortConfig.key === 'name') {
             aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
             bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
-        } else {
+        } else { // email
             aValue = a[sortConfig.key]?.toLowerCase() ?? '';
             bValue = b[sortConfig.key]?.toLowerCase() ?? '';
         }
+
         if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
     });
     return sortableItems;
-  }, [filteredPeople, sortConfig]);
+  }, [filteredPeople, sortConfig, schools]);
 
   const filtersApplied = searchQuery || roleFilters.length > 0;
 
@@ -272,6 +278,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                 <TableHeader>
                   <TableRow>
                     <SortableHeader column="name">Name</SortableHeader>
+                    <SortableHeader column="schoolName">Assigned School</SortableHeader>
                     <SortableHeader column="email">Email</SortableHeader>
                     <TableHead>Roles</TableHead>
                     {canManage && <TableHead className="text-right">Actions</TableHead>}
@@ -279,11 +286,20 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                 </TableHeader>
                 <TableBody>
                   {paginatedPeople.length > 0 ? (
-                    paginatedPeople.map((person) => (
+                    paginatedPeople.map((person) => {
+                      const assignedSchool = schools.find(s => s.schoolId === person.assignedSchools?.[0]);
+                      return (
                       <TableRow key={person.personId}>
                         <TableCell className="font-medium flex items-center gap-3">
                           <Avatar><AvatarImage src={person.profileImageUrl} alt={`${person.firstName} ${person.lastName}`} /><AvatarFallback>{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback></Avatar>
                           <Link href={`/people/${person.personId}`} className="hover:underline">{person.firstName} {person.lastName}</Link>
+                        </TableCell>
+                        <TableCell>
+                          {assignedSchool ? (
+                            <Link href={`/schools/${assignedSchool.schoolId}`} className="hover:underline">{assignedSchool.name}</Link>
+                          ) : (
+                            <span className="text-muted-foreground">Unassigned</span>
+                          )}
                         </TableCell>
                         <TableCell className="truncate">{person.email}</TableCell>
                         <TableCell>
@@ -321,9 +337,9 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                           </DropdownMenu>
                         </TableCell>}
                       </TableRow>
-                    ))
+                    )})
                   ) : (
-                    <TableRow><TableCell colSpan={canManage ? 4 : 3} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={canManage ? 5 : 4} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -335,6 +351,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                             <PersonCard 
                                 key={person.personId} 
                                 person={person} 
+                                schools={schools}
                                 onEdit={() => { setSelectedPerson(person); setDialogMode('edit'); setIsPersonDialogOpen(true); }}
                                 onDelete={() => { setSelectedPerson(person); setIsDeleteDialogOpen(true); }}
                                 canManage={canEditUsers}
