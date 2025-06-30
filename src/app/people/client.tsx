@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown, Building } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown, Building, Users } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,12 +34,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import type { Person, School } from "@/lib/data";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Person, School, Team } from "@/lib/data";
 import { deletePlayerAction } from '@/lib/actions/players';
+import { bulkAssignPeopleToTeamAction } from '@/lib/actions/teams';
 import { PersonCard } from "./person-card";
 import { ROLE_GROUPS } from "@/lib/roles";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AssignSchoolDialog } from "./assign-school-dialog";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.PersonDialog), {
@@ -51,7 +57,66 @@ const ALL_ROLES = ROLE_GROUPS.flatMap(group => group.roles);
 
 type SortableColumn = 'name' | 'email' | 'schoolName';
 
-export default function PeopleClient({ people, user, schools }: { people: Person[], user: Person | null, schools: School[] }) {
+const bulkAssignTeamSchema = z.object({
+  teamId: z.string({ required_error: "Please select a team." }),
+});
+
+function BulkAssignTeamDialog({ personIds, teams, open, onOpenChange, onSuccess }: { personIds: string[], teams: Team[], open: boolean, onOpenChange: (open: boolean) => void, onSuccess: () => void }) {
+    const { toast } = useToast();
+    const [isPending, startTransition] = React.useTransition();
+    const form = useForm<z.infer<typeof bulkAssignTeamSchema>>({
+        resolver: zodResolver(bulkAssignTeamSchema),
+    });
+
+    function onSubmit(data: z.infer<typeof bulkAssignTeamSchema>) {
+        startTransition(async () => {
+            try {
+                await bulkAssignPeopleToTeamAction(data.teamId, personIds);
+                toast({ title: "Assignment Successful", description: `${personIds.length} people have been added to the team.` });
+                onSuccess();
+                onOpenChange(false);
+            } catch (error) {
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not assign people.", variant: "destructive" });
+            }
+        });
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Assign to Team</DialogTitle>
+                    <DialogDescription>Assign the selected {personIds.length} people to a team with the 'Player' role.</DialogDescription>
+                </DialogHeader>
+                 <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="teamId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Label>Team</Label>
+                                    <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl>
+                                        <SelectContent>{teams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isPending}>{isPending ? "Assigning..." : "Assign to Team"}</Button>
+                        </DialogFooter>
+                    </form>
+                 </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+export default function PeopleClient({ people, user, schools, teams }: { people: Person[], user: Person | null, schools: School[], teams: Team[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
@@ -73,6 +138,9 @@ export default function PeopleClient({ people, user, schools }: { people: Person
   
   const canManage = user?.roles.some(role => ['Admin', 'Sportsmaster', 'Team Manager'].includes(role)) ?? false;
   const canEditUsers = user?.roles.includes('Admin') ?? false;
+
+  const [selectedRowKeys, setSelectedRowKeys] = React.useState<string[]>([]);
+  const [isBulkAssignTeamDialogOpen, setIsBulkAssignTeamDialogOpen] = React.useState(false);
 
   const filteredPeople = React.useMemo(() => {
     return people.filter(person => {
@@ -116,6 +184,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
   // Reset page to 1 when filters or view change
   React.useEffect(() => {
     setCurrentPage(1);
+    setSelectedRowKeys([]);
   }, [searchQuery, roleFilters, schoolFilter, view, sortConfig]);
 
   // Pagination logic
@@ -186,6 +255,12 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                 <CardDescription>A list of all people in the system.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
+                {selectedRowKeys.length > 0 && canManage && (
+                    <Button onClick={() => setIsBulkAssignTeamDialogOpen(true)}>
+                        <Users className="mr-2"/>
+                        Assign to Team ({selectedRowKeys.length})
+                    </Button>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="icon" className="relative">
@@ -324,6 +399,15 @@ export default function PeopleClient({ people, user, schools }: { people: Person
               <Table>
                 <TableHeader>
                   <TableRow>
+                     <TableHead className="w-12">
+                        <Checkbox
+                           checked={paginatedPeople.length > 0 && selectedRowKeys.length === paginatedPeople.length}
+                           onCheckedChange={(checked) => {
+                                setSelectedRowKeys(checked ? paginatedPeople.map(p => p.personId) : []);
+                           }}
+                           aria-label="Select all rows on this page"
+                        />
+                     </TableHead>
                     <SortableHeader column="name">Name</SortableHeader>
                     <SortableHeader column="schoolName">Assigned School</SortableHeader>
                     <SortableHeader column="email">Email</SortableHeader>
@@ -337,6 +421,19 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                       const assignedSchool = schools.find(s => s.schoolId === person.assignedSchools?.[0]);
                       return (
                       <TableRow key={person.personId}>
+                        <TableCell>
+                            <Checkbox
+                                checked={selectedRowKeys.includes(person.personId)}
+                                onCheckedChange={(checked) => {
+                                    setSelectedRowKeys(
+                                        checked
+                                        ? [...selectedRowKeys, person.personId]
+                                        : selectedRowKeys.filter(id => id !== person.personId)
+                                    );
+                                }}
+                                aria-label={`Select row for ${person.firstName} ${person.lastName}`}
+                            />
+                        </TableCell>
                         <TableCell className="font-medium flex items-center gap-3">
                           <Avatar><AvatarImage src={person.profileImageUrl} alt={`${person.firstName} ${person.lastName}`} /><AvatarFallback>{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback></Avatar>
                           <Link href={`/people/${person.personId}`} className="hover:underline">{person.firstName} {person.lastName}</Link>
@@ -386,7 +483,7 @@ export default function PeopleClient({ people, user, schools }: { people: Person
                       </TableRow>
                     )})
                   ) : (
-                    <TableRow><TableCell colSpan={canManage ? 5 : 4} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={canManage ? 6 : 5} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -433,6 +530,8 @@ export default function PeopleClient({ people, user, schools }: { people: Person
             }}
         />
       )}
+
+      {canManage && <BulkAssignTeamDialog personIds={selectedRowKeys} teams={teams} open={isBulkAssignTeamDialogOpen} onOpenChange={setIsBulkAssignTeamDialogOpen} onSuccess={() => setSelectedRowKeys([])} />}
 
       {canEditUsers && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

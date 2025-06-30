@@ -619,3 +619,42 @@ export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> 
     return [];
   }
 });
+
+export async function bulkAssignPeopleToTeamAction(teamId: string, personIds: string[]) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found or permission denied.");
+
+    if (!personIds || personIds.length === 0) {
+        throw new Error("No people selected for assignment.");
+    }
+
+    const rosterCol = collection(db, 'teams', teamId, 'roster');
+    const existingRosterSnap = await getDocs(rosterCol);
+    const existingPlayerIds = new Set(existingRosterSnap.docs.map(d => d.data().personId));
+
+    const batch = writeBatch(db);
+    for (const personId of personIds) {
+        if (!existingPlayerIds.has(personId)) {
+            const newRosterDocRef = doc(rosterCol);
+            batch.set(newRosterDocRef, {
+                personId,
+                role: 'Player', // Default role for bulk add
+                status: 'active', // Default status
+                isCaptain: false,
+                isViceCaptain: false,
+            });
+        }
+    }
+
+    try {
+        await batch.commit();
+    } catch(error) {
+        console.error("Error bulk adding people to roster:", error);
+        throw new Error("Could not add people to roster.");
+    }
+    revalidatePath('/people');
+    revalidatePath(`/teams/${teamId}`);
+}
