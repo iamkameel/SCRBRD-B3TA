@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamStandingsChart } from "../dashboard-charts";
-import { AlertTriangle, Users, MapPin, AlertCircle, Shield, ClipboardList, Trophy, UserCog, ArrowRight } from 'lucide-react';
+import { AlertTriangle, Users, MapPin, AlertCircle, Shield, ClipboardList, Trophy, UserCog, ArrowRight, Database } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { format, isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
@@ -174,6 +174,16 @@ export default function SportsmasterDashboard() {
                         <div className="flex-1">
                             <h3 className="font-semibold">Personnel Management</h3>
                             <p className="text-sm text-muted-foreground">View all registered people.</p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                    </div>
+                </Link>
+                 <Link href="/data-management" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
+                    <div className="flex items-center gap-4">
+                        <Database className="w-8 h-8 text-muted-foreground shrink-0" />
+                        <div className="flex-1">
+                            <h3 className="font-semibold">Data Management</h3>
+                            <p className="text-sm text-muted-foreground">Migrate or clear data.</p>
                         </div>
                         <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
                     </div>
