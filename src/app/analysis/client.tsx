@@ -16,6 +16,7 @@ import { Loader2, Swords, Shield } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from '@/lib/utils';
+import { StatsQueryCard } from './stats-query-card';
 
 // --- Schemas ---
 const playerComparisonSchema = z.object({
@@ -251,9 +252,11 @@ export default function AnalysisClient({ players, teams }: { players: Person[], 
     return (
         <div className="flex flex-col gap-8">
             <header>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">Head-to-Head</h1>
-                <p className="text-muted-foreground">Select two players or teams to compare their stats.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">Analysis Hub</h1>
+                <p className="text-muted-foreground">Ask the AI a question or select two entities to compare stats.</p>
             </header>
+
+            <StatsQueryCard />
 
             <Tabs defaultValue="player-vs-player" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">

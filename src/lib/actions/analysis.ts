@@ -16,6 +16,7 @@ import { selectLineup } from '@/ai/flows/select-lineup-flow';
 import { generateOppositionAnalysis } from '@/ai/flows/generate-opposition-analysis-flow';
 import { generateLiveMatchUpdate } from '@/ai/flows/generate-live-match-update-flow';
 import { getUserId } from '@/lib/auth';
+import { queryStats } from '@/ai/flows/stats-query-flow';
 
 import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
@@ -280,5 +281,25 @@ export async function generateLiveMatchUpdateAction(matchId: string): Promise<Li
         console.error("Error generating live match update:", error);
         if (error instanceof Error) throw error;
         throw new Error("The AI failed to generate a live match update.");
+    }
+}
+
+
+export async function queryStatsAction(question: string): Promise<string> {
+    const userId = await getUserId();
+    if (!userId) {
+        throw new Error("User not authenticated.");
+    }
+    if (!question) {
+        throw new Error("A question is required.");
+    }
+
+    try {
+        const answer = await queryStats(question);
+        return answer;
+    } catch (error) {
+        console.error("Error querying stats:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("The AI failed to answer your question.");
     }
 }
