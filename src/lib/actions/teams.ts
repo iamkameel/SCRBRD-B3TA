@@ -14,8 +14,37 @@ import { getUserId } from '@/lib/auth';
 export const getTeams = cache(async (): Promise<Team[]> => {
   const userId = await getUserId();
   if (!userId) return [];
+  
+  const currentUser = await getPerson(userId);
+  if (!currentUser) return [];
+
+  const teamsCollection = collection(db, 'teams');
+  let q;
+
+  const activeRole = currentUser.activeRole;
+  
+  // Admin role sees all teams within their organization.
+  if (activeRole === 'Admin') {
+     q = query(teamsCollection, where("userId", "==", userId));
+  }
+  // Sportsmaster role sees only teams from their assigned schools.
+  else if (activeRole === 'Sportsmaster') {
+    if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
+      return []; // No schools assigned, so no teams to see.
+    }
+    // Firestore 'in' query is limited to 30 items. This should be sufficient for assigned schools.
+    q = query(
+      teamsCollection, 
+      where("userId", "==", userId), 
+      where("schoolId", "in", currentUser.assignedSchools)
+    );
+  }
+  // For other roles, they see all teams. This can be refined later if needed.
+  else {
+      q = query(teamsCollection, where("userId", "==", userId));
+  }
+
   try {
-    const q = query(collection(db, 'teams'), where("userId", "==", userId));
     const teamSnapshot = await getDocs(q);
     return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
   } catch (error) {
@@ -134,8 +163,11 @@ export const getTeamStats = cache(async (teamId: string): Promise<TeamStats> => 
 
 
 const assignmentSchema = z.object({
-  personId: z.string(), role: z.string(), status: z.string(),
-  isCaptain: z.boolean().default(false), isViceCaptain: z.boolean().default(false),
+  personId: z.string({ required_error: "Please select a person." }),
+  role: z.string({ required_error: "Please select a role." }),
+  status: z.string({ required_error: "Please select a status." }),
+  isCaptain: z.boolean().default(false),
+  isViceCaptain: z.boolean().default(false),
 });
 
 export async function addPlayerToRosterAction(teamId: string, data: z.infer<typeof assignmentSchema>) {
