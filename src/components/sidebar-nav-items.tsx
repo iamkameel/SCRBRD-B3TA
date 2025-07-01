@@ -9,7 +9,8 @@ import {
     HeartPulse,
     Dumbbell,
     Target,
-    CalendarRange
+    CalendarRange,
+    UserSearch
 } from 'lucide-react';
 
 const adminTopLevelNavItems = [
@@ -23,6 +24,7 @@ const adminNavGroups = [
         items: [
             { href: '/matches', label: 'All Matches', icon: ClipboardList },
             { href: '/strategic-calendar', label: 'Strategic Calendar', icon: CalendarRange },
+            { href: '/scouting', label: 'Scouting Assistant', icon: UserSearch },
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
         ]
@@ -93,6 +95,7 @@ const coachNavGroups = [
         title: "Analysis & Strategy",
         icon: Trophy,
         items: [
+            { href: '/scouting', label: 'Scouting Assistant', icon: UserSearch },
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
             { href: '/rankings', label: 'Leaderboards', icon: Trophy },
             { href: '/people', label: 'Player Profiles', icon: User },

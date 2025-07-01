@@ -17,10 +17,10 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 ### Category 2: Next-Generation AI & Analytics
 
+-   [x] **6. AI Scouting Assistant**: **Complete.** Coaches can upload a photo to receive an AI-generated technical analysis of a player.
 -   [x] **7. Predictive Player Performance**: **Complete.** AI can now forecast a player's likely performance in an upcoming match.
 -   [x] **9. Natural Language Query for Stats**: **Complete.** Users can ask plain-English questions about stats and receive AI-generated answers.
 -   [x] **10. Dynamic In-Match Strategy Suggestions**: **Complete.** The live scoring analysis now provides tactical advice.
--   [ ] **6. AI Scouting Assistant**: Not Started.
 -   [ ] **8. Automated Highlight Reels**: Not Started.
 
 ---
@@ -32,3 +32,4 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started.
 -   [ ] **12. Comprehensive Testing Suite**: Not Started.
 -   [ ] **13. Push Notification System**: Not Started.
+

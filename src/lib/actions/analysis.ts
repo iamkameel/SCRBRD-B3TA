@@ -18,9 +18,10 @@ import { generateLiveMatchUpdate } from '@/ai/flows/generate-live-match-update-f
 import { getUserId } from '@/lib/auth';
 import { queryStats } from '@/ai/flows/stats-query-flow';
 import { generatePlayerPerformanceForecast } from '@/ai/flows/generate-player-performance-forecast-flow';
+import { scoutPlayer } from '@/ai/flows/scout-player-flow';
 
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
@@ -318,4 +319,24 @@ export async function generatePlayerPerformanceForecastAction(input: PlayerPerfo
         if (error instanceof Error) throw error;
         throw new Error("The AI failed to generate a performance forecast.");
     }
+}
+
+export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {
+  const userId = await getUserId();
+  if (!userId) {
+    throw new Error("User not authenticated.");
+  }
+  
+  if (!input.photoDataUri) {
+    throw new Error("An image is required for the scouting report.");
+  }
+
+  try {
+    const result = await scoutPlayer(input);
+    return result;
+  } catch (error) {
+    console.error("Error running scouting report:", error);
+    if (error instanceof Error) throw error;
+    throw new Error("The AI scouting report failed to complete.");
+  }
 }

@@ -252,3 +252,20 @@ export const PlayerPerformanceForecastPromptInputSchema = z.object({
   weatherForecast: GetMatchForecastOutputSchema,
   opponentTeamStats: z.any().describe("JSON string of the opponent team's overall season stats."),
 });
+
+
+// From scout-player-flow.ts
+export const ScoutingReportInputSchema = z.object({
+  photoDataUri: z.string().describe("A photo of a cricket player, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  playerName: z.string().describe("The name of the player being scouted."),
+  skill: z.enum(['Batting', 'Bowling']).describe("The primary skill to analyze (either Batting or Bowling).")
+});
+export type ScoutingReportInput = z.infer<typeof ScoutingReportInputSchema>;
+
+export const ScoutingReportSchema = z.object({
+    strengths: z.array(z.string()).describe("A list of 2-3 key technical strengths observed in the photo."),
+    areasForImprovement: z.array(z.string()).describe("A list of 2-3 technical areas that could be improved."),
+    professionalComparison: z.string().describe("A comparison to a well-known professional player with a similar style, with a brief explanation."),
+    summary: z.string().describe("A concise, one-paragraph summary of the player's potential based on the visual analysis."),
+});
+export type ScoutingReportOutput = z.infer<typeof ScoutingReportSchema>;
