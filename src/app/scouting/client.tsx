@@ -17,7 +17,7 @@ import { runScoutingReportAction } from '@/lib/actions/analysis';
 import type { ScoutingReportOutput } from '@/ai/schemas';
 import { Loader2, Upload, CheckCircle, AlertTriangle, User, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const scoutingSchema = z.object({
     playerName: z.string().min(1, { message: "Player name is required." }),
