@@ -11,7 +11,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
 // This function now fetches data from Firestore for the current user
-export const getDivisions = cache(async (): Promise<Division[]> => {
+export async function getDivisions(): Promise<Division[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -27,7 +27,7 @@ export const getDivisions = cache(async (): Promise<Division[]> => {
     console.error("Error fetching divisions:", error);
     return [];
   }
-});
+}
 
 export const getDivision = cache(async (divisionId: string): Promise<Division | null> => {
   const userId = await getUserId();

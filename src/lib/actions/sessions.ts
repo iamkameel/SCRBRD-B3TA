@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -10,7 +11,7 @@ import { getUserId } from '@/lib/auth';
 import { cache } from 'react';
 import { getTeam, isTeamManagerOrAdmin } from './teams';
 
-export const getSessionsByTeam = cache(async (teamId: string): Promise<TrainingSession[]> => {
+export async function getSessionsByTeam(teamId: string): Promise<TrainingSession[]> {
     if (!teamId) return [];
     
     try {
@@ -31,7 +32,7 @@ export const getSessionsByTeam = cache(async (teamId: string): Promise<TrainingS
         console.error(`Error fetching sessions for team ${teamId}:`, error);
         return [];
     }
-});
+}
 
 const sessionSchema = z.object({
     title: z.string().min(1, { message: "Session title is required." }),

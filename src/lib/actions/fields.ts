@@ -11,7 +11,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { getPerson } from './players';
 
-export const getFields = cache(async (): Promise<Field[]> => {
+export async function getFields(): Promise<Field[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -68,7 +68,7 @@ export const getFields = cache(async (): Promise<Field[]> => {
     console.error("Error fetching fields:", error);
     return [];
   }
-});
+}
 
 export const getField = cache(async (fieldId: string): Promise<Field | null> => {
   const userId = await getUserId();
@@ -295,7 +295,7 @@ export async function deleteFieldAction(fieldId: string) {
   revalidatePath('/new-match');
 }
 
-export const getFieldsForGroundskeeper = cache(async (personId: string): Promise<Field[]> => {
+export async function getFieldsForGroundskeeper(personId: string): Promise<Field[]> {
     const userId = await getUserId();
     if (!userId) return [];
     
@@ -304,7 +304,7 @@ export const getFieldsForGroundskeeper = cache(async (personId: string): Promise
     return allUserFields.filter(field => 
         field.assignments?.some(assignment => assignment.personId === personId)
     );
-});
+}
 
 
 const fieldStatusSchema = z.enum(['Available', 'Maintenance', 'Closed']);

@@ -14,7 +14,7 @@ import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
-export const getPlayers = cache(async (): Promise<Person[]> => {
+export async function getPlayers(): Promise<Person[]> {
   const userId = await getUserId();
   if (!userId) return [];
 
@@ -101,9 +101,9 @@ export const getPlayers = cache(async (): Promise<Person[]> => {
     console.error("Error fetching people:", error);
     return [];
   }
-});
+}
 
-export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => {
+export async function getPeopleByRole(role: string): Promise<Person[]> {
   try {
     const peopleCollection = collection(db, 'people');
     const q = query(peopleCollection, where("roles", "array-contains", role));
@@ -115,7 +115,7 @@ export const getPeopleByRole = cache(async (role: string): Promise<Person[]> => 
     console.error(`Error fetching people with role ${role}:`, error);
     return [];
   }
-});
+}
 
 export const getPerson = cache(async (personId: string): Promise<Person | null> => {
     if (!personId) return null;
@@ -134,7 +134,8 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
 
         return {
             personId: personSnap.id,
-            ...data
+            ...data,
+            activeRole
         } as Person;
 
     } catch (error) {
@@ -159,7 +160,7 @@ export const getPersonByEmail = cache(async (email: string): Promise<Person | nu
     }
 });
 
-export const getPersonLinks = cache(async (personId: string): Promise<{ guardians: Person[], children: Person[] }> => {
+export async function getPersonLinks(personId: string): Promise<{ guardians: Person[], children: Person[] }> {
     if (!await getPerson(personId)) return { guardians: [], children: [] };
 
     const linksCollection = collection(db, 'familyLinks');
@@ -181,7 +182,7 @@ export const getPersonLinks = cache(async (personId: string): Promise<{ guardian
         console.error(`Error fetching links for person ${personId}:`, error);
         return { guardians: [], children: [] };
     }
-});
+}
 
 const addLinkSchema = z.object({
   currentPersonId: z.string(), linkedPersonId: z.string(), relationship: z.enum(["guardian", "child"]),
@@ -531,7 +532,7 @@ export async function updateActiveRoleAction(personId: string, role: string) {
   }
 }
 
-export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> => {
+export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -547,7 +548,7 @@ export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> 
     console.error(`Error fetching staff for school ${schoolId}:`, error);
     return [];
   }
-});
+}
 
 
 export async function assignPersonToSchoolAction(personId: string, schoolId: string | null) {

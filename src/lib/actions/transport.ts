@@ -12,7 +12,7 @@ import { getPerson } from './players';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
-export const getVehicles = cache(async (): Promise<Vehicle[]> => {
+export async function getVehicles(): Promise<Vehicle[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -28,7 +28,7 @@ export const getVehicles = cache(async (): Promise<Vehicle[]> => {
     console.error("Error fetching vehicles:", error);
     return [];
   }
-});
+}
 
 const vehicleSchema = z.object({
   name: z.string().min(1, { message: "Vehicle name is required." }),
@@ -122,7 +122,7 @@ export async function deleteVehicleAction(vehicleId: string) {
 }
 
 // TRANSPORT ASSIGNMENT ACTIONS
-export const getMatchTransportAssignments = cache(async (matchId: string): Promise<TransportAssignment[]> => {
+export async function getMatchTransportAssignments(matchId: string): Promise<TransportAssignment[]> {
   const userId = await getUserId();
   const match = await getMatch(matchId);
   if (!match) return [];
@@ -158,9 +158,9 @@ export const getMatchTransportAssignments = cache(async (matchId: string): Promi
     console.error(`Error fetching transport assignments for match ${matchId}:`, error);
     return [];
   }
-});
+}
 
-export const getAllTransportAssignments = cache(async (): Promise<FullTransportAssignment[]> => {
+export async function getAllTransportAssignments(): Promise<FullTransportAssignment[]> {
     const userId = await getUserId();
     if (!userId) return [];
     
@@ -180,9 +180,9 @@ export const getAllTransportAssignments = cache(async (): Promise<FullTransportA
     }
     
     return allAssignments.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
-});
+}
 
-export const getAssignmentsForDriver = cache(async (personId: string): Promise<FullTransportAssignment[]> => {
+export async function getAssignmentsForDriver(personId: string): Promise<FullTransportAssignment[]> {
     const userId = await getUserId();
     if (!userId || !personId) return [];
     try {
@@ -222,7 +222,7 @@ export const getAssignmentsForDriver = cache(async (personId: string): Promise<F
         console.error("Error fetching driver assignments:", error);
         return [];
     }
-});
+}
 
 
 const transportAssignmentSchema = z.object({

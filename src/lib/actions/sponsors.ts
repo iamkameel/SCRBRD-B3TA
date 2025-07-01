@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,7 +10,7 @@ import type { Sponsor } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
-export const getSponsors = cache(async (): Promise<Sponsor[]> => {
+export async function getSponsors(): Promise<Sponsor[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -25,7 +26,7 @@ export const getSponsors = cache(async (): Promise<Sponsor[]> => {
     console.error("Error fetching sponsors:", error);
     return [];
   }
-});
+}
 
 const sponsorSchema = z.object({
   name: z.string().min(1, { message: "Sponsor name is required." }),

@@ -10,7 +10,7 @@ import type { Transaction } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
-export const getTransactions = cache(async (): Promise<Transaction[]> => {
+export async function getTransactions(): Promise<Transaction[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -30,7 +30,7 @@ export const getTransactions = cache(async (): Promise<Transaction[]> => {
     console.error("Error fetching transactions:", error);
     return [];
   }
-});
+}
 
 const transactionSchema = z.object({
   description: z.string().min(1, { message: "Description is required." }),

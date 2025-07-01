@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -10,7 +11,7 @@ import { getUserId } from '@/lib/auth';
 import { cache } from 'react';
 import { getPerson } from './players';
 
-export const getDrills = cache(async (): Promise<Drill[]> => {
+export async function getDrills(): Promise<Drill[]> {
     // Drills are considered a shared resource for now, visible to all authenticated users.
     // A check for `userId` could be added here if drills should be private.
     try {
@@ -24,7 +25,7 @@ export const getDrills = cache(async (): Promise<Drill[]> => {
         console.error("Error fetching drills:", error);
         return [];
     }
-});
+}
 
 const drillSchema = z.object({
     name: z.string().min(1, { message: "Drill name is required." }),

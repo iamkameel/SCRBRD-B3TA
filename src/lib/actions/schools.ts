@@ -5,15 +5,15 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db, app } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch, Timestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch, Timestamp } from 'firebase/firestore';
 import type { School, Person, Team, Match } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { getTeamRoster, getTeams, getTeamsBySchool } from './teams';
 
 // This function now fetches data from Firestore for the current user
-export const getSchools = cache(async (): Promise<School[]> => {
+export async function getSchools(): Promise<School[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -30,7 +30,7 @@ export const getSchools = cache(async (): Promise<School[]> => {
     // Return empty array or handle error as needed
     return [];
   }
-});
+}
 
 export const getSchool = cache(async (schoolId: string): Promise<School | null> => {
   const userId = await getUserId();
@@ -194,7 +194,7 @@ export async function deleteSchoolAction(schoolId: string) {
   revalidatePath('/teams');
 }
 
-export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> => {
+export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -210,10 +210,10 @@ export const getSchoolStaff = cache(async (schoolId: string): Promise<Person[]> 
     console.error(`Error fetching staff for school ${schoolId}:`, error);
     return [];
   }
-});
+}
 
 
-export const getSchoolPlayers = cache(async (schoolId: string): Promise<Person[]> => {
+export async function getSchoolPlayers(schoolId: string): Promise<Person[]> {
     const teams = await getTeamsBySchool(schoolId);
     const playerIds = new Set<string>();
     for (const team of teams) {
@@ -243,7 +243,7 @@ export const getSchoolPlayers = cache(async (schoolId: string): Promise<Person[]
         });
     }
     return people;
-});
+}
 
 export async function updateSchoolStaffAssignmentsAction(schoolId: string, staffIdsToAssign: string[]) {
     const userId = await getUserId();
@@ -288,7 +288,7 @@ export async function updateSchoolStaffAssignmentsAction(schoolId: string, staff
     revalidatePath(`/schools/${schoolId}`);
 }
 
-export const getMatchesBySchool = cache(async (schoolId: string): Promise<Match[]> => {
+export async function getMatchesBySchool(schoolId: string): Promise<Match[]> {
   const teams = await getTeamsBySchool(schoolId);
   if (teams.length === 0) return [];
 
@@ -327,4 +327,4 @@ export const getMatchesBySchool = cache(async (schoolId: string): Promise<Match[
   });
 
   return Array.from(uniqueMatchesMap.values()).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
-});
+}

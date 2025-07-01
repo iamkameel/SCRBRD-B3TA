@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -10,7 +11,7 @@ import { getPerson } from './players';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
-export const getEquipment = cache(async (): Promise<EquipmentItem[]> => {
+export async function getEquipment(): Promise<EquipmentItem[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -24,7 +25,7 @@ export const getEquipment = cache(async (): Promise<EquipmentItem[]> => {
     console.error("Error fetching equipment:", error);
     return [];
   }
-});
+}
 
 const itemSchema = z.object({
   name: z.string().min(1, { message: "Item name is required." }),
@@ -146,7 +147,7 @@ export async function returnEquipmentAction(assignmentId: string) {
   revalidatePath('/equipment');
 }
 
-export const getAllEquipmentAssignments = cache(async (): Promise<FullEquipmentAssignment[]> => {
+export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignment[]> {
     const userId = await getUserId();
     if (!userId) return [];
     try {
@@ -180,4 +181,4 @@ export const getAllEquipmentAssignments = cache(async (): Promise<FullEquipmentA
         console.error("Error fetching all assignments:", error);
         return [];
     }
-});
+}

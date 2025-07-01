@@ -10,7 +10,7 @@ import type { Season } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
-export const getSeasons = cache(async (): Promise<Season[]> => {
+export async function getSeasons(): Promise<Season[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -31,7 +31,7 @@ export const getSeasons = cache(async (): Promise<Season[]> => {
     console.error("Error fetching seasons:", error);
     return [];
   }
-});
+}
 
 export const getSeason = cache(async (seasonId: string): Promise<Season | null> => {
   const userId = await getUserId();
