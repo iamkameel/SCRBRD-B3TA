@@ -6,7 +6,7 @@ import { getMatches } from './matches';
 import { getTeams } from './teams';
 import type { Match, Team } from '@/lib/data';
 import { getUserId } from '@/lib/auth';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface FixtureConflict {
@@ -87,25 +87,13 @@ export async function getUnconfirmedAssignmentsCount(): Promise<number> {
     if (!userId) return 0;
     
     try {
-        const allMatches = await getMatches();
-        const scheduledMatches = allMatches.filter(m => m.status === 'scheduled');
-
-        if (scheduledMatches.length === 0) {
-            return 0;
-        }
-
-        let unconfirmedCount = 0;
-        const promises = scheduledMatches.map(async (match) => {
-            const officialsColRef = collection(db, 'matches', match.matchId, 'officials');
-            const q = query(officialsColRef, where('confirmed', '==', false), where('userId', '==', userId));
-            const snapshot = await getDocs(q);
-            return snapshot.size;
-        });
-
-        const counts = await Promise.all(promises);
-        unconfirmedCount = counts.reduce((sum, count) => sum + count, 0);
-        
-        return unconfirmedCount;
+        const q = query(
+            collectionGroup(db, 'officials'), 
+            where('personId', '==', userId), 
+            where('confirmed', '==', false)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.size;
     } catch(error) {
         console.error("Error fetching unconfirmed assignments count:", error);
         return 0;

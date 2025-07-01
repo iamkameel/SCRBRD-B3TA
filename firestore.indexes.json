@@ -121,6 +121,20 @@
         }
       ]
     },
+     {
+      "collectionGroup": "officials",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "personId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "confirmed",
+          "order": "ASCENDING"
+        }
+      ]
+    },
     {
       "collectionGroup": "people",
       "queryScope": "COLLECTION",

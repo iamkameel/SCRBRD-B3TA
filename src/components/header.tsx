@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, Settings, LogOut, ChevronDown, User } from 'lucide-react';
+import { Menu, Settings, LogOut, ChevronDown, User, Bell, Loader2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/accordion";
 import { ScrollArea } from './ui/scroll-area';
 import { ROLE_GROUPS } from '@/lib/roles';
+import { getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 
 function RoleSwitcher() {
     const { person } = useAuth();
@@ -99,6 +100,68 @@ function RoleSwitcher() {
                         );
                     })}
                 </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function NotificationBell() {
+    const [count, setCount] = React.useState(0);
+    const [loading, setLoading] = React.useState(true);
+    const { person } = useAuth();
+    const pathname = usePathname();
+
+    const isOfficial = person?.roles.includes('Umpire') || person?.roles.includes('Scorer');
+
+    React.useEffect(() => {
+        if (isOfficial) {
+            setLoading(true);
+            getUnconfirmedAssignmentsCount().then(num => {
+                setCount(num);
+                setLoading(false);
+            });
+        } else {
+            setLoading(false);
+            setCount(0);
+        }
+    }, [isOfficial, pathname]);
+
+    if (!isOfficial) {
+        return null;
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/20 relative">
+                    <Bell className="h-5 w-5" />
+                    {!loading && count > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                            {count}
+                        </span>
+                    )}
+                    <span className="sr-only">Toggle notifications</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {loading ? (
+                    <DropdownMenuItem disabled>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Loading...
+                    </DropdownMenuItem>
+                ) : count > 0 ? (
+                    <DropdownMenuItem asChild>
+                         <Link href="/dashboard">
+                            You have {count} unconfirmed match assignment{count > 1 ? 's' : ''}.
+                        </Link>
+                    </DropdownMenuItem>
+                ) : (
+                    <DropdownMenuItem disabled>
+                       No new notifications
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );
@@ -206,6 +269,8 @@ export function Header() {
 
             <div className="flex-1 w-full" />
             
+            <NotificationBell />
+
             {person && <RoleSwitcher />}
 
             <DropdownMenu>
