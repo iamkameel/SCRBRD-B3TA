@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, query, collection, where, limit } from 'firebase/firestore';
+import { query, collection, where, limit, getDocs } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
 
@@ -39,23 +39,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (user) {
-      setLoading(true);
-      // Query for the person document using their email address, which is consistent
-      // for both sample users and newly registered users.
-      const q = query(collection(db, "people"), where("email", "==", user.email), limit(1));
-      
-      const unsub = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          const userDoc = snapshot.docs[0];
-          setPerson({ personId: userDoc.id, ...userDoc.data() } as Person);
-        } else {
-          // This can happen if a user is created in Auth but not yet in Firestore,
-          // or if they were deleted from Firestore but not Auth.
-          setPerson(null);
+      const fetchPerson = async () => {
+        setLoading(true);
+        const q = query(collection(db, "people"), where("email", "==", user.email), limit(1));
+        try {
+          const snapshot = await getDocs(q);
+          if (!snapshot.empty) {
+            const userDoc = snapshot.docs[0];
+            setPerson({ personId: userDoc.id, ...userDoc.data() } as Person);
+          } else {
+            // This can happen if a user is created in Auth but not yet in Firestore,
+            // or if they were deleted from Firestore but not Auth.
+            setPerson(null);
+          }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+            setPerson(null);
         }
-        setLoading(false);
-      });
-      return () => unsub();
+        finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchPerson();
     }
   }, [user]);
 
