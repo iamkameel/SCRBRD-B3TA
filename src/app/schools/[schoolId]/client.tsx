@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -163,11 +162,10 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-2 space-y-8">
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <StatCard title="Total Teams" value={teams.length} icon={Users} />
                         <StatCard title="Active Players" value={players.length} icon={User} />
                         <StatCard title="Total Staff" value={staff.length} icon={User} />
-                        <StatCard title="Fixtures This Season" value={0} icon={ClipboardList} />
                      </div>
 
                      <Tabs defaultValue="teams" className="w-full">
