@@ -23,9 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName } from "@/lib/actions/data-management";
+import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName, exportDataAction } from "@/lib/actions/data-management";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SUBSETS: { name: SubsetName }[] = [
@@ -38,19 +37,21 @@ const SUBSETS: { name: SubsetName }[] = [
     { name: 'Teams' },
     { name: 'Matches' },
     { name: 'Financials' },
+    { name: 'Sponsors' },
     { name: 'Equipment' },
     { name: 'Drills' },
 ];
 
 const INDEPENDENT_SUBSETS: SubsetName[] = [
-    'Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Drills'
+    'Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Drills', 'Sponsors'
 ];
 
 export default function DataManagementClient() {
   const [isMigrating, startMigrationTransition] = React.useTransition();
   const [isDeleting, startDeletionTransition] = React.useTransition();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
   const [actionToConfirm, setActionToConfirm] = React.useState<'migrateAll' | 'deleteAll' | SubsetName | null>(null);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [exportingSubset, setExportingSubset] = React.useState<SubsetName | null>(null);
   
   const { toast } = useToast();
 
@@ -106,7 +107,34 @@ export default function DataManagementClient() {
     });
   }
 
-  const isProcessing = isMigrating || isDeleting;
+  const handleExport = (subset: SubsetName) => {
+    setExportingSubset(subset);
+    startMigrationTransition(async () => { // Using same transition for loading state
+      try {
+        const result = await exportDataAction(subset);
+        if (result.error) {
+          toast({ title: "Export Failed", description: result.error, variant: "destructive" });
+        } else {
+          const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", `${subset.toLowerCase().replace(/\s/g, '_')}_export.csv`);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast({ title: "Export Successful", description: `${subset} data has been exported.` });
+        }
+      } catch (error) {
+        toast({ title: "Export Error", description: "An unexpected error occurred.", variant: "destructive" });
+      } finally {
+        setExportingSubset(null);
+      }
+    });
+  };
+
+  const isProcessing = isMigrating || isDeleting || !!exportingSubset;
 
   return (
     <>
@@ -116,191 +144,136 @@ export default function DataManagementClient() {
             Data Management
           </h1>
           <p className="text-muted-foreground">
-            Manage your application data using sample sets or your own files.
+            Manage your application data using sample sets or by exporting your own data.
           </p>
         </header>
         
-        <Tabs defaultValue="sample-data" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="sample-data">Sample Data</TabsTrigger>
-                <TabsTrigger value="import-export">Import & Export</TabsTrigger>
-            </TabsList>
-            <TabsContent value="sample-data" className="mt-4">
-                 <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger>Bulk Data Operations</AccordionTrigger>
-                        <AccordionContent>
-                        <Card>
-                            <CardHeader>
-                            <CardTitle>Sample Data & Deletion</CardTitle>
-                            <CardDescription>
-                                Use these actions to populate your entire database with sample data for demonstration, or to delete all existing data.
-                            </CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col sm:flex-row gap-4">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button onClick={() => { setActionToConfirm('migrateAll'); setDialogOpen(true); }} disabled={isProcessing}>
-                                            {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DatabaseZap className="mr-2 h-4 w-4" />}
-                                            Migrate All Sample Data
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Replaces all current data with the complete sample dataset.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="destructive" onClick={() => { setActionToConfirm('deleteAll'); setDialogOpen(true); }} disabled={isProcessing}>
-                                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TriangleAlert className="mr-2 h-4 w-4" />}
-                                            Delete All Data
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Permanently deletes all data from all collections in the database.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            </CardContent>
-                        </Card>
-                        </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="item-2">
-                        <AccordionTrigger>Manage Data Subsets</AccordionTrigger>
-                        <AccordionContent>
-                        <Card>
-                            <CardHeader>
-                            <CardTitle>Individual Data Subsets</CardTitle>
-                            <CardDescription>
-                                Migrate sample data or delete all records for a specific data type.
-                            </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                            <Table>
-                                <TableHeader>
-                                <TableRow>
-                                    <TableHead>Data Type</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                {SUBSETS.map(({name}) => {
-                                  const isIndependent = INDEPENDENT_SUBSETS.includes(name);
-                                  return (
-                                    <TableRow key={name}>
-                                      <TableCell className="font-medium">{name}</TableCell>
-                                      <TableCell className="flex justify-end gap-2">
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <span tabIndex={!isIndependent ? 0 : -1}>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleMigrateSubset(name)}
-                                                                disabled={isProcessing || !isIndependent}
-                                                            >
-                                                                <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
-                                                            </Button>
-                                                        </span>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>{isIndependent ? `Replaces all existing ${name} data with the sample set.` : `Migration for ${name} depends on other data. Use 'Migrate All' instead.`}</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <span tabIndex={!isIndependent ? 0 : -1}>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="destructive"
-                                                                onClick={() => { setActionToConfirm(name); setDialogOpen(true); }}
-                                                                disabled={isProcessing || !isIndependent}
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                            </Button>
-                                                        </span>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>{isIndependent ? `Permanently deletes all ${name} data from the database.` : `Deletion for ${name} depends on other data. Use 'Delete All' instead.`}</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                      </TableCell>
-                                    </TableRow>
-                                  )
-                                })}
-                                </TableBody>
-                            </Table>
-                            </CardContent>
-                        </Card>
-                        </AccordionContent>
-                    </AccordionItem>
-                 </Accordion>
-            </TabsContent>
-            <TabsContent value="import-export" className="mt-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Import Data</CardTitle>
-                            <CardDescription>
-                                Upload a CSV file to import data from previous seasons or other systems. This feature is coming soon.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                <Upload className="h-8 w-8 text-muted-foreground mb-2"/>
-                                <p className="text-muted-foreground mb-4">Drag & drop your file here or</p>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span tabIndex={0}>
-                                                <Button disabled>Choose File</Button>
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>This feature is coming soon.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Export Data</CardTitle>
-                            <CardDescription>
-                                Download all your application data as a set of CSV files for backup or offline analysis. This feature is coming soon.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                <Download className="h-8 w-8 text-muted-foreground mb-2"/>
-                                <p className="text-muted-foreground mb-4">Export will generate a zip file of CSVs.</p>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span tabIndex={0}>
-                                                <Button disabled>Export All Data</Button>
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>This feature is coming soon.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </TabsContent>
-        </Tabs>
+        <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+            <AccordionItem value="item-1">
+                <AccordionTrigger>Bulk Data Operations</AccordionTrigger>
+                <AccordionContent>
+                <Card>
+                    <CardHeader>
+                    <CardTitle>Sample Data & Deletion</CardTitle>
+                    <CardDescription>
+                        Use these actions to populate your entire database with sample data for demonstration, or to delete all existing data.
+                    </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col sm:flex-row gap-4">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button onClick={() => { setActionToConfirm('migrateAll'); setDialogOpen(true); }} disabled={isProcessing}>
+                                    {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DatabaseZap className="mr-2 h-4 w-4" />}
+                                    Migrate All Sample Data
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Replaces all current data with the complete sample dataset.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="destructive" onClick={() => { setActionToConfirm('deleteAll'); setDialogOpen(true); }} disabled={isProcessing}>
+                                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TriangleAlert className="mr-2 h-4 w-4" />}
+                                    Delete All Data
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Permanently deletes all data from all collections in the database.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    </CardContent>
+                </Card>
+                </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="item-2">
+                <AccordionTrigger>Manage Data Subsets</AccordionTrigger>
+                <AccordionContent>
+                <Card>
+                    <CardHeader>
+                    <CardTitle>Individual Data Subsets</CardTitle>
+                    <CardDescription>
+                        Migrate sample data, delete all records, or export data for a specific type.
+                    </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Data Type</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {SUBSETS.map(({name}) => {
+                          const isIndependent = INDEPENDENT_SUBSETS.includes(name);
+                          return (
+                            <TableRow key={name}>
+                              <TableCell className="font-medium">{name}</TableCell>
+                              <TableCell className="flex justify-end gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleExport(name)}
+                                        disabled={isProcessing}
+                                    >
+                                        {exportingSubset === name ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                        Export
+                                    </Button>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span tabIndex={!isIndependent ? 0 : -1}>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleMigrateSubset(name)}
+                                                        disabled={isProcessing || !isIndependent}
+                                                    >
+                                                        <DatabaseZap className="mr-2 h-4 w-4" /> Migrate
+                                                    </Button>
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{isIndependent ? `Replaces all existing ${name} data with the sample set.` : `Migration for ${name} depends on other data. Use 'Migrate All' instead.`}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span tabIndex={!isIndependent ? 0 : -1}>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        onClick={() => { setActionToConfirm(name); setDialogOpen(true); }}
+                                                        disabled={isProcessing || !isIndependent}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </Button>
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{isIndependent ? `Permanently deletes all ${name} data from the database.` : `Deletion for ${name} depends on other data. Use 'Delete All' instead.`}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                        </TableBody>
+                    </Table>
+                    </CardContent>
+                </Card>
+                </AccordionContent>
+            </AccordionItem>
+          </Accordion>
       </div>
       
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>

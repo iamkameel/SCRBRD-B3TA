@@ -17,14 +17,16 @@ import { getCompetitions, deleteCompetitionAction } from './competitions';
 import { getEquipment, deleteEquipmentItemAction } from './equipment';
 import { getDrills, deleteDrillAction } from './drills';
 import { getUserId } from '@/lib/auth';
+import { getSponsors } from './sponsors';
+import { getTransactions } from './financials';
 
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
     'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches', 'Competitions': 'competitions',
-    'Financials': 'financials', 'Equipment': 'equipment', 'Drills': 'drills',
+    'Financials': 'financials', 'Equipment': 'equipment', 'Drills': 'drills', 'Sponsors': 'sponsors',
 } as const;
 export type SubsetName = keyof typeof collectionNameMap;
-const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Drills'];
+const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fields', 'People', 'Financials', 'Equipment', 'Drills', 'Sponsors'];
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
@@ -459,4 +461,85 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
     }
 }
 
+function toCSV(data: any[]): string {
+    if (data.length === 0) return "";
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+
+    for (const row of data) {
+        const values = headers.map(header => {
+            let value = row[header];
+            if (value === null || value === undefined) {
+                value = '';
+            } else if (value instanceof Timestamp) {
+                value = value.toDate().toISOString();
+            } else if (value instanceof Date) {
+                value = value.toISOString();
+            } else if (typeof value === 'object') {
+                value = JSON.stringify(value);
+            }
+            
+            const stringValue = String(value);
+
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+        });
+        csvRows.push(values.join(','));
+    }
+    return csvRows.join('\n');
+}
+
+export async function exportDataAction(subsetName: SubsetName): Promise<{ csv: string; error?: string }> {
+    const userId = await getUserId();
+    if (!userId) {
+        return { csv: '', error: "User not authenticated." };
+    }
     
+    try {
+        let data: any[] = [];
+        const getAction = {
+            'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
+            'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
+            'Equipment': getEquipment, 'Financials': getTransactions,
+            'Sponsors': getSponsors,
+            'Drills': getDrills,
+        }[subsetName];
+
+        if (!getAction) {
+            throw new Error(`Export not supported for subset: ${subsetName}`);
+        }
+
+        // @ts-ignore
+        data = await getAction();
+
+        if (data.length === 0) {
+             return { csv: '', error: `No data found for ${subsetName} to export.` };
+        }
+        
+        // Remove complex nested objects that don't export well to CSV
+        if (subsetName === 'Teams') {
+            data = data.map(({ roster, ...team }) => team);
+        }
+        if (subsetName === 'Matches') {
+            data = data.map(({ playerOfTheMatch, liveScore, previousLiveScore, availability, analysisReports, ...match }) => ({
+                ...match,
+                playerOfTheMatchName: playerOfTheMatch?.name,
+                playerOfTheMatchTeam: playerOfTheMatch?.teamName
+            }));
+        }
+
+
+        const csv = toCSV(data);
+        return { csv };
+
+    } catch (error) {
+        const message = error instanceof Error ? error.message : `Failed to export ${subsetName} data.`;
+        console.error("Export Error:", message);
+        return { csv: '', error: message };
+    }
+}
+    
+
