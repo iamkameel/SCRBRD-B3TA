@@ -19,22 +19,29 @@ import type { Competition, Team, FixtureConflict, Person, StandingTeam, Leaderbo
 import { DreamTeamCard } from '@/app/dream-team-card';
 
 interface AdminDashboardData {
-    allMatches: Match[];
-    topRunScorers: LeaderboardPlayer[];
-    topWicketTakers: LeaderboardPlayer[];
+    kpis: {
+        competitions: number;
+        teams: number;
+        players: number;
+        fields: number;
+        netBalance: number;
+        sponsors: number;
+    };
+    operations: {
+        liveMatches: Match[];
+        todayMatches: Match[];
+        availableFields: number;
+        maintenanceFields: number;
+    };
+    resources: {
+        fieldsInUse: number;
+        transportAssignedToday: number;
+        equipmentAssigned: number;
+        totalEquipment: number;
+        totalVehicles: number;
+        totalFields: number;
+    };
     teamStandings: StandingTeam[];
-    allTeams: Team[];
-    allPlayers: Person[];
-    allFields: any[];
-    allTransactions: Transaction[];
-    allSponsors: Sponsor[];
-    allVehicles: Vehicle[];
-    allEquipment: EquipmentItem[];
-    allCompetitions: Competition[];
-    allSeasons: Season[];
-    allDivisions: Division[];
-    allSchools: School[];
-    conflicts: FixtureConflict[];
 }
 
 function KpiCard({ title, value, description, href }: { title: string, value: string | number, description: string, href: string }) {
@@ -61,23 +68,10 @@ export default function AdminDashboard() {
   const [data, setData] = React.useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = React.useState(true);
 
-  const [activeTab, setActiveTab] = React.useState('overview');
-  
-  // Filter states
-  const [selectedSchool, setSelectedSchool] = React.useState('all');
-  const [selectedSeason, setSelectedSeason] = React.useState('all');
-  const [selectedCompetition, setSelectedCompetition] = React.useState('all');
-  const [selectedDivision, setSelectedDivision] = React.useState('all');
-  const [selectedDateRange, setSelectedDateRange] = React.useState('all');
-
   React.useEffect(() => {
     if (person?.personId) {
       getAdminDashboardData(person.personId).then(fetchedData => {
         setData(fetchedData);
-        if (fetchedData.allSeasons.length > 0) {
-            const activeSeason = fetchedData.allSeasons.find(s => s.active);
-            setSelectedSeason(activeSeason?.seasonId || fetchedData.allSeasons[0].seasonId);
-        }
         setLoading(false);
       }).catch(error => {
         console.error("Failed to load admin dashboard data:", error);
@@ -86,52 +80,11 @@ export default function AdminDashboard() {
     }
   }, [person]);
 
-  const filteredData = React.useMemo(() => {
-    if (!data) return null;
-    let { allTeams, allPlayers, allCompetitions, allMatches } = data;
-
-    if (selectedSchool !== 'all') {
-      allTeams = allTeams.filter(t => t.schoolId === selectedSchool);
-      const teamIds = new Set(allTeams.map(t => t.teamId));
-      allMatches = allMatches.filter(m => teamIds.has(m.teamAId) || teamIds.has(m.teamBId));
-    }
-    if (selectedSeason !== 'all') {
-      allCompetitions = allCompetitions.filter(c => c.seasonId === selectedSeason);
-      allTeams = allTeams.filter(t => t.seasonId === selectedSeason);
-    }
-    if (selectedCompetition !== 'all') {
-      allMatches = allMatches.filter(m => m.competitionId === selectedCompetition);
-    }
-    if (selectedDivision !== 'all') {
-      allTeams = allTeams.filter(t => t.divisionId === selectedDivision);
-    }
-    // Date range filtering would be more complex and is omitted for this example
-
-    return { ...data, allTeams, allPlayers, allCompetitions, allMatches };
-  }, [data, selectedSchool, selectedSeason, selectedCompetition, selectedDivision, selectedDateRange]);
-
-  const headerContext = React.useMemo(() => {
-      const schoolName = selectedSchool === 'all' ? 'All Schools' : data?.allSchools.find(s => s.schoolId === selectedSchool)?.name || '...';
-      const seasonName = selectedSeason === 'all' ? 'All Seasons' : data?.allSeasons.find(s => s.seasonId === selectedSeason)?.name || '...';
-      const competitionName = selectedCompetition === 'all' ? 'All Competitions' : data?.allCompetitions.find(c => c.competitionId === selectedCompetition)?.name || '...';
-      return `${schoolName} · ${seasonName} · ${competitionName}`;
-  }, [data, selectedSchool, selectedSeason, selectedCompetition]);
-
-
-  if (loading || !filteredData) {
+  if (loading || !data) {
     return <DashboardSkeleton />;
   }
 
-  const { allMatches, allTeams, allPlayers, allCompetitions, allFields, allSponsors, allTransactions } = filteredData;
-  const liveMatches = allMatches.filter(m => m.status === 'live');
-  const todayMatches = allMatches.filter(m => new Date(m.dateTime).toDateString() === new Date().toDateString());
-  const financialSummary = allTransactions.reduce((acc, t) => {
-    if (t.type === 'Income') acc.income += t.amount;
-    else acc.expense += t.amount;
-    return acc;
-  }, { income: 0, expense: 0 });
-  const netBalance = financialSummary.income - financialSummary.expense;
-  
+  const { kpis, operations, resources, teamStandings } = data;
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
   return (
@@ -141,29 +94,13 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                    <p className="text-sm opacity-90">{headerContext}</p>
+                    <p className="text-sm opacity-90">High-level overview of all operations.</p>
                 </div>
             </div>
         </header>
-
-        {/* Filters */}
-        <Card className="sticky top-[70px] z-30">
-            <CardContent className="p-2 flex flex-wrap items-center gap-2">
-                <Select value={selectedSchool} onValueChange={setSelectedSchool}><SelectTrigger className="w-full md:w-auto flex-grow"><SelectValue placeholder="School" /></SelectTrigger><SelectContent>{[{schoolId: 'all', name: 'All Schools'}, ...data.allSchools].map(s => <SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={selectedSeason} onValueChange={setSelectedSeason}><SelectTrigger className="w-full md:w-auto flex-grow"><SelectValue placeholder="Season" /></SelectTrigger><SelectContent>{[{seasonId: 'all', name: 'All Seasons'}, ...data.allSeasons].map(s => <SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={selectedCompetition} onValueChange={setSelectedCompetition}><SelectTrigger className="w-full md:w-auto flex-grow"><SelectValue placeholder="Competition" /></SelectTrigger><SelectContent>{[{competitionId: 'all', name: 'All Competitions'}, ...filteredData.allCompetitions].map(c => <SelectItem key={c.competitionId} value={c.competitionId}>{c.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={selectedDivision} onValueChange={setSelectedDivision}><SelectTrigger className="w-full md:w-auto flex-grow"><SelectValue placeholder="Division" /></SelectTrigger><SelectContent>{[{divisionId: 'all', name: 'All Divisions'}, ...data.allDivisions].map(d => <SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={selectedDateRange} onValueChange={setSelectedDateRange}><SelectTrigger className="w-full md:w-auto flex-grow"><SelectValue placeholder="Date Range" /></SelectTrigger><SelectContent><SelectItem value="all">All Time</SelectItem><SelectItem value="7d">Last 7 days</SelectItem><SelectItem value="30d">Last 30 days</SelectItem></SelectContent></Select>
-                <div className="flex-grow flex justify-end items-center gap-2 w-full md:w-auto">
-                     <Select disabled><SelectTrigger className="w-[120px]"><SelectValue placeholder="Quick Views" /></SelectTrigger></Select>
-                     <Button variant="outline" onClick={() => { setSelectedSchool('all'); setSelectedSeason('all'); setSelectedCompetition('all'); setSelectedDivision('all'); setSelectedDateRange('all'); }}>Reset</Button>
-                     <Button disabled>Save View</Button>
-                </div>
-            </CardContent>
-        </Card>
         
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="overview" className="w-full">
             <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="bySchool" disabled>By School</TabsTrigger>
@@ -174,12 +111,12 @@ export default function AdminDashboard() {
             <TabsContent value="overview" className="mt-4 space-y-4">
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <KpiCard title="Competitions" value={allCompetitions.length} description="Active this season" href="/competitions" />
-                    <KpiCard title="Teams" value={allTeams.length} description="All divisions" href="/teams" />
-                    <KpiCard title="Players" value={allPlayers.length} description="Registered" href="/people" />
-                    <KpiCard title="Fields & Venues" value={allFields.length} description="Available for booking" href="/fields" />
-                    <KpiCard title="Net Balance" value={formatCurrency(netBalance)} description="Current financial position" href="/financials" />
-                    <KpiCard title="Sponsors" value={allSponsors.length} description="Active partnerships" href="/sponsors" />
+                    <KpiCard title="Competitions" value={kpis.competitions} description="Active this season" href="/competitions" />
+                    <KpiCard title="Teams" value={kpis.teams} description="All divisions" href="/teams" />
+                    <KpiCard title="Players" value={kpis.players} description="Registered" href="/people" />
+                    <KpiCard title="Fields & Venues" value={kpis.fields} description="Available for booking" href="/fields" />
+                    <KpiCard title="Net Balance" value={formatCurrency(kpis.netBalance)} description="Current financial position" href="/financials" />
+                    <KpiCard title="Sponsors" value={kpis.sponsors} description="Active partnerships" href="/sponsors" />
                 </div>
                 {/* Main Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
@@ -188,22 +125,22 @@ export default function AdminDashboard() {
                             <CardHeader><CardTitle>Operations Center</CardTitle><CardDescription>Live match operations and field status</CardDescription></CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div><p className="font-semibold">Live Now ({liveMatches.length})</p><p className="text-sm text-muted-foreground">{liveMatches.length > 0 ? liveMatches.map(m => m.teamAName).join(', ') : 'No matches'}</p></div>
-                                    <div><p className="font-semibold">Today's Schedule ({todayMatches.length})</p><p className="text-sm text-muted-foreground">{todayMatches.length > 0 ? `${todayMatches.length} matches` : 'No matches'}</p></div>
+                                    <div><p className="font-semibold">Live Now ({operations.liveMatches.length})</p><p className="text-sm text-muted-foreground">{operations.liveMatches.length > 0 ? operations.liveMatches.map(m => m.teamAName).join(', ') : 'No matches'}</p></div>
+                                    <div><p className="font-semibold">Today's Schedule ({operations.todayMatches.length})</p><p className="text-sm text-muted-foreground">{operations.todayMatches.length > 0 ? `${operations.todayMatches.length} matches` : 'No matches'}</p></div>
                                 </div>
-                                <div><p className="font-semibold">Field Status</p><p className="text-sm text-muted-foreground flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-green-500"></span>Available: {allFields.filter(f => f.status === 'Available').length} <span className="h-2 w-2 rounded-full bg-red-500"></span>In Use: 0 <span className="h-2 w-2 rounded-full bg-yellow-500"></span>Maintenance: {allFields.filter(f => f.status === 'Maintenance').length}</p></div>
+                                <div><p className="font-semibold">Field Status</p><p className="text-sm text-muted-foreground flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-green-500"></span>Available: {operations.availableFields} <span className="h-2 w-2 rounded-full bg-red-500"></span>In Use: {resources.fieldsInUse} <span className="h-2 w-2 rounded-full bg-yellow-500"></span>Maintenance: {operations.maintenanceFields}</p></div>
                             </CardContent>
                         </Card>
                         <Card>
-                            <CardHeader><CardTitle>Team Standings</CardTitle><CardDescription>Season leaderboard based on Wins and Net Run Rate.</CardDescription></CardHeader>
+                            <CardHeader><CardTitle>Team Standings</CardTitle><CardDescription>Top 3 teams in the current season.</CardDescription></CardHeader>
                             <CardContent>
-                                <div className="h-24 flex items-center justify-center text-muted-foreground bg-muted/50 rounded-md"><BarChart2 className="w-6 h-6 mr-2" />Dynamic chart based on current filters</div>
                                 <Table>
                                   <TableHeader><TableRow><TableHead>Team</TableHead><TableHead>W</TableHead><TableHead>L</TableHead><TableHead>NRR</TableHead></TableRow></TableHeader>
                                   <TableBody>
-                                    {data.teamStandings.slice(0, 2).map(t => (
+                                    {teamStandings.slice(0, 3).map(t => (
                                       <TableRow key={t.teamId}><TableCell>{t.name}</TableCell><TableCell>{t.stats.matchesWon}</TableCell><TableCell>{t.stats.matchesLost}</TableCell><TableCell>{t.stats.netRunRate.toFixed(2)}</TableCell></TableRow>
                                     ))}
+                                    {teamStandings.length === 0 && <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No standings available.</TableCell></TableRow>}
                                   </TableBody>
                                 </Table>
                             </CardContent>
@@ -211,16 +148,15 @@ export default function AdminDashboard() {
                          <Card>
                             <CardHeader><CardTitle>Top Performers</CardTitle><CardDescription>Season leaders across all divisions and competitions</CardDescription></CardHeader>
                             <CardContent>
-                                <div className="flex gap-2 mb-4"><Button size="sm" variant="secondary">Batting</Button><Button size="sm" variant="ghost">Bowling</Button></div>
-                                <div className="text-center py-4 text-muted-foreground"><p>No batting data available</p><p className="text-xs">Adjust filters to see performance data</p></div>
+                                <div className="text-center py-4 text-muted-foreground"><p>Leaderboards are available on the Rankings page.</p></div>
                             </CardContent>
                         </Card>
                          <Card>
                             <CardHeader><CardTitle>Resource Utilization</CardTitle><CardDescription>Key resource allocation and usage metrics</CardDescription></CardHeader>
                             <CardContent className="space-y-4">
-                                <ResourceItem label="Fields in Use" value={0} total={allFields.length} />
-                                <ResourceItem label="Transport Assigned Today" value={0} total={data.allVehicles.length} />
-                                <ResourceItem label="Equipment Assigned" value={data.allEquipment.filter(e => e.status === 'Assigned').length} total={data.allEquipment.length} />
+                                <ResourceItem label="Fields in Use" value={resources.fieldsInUse} total={resources.totalFields} />
+                                <ResourceItem label="Transport Assigned Today" value={resources.transportAssignedToday} total={resources.totalVehicles} />
+                                <ResourceItem label="Equipment Assigned" value={resources.equipmentAssigned} total={resources.totalEquipment} />
                             </CardContent>
                         </Card>
                     </div>
@@ -247,7 +183,7 @@ const ResourceItem = ({label, value, total}: {label: string, value: number, tota
             <span className="font-medium text-muted-foreground">{label}</span>
             <span>{value} / {total}</span>
         </div>
-        <Progress value={(value/total) * 100} />
+        <Progress value={total > 0 ? (value/total) * 100 : 0} />
     </div>
 );
 
@@ -258,5 +194,3 @@ const AdminLink = ({href, icon: Icon, title}: {href: string, icon: React.Element
         <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
     </Link>
 )
-
-    

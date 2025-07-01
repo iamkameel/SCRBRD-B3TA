@@ -94,7 +94,7 @@ export async function getTeamLeaderboard(teamId: string): Promise<{ topRunScorer
 
 export async function getAdminDashboardData(personId: string) {
     const [
-        allMatches,
+        allCompetitions,
         allTeams,
         allPlayers,
         allFields,
@@ -102,13 +102,10 @@ export async function getAdminDashboardData(personId: string) {
         allSponsors,
         allVehicles,
         allEquipment,
-        allCompetitions,
-        allSeasons,
-        allDivisions,
-        allSchools,
-        teamStandings
+        allMatches,
+        teamStandings,
     ] = await Promise.all([
-        getMatches(),
+        getCompetitions(),
         getTeams(),
         getPlayers(),
         getFields(),
@@ -116,31 +113,38 @@ export async function getAdminDashboardData(personId: string) {
         getSponsors(),
         getVehicles(),
         getEquipment(),
-        getCompetitions(),
-        getSeasons(),
-        getDivisions(),
-        getSchools(),
+        getMatches(),
         getTeamStandings(),
     ]);
 
+    const liveMatches = allMatches.filter(m => m.status === 'live');
+    const todayMatches = allMatches.filter(m => new Date(m.dateTime).toDateString() === new Date().toDateString());
+    const netBalance = allTransactions.reduce((acc, t) => acc + (t.type === 'Income' ? t.amount : -t.amount), 0);
+    
     return {
-        allMatches,
+        kpis: {
+            competitions: allCompetitions.length,
+            teams: allTeams.length,
+            players: allPlayers.length,
+            fields: allFields.length,
+            netBalance,
+            sponsors: allSponsors.length,
+        },
+        operations: {
+            liveMatches,
+            todayMatches,
+            availableFields: allFields.filter(f => f.status === 'Available').length,
+            maintenanceFields: allFields.filter(f => f.status === 'Maintenance').length,
+        },
+        resources: {
+            fieldsInUse: 0,
+            transportAssignedToday: 0,
+            equipmentAssigned: allEquipment.filter(e => e.status === 'Assigned').length,
+            totalEquipment: allEquipment.length,
+            totalVehicles: allVehicles.length,
+            totalFields: allFields.length
+        },
         teamStandings,
-        allTeams,
-        allPlayers,
-        allFields,
-        allTransactions,
-        allSponsors,
-        allVehicles,
-        allEquipment,
-        allCompetitions,
-        allSeasons,
-        allDivisions,
-        allSchools,
-        // Return empty arrays for the complex data to avoid query explosion
-        conflicts: [],
-        topRunScorers: [],
-        topWicketTakers: [],
     };
 }
 
