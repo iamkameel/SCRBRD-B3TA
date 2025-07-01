@@ -143,6 +143,8 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
             profileImageUrl: data.profileImageUrl,
             assignedSchools: data.assignedSchools,
             notificationPreferences: data.notificationPreferences || { email: true, push: false },
+            developmentPlan: data.developmentPlan,
+            developmentPlanGeneratedAt: data.developmentPlanGeneratedAt ? (data.developmentPlanGeneratedAt as Timestamp).toDate() : undefined,
         } as Person;
 
     } catch (error) {
@@ -472,6 +474,14 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
 
     try {
         const plan = await generatePlayerDevelopmentPlanFlow(promptInput);
+        
+        const personRef = doc(db, 'people', personId);
+        await updateDoc(personRef, {
+            developmentPlan: plan,
+            developmentPlanGeneratedAt: Timestamp.now(),
+        });
+        revalidatePath(`/people/${personId}`);
+
         return plan;
     } catch (error) {
         console.error("Error generating development plan:", error);

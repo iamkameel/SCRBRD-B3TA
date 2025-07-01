@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -272,7 +273,7 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
          <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="assignments">Roles & Assignments</TabsTrigger>
+                <TabsTrigger value="assignments">Roles &amp; Assignments</TabsTrigger>
                 <TabsTrigger value="history">Match History</TabsTrigger>
                 <TabsTrigger value="development">Development</TabsTrigger>
             </TabsList>
@@ -367,7 +368,11 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                 </Card>
             </TabsContent>
             <TabsContent value="development" className="mt-4">
-                <PlayerDevelopmentCard personId={person.personId} />
+                <PlayerDevelopmentCard 
+                    personId={person.personId} 
+                    initialPlan={person.developmentPlan ?? null}
+                    initialPlanDate={person.developmentPlanGeneratedAt}
+                />
             </TabsContent>
          </Tabs>
       </div>

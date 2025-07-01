@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -10,11 +11,13 @@ import { generatePlayerDevelopmentPlanAction } from '@/lib/actions/players';
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
-export function PlayerDevelopmentCard({ personId }: { personId: string }) {
+export function PlayerDevelopmentCard({ personId, initialPlan, initialPlanDate }: { personId: string, initialPlan: PlayerDevelopmentPlanOutput | null, initialPlanDate?: Date }) {
     const { toast } = useToast();
     const [isGenerating, setIsGenerating] = React.useState(false);
-    const [plan, setPlan] = React.useState<PlayerDevelopmentPlanOutput | null>(null);
+    const [plan, setPlan] = React.useState<PlayerDevelopmentPlanOutput | null>(initialPlan);
+    const [planDate, setPlanDate] = React.useState<Date | undefined>(initialPlanDate);
 
     const handleGenerate = async () => {
         setIsGenerating(true);
@@ -22,6 +25,7 @@ export function PlayerDevelopmentCard({ personId }: { personId: string }) {
         try {
             const result = await generatePlayerDevelopmentPlanAction(personId);
             setPlan(result);
+            setPlanDate(new Date());
             toast({
                 title: "Development Plan Generated",
                 description: "The AI has analyzed the player's performance.",
@@ -45,10 +49,13 @@ export function PlayerDevelopmentCard({ personId }: { personId: string }) {
                     <div>
                         <CardTitle>AI Player Development Plan</CardTitle>
                         <CardDescription>Generate a personalized coaching plan based on stats and recent form.</CardDescription>
+                        {plan && planDate && (
+                            <p className="text-xs text-muted-foreground mt-1">Last generated: {format(planDate, 'PPP, p')}</p>
+                        )}
                     </div>
                      <Button onClick={handleGenerate} disabled={isGenerating} className="mt-4 md:mt-0">
                         <Wand2 className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-                        {isGenerating ? "Analyzing Performance..." : "Generate Plan"}
+                        {isGenerating ? "Analyzing Performance..." : (plan ? "Regenerate Plan" : "Generate Plan")}
                     </Button>
                 </div>
             </CardHeader>
@@ -83,7 +90,7 @@ export function PlayerDevelopmentCard({ personId }: { personId: string }) {
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold mb-2">Recommended Drills & Focus</h3>
+                            <h3 className="text-lg font-semibold mb-2">Recommended Drills &amp; Focus</h3>
                              <Accordion type="single" collapsible className="w-full">
                                 {plan.recommendations.map((rec, index) => (
                                     <AccordionItem value={`item-${index}`} key={index}>

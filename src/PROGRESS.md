@@ -11,7 +11,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **1. Coach's Tactical Planner**: **Complete.** The Drill Library, Session Planner, and a drag-and-drop interface for reordering drills are now fully functional.
 -   [x] **2. Team Manager's Logistics Hub**: **Complete.** A player availability (RSVP) system has been implemented.
 -   [x] **4. Sportmaster's Strategic Calendar**: **Complete.** A multi-month, filterable calendar provides a high-level view of all fixtures.
--   [~] **3. Player & Captain Engagement Features**: **In Progress.** Captains can now confirm lineups. A private feedback channel is still to be developed.
+-   [x] **3. Player & Captain Engagement Features**: **Complete.** Captains can confirm lineups and coaches can generate and save AI-powered development plans for players.
 
 ---
 
@@ -32,4 +32,3 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started.
 -   [ ] **12. Comprehensive Testing Suite**: Not Started.
 -   [ ] **13. Push Notification System**: Not Started.
-

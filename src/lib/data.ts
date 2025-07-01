@@ -1,5 +1,7 @@
 
 
+import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
+
 // Interfaces
 export interface Person {
   personId: string;
@@ -16,6 +18,8 @@ export interface Person {
     push: boolean;
   };
   userId?: string;
+  developmentPlan?: PlayerDevelopmentPlanOutput;
+  developmentPlanGeneratedAt?: Date;
 }
 
 export interface School {
