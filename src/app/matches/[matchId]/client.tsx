@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -591,8 +590,8 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">{match.teamAName} vs {match.teamBName || 'TBD'}</h1>
                     <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm">
                         {match.competitionName && <span className="flex items-center gap-1.5"><Trophy className="h-4 w-4" /> {match.competitionName}</span>}
-                        <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {isClient ? format(match.dateTime, "PPP") : '\u00A0'}</span>
-                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {isClient ? format(match.dateTime, "p") : '\u00A0'}</span>
+                        <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {isClient ? format(match.dateTime, "PPP") : '...'}</span>
+                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {isClient ? format(match.dateTime, "p") : '...'}</span>
                         <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{match.fieldName}</span>
                     </div>
                 </div>
