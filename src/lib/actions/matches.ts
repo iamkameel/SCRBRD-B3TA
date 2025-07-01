@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,7 +10,7 @@ import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setD
 import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
-import { getTeams } from './teams';
+import { getTeamRoster, getTeams } from './teams';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
@@ -175,6 +176,8 @@ export async function addMatchAction(data: FixtureFormValues) {
       audioCommentaryUrl: '',
       analysisReports: {},
       availability: {},
+      lineupConfirmedByCaptainA: false,
+      lineupConfirmedByCaptainB: false,
     };
   } else {
     const competition = await getCompetition(competitionId);
@@ -201,6 +204,8 @@ export async function addMatchAction(data: FixtureFormValues) {
       audioCommentaryUrl: '',
       analysisReports: {},
       availability: {},
+      lineupConfirmedByCaptainA: false,
+      lineupConfirmedByCaptainB: false,
     };
   }
 
@@ -445,6 +450,32 @@ export async function saveMatchLineupAction(matchId: string, teamId: string, pla
   }
   revalidatePath(`/matches/${matchId}`);
   return { success: true };
+}
+
+export async function confirmLineupAction(matchId: string, teamId: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found.");
+
+    const roster = await getTeamRoster(teamId);
+    const captainAssignment = roster.find(m => m.personId === userId && m.isCaptain);
+    if (!captainAssignment) {
+        throw new Error("You are not the captain of this team.");
+    }
+
+    const matchRef = doc(db, 'matches', matchId);
+    const updateField = match.teamAId === teamId ? 'lineupConfirmedByCaptainA' : 'lineupConfirmedByCaptainB';
+    
+    try {
+        await updateDoc(matchRef, { [updateField]: true });
+        revalidatePath(`/matches/${matchId}`);
+        return { success: true, message: 'Lineup confirmed successfully!' };
+    } catch (error) {
+        console.error("Error confirming lineup:", error);
+        throw new Error("Could not confirm lineup.");
+    }
 }
 
 export async function removeOfficialFromMatchAction(matchId: string, assignmentId: string) {

@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -38,13 +39,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, confirmLineupAction } from '@/lib/actions/matches';
 import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction, generatePlayerPerformanceForecastAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecastOutput } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
+import { useAuth } from "@/lib/auth-context";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -214,9 +216,11 @@ interface LineupSelectionCardProps {
   match: Match;
   roster: RosterMember[];
   lineup: string[];
+  isCaptain: boolean;
+  lineupConfirmed: boolean;
 }
 
-function LineupSelectionCard({ teamId, teamName, match, roster, lineup }: LineupSelectionCardProps) {
+function LineupSelectionCard({ teamId, teamName, match, roster, lineup, isCaptain, lineupConfirmed }: LineupSelectionCardProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -267,6 +271,17 @@ function LineupSelectionCard({ teamId, teamName, match, roster, lineup }: Lineup
       }
     });
   }
+  
+  const handleConfirmLineup = () => {
+    startTransition(async () => {
+        try {
+            await confirmLineupAction(match.matchId, teamId);
+            toast({ title: "Lineup Confirmed", description: "You have confirmed the lineup for this match." });
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not confirm lineup.", variant: "destructive" });
+        }
+    });
+  };
 
   const selectedCount = form.watch('playerIds')?.length || 0;
 
@@ -275,6 +290,18 @@ function LineupSelectionCard({ teamId, teamName, match, roster, lineup }: Lineup
       <CardHeader>
         <CardTitle>{teamName} - Select Lineup ({selectedCount}/11)</CardTitle>
         <CardDescription>Select the 11 players for this match.</CardDescription>
+        <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-2 text-sm">
+                {lineupConfirmed ? (
+                    <><CheckCircle className="h-5 w-5 text-green-500" /><span className="font-semibold text-green-600">Lineup Confirmed</span></>
+                ) : (
+                    <><HelpCircle className="h-5 w-5 text-yellow-500" /><span className="font-semibold text-yellow-600">Awaiting Captain's Confirmation</span></>
+                )}
+            </div>
+            {isCaptain && !lineupConfirmed && selectedCount === 11 && (
+                <Button size="sm" onClick={handleConfirmLineup} disabled={isPending || isAutoSelecting}>Confirm Lineup</Button>
+            )}
+        </div>
       </CardHeader>
       <CardContent>
         {roster.length > 0 ? (
@@ -397,6 +424,7 @@ interface MatchDetailsClientProps {
 
 export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup, innings1, innings2, transportAssignments, vehicles, drivers }: MatchDetailsClientProps) {
   const { toast } = useToast();
+  const { person } = useAuth();
   const [isClient, setIsClient] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [isGenerating, startGenerationTransition] = React.useTransition();
@@ -419,6 +447,12 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const teamACaptain = teamARoster.find(m => m.isCaptain);
+  const isCaptainTeamA = !!(person && teamACaptain && person.personId === teamACaptain.personId);
+
+  const teamBCaptain = teamBRoster.find(m => m.isCaptain);
+  const isCaptainTeamB = !!(person && teamBCaptain && person.personId === teamBCaptain.personId);
 
   const playersInMatch = React.useMemo(() => {
     const allPlayers = new Map<string, { name: string; teamName: string }>();
@@ -710,9 +744,9 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
 
             <TabsContent value="lineups" className="mt-4">
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} match={match} roster={teamARoster} lineup={teamALineup} />
+                    <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} match={match} roster={teamARoster} lineup={teamALineup} isCaptain={isCaptainTeamA} lineupConfirmed={!!match.lineupConfirmedByCaptainA} />
                     {match.teamBId ?
-                        <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} match={match} roster={teamBRoster} lineup={teamBLineup} />
+                        <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} match={match} roster={teamBRoster} lineup={teamBLineup} isCaptain={isCaptainTeamB} lineupConfirmed={!!match.lineupConfirmedByCaptainB} />
                         : <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
                     }
                 </div>
