@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup } from 'firebase/firestore';
 import type { Person, PlayerDevelopmentPlanOutput, Match } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
@@ -53,17 +53,25 @@ export async function getPlayers(): Promise<Person[]> {
         });
         
         // 2. Get teams for the sportsmaster's schools
-        const teams = await getDocs(query(collection(db, 'teams'), where("schoolId", "in", currentUser.assignedSchools)));
+        const teamsQuery = query(collection(db, 'teams'), where("schoolId", "in", currentUser.assignedSchools));
+        const teamsSnapshot = await getDocs(teamsQuery);
+        const accessibleTeamIds = new Set(teamsSnapshot.docs.map(doc => doc.id));
 
-        // 3. Get all people from the rosters of these teams
-        for (const teamDoc of teams.docs) {
-            const rosterSnapshot = await getDocs(collection(db, 'teams', teamDoc.id, 'roster'));
-            rosterSnapshot.forEach(doc => {
-                peopleIds.add(doc.data().personId);
+        if (accessibleTeamIds.size > 0) {
+            // 3. Use a single collectionGroup query to find all relevant roster members efficiently
+            const rosterGroupQuery = query(collectionGroup(db, 'roster'));
+            const allRosterMembersSnapshot = await getDocs(rosterGroupQuery);
+
+            // 4. Filter roster members in memory to find players from accessible teams
+            allRosterMembersSnapshot.forEach(rosterDoc => {
+                const teamId = rosterDoc.ref.parent.parent?.id;
+                if (teamId && accessibleTeamIds.has(teamId)) {
+                    peopleIds.add(rosterDoc.data().personId);
+                }
             });
         }
-
-        // 4. Fetch all unique people documents
+        
+        // 5. Fetch all unique people documents in chunks
         if (peopleIds.size === 0) {
             return [];
         }
@@ -154,7 +162,7 @@ export const getPersonByEmail = cache(async (email: string): Promise<Person | nu
         }
         const doc = snapshot.docs[0];
         return { personId: doc.id, ...doc.data() } as Person;
-    } catch(e) {
+    } catch (e) {
         console.error("Error fetching person by email", e);
         return null;
     }

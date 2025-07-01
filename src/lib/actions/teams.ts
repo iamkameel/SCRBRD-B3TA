@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db, app } from '@/lib/firebase';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp, collectionGroup } from 'firebase/firestore';
 import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment, Person, Division } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { cache } from 'react';
@@ -539,38 +539,40 @@ export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => 
 });
 
 export const getPersonTeamAssignments = cache(async (personId: string): Promise<PlayerTeamAssignment[]> => {
-    if (!await getPerson(personId)) return [];
-
-    const assignments: PlayerTeamAssignment[] = [];
-    const teamsCollection = collection(db, 'teams');
-    const q = query(teamsCollection);
+    if (!personId || !await getPerson(personId)) return [];
+    
+    // Use a collectionGroup query to find all roster assignments for the person efficiently.
+    const rosterAssignmentsQuery = query(collectionGroup(db, 'roster'), where("personId", "==", personId));
 
     try {
-        const teamsSnapshot = await getDocs(q);
-        for (const teamDoc of teamsSnapshot.docs) {
-            const rosterCol = collection(db, 'teams', teamDoc.id, 'roster');
-            const rosterQuery = query(rosterCol, where("personId", "==", personId));
-            const rosterSnapshot = await getDocs(rosterQuery);
+        const rosterSnapshot = await getDocs(rosterAssignmentsQuery);
+        
+        const teamPromises = rosterSnapshot.docs.map(async (rosterDoc) => {
+            const teamId = rosterDoc.ref.parent.parent?.id;
+            if (!teamId) return null;
+            
+            const team = await getTeam(teamId); // getTeam is cached, so this is efficient.
+            if (!team) return null;
 
-            if (!rosterSnapshot.empty) {
-                const rosterData = rosterSnapshot.docs[0].data();
-                assignments.push({
-                    assignmentId: rosterSnapshot.docs[0].id,
-                    teamId: teamDoc.id,
-                    teamName: teamDoc.data().name,
-                    role: rosterData.role,
-                    status: rosterData.status,
-                    isCaptain: rosterData.isCaptain ?? false,
-                    isViceCaptain: rosterData.isViceCaptain ?? false,
-                });
-            }
-        }
+            const rosterData = rosterDoc.data();
+            return {
+                assignmentId: rosterDoc.id,
+                teamId: team.teamId,
+                teamName: team.name,
+                role: rosterData.role,
+                status: rosterData.status,
+                isCaptain: rosterData.isCaptain ?? false,
+                isViceCaptain: rosterData.isViceCaptain ?? false,
+            };
+        });
+
+        const results = await Promise.all(teamPromises);
+        return results.filter((a): a is PlayerTeamAssignment => a !== null);
+
     } catch (error) {
         console.error(`Error fetching team assignments for person ${personId}:`, error);
         return [];
     }
-
-    return assignments;
 });
 
 // Helper function for ranking
@@ -705,4 +707,19 @@ export async function bulkAssignPeopleToTeamAction(teamId: string, personIds: st
     }
     revalidatePath('/people');
     revalidatePath(`/teams/${teamId}`);
+}
+
+
+export async function isTeamManagerOrAdmin(teamId: string, userId: string): Promise<boolean> {
+    const user = await getPerson(userId);
+    if (!user) return false;
+
+    if (user.roles.includes('Admin') || user.roles.includes('Sportsmaster')) {
+        return true;
+    }
+    
+    const roster = await getTeamRoster(teamId);
+    const isManagerOrCoach = roster.some(m => m.personId === userId && (m.role === 'Coach' || m.role === 'Team Manager'));
+
+    return isManagerOrCoach;
 }
