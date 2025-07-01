@@ -3,19 +3,14 @@
 'use client';
 
 import * as React from "react";
-import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle, CheckCircle, AlertTriangle, User, Calendar, BarChart2 } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle, User, BarChart2, Heart, Shield, Dumbbell, Briefcase, Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,120 +31,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance, Team } from "@/lib/data";
-import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from "@/lib/actions/players";
-import { addPlayerToRosterAction, updateRosterAssignmentAction, removeRosterAssignmentAction } from "@/lib/actions/teams";
+import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from '@/lib/actions/players';
+import { addPlayerToRosterAction, updateRosterAssignmentAction, removeRosterAssignmentAction } from '@/lib/actions/teams';
 import { AddLinkDialog } from "./add-link-dialog";
 import { PlayerDevelopmentCard } from "./player-development-card";
-import { ROLE_GROUPS } from "@/lib/roles";
 import { useAuth } from "@/lib/auth-context";
-
-// --- Dialog for Assigning a Person to a NEW Team ---
-const assignTeamSchema = z.object({
-  teamId: z.string({ required_error: "Please select a team." }),
-  role: z.string({ required_error: "Please select a role." }),
-  status: z.string({ required_error: "Please select a status." }),
-  isCaptain: z.boolean().default(false),
-  isViceCaptain: z.boolean().default(false),
-});
-type AssignTeamFormValues = z.infer<typeof assignTeamSchema>;
-const TEAM_ASSIGNABLE_ROLES = ["Player", "Coach", "Assistant Coach", "Team Manager", "Trainer", "Physio", "Scorer"];
-const STATUSES = ["active", "on_trial", "injured", "retired"];
-
-function AssignTeamDialog({ person, teams, open, onOpenChange }: { person: Person, teams: Team[], open: boolean, onOpenChange: (open: boolean) => void }) {
-    const { toast } = useToast();
-    const [isPending, startTransition] = React.useTransition();
-    const form = useForm<AssignTeamFormValues>({
-        resolver: zodResolver(assignTeamSchema),
-        defaultValues: { isCaptain: false, isViceCaptain: false, status: 'active', role: 'Player' },
-    });
-    
-    React.useEffect(() => {
-        if(open) form.reset({ isCaptain: false, isViceCaptain: false, status: 'active', role: 'Player', teamId: undefined });
-    }, [open, form]);
-
-    function onSubmit(data: AssignTeamFormValues) {
-        startTransition(async () => {
-            try {
-                const { teamId, ...assignmentData } = data;
-                await addPlayerToRosterAction(teamId, { personId: person.personId, ...assignmentData });
-                toast({ title: "Assignment Successful", description: `${person.firstName} has been added to the team.` });
-                onOpenChange(false);
-            } catch (error) {
-                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not assign person.", variant: "destructive" });
-            }
-        });
-    }
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent><DialogHeader><DialogTitle>Assign {person.firstName} to a Team</DialogTitle><DialogDescription>Select a team and define the role and status for this person.</DialogDescription></DialogHeader>
-                <Form {...form}><form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField control={form.control} name="teamId" render={({ field }) => (<FormItem><FormLabel>Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger></FormControl><SelectContent>{teams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{TEAM_ASSIGNABLE_ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} defaultValue="active" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <div className="flex items-center space-x-4 pt-2">
-                        <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
-                        <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
-                    </div>
-                    <DialogFooter><Button type="submit" disabled={isPending}>{isPending ? "Assigning..." : "Assign to Team"}</Button></DialogFooter>
-                </form></Form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-// --- Dialog for EDITING a Person's Team Assignment ---
-function EditTeamAssignmentDialog({ assignment, open, onOpenChange }: { assignment: PlayerTeamAssignment, open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = React.useTransition();
-  const form = useForm<Omit<PlayerTeamAssignment, 'teamId' | 'teamName' | 'personId' | 'personName' | 'assignmentId'>>({
-    resolver: zodResolver(assignmentSchema.omit({ personId: true })),
-    defaultValues: { role: assignment.role, status: assignment.status, isCaptain: assignment.isCaptain, isViceCaptain: assignment.isViceCaptain },
-  });
-  
-  React.useEffect(() => {
-    form.reset({ role: assignment.role, status: assignment.status, isCaptain: assignment.isCaptain, isViceCaptain: assignment.isViceCaptain });
-  }, [assignment, form]);
-
-  function onSubmit(data: any) {
-    startTransition(async () => {
-        try {
-            await updateRosterAssignmentAction({ teamId: assignment.teamId, assignmentId: assignment.assignmentId, ...data });
-            toast({ title: "Roster Updated", description: `The assignment has been updated.` });
-            onOpenChange(false);
-        } catch (error) {
-            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not update assignment.", variant: "destructive" });
-        }
-    });
-  }
-  
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent><DialogHeader><DialogTitle>Edit Assignment: {assignment.teamName}</DialogTitle></DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{TEAM_ASSIGNABLE_ROLES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <div className="flex items-center space-x-4 pt-2">
-                <FormField control={form.control} name="isCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Captain</FormLabel></div></FormItem>)} />
-                <FormField control={form.control} name="isViceCaptain" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isPending}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Vice-Captain</FormLabel></div></FormItem>)} />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Changes"}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
+import { AssignTeamDialog, EditTeamAssignmentDialog } from "./team-assignment-dialogs";
 
 interface PersonDetailsClientProps {
     person: Person;
@@ -162,6 +51,20 @@ interface PersonDetailsClientProps {
     allTeams: Team[];
     canManage: boolean;
 }
+
+const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | number, href?: string }) => {
+    if (!value) return null;
+    const content = href ? <Link href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{value}</Link> : <span>{value}</span>;
+    return (
+        <div className="flex items-start gap-3">
+            <Icon className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
+            <div>
+                <p className="font-semibold text-sm">{label}</p>
+                <p className="text-sm text-muted-foreground">{content}</p>
+            </div>
+        </div>
+    );
+};
 
 export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, allTeams, canManage }: PersonDetailsClientProps) {
   const { person: currentUser } = useAuth();
@@ -225,21 +128,8 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
     });
   };
   
-  const groupedRoles = React.useMemo(() => {
-    const groups: { [key: string]: string[] } = {};
-    person.roles.forEach(roleId => {
-        const group = ROLE_GROUPS.find(g => g.roles.some(r => r.id === roleId));
-        if (group) {
-            if (!groups[group.group]) {
-                groups[group.group] = [];
-            }
-            groups[group.group].push(roleId);
-        }
-    });
-    return Object.entries(groups).map(([group, roles]) => ({ group, roles }));
-  }, [person.roles]);
-
   const canGeneratePortrait = canManage || person.personId === currentUser?.personId;
+  const isPlayer = person.roles.includes('Player');
 
   return (
     <>
@@ -267,55 +157,108 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                   )}
                 </div>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">{person.firstName} {person.lastName}</h1>
-                    <p className="text-muted-foreground">{person.email}</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">{person.displayName || `${person.firstName} ${person.lastName}`}</h1>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {person.roles.map(role => <Badge key={role} variant="secondary" className="capitalize">{role}</Badge>)}
+                    </div>
                 </div>
             </div>
           </div>
         </header>
 
          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="assignments">Roles &amp; Assignments</TabsTrigger>
+                <TabsTrigger value="profile">Profile Details</TabsTrigger>
+                <TabsTrigger value="assignments">Assignments</TabsTrigger>
                 <TabsTrigger value="history">Match History</TabsTrigger>
                 <TabsTrigger value="development">Development</TabsTrigger>
             </TabsList>
+
             <TabsContent value="overview" className="mt-4">
-                <Card>
+                 <Card>
                   <CardHeader><CardTitle>Player Statistics</CardTitle><CardDescription>Overall career statistics for all completed matches.</CardDescription></CardHeader>
                   <CardContent className="space-y-6">
-                      <div>
-                          <h3 className="text-lg font-medium mb-4 text-primary">Batting</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                              <StatItem label="Matches" value={playerStats.matchesPlayed} /><StatItem label="Innings" value={playerStats.inningsBatted} /><StatItem label="Runs" value={playerStats.totalRuns} /><StatItem label="Highest" value={`${playerStats.highestScore}${playerStats.highestScoreNotOut ? '*' : ''}`} /><StatItem label="Average" value={playerStats.battingAverage.toFixed(2)} /><StatItem label="Strike Rate" value={playerStats.strikeRate.toFixed(2)} /><StatItem label="100s" value={playerStats.hundreds} /><StatItem label="50s" value={playerStats.fifties} />
+                      {isPlayer ? (
+                          <>
+                            <div>
+                                <h3 className="text-lg font-medium mb-4 text-primary">Batting</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                                    <StatItem label="Matches" value={playerStats.matchesPlayed} /><StatItem label="Innings" value={playerStats.inningsBatted} /><StatItem label="Runs" value={playerStats.totalRuns} /><StatItem label="Highest" value={`${playerStats.highestScore}${playerStats.highestScoreNotOut ? '*' : ''}`} /><StatItem label="Average" value={playerStats.battingAverage.toFixed(2)} /><StatItem label="Strike Rate" value={playerStats.strikeRate.toFixed(2)} /><StatItem label="100s" value={playerStats.hundreds} /><StatItem label="50s" value={playerStats.fifties} />
+                                </div>
+                            </div>
+                            <Separator />
+                            <div>
+                                <h3 className="text-lg font-medium mb-4 text-primary">Bowling</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+                                    <StatItem label="Overs" value={playerStats.oversBowled} /><StatItem label="Wickets" value={playerStats.wicketsTaken} /><StatItem label="Average" value={playerStats.bowlingAverage.toFixed(2)} /><StatItem label="Economy" value={playerStats.economyRate.toFixed(2)} /><StatItem label="Maidens" value={playerStats.maidens} /><StatItem label="Best" value={playerStats.bestBowling} /><StatItem label="Runs Conceded" value={playerStats.runsConceded} />
+                                </div>
+                            </div>
+                          </>
+                      ) : (
+                          <div className="text-center text-muted-foreground py-10">
+                              <BarChart2 className="mx-auto h-12 w-12" />
+                              <p className="mt-4">Statistical data is only available for people with the 'Player' role.</p>
                           </div>
-                      </div>
-                      <Separator />
-                      <div>
-                          <h3 className="text-lg font-medium mb-4 text-primary">Bowling</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-                              <StatItem label="Overs" value={playerStats.oversBowled} /><StatItem label="Wickets" value={playerStats.wicketsTaken} /><StatItem label="Average" value={playerStats.bowlingAverage.toFixed(2)} /><StatItem label="Economy" value={playerStats.economyRate.toFixed(2)} /><StatItem label="Maidens" value={playerStats.maidens} /><StatItem label="Best" value={playerStats.bestBowling} /><StatItem label="Runs Conceded" value={playerStats.runsConceded} />
-                          </div>
-                      </div>
+                      )}
                   </CardContent>
                 </Card>
             </TabsContent>
-            <TabsContent value="assignments" className="mt-4 space-y-6">
-                <Card>
-                    <CardHeader><CardTitle>Assigned Roles</CardTitle><CardDescription>A summary of all roles assigned to this person.</CardDescription></CardHeader>
-                    <CardContent className="flex flex-wrap gap-4">
-                        {groupedRoles.map(({group, roles}) => (
-                            <div key={group}>
-                                <h3 className="font-semibold text-sm uppercase text-muted-foreground tracking-wider">{group}</h3>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                    {roles.map(role => <Badge key={role} className="capitalize">{role}</Badge>)}
-                                </div>
+            
+            <TabsContent value="profile" className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
+                    <CardHeader><CardTitle>Biography & Qualifications</CardTitle></CardHeader>
+                    <CardContent className="space-y-6">
+                        {person.biography && <div className="space-y-2"><h3 className="font-semibold">Biography</h3><p className="text-muted-foreground text-sm whitespace-pre-wrap">{person.biography}</p></div>}
+                        {person.qualifications && person.qualifications.length > 0 && (
+                            <div className="space-y-2">
+                                <h3 className="font-semibold">Qualifications</h3>
+                                <ul className="list-disc list-inside text-muted-foreground text-sm space-y-1">
+                                    {person.qualifications.map((q, i) => <li key={i}>{q}</li>)}
+                                </ul>
                             </div>
-                        ))}
+                        )}
+                        {(!person.biography && (!person.qualifications || person.qualifications.length === 0)) && (
+                            <p className="text-sm text-muted-foreground text-center py-8">No biography or qualifications have been added.</p>
+                        )}
                     </CardContent>
                 </Card>
-                <Card>
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5"/>Contact Info</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
+                            <InfoItem icon={Mail} label="Email" value={person.email} href={`mailto:${person.email}`} />
+                            <InfoItem icon={Phone} label="Phone" value={person.phone} href={`tel:${person.phone}`} />
+                        </CardContent>
+                    </Card>
+                    {person.emergencyContact?.name && (
+                      <Card>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><Heart className="h-5 w-5"/>Emergency</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
+                            <InfoItem icon={User} label="Contact Name" value={person.emergencyContact.name} />
+                            <InfoItem icon={Shield} label="Relation" value={person.emergencyContact.relation} />
+                            <InfoItem icon={Phone} label="Contact Phone" value={person.emergencyContact.phone} href={`tel:${person.emergencyContact.phone}`} />
+                        </CardContent>
+                      </Card>
+                    )}
+                    {isPlayer && person.physicalAttributes && (
+                         <Card>
+                            <CardHeader><CardTitle className="flex items-center gap-2"><Dumbbell className="h-5 w-5"/>Physical Profile</CardTitle></CardHeader>
+                            <CardContent className="space-y-3">
+                                <InfoItem icon={Dumbbell} label="Height" value={person.physicalAttributes.heightCm ? `${person.physicalAttributes.heightCm} cm` : undefined} />
+                                <InfoItem icon={Dumbbell} label="Weight" value={person.physicalAttributes.weightKg ? `${person.physicalAttributes.weightKg} kg` : undefined} />
+                                <InfoItem icon={Dumbbell} label="Batting Hand" value={person.physicalAttributes.battingHand} />
+                                <InfoItem icon={Dumbbell} label="Bowling Hand" value={person.physicalAttributes.bowlingHand} />
+                            </CardContent>
+                         </Card>
+                    )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="assignments" className="mt-4">
+                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle>Team Assignments</CardTitle>
@@ -347,6 +290,7 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                     </CardContent>
                 </Card>
             </TabsContent>
+
             <TabsContent value="history" className="mt-4">
                 <Card>
                     <CardHeader><CardTitle>Recent Match History</CardTitle><CardDescription>A summary of the last 5 match performances.</CardDescription></CardHeader>
@@ -371,6 +315,7 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                     </CardContent>
                 </Card>
             </TabsContent>
+
             <TabsContent value="development" className="mt-4">
                 <PlayerDevelopmentCard 
                     personId={person.personId} 

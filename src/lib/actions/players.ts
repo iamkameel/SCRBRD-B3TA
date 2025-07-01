@@ -134,17 +134,7 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
 
         return {
             personId: personSnap.id,
-            firstName: data.firstName || '',
-            lastName: data.lastName || '',
-            email: data.email || '',
-            roles: roles,
-            activeRole: activeRole,
-            phone: data.phone,
-            profileImageUrl: data.profileImageUrl,
-            assignedSchools: data.assignedSchools,
-            notificationPreferences: data.notificationPreferences || { email: true, push: false },
-            developmentPlan: data.developmentPlan,
-            developmentPlanGeneratedAt: data.developmentPlanGeneratedAt ? (data.developmentPlanGeneratedAt as Timestamp).toDate() : undefined,
+            ...data
         } as Person;
 
     } catch (error) {
@@ -245,12 +235,29 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
 }
 
 const personSchema = z.object({
-    firstName: z.string().min(1), lastName: z.string().min(1), email: z.string().email(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  displayName: z.string().optional(),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  profileImageUrl: z.string().url().optional().or(z.literal('')),
+  roles: z.array(z.string()).min(1),
+  assignedSchoolId: z.string().optional(),
+  activeRole: z.string().optional(),
+  emergencyContact: z.object({
+    name: z.string().optional(),
+    relation: z.string().optional(),
     phone: z.string().optional(),
-    profileImageUrl: z.string().url().optional().or(z.literal('')),
-    roles: z.array(z.string()).min(1),
-    assignedSchoolId: z.string().optional(),
-    activeRole: z.string().optional(),
+  }).optional(),
+  physicalAttributes: z.object({
+    heightCm: z.coerce.number().optional(),
+    weightKg: z.coerce.number().optional(),
+    battingHand: z.enum(['Left', 'Right']).optional(),
+    bowlingHand: z.enum(['Left', 'Right']).optional(),
+    bowlingStyles: z.array(z.string()).optional(),
+  }).optional(),
+  biography: z.string().optional(),
+  qualifications: z.array(z.string()).optional(),
 });
 
 function hasPermissionToAssign(assignerRoles: string[], targetRoles: string[]): boolean {

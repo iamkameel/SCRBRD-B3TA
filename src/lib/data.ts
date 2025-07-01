@@ -6,12 +6,27 @@ export interface Person {
   personId: string;
   firstName: string;
   lastName: string;
+  displayName?: string;
   email: string;
   phone?: string;
+  emergencyContact?: {
+    name: string;
+    relation: string;
+    phone: string;
+  };
   profileImageUrl?: string;
   roles: string[];
   activeRole: string;
   assignedSchools?: string[];
+  physicalAttributes?: {
+    heightCm?: number;
+    weightKg?: number;
+    battingHand?: "Left"|"Right";
+    bowlingHand?: "Left"|"Right";
+    bowlingStyles?: string[];
+  };
+  biography?: string;
+  qualifications?: string[];
   notificationPreferences?: {
     email: boolean;
     push: boolean;
