@@ -118,39 +118,24 @@ export async function getAdminDashboardData() {
 
 export async function getSportsmasterDashboardData() {
     const [
-        allMatches,
         allCompetitions,
         allTeams,
         allPlayers,
         allFields,
-        conflicts,
-        unconfirmedAssignmentsCount,
-        teamStandings,
-        leaderboards,
         pendingRequests,
     ] = await Promise.all([
-        getMatches(),
         getCompetitions(),
         getTeams(),
         getPlayers(),
         getFields(),
-        getFixtureConflicts(),
-        getUnconfirmedAssignmentsCount(),
-        getTeamStandings(),
-        getLeaderboards(),
         getPendingAssignmentRequests(),
     ]);
 
     return {
-        allMatches,
         allCompetitions,
         allTeams,
         allPlayers,
         allFields,
-        conflicts,
-        unconfirmedAssignmentsCount,
-        teamStandings,
-        leaderboards,
         pendingRequests,
     };
 }
