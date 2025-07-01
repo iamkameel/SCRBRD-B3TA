@@ -30,19 +30,22 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
     const { targetId, targetType, role } = validatedFields.data;
 
     let targetName = '';
+    let ownerUserId: string | null = null;
     if (targetType === 'School') {
         const schoolSnap = await getDoc(doc(db, 'schools', targetId));
         if (!schoolSnap.exists()) throw new Error("School not found.");
         targetName = schoolSnap.data().name;
+        ownerUserId = schoolSnap.data().userId;
     } else {
         const teamSnap = await getDoc(doc(db, 'teams', targetId));
         if (!teamSnap.exists()) throw new Error("Team not found.");
         targetName = teamSnap.data().name;
+        ownerUserId = teamSnap.data().userId;
     }
 
+    if (!ownerUserId) throw new Error("Could not determine the owner of the target entity.");
+
     const requestsCollection = collection(db, 'assignmentRequests');
-    // Using the current user's ID as the owner of the data
-    const ownerUserId = requester.userId || userId;
     const q = query(requestsCollection, where("requesterId", "==", userId), where("targetId", "==", targetId), where("status", "==", "pending"));
     const existingRequest = await getDocs(q);
 

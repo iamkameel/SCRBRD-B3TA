@@ -30,10 +30,12 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
 }
 
 interface SportsmasterDashboardData {
-    allCompetitions: Competition[];
-    allTeams: Team[];
-    allPlayers: Person[];
-    allFields: any[];
+    kpis: {
+        competitions: number;
+        teams: number;
+        players: number;
+        fields: number;
+    };
     pendingRequests: AssignmentRequest[];
 }
 
@@ -73,10 +75,7 @@ export default function SportsmasterDashboard() {
   }
 
   const {
-    allCompetitions,
-    allTeams,
-    allPlayers,
-    allFields,
+    kpis,
     pendingRequests,
   } = data;
   
@@ -135,10 +134,10 @@ export default function SportsmasterDashboard() {
         <Card>
             <CardHeader><CardTitle>Global Overview</CardTitle><CardDescription>High-level metrics across all schools and divisions you oversee.</CardDescription></CardHeader>
             <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <StatCard title="Competitions" value={allCompetitions.length} icon={Shield} description="active this season" />
-                <StatCard title="Teams" value={allTeams.length} icon={Users} description="across all divisions"/>
-                <StatCard title="Players" value={allPlayers.filter(p => p.roles.includes('Player')).length} icon={Users} description="registered" />
-                <StatCard title="Fields & Venues" value={allFields.length} icon={MapPin} description="available for booking" />
+                <StatCard title="Competitions" value={kpis.competitions} icon={Shield} description="active this season" />
+                <StatCard title="Teams" value={kpis.teams} icon={Users} description="across all divisions"/>
+                <StatCard title="Players" value={kpis.players} icon={Users} description="registered" />
+                <StatCard title="Fields & Venues" value={kpis.fields} icon={MapPin} description="available for booking" />
             </CardContent>
         </Card>
       

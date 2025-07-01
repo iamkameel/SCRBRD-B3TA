@@ -58,6 +58,7 @@ export interface School {
     primary: string;
     secondary: string;
   };
+  staff?: Person[]; // No longer directly stored, but added for client components
 }
 
 export interface Division {

@@ -1,24 +1,15 @@
 
-
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, FixtureConflict, FullTransportAssignment, TrainingSession, Season, Division, School, AssignmentRequest } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest } from '@/lib/data';
 import { getPlayers, getPerson, getPersonLinks } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
 import { getFieldsForGroundskeeper, getFields } from './fields';
 import { getMatchesByField, getMatches } from './matches';
 import { getCompetitions } from './competitions';
-import { getFixtureConflicts, getUnconfirmedAssignmentsCount } from './alerts';
-import { getSponsors } from './sponsors';
-import { getEquipment } from './equipment';
-import { getVehicles, getAllTransportAssignments } from './transport';
-import { getTransactions } from './financials';
-import { getSessionsByTeam } from './sessions';
-import { getSeasons } from './seasons';
-import { getDivisions } from './divisions';
-import { getSchools } from './schools';
 import { getPendingAssignmentRequests } from './requests';
+import { getSessionsByTeam } from './sessions';
 import { cache } from 'react';
 
 
@@ -118,10 +109,10 @@ export async function getAdminDashboardData() {
 
 export async function getSportsmasterDashboardData() {
     const [
-        allCompetitions,
-        allTeams,
-        allPlayers,
-        allFields,
+        competitions,
+        teams,
+        players,
+        fields,
         pendingRequests,
     ] = await Promise.all([
         getCompetitions(),
@@ -132,10 +123,12 @@ export async function getSportsmasterDashboardData() {
     ]);
 
     return {
-        allCompetitions,
-        allTeams,
-        allPlayers,
-        allFields,
+       kpis: {
+            competitions: competitions.length,
+            teams: teams.length,
+            players: players.length,
+            fields: fields.length,
+        },
         pendingRequests,
     };
 }
