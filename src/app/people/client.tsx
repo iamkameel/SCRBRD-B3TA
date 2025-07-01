@@ -265,13 +265,26 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
       const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+
       const matchesRole = roleFilters.length === 0 || roleFilters.some(role => person.roles.includes(role));
-      const matchesSchool = schoolFilter.length === 0 || schoolFilter.some(schoolId => person.assignedSchools?.includes(schoolId));
-      const matchesAssignment = 
-        assignmentFilter === 'all' ||
-        (assignmentFilter === 'assigned' && person.assignedSchools && person.assignedSchools.length > 0) ||
-        (assignmentFilter === 'unassigned' && (!person.assignedSchools || person.assignedSchools.length === 0));
-      return matchesSearch && matchesRole && matchesSchool && matchesAssignment;
+      if (!matchesRole) return false;
+
+      const isAssignedToAnySchool = person.assignedSchools && person.assignedSchools.length > 0;
+
+      // Handle assignment filter first as it's a primary toggle
+      if (assignmentFilter === 'unassigned') {
+        return !isAssignedToAnySchool;
+      }
+      
+      if (assignmentFilter === 'assigned' && !isAssignedToAnySchool) {
+        return false;
+      }
+      
+      // If we've passed the assignment filter, apply the school filter
+      const matchesSchool = schoolFilter.length === 0 || (isAssignedToAnySchool && schoolFilter.some(schoolId => person.assignedSchools!.includes(schoolId)));
+      
+      return matchesSchool;
     });
   }, [people, searchQuery, roleFilters, schoolFilter, assignmentFilter]);
 
