@@ -20,7 +20,7 @@ import { ScoringDialog } from './scoring-dialog';
 // A simple display component for the current over
 function OverHistory({ balls }: { balls: string[] }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1">
       {balls.map((ball, index) => (
         <span
           key={index}
@@ -240,8 +240,8 @@ export function LiveScoringInterface({
             <p className="mt-1 text-sm text-muted-foreground">Please select the opening batsmen and bowler to begin scoring.</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 space-y-4">
                 <Card>
                     <CardHeader>
                         <CardTitle>Scoring Controls</CardTitle>
@@ -256,7 +256,7 @@ export function LiveScoringInterface({
                     </CardContent>
                 </Card>
             </div>
-            <div className="md:col-span-1 space-y-4">
+            <div className="lg:col-span-1 space-y-4">
                 <Card>
                     <CardHeader><CardTitle>Current Over</CardTitle></CardHeader>
                     <CardContent>
