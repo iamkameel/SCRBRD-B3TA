@@ -10,7 +10,7 @@ export default async function SeasonsPage() {
   
   const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.includes('Admin') ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
 
   return <SeasonsClient seasons={seasons} isAdmin={isAdmin} />;
 }

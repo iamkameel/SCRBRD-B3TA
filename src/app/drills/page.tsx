@@ -1,8 +1,16 @@
 
 import { getDrills } from '@/lib/actions/drills';
 import DrillsClient from './client';
+import { getPerson } from '@/lib/actions/players';
+import { getUserId } from '@/lib/auth';
 
 export default async function DrillsPage() {
-  const drills = await getDrills();
-  return <DrillsClient initialDrills={drills} />;
+  const [drills, userId] = await Promise.all([
+    getDrills(),
+    getUserId()
+  ]);
+  const user = userId ? await getPerson(userId) : null;
+  const canManage = user?.roles.includes('Coach') || user?.roles.includes('Admin') || user?.roles.includes('Sportsmaster') ?? false;
+
+  return <DrillsClient initialDrills={drills} canManage={canManage} />;
 }

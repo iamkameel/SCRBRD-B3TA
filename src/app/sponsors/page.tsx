@@ -10,7 +10,7 @@ export default async function SponsorsPage() {
 
   const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.includes('Admin') ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
 
   return <SponsorsClient sponsors={sponsors} isAdmin={isAdmin} />;
 }

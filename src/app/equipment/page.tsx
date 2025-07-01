@@ -14,7 +14,7 @@ export default async function EquipmentPage() {
   ]);
   
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.includes('Admin') ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
   
   return <EquipmentClient inventory={inventory} assignments={assignments} players={players} isAdmin={isAdmin} />;
 }

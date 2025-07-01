@@ -18,7 +18,7 @@ export default async function MatchesPage() {
   ]);
   
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.includes('Admin') ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
   
   return <MatchesClient matches={matches} teams={teams} fields={fields} competitions={competitions} isAdmin={isAdmin} />;
 }

@@ -83,7 +83,7 @@ function AddDrillDialog() {
   );
 }
 
-export default function DrillsClient({ initialDrills }: { initialDrills: Drill[] }) {
+export default function DrillsClient({ initialDrills, canManage }: { initialDrills: Drill[], canManage: boolean }) {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between">
@@ -91,7 +91,7 @@ export default function DrillsClient({ initialDrills }: { initialDrills: Drill[]
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Drill Library</h1>
           <p className="text-muted-foreground">Manage your collection of training drills.</p>
         </div>
-        <AddDrillDialog />
+        {canManage && <AddDrillDialog />}
       </header>
 
       <Card>
