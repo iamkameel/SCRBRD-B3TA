@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -247,19 +248,17 @@ export default function DataManagementClient() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <span tabIndex={!isIndependent ? 0 : -1}>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="destructive"
-                                                        onClick={() => { setActionToConfirm(name); setDialogOpen(true); }}
-                                                        disabled={isProcessing || !isIndependent}
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                    </Button>
-                                                </span>
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => { setActionToConfirm(name); setDialogOpen(true); }}
+                                                    disabled={isProcessing}
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>{isIndependent ? `Permanently deletes all ${name} data from the database.` : `Deletion for ${name} depends on other data. Use 'Delete All' instead.`}</p>
+                                                <p>Permanently deletes all {name} data from the database.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>

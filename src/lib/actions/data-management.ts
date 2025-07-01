@@ -349,9 +349,6 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         return { success: true, message: "No active user, so no data to delete." };
     }
 
-    if (!independentSubsets.includes(subsetName)) {
-        return { success: false, message: `Individual deletion for ${subsetName} is not supported due to data dependencies. Please use the 'Delete All Data' function.` };
-    }
     try {
         const getAction = {
             'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
@@ -542,4 +539,5 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv: s
     }
 }
     
+
 
