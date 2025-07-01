@@ -22,7 +22,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **9. Natural Language Query for Stats**: **Complete.** Users can ask plain-English questions about stats and receive AI-generated answers.
 -   [x] **10. Dynamic In-Match Strategy Suggestions**: **Complete.** The live scoring analysis now provides tactical advice.
 -   [x] **AI Dream Team Selector**: **Complete.** An AI can select a balanced, high-performing squad from available players.
--   [ ] **8. Automated Highlight Reels**: Not Started.
+-   [~] **8. Automated Highlight Reels**: **In Progress.** AI can analyze a scorecard to generate a list of key moments.
 
 ---
 

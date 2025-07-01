@@ -269,3 +269,16 @@ export const ScoutingReportSchema = z.object({
     summary: z.string().describe("A concise, one-paragraph summary of the player's potential based on the visual analysis."),
 });
 export type ScoutingReportOutput = z.infer<typeof ScoutingReportSchema>;
+
+
+// From generate-highlight-reel-flow.ts
+export const HighlightEventSchema = z.object({
+  over: z.string().describe("The over in which the event occurred, e.g., '19.2'."),
+  description: z.string().describe("A short, exciting, one-sentence description of the key moment."),
+});
+export type HighlightEvent = z.infer<typeof HighlightEventSchema>;
+
+export const HighlightReelSchema = z.object({
+  highlights: z.array(HighlightEventSchema).describe("A list of key moments from the match, ordered chronologically."),
+});
+export type HighlightReelOutput = z.infer<typeof HighlightReelSchema>;

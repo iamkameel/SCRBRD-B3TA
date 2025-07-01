@@ -19,9 +19,10 @@ import { getUserId } from '@/lib/auth';
 import { queryStats } from '@/ai/flows/stats-query-flow';
 import { generatePlayerPerformanceForecast } from '@/ai/flows/generate-player-performance-forecast-flow';
 import { scoutPlayer } from '@/ai/flows/scout-player-flow';
+import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
@@ -339,4 +340,31 @@ export async function runScoutingReportAction(input: ScoutingReportInput): Promi
     if (error instanceof Error) throw error;
     throw new Error("The AI scouting report failed to complete.");
   }
+}
+
+export async function generateHighlightReelAction(matchId: string): Promise<HighlightReelOutput> {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    const scorecard = await getScorecard(matchId);
+    if (!scorecard) {
+        throw new Error("A complete scorecard is required to generate highlights.");
+    }
+
+    try {
+        const result = await generateHighlightReel({
+            teamAName: match.teamAName,
+            teamBName: match.teamBName,
+            innings1: scorecard.innings1,
+            innings2: scorecard.innings2,
+        });
+        return result;
+    } catch (error) {
+        console.error("Error generating highlight reel:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("The AI failed to generate highlights.");
+    }
 }

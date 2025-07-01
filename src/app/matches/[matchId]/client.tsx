@@ -6,7 +6,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -40,9 +40,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, confirmLineupAction } from '@/lib/actions/matches';
-import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction, generatePlayerPerformanceForecastAction } from '@/lib/actions/analysis';
+import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
-import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecastOutput } from "@/lib/data";
+import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecastOutput, HighlightReelOutput } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
@@ -439,6 +439,8 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
   const [isGeneratingAnalysis, startAnalysisGeneration] = React.useTransition();
   const [analyzedTeamId, setAnalyzedTeamId] = React.useState<string | null>(null);
+  const [isGeneratingHighlights, startHighlightsGeneration] = React.useTransition();
+  const [highlightReel, setHighlightReel] = React.useState<HighlightReelOutput | null>(null);
 
   const [isGeneratingForecast, startForecastGeneration] = React.useTransition();
   const [forecastedPlayer, setForecastedPlayer] = React.useState<string>('');
@@ -606,6 +608,18 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+  
+  const handleGenerateHighlights = () => {
+    startHighlightsGeneration(async () => {
+        setHighlightReel(null);
+        try {
+            const result = await generateHighlightReelAction(match.matchId);
+            setHighlightReel(result);
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate highlights.", variant: "destructive" });
+        }
+    });
+  };
 
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
@@ -647,10 +661,11 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
         </header>
 
         <Tabs defaultValue="scorecard" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
                 <TabsTrigger value="lineups" disabled={match.status === 'completed'}><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
+                <TabsTrigger value="highlights"><Film className="mr-2 h-4 w-4"/>Highlights</TabsTrigger>
                 <TabsTrigger value="logistics"><Bus className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
             </TabsList>
 
@@ -938,6 +953,55 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                         </Card>
                     </div>
                 </div>
+            </TabsContent>
+            
+            <TabsContent value="highlights" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>AI Highlight Reel</CardTitle>
+                                <CardDescription>Key moments from the match, identified by AI.</CardDescription>
+                            </div>
+                            {match.status === 'completed' && innings1 && (
+                                <Button onClick={handleGenerateHighlights} disabled={isGeneratingHighlights}>
+                                    <Wand2 className={`mr-2 h-4 w-4 ${isGeneratingHighlights ? 'animate-spin' : ''}`} />
+                                    {isGeneratingHighlights ? "Generating..." : (highlightReel ? "Regenerate" : "Generate")}
+                                </Button>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {isGeneratingHighlights && (
+                            <div className="flex flex-col items-center justify-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="mt-4 text-muted-foreground">Finding key moments...</p>
+                            </div>
+                        )}
+                        {!isGeneratingHighlights && !highlightReel && (
+                            <div className="text-center text-muted-foreground py-8">
+                                <p>No highlights have been generated for this match yet.</p>
+                                {match.status === 'completed' && innings1 && <p className="text-xs">Click the button above to generate them with AI.</p>}
+                                {match.status !== 'completed' && <p className="text-xs">Highlights can be generated for completed matches.</p>}
+                            </div>
+                        )}
+                        {!isGeneratingHighlights && highlightReel && (
+                            <div className="space-y-4">
+                                {highlightReel.highlights.map((highlight, index) => (
+                                    <div key={index} className="flex items-start gap-4">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted font-bold text-sm flex-shrink-0">
+                                            {highlight.over}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-foreground">{highlight.description}</p>
+                                            <p className="text-xs text-muted-foreground">Over: {highlight.over}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </TabsContent>
 
             <TabsContent value="logistics" className="mt-4">
