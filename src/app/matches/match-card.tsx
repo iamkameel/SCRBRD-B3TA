@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import type { Match } from "@/lib/data";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MatchCardProps {
     match: Match;
@@ -41,12 +42,12 @@ export function MatchCard({ match, onEdit, onDelete, isAdmin }: MatchCardProps) 
                         <CardTitle className="text-lg">
                              <Link href={`/matches/${match.matchId}`} className="hover:underline leading-tight">
                                 <div className="flex items-center gap-2">
-                                    <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+                                    <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
                                     <span>{match.teamAName}</span>
                                 </div>
                                 <div className="text-xs text-muted-foreground font-normal pl-4 my-0.5">vs</div>
                                 <div className="flex items-center gap-2">
-                                    <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />
+                                    <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
                                     <span>{match.teamBName}</span>
                                 </div>
                              </Link>

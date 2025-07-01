@@ -204,6 +204,7 @@ const generateTeams = () => {
                     divisionId: openDivision.divisionId,
                     seasonId: 'season_1',
                     teamClass: teamClass,
+                    logoUrl: 'https://placehold.co/100x100.png',
                     roster: []
                 });
                 teamNameMap[teamName] = teamId;
@@ -222,6 +223,7 @@ const generateTeams = () => {
                     divisionId: division.divisionId,
                     seasonId: 'season_1',
                     teamClass: formattedTeamClass,
+                    logoUrl: 'https://placehold.co/100x100.png',
                     roster: []
                 });
                 teamNameMap[teamName] = teamId;
@@ -462,5 +464,6 @@ export const sampleScorecardData = {
 };
 
     
+
 
 

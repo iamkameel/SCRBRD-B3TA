@@ -43,6 +43,7 @@ import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssi
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -379,12 +380,10 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    {team.teamColors && (
-                      <div className="relative h-16 w-16 rounded-full border-2 border-border flex items-center justify-center bg-muted">
-                        <div className="absolute h-full w-1/2 left-0 rounded-l-full" style={{ backgroundColor: team.teamColors.primary }} />
-                        <div className="absolute h-full w-1/2 right-0 rounded-r-full" style={{ backgroundColor: team.teamColors.secondary }}/>
-                      </div>
-                    )}
+                    <Avatar className="h-16 w-16 border">
+                      <AvatarImage src={team.logoUrl} alt={team.name} />
+                      <AvatarFallback className="text-xl">{team.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                    </Avatar>
                     <div>
                       <h1 className="text-3xl font-bold tracking-tight text-foreground">{team.name}</h1>
                       <p className="text-muted-foreground">

@@ -299,19 +299,23 @@ export const getMatchesByCompetition = cache(async (competitionId: string): Prom
       getDocs(q),
     ]);
     
-    const teamColorMap = new Map<string, { primary?: string; secondary?: string }>();
+    const teamInfoMap = new Map<string, Team>();
     teams.forEach(team => {
-      teamColorMap.set(team.teamId, team.teamColors || {});
+      teamInfoMap.set(team.teamId, team);
     });
 
     const matchesList = matchSnapshot.docs.map(doc => {
       const data = doc.data();
+      const teamA = teamInfoMap.get(data.teamAId);
+      const teamB = teamInfoMap.get(data.teamBId);
       return {
         matchId: doc.id,
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
-        teamAColor: teamColorMap.get(data.teamAId)?.primary,
-        teamBColor: teamColorMap.get(data.teamBId)?.primary,
+        teamAColor: teamA?.teamColors?.primary,
+        teamBColor: teamB?.teamColors?.primary,
+        teamALogoUrl: teamA?.logoUrl,
+        teamBLogoUrl: teamB?.logoUrl,
       } as Match;
     });
     return matchesList.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());

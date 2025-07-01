@@ -47,6 +47,7 @@ import type { Match, Team, Competition, Field, MatchStatus } from "@/lib/data";
 import { deleteMatchAction, updateMatchAction } from '@/lib/actions/matches';
 import { MatchCard } from "./match-card";
 import { MatchCalendar } from "./match-calendar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const fixtureSchema = z.object({
   teamAId: z.string({ required_error: "Please select the home team." }),
@@ -353,13 +354,13 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                             <TableRow key={match.matchId}>
                             <TableCell className="font-medium">
                                 <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+                                    <div className="flex items-center gap-2">
+                                        <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
                                         <span>{match.teamAName}</span>
                                     </div>
                                     <span className="text-muted-foreground text-xs">vs</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />
+                                    <div className="flex items-center gap-2">
+                                        <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
                                         <span>{match.teamBName}</span>
                                     </div>
                                 </Link>

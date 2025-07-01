@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Team } from "@/lib/data";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface TeamCardProps {
     team: Team;
@@ -24,26 +26,28 @@ interface TeamCardProps {
 
 export function TeamCard({ team, onEdit, onDelete, canManage }: TeamCardProps) {
     return (
-        <Card className="flex flex-col h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 flex">
-                <div style={{ backgroundColor: team.teamColors?.primary || 'hsl(var(--muted))' }} className="flex-1"></div>
-                <div style={{ backgroundColor: team.teamColors?.secondary || 'hsl(var(--muted))' }} className="flex-1"></div>
-            </div>
-            <CardHeader className="pt-4">
-                 <div className="flex justify-between items-start">
-                    <div className="flex-1 mr-2">
-                         <CardTitle className="text-lg">
-                            <Link href={`/teams/${team.teamId}`} className="hover:underline">
-                                {team.name}
-                            </Link>
-                         </CardTitle>
-                         <CardDescription>
-                            {team.alias && <span className="font-medium text-foreground">{team.alias} &bull; </span>}
-                            {team.schoolName}
-                        </CardDescription>
+        <Card className="flex flex-col h-full relative">
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-4 flex-1 mr-2">
+                        <Avatar>
+                            <AvatarImage src={team.logoUrl} alt={team.name} />
+                            <AvatarFallback>{team.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                            <CardTitle className="text-lg">
+                                <Link href={`/teams/${team.teamId}`} className="hover:underline">
+                                    {team.name}
+                                </Link>
+                            </CardTitle>
+                            <CardDescription>
+                                {team.alias && <span className="font-medium text-foreground">{team.alias} &bull; </span>}
+                                {team.schoolName}
+                            </CardDescription>
+                        </div>
                     </div>
                      {canManage && <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 -mr-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>

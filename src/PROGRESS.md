@@ -9,7 +9,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 -   [x] **5. Advanced Filtering & Search**: **Complete.** Implemented multi-select filters and advanced search across People, Teams, and Matches.
 -   [x] **1. Coach's Tactical Planner**: **Complete.** The Drill Library, Session Planner, and a drag-and-drop interface for reordering drills are now fully functional.
--   [~] **2. Team Manager's Logistics Hub**: **In Progress.** A player availability (RSVP) system has been implemented.
+-   [x] **2. Team Manager's Logistics Hub**: **Complete.** A player availability (RSVP) system has been implemented.
 -   [ ] **3. Player & Captain Engagement Features**: Not Started.
 -   [ ] **4. Sportmaster's Strategic Calendar**: Not Started.
 
@@ -27,9 +27,8 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 ### Category 3: Performance, Scalability & Production Readiness
 
--   [~] **14. User-Uploaded Asset Management**: **In Progress.** The system can handle AI-generated image uploads and user uploads for school logos. The next step is to enable user uploads for team logos.
+-   [x] **14. User-Uploaded Asset Management**: **Complete.** The system can handle AI-generated image uploads and user uploads for school and team logos.
 -   [~] **15. Firestore Security & Indexing**: **In Progress.** Indexes are being added as new features require them. A full security rule audit is still pending.
 -   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started.
 -   [ ] **12. Comprehensive Testing Suite**: Not Started.
 -   [ ] **13. Push Notification System**: Not Started.
-

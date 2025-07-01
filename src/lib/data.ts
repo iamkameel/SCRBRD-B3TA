@@ -99,6 +99,7 @@ export interface Team {
   seasonId: string;
   seasonName: string;
   teamClass?: string;
+  logoUrl?: string;
   teamColors?: {
     primary?: string;
     secondary?: string;
@@ -147,8 +148,10 @@ export interface Match {
   matchId: string;
   teamAId: string;
   teamAName: string;
+  teamALogoUrl?: string;
   teamBId: string;
   teamBName: string;
+  teamBLogoUrl?: string;
   competitionId?: string;
   competitionName?: string;
   seasonId?: string;

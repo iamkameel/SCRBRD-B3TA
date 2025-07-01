@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeams } from './teams';
@@ -26,19 +26,23 @@ export const getMatches = cache(async (): Promise<Match[]> => {
       getDocs(q),
     ]);
     
-    const teamColorMap = new Map<string, { primary?: string; secondary?: string }>();
+    const teamInfoMap = new Map<string, Team>();
     teams.forEach(team => {
-      teamColorMap.set(team.teamId, team.teamColors || {});
+      teamInfoMap.set(team.teamId, team);
     });
 
     const matchesList = matchSnapshot.docs.map(doc => {
       const data = doc.data();
+      const teamA = teamInfoMap.get(data.teamAId);
+      const teamB = teamInfoMap.get(data.teamBId);
       return {
         matchId: doc.id,
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
-        teamAColor: teamColorMap.get(data.teamAId)?.primary,
-        teamBColor: teamColorMap.get(data.teamBId)?.primary,
+        teamAColor: teamA?.teamColors?.primary,
+        teamBColor: teamB?.teamColors?.primary,
+        teamALogoUrl: teamA?.logoUrl,
+        teamBLogoUrl: teamB?.logoUrl,
       } as Match;
     });
     return matchesList.sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());

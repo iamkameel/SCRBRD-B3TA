@@ -4,7 +4,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { db, app } from '@/lib/firebase';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
 import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment, Person, Division } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
@@ -324,6 +325,8 @@ const teamSchema = z.object({
   divisionId: z.string(),
   seasonId: z.string(),
   teamClass: z.string(),
+  logoUrl: z.string().url().optional().or(z.literal('')),
+  logoDataUri: z.string().optional(),
 });
 
 async function validateTeamRefs(schoolId: string, divisionId: string, seasonId: string) {
@@ -350,8 +353,21 @@ export async function addTeamAction(data: z.infer<typeof teamSchema>) {
   
   const validated = teamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
-  const { name, alias, schoolId, divisionId, seasonId, teamClass } = validated.data;
+  const { logoDataUri, ...teamData } = validated.data;
+  const { name, alias, schoolId, divisionId, seasonId, teamClass } = teamData;
   const [schoolData, divisionData, seasonData] = await validateTeamRefs(schoolId, divisionId, seasonId);
+
+  let finalLogoUrl = teamData.logoUrl || '';
+
+  if (logoDataUri) {
+    const storage = getStorage(app);
+    const storageRef = ref(storage, `logos/teams/${name.replace(/\s+/g, '-')}-${Date.now()}.png`);
+    const mimeType = logoDataUri.match(/data:(.*);/)?.[1] || 'image/png';
+    const base64Data = logoDataUri.split(',')[1];
+    
+    await uploadString(storageRef, base64Data, 'base64', { contentType: mimeType });
+    finalLogoUrl = await getDownloadURL(storageRef);
+  }
 
   try {
     await addDoc(collection(db, 'teams'), {
@@ -361,6 +377,7 @@ export async function addTeamAction(data: z.infer<typeof teamSchema>) {
         divisionId, divisionName: divisionData?.name,
         seasonId, seasonName: seasonData?.name,
         teamClass,
+        logoUrl: finalLogoUrl,
         teamColors: schoolData?.brandColors || { primary: '#000000', secondary: '#ffffff' },
         userId,
     });
@@ -383,9 +400,23 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
 
   const validated = updateTeamSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid team data.');
-  const { teamId, name, alias, schoolId, divisionId, seasonId, teamClass } = validated.data;
+  const { teamId, logoDataUri, ...teamData } = validated.data;
+  const { name, alias, schoolId, divisionId, seasonId, teamClass } = teamData;
   if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
   const [schoolData, divisionData, seasonData] = await validateTeamRefs(schoolId, divisionId, seasonId);
+  
+  let finalLogoUrl = teamData.logoUrl || '';
+
+  if (logoDataUri) {
+    const storage = getStorage(app);
+    const storageRef = ref(storage, `logos/teams/${name.replace(/\s+/g, '-')}-${Date.now()}.png`);
+    const mimeType = logoDataUri.match(/data:(.*);/)?.[1] || 'image/png';
+    const base64Data = logoDataUri.split(',')[1];
+    
+    await uploadString(storageRef, base64Data, 'base64', { contentType: mimeType });
+    finalLogoUrl = await getDownloadURL(storageRef);
+  }
+
   try {
     await updateDoc(doc(db, 'teams', teamId), {
         name,
@@ -394,6 +425,7 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
         divisionId, divisionName: divisionData?.name,
         seasonId, seasonName: seasonData?.name,
         teamClass,
+        logoUrl: finalLogoUrl,
         teamColors: schoolData?.brandColors || { primary: '#000000', secondary: '#ffffff' },
     });
   } catch (error) {
@@ -467,16 +499,32 @@ export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => 
       getDocs(teamAQuery),
       getDocs(teamBQuery),
     ]);
-
+    
     const allMatches = [...teamAMatchesSnap.docs, ...teamBMatchesSnap.docs];
+    const teamIds = new Set<string>();
+    allMatches.forEach(doc => {
+      teamIds.add(doc.data().teamAId);
+      if (doc.data().teamBId) {
+        teamIds.add(doc.data().teamBId);
+      }
+    });
+
+    const teamsData = await getTeams();
+    const teamInfoMap = new Map<string, Team>();
+    teamsData.forEach(team => teamInfoMap.set(team.teamId, team));
     
     const uniqueMatchesMap = new Map<string, Match>();
     allMatches.forEach(doc => {
       const data = doc.data();
+      const teamA = teamInfoMap.get(data.teamAId);
+      const teamB = teamInfoMap.get(data.teamBId);
+      
       const match = {
         matchId: doc.id,
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
+        teamALogoUrl: teamA?.logoUrl,
+        teamBLogoUrl: teamB?.logoUrl,
       } as Match;
       uniqueMatchesMap.set(doc.id, match);
     });

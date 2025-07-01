@@ -43,11 +43,11 @@ const BracketMatch = React.forwardRef<HTMLDivElement, { match: Match }>(({ match
       </div>
       <div className="space-y-1.5 text-sm">
         <div className={cn("flex items-center gap-2", teamAStyles)}>
-            <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+            <Avatar className="h-4 w-4"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
             {match.teamAName}
         </div>
         <div className={cn("flex items-center gap-2", teamBStyles)}>
-            {match.teamBId ? (<span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />) : (<div className="h-2 w-2" />) }
+            {match.teamBId ? (<Avatar className="h-4 w-4"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>) : (<div className="h-4 w-4" />) }
             {match.teamBName || 'TBD'}
         </div>
       </div>
@@ -231,7 +231,10 @@ export default function CompetitionDetailsClient({ competition, standings, match
                                         <TableRow key={team.teamId}>
                                             <TableCell className="font-medium">{index + 1}</TableCell>
                                             <TableCell>
-                                                <Link href={`/teams/${team.teamId}`} className="font-medium hover:underline">{team.name}</Link>
+                                                <Link href={`/teams/${team.teamId}`} className="font-medium hover:underline flex items-center gap-2">
+                                                    <Avatar className="h-6 w-6"><AvatarImage src={team.logoUrl} /><AvatarFallback>{team.name[0]}</AvatarFallback></Avatar>
+                                                    {team.name}
+                                                </Link>
                                             </TableCell>
                                             <TableCell className="text-right">{team.stats.matchesPlayed}</TableCell>
                                             <TableCell className="text-right">{team.stats.matchesWon}</TableCell>
@@ -287,13 +290,13 @@ export default function CompetitionDetailsClient({ competition, standings, match
                                         <TableRow key={match.matchId}>
                                         <TableCell className="font-medium">
                                             <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamAColor || 'transparent' }} />
+                                                <div className="flex items-center gap-2">
+                                                    <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
                                                     <span>{match.teamAName}</span>
                                                 </div>
                                                 <span className="text-muted-foreground text-xs">vs</span>
-                                                <div className="flex items-center gap-1.5">
-                                                     {match.teamBId ? (<span className="h-2 w-2 rounded-full border" style={{ backgroundColor: match.teamBColor || 'transparent' }} />) : (<div className="h-2 w-2" />) }
+                                                <div className="flex items-center gap-2">
+                                                    {match.teamBId ? (<Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>) : (<div className="h-6 w-6" />) }
                                                     <span>{match.teamBName || 'TBD'}</span>
                                                 </div>
                                             </Link>
