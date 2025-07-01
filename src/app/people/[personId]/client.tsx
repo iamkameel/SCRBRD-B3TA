@@ -66,7 +66,7 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
     );
 };
 
-export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, allTeams, canManage }: PersonDetailsClientProps) {
+export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, matchHistory, allTeams, canManage }: PersonDetailsClientProps) {
   const { person: currentUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
