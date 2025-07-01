@@ -142,12 +142,6 @@ export interface LiveScore {
     liveInnings?: 1 | 2;
 }
 
-export interface LiveMatchUpdateOutput {
-    winProbability: number;
-    summary: string;
-    tacticalSuggestions?: string[];
-}
-
 export interface Match {
   matchId: string;
   teamAId: string;

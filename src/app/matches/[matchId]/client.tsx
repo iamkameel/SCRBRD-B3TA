@@ -42,7 +42,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, confirmLineupAction } from '@/lib/actions/matches';
 import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
-import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecastOutput, HighlightReelOutput } from "@/lib/data";
+import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
@@ -444,7 +444,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
 
   const [isGeneratingForecast, startForecastGeneration] = React.useTransition();
   const [forecastedPlayer, setForecastedPlayer] = React.useState<string>('');
-  const [forecastResult, setForecastResult] = React.useState<PlayerPerformanceForecastOutput | null>(null);
+  const [forecastResult, setForecastResult] = React.useState<PlayerPerformanceForecast | null>(null);
 
   React.useEffect(() => {
     setIsClient(true);

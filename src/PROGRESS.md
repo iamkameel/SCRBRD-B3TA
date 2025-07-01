@@ -1,4 +1,3 @@
-
 # Project Progress: Towards Market Leadership
 
 This document tracks our progress against the "Next Steps" roadmap. We've made significant strides, especially in building out our advanced AI capabilities and improving core usability with advanced filtering.

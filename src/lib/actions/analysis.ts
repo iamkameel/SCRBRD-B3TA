@@ -27,23 +27,23 @@ import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 
-export async function runUmpireReviewAction(photoDataUri: string): Promise<UmpireDecisionOutput> {
+export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("User not authenticated.");
   }
   
-  if (!photoDataUri) {
-    throw new Error("An image is required for the review.");
+  if (!input.photoDataUri) {
+    throw new Error("An image is required for the scouting report.");
   }
 
   try {
-    const result = await runUmpireReview({ photoDataUri });
+    const result = await scoutPlayer(input);
     return result;
   } catch (error) {
-    console.error("Error running umpire review:", error);
+    console.error("Error running scouting report:", error);
     if (error instanceof Error) throw error;
-    throw new Error("The AI umpire review failed to complete.");
+    throw new Error("The AI scouting report failed to complete.");
   }
 }
 
@@ -322,23 +322,23 @@ export async function generatePlayerPerformanceForecastAction(input: PlayerPerfo
     }
 }
 
-export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {
+export async function runUmpireReviewAction(input: ScoutingReportInput): Promise<UmpireDecisionOutput> {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("User not authenticated.");
   }
   
   if (!input.photoDataUri) {
-    throw new Error("An image is required for the scouting report.");
+    throw new Error("An image is required for the review.");
   }
 
   try {
-    const result = await scoutPlayer(input);
+    const result = await runUmpireReview({ photoDataUri: input.photoDataUri });
     return result;
   } catch (error) {
-    console.error("Error running scouting report:", error);
+    console.error("Error running umpire review:", error);
     if (error instanceof Error) throw error;
-    throw new Error("The AI scouting report failed to complete.");
+    throw new Error("The AI umpire review failed to complete.");
   }
 }
 
