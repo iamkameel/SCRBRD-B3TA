@@ -1,8 +1,7 @@
-
 'use client';
 
 import * as React from 'react';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { ChevronDown, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,7 +57,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
         return map;
     }, [filteredMatches]);
 
-    function Day({ date, ...props }: { date: Date } & React.ComponentProps<'div'>) {
+    function Day({ date, displayMonth: _displayMonth, ...props }: { date: Date, displayMonth: Date } & React.HTMLAttributes<HTMLDivElement>) {
         const dayKey = format(date, 'yyyy-MM-dd');
         const matchesForDay = dayToMatchesMap.get(dayKey) || [];
 
