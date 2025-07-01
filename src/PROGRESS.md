@@ -21,6 +21,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **7. Predictive Player Performance**: **Complete.** AI can now forecast a player's likely performance in an upcoming match.
 -   [x] **9. Natural Language Query for Stats**: **Complete.** Users can ask plain-English questions about stats and receive AI-generated answers.
 -   [x] **10. Dynamic In-Match Strategy Suggestions**: **Complete.** The live scoring analysis now provides tactical advice.
+-   [x] **AI Dream Team Selector**: **Complete.** An AI can select a balanced, high-performing squad from available players.
 -   [ ] **8. Automated Highlight Reels**: Not Started.
 
 ---
@@ -32,4 +33,3 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started.
 -   [ ] **12. Comprehensive Testing Suite**: Not Started.
 -   [ ] **13. Push Notification System**: Not Started.
-

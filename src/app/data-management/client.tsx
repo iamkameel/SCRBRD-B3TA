@@ -216,17 +216,19 @@ export default function DataManagementClient() {
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="destructive"
-                                                            onClick={() => { setActionToConfirm(name); setDialogOpen(true); }}
-                                                            disabled={isProcessing}
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                        </Button>
+                                                        <span tabIndex={!isIndependent ? 0 : -1}>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="destructive"
+                                                                onClick={() => { setActionToConfirm(name); setDialogOpen(true); }}
+                                                                disabled={isProcessing || !isIndependent}
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                            </Button>
+                                                        </span>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                        <p>Permanently deletes all {name} data from the database.</p>
+                                                        <p>{isIndependent ? `Permanently deletes all ${name} data from the database.` : `Deletion for ${name} depends on other data. Use 'Delete All' instead.`}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
