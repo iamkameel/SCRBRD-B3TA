@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,6 +24,7 @@ import {
 import type { Match, Competition, Division } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { ScrollBar } from '@/components/ui/scroll-area';
 
 
 interface StrategicCalendarClientProps {
@@ -143,12 +145,19 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Calendar
-                        mode="single"
-                        numberOfMonths={3}
-                        className="p-0"
-                        components={{ Day }}
-                    />
+                    <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                        <Calendar
+                            mode="single"
+                            numberOfMonths={3}
+                            className="p-4"
+                            components={{ Day }}
+                            modifiers={{ hasMatch: matchDays }}
+                            modifiersClassNames={{
+                                hasMatch: 'bg-primary/20 rounded-md text-primary-foreground',
+                            }}
+                        />
+                         <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
                 </CardContent>
             </Card>
         </div>

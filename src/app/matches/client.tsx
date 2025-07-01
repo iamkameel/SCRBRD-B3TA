@@ -343,6 +343,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                         <TableRow>
                           <TableHead>Match</TableHead>
                           <TableHead>Date</TableHead>
+                          <TableHead>Competition</TableHead>
                           <TableHead>Venue</TableHead>
                           <TableHead>Status</TableHead>
                           {isAdmin && <TableHead className="text-right">Actions</TableHead>}
@@ -366,6 +367,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                                 </Link>
                             </TableCell>
                             <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                            <TableCell>{match.competitionName || 'Friendly'}</TableCell>
                             <TableCell>{match.fieldName}</TableCell>
                             <TableCell>
                               <Badge
@@ -392,7 +394,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                             </TableRow>
                         ))
                         ) : (
-                        <TableRow><TableCell colSpan={isAdmin ? 5 : 4} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
@@ -455,4 +457,5 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
     </>
   );
 }
+
 
