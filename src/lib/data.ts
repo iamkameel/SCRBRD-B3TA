@@ -34,6 +34,7 @@ export interface Person {
   userId?: string;
   developmentPlan?: PlayerDevelopmentPlanOutput;
   developmentPlanGeneratedAt?: Date;
+  fcmTokens?: string[];
 }
 
 export interface School {

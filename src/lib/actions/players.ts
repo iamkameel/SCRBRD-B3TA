@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { Person, PlayerDevelopmentPlanOutput, Match } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
@@ -466,6 +466,36 @@ export async function updateNotificationPreferencesAction(personId: string, pref
   }
 
   revalidatePath('/settings');
+}
+
+export async function saveFcmTokenAction(token: string) {
+    const userId = await getUserId();
+    if (!userId || !token) return;
+
+    const personRef = doc(db, 'people', userId);
+    try {
+        await updateDoc(personRef, {
+            fcmTokens: arrayUnion(token)
+        });
+    } catch (error) {
+        console.error("Error saving FCM token:", error);
+        throw new Error("Could not save notification token.");
+    }
+}
+
+export async function removeFcmTokenAction(token: string) {
+    const userId = await getUserId();
+    if (!userId || !token) return;
+
+    const personRef = doc(db, 'people', userId);
+    try {
+        await updateDoc(personRef, {
+            fcmTokens: arrayRemove(token)
+        });
+    } catch (error) {
+        console.error("Error removing FCM token:", error);
+        throw new Error("Could not remove notification token.");
+    }
 }
 
 

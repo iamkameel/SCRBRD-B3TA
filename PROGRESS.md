@@ -29,6 +29,6 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 -   [x] **14. User-Uploaded Asset Management**: **Complete.** The system can handle AI-generated image uploads and user uploads for school and team logos.
 -   [x] **15. Firestore Security & Indexing**: **Complete.** A comprehensive set of Firestore security rules has been implemented to protect data integrity and control access. Composite indexes are being added as required by new features.
+-   [x] **13. Push Notification System**: **Complete.** Users can now opt-in to receive push notifications.
 -   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started. The initial attempt caused stability issues and was rolled back.
 -   [ ] **12. Comprehensive Testing Suite**: Not Started.
--   [ ] **13. Push Notification System**: Not Started.

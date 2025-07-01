@@ -15,7 +15,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { Person } from '@/lib/data';
-import { updatePlayerAction, updateNotificationPreferencesAction } from '@/lib/actions/players';
+import { updatePlayerAction, updateNotificationPreferencesAction, saveFcmTokenAction, removeFcmTokenAction } from '@/lib/actions/players';
+import { getFcmToken } from "@/lib/fcm";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -26,13 +27,16 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+const FCM_TOKEN_KEY = 'fcm_token';
+
 export default function SettingsClient({ userProfile }: { userProfile: Person | null }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [isNotificationPending, startNotificationTransition] = React.useTransition();
 
   const [emailNotifications, setEmailNotifications] = React.useState(userProfile?.notificationPreferences?.email ?? false);
-
+  const [pushNotifications, setPushNotifications] = React.useState(userProfile?.notificationPreferences?.push ?? false);
+  
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -65,9 +69,7 @@ export default function SettingsClient({ userProfile }: { userProfile: Person | 
 
   const handleEmailNotificationChange = (value: boolean) => {
     if (!userProfile) return;
-
     setEmailNotifications(value);
-    
     startNotificationTransition(async () => {
       try {
         await updateNotificationPreferencesAction(userProfile.personId, { email: value });
@@ -78,7 +80,44 @@ export default function SettingsClient({ userProfile }: { userProfile: Person | 
       }
     });
   };
+  
+  const handlePushNotificationChange = async (enabled: boolean) => {
+    if (!userProfile) return;
 
+    startNotificationTransition(async () => {
+        if (enabled) {
+            try {
+                const token = await getFcmToken();
+                if (token) {
+                    await saveFcmTokenAction(token);
+                    await updateNotificationPreferencesAction(userProfile.personId, { push: true });
+                    localStorage.setItem(FCM_TOKEN_KEY, token);
+                    setPushNotifications(true);
+                    toast({ title: "Push Notifications Enabled" });
+                } else {
+                    toast({ title: "Permission Required", description: "You need to grant permission to receive push notifications.", variant: "destructive" });
+                    setPushNotifications(false);
+                }
+            } catch (error) {
+                toast({ title: "Error", description: "Could not enable push notifications.", variant: "destructive" });
+                setPushNotifications(false);
+            }
+        } else {
+            try {
+                const token = localStorage.getItem(FCM_TOKEN_KEY);
+                if (token) {
+                    await removeFcmTokenAction(token);
+                    localStorage.removeItem(FCM_TOKEN_KEY);
+                }
+                await updateNotificationPreferencesAction(userProfile.personId, { push: false });
+                setPushNotifications(false);
+                toast({ title: "Push Notifications Disabled" });
+            } catch (error) {
+                toast({ title: "Error", description: "Could not disable push notifications.", variant: "destructive" });
+            }
+        }
+    });
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -142,9 +181,14 @@ export default function SettingsClient({ userProfile }: { userProfile: Person | 
             <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                     <Label htmlFor="push-notifications" className="font-medium">Push Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Get real-time alerts on your device. (Coming soon)</p>
+                    <p className="text-sm text-muted-foreground">Get real-time alerts on your device.</p>
                 </div>
-                <Switch id="push-notifications" disabled/>
+                <Switch 
+                  id="push-notifications"
+                  checked={pushNotifications}
+                  onCheckedChange={handlePushNotificationChange}
+                  disabled={isNotificationPending || !userProfile}
+                />
             </div>
         </CardContent>
       </Card>
