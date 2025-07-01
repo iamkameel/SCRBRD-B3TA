@@ -13,6 +13,9 @@ import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBa
 import { generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { WagonWheel } from '@/components/wagon-wheel';
+import { ScoringDialog } from './scoring-dialog';
+
 
 // A simple display component for the current over
 function OverHistory({ balls }: { balls: string[] }) {
@@ -50,6 +53,8 @@ export function LiveScoringInterface({
   const [isPending, startTransition] = React.useTransition();
   const [isGeneratingUpdate, startUpdateGeneration] = React.useTransition();
   const [liveUpdate, setLiveUpdate] = React.useState<LiveMatchUpdateOutput | null>(null);
+  const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
+
 
   const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 };
   const batsmenOut = liveScore.batsmenOut || [];
@@ -90,10 +95,10 @@ export function LiveScoringInterface({
     });
   };
 
-  const handleRecordBall = (event: string, runs?: number) => {
+  const handleRecordBall = (eventData: { event: string; runs?: number }) => {
     startTransition(async () => {
         try {
-            await recordBallAction(match.matchId, { event, runs });
+            await recordBallAction(match.matchId, eventData);
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         }
@@ -110,16 +115,6 @@ export function LiveScoringInterface({
         }
     });
   };
-  
-  const handleScore = (run: number) => {
-    handleRecordBall(run === 0 ? '.' : run.toString(), run);
-  };
-  const handleExtra = (type: 'wd' | 'nb') => {
-    handleRecordBall(type);
-  }
-  const handleWicket = () => {
-    handleRecordBall('W');
-  }
 
   const handleGetLiveUpdate = () => {
     startUpdateGeneration(async () => {
@@ -145,13 +140,14 @@ export function LiveScoringInterface({
   };
 
   return (
+    <>
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
             <CardHeader>
             <CardTitle>Live Score</CardTitle>
             <CardDescription>
-                {isFirstInnings ? teamARoster[0]?.personName.split(" ")[0] : teamBRoster[0]?.personName.split(" ")[0]} is batting.
+                Innings {liveScore.liveInnings}: {isFirstInnings ? match.teamAName : match.teamBName} is batting.
             </CardDescription>
             </CardHeader>
             <CardContent>
@@ -173,12 +169,12 @@ export function LiveScoringInterface({
             </CardContent>
         </Card>
 
-        {!isFirstInnings && match.firstInningsTotal && (
+        {!isFirstInnings && match.firstInningsTotal != null && (
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Target /> Target Score</CardTitle>
                     <CardDescription>
-                        To win, {teamBRoster[0]?.personName.split(" ")[0]} needs to score {match.firstInningsTotal + 1} runs.
+                        To win, {match.teamBName} needs to score {match.firstInningsTotal + 1} runs.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -239,22 +235,16 @@ export function LiveScoringInterface({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2 space-y-4">
                 <Card>
-                    <CardHeader><CardTitle>Scoring Controls</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <Label>Runs Scored</Label>
-                        <div className="grid grid-cols-4 gap-2">
-                            {[0, 1, 2, 3, 4, 5, 6].map(run => <Button key={run} onClick={() => handleScore(run)} variant="outline" disabled={isPending}>{run}</Button>)}
-                            <Button onClick={handleWicket} variant="destructive" disabled={isPending}>Wicket</Button>
-                        </div>
-                        <Label>Extras</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                             <Button onClick={() => handleExtra('wd')} variant="outline" disabled={isPending}>Wide</Button>
-                             <Button onClick={() => handleExtra('nb')} variant="outline" disabled={isPending}>No Ball</Button>
-                        </div>
+                    <CardHeader>
+                        <CardTitle>Scoring Controls</CardTitle>
+                        <CardDescription>Tap the location on the wagon-wheel where the ball was hit.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center">
+                        <WagonWheel onShotSelect={() => setIsScoringDialogOpen(true)} disabled={isPending} />
                     </CardContent>
                 </Card>
             </div>
-            <div className="space-y-4">
+            <div className="md:col-span-1 space-y-4">
                 <Card>
                     <CardHeader><CardTitle>Current Over</CardTitle></CardHeader>
                     <CardContent>
@@ -313,5 +303,11 @@ export function LiveScoringInterface({
         </div>
       )}
     </div>
+    <ScoringDialog 
+        open={isScoringDialogOpen}
+        onOpenChange={setIsScoringDialogOpen}
+        onScore={handleRecordBall}
+    />
+    </>
   );
 }
