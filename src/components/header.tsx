@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, Settings, LogOut, ChevronDown, User } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -226,6 +226,11 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 {person?.personId && (
+                    <DropdownMenuItem asChild>
+                        <Link href={`/people/${person.personId}`}><User className="mr-2"/>My Profile</Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href="/settings"><Settings className="mr-2"/>Settings</Link>
                 </DropdownMenuItem>
