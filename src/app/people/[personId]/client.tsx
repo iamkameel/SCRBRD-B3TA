@@ -46,6 +46,7 @@ import { addPlayerToRosterAction, updateRosterAssignmentAction, removeRosterAssi
 import { AddLinkDialog } from "./add-link-dialog";
 import { PlayerDevelopmentCard } from "./player-development-card";
 import { ROLE_GROUPS } from "@/lib/roles";
+import { useAuth } from "@/lib/auth-context";
 
 // --- Dialog for Assigning a Person to a NEW Team ---
 const assignTeamSchema = z.object({
@@ -162,7 +163,8 @@ interface PersonDetailsClientProps {
     canManage: boolean;
 }
 
-export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, matchHistory, allTeams, canManage }: PersonDetailsClientProps) {
+export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, allTeams, canManage }: PersonDetailsClientProps) {
+  const { person: currentUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -237,6 +239,8 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
     return Object.entries(groups).map(([group, roles]) => ({ group, roles }));
   }, [person.roles]);
 
+  const canGeneratePortrait = canManage || person.personId === currentUser?.personId;
+
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -251,7 +255,7 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                       <AvatarImage src={person.profileImageUrl} />
                       <AvatarFallback className="text-3xl">{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback>
                   </Avatar>
-                  {canManage && (
+                  {canGeneratePortrait && (
                       <Button 
                           size="icon" variant="outline"
                           className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full border-2 border-background"

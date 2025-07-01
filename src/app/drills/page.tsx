@@ -10,7 +10,7 @@ export default async function DrillsPage() {
     getUserId()
   ]);
   const user = userId ? await getPerson(userId) : null;
-  const canManage = user?.roles.includes('Coach') || user?.roles.includes('Admin') || user?.roles.includes('Sportsmaster') ?? false;
+  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster', 'Coach'].includes(r)) ?? false;
 
   return <DrillsClient initialDrills={drills} canManage={canManage} />;
 }

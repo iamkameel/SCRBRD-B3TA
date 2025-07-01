@@ -8,13 +8,13 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Drill } from '@/lib/data';
 import { getUserId } from '@/lib/auth';
 import { cache } from 'react';
+import { getPerson } from './players';
 
 export const getDrills = cache(async (): Promise<Drill[]> => {
-    const userId = await getUserId();
-    if (!userId) return [];
+    // Drills are considered a shared resource for now, visible to all authenticated users.
+    // A check for `userId` could be added here if drills should be private.
     try {
-        const q = query(collection(db, 'drills'), where("userId", "==", userId));
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(collection(db, 'drills'));
         const drills = snapshot.docs.map(doc => ({
             drillId: doc.id,
             ...doc.data()
@@ -33,9 +33,17 @@ const drillSchema = z.object({
     duration: z.coerce.number().int().min(1, { message: "Duration must be at least 1 minute." }),
 });
 
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'Coach'].includes(r))) {
+        throw new Error("You do not have permission to manage drills.");
+    }
+}
+
 export async function addDrillAction(data: z.infer<typeof drillSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
+    await checkManagementPermission(userId);
 
     const validatedFields = drillSchema.safeParse(data);
     if (!validatedFields.success) {
@@ -45,7 +53,7 @@ export async function addDrillAction(data: z.infer<typeof drillSchema>) {
     try {
         await addDoc(collection(db, 'drills'), {
             ...validatedFields.data,
-            userId,
+            userId, // The creator of the drill
         });
     } catch (error) {
         console.error("Error adding drill:", error);
@@ -60,6 +68,8 @@ const updateDrillSchema = drillSchema.extend({ drillId: z.string() });
 export async function updateDrillAction(data: z.infer<typeof updateDrillSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
+
     const validatedFields = updateDrillSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -69,10 +79,8 @@ export async function updateDrillAction(data: z.infer<typeof updateDrillSchema>)
     const { drillId, ...updateData } = validatedFields.data;
     const drillDocRef = doc(db, 'drills', drillId);
 
-    const drillSnap = await getDoc(drillDocRef);
-    if (!drillSnap.exists() || drillSnap.data().userId !== userId) {
-        throw new Error("Drill not found or you do not have permission to edit it.");
-    }
+    // Optional: Could add a check to see if the current user is the original creator.
+    // For now, any authorized role can edit any drill.
 
     try {
         await updateDoc(drillDocRef, updateData);
@@ -87,6 +95,7 @@ export async function updateDrillAction(data: z.infer<typeof updateDrillSchema>)
 export async function deleteDrillAction(drillId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   
   if (!drillId) {
     throw new Error("Drill ID is required.");
@@ -94,8 +103,8 @@ export async function deleteDrillAction(drillId: string) {
   
   const drillDocRef = doc(db, 'drills', drillId);
   const drillSnap = await getDoc(drillDocRef);
-  if (!drillSnap.exists() || drillSnap.data().userId !== userId) {
-    throw new Error("Drill not found or you do not have permission to delete it.");
+  if (!drillSnap.exists()) {
+    throw new Error("Drill not found.");
   }
   
   try {

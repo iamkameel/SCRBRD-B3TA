@@ -1,4 +1,5 @@
 
+
 import { getTeam, getTeamRoster, getTeamStats, getTeamMatches } from '@/lib/actions/teams';
 import { getPlayers, getPerson } from '@/lib/actions/players';
 import TeamDetailsClient from './client';
@@ -20,7 +21,9 @@ export default async function TeamDetailsPage({ params }: { params: { teamId: st
   }
   
   const user = userId ? await getPerson(userId) : null;
-  const canManage = (user?.roles.includes('Admin') || user?.roles.includes('Sportsmaster')) ?? false;
+  const isAdminOrSportsmaster = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
+  const isTeamStaff = roster.some(m => m.personId === userId && ['Coach', 'Team Manager'].includes(m.role));
+  const canManage = isAdminOrSportsmaster || isTeamStaff;
 
   // Filter out people who are already on the roster to prevent duplicates.
   const rosterPersonIds = new Set(roster.map(member => member.personId));

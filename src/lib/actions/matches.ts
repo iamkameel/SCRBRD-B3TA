@@ -10,7 +10,7 @@ import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setD
 import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
-import { getTeamRoster, getTeams } from './teams';
+import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 
@@ -439,8 +439,12 @@ const lineupSchema = z.object({ playerIds: z.array(z.string()) });
 export async function saveMatchLineupAction(matchId: string, teamId: string, playerIds: string[]) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  const match = await getMatch(matchId);
-  if (!match) throw new Error("Match not found or you do not have permission to edit it.");
+  
+  const hasPermission = await isTeamManagerOrAdmin(teamId, userId);
+  if (!hasPermission) {
+    throw new Error("You do not have permission to edit this team's lineup.");
+  }
+
   if (!lineupSchema.safeParse({ playerIds }).success) throw new Error('Invalid lineup data.');
   try {
     await setDoc(doc(db, 'matches', matchId, 'lineups', teamId), { playerIds });

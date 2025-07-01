@@ -342,6 +342,12 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
 }
 
 export async function deletePlayerAction(personId: string) {
+  const currentUserId = await getUserId();
+  const currentUser = currentUserId ? await getPerson(currentUserId) : null;
+  if (!currentUser || !currentUser.roles.includes('Admin')) {
+    throw new Error("Only administrators can delete people.");
+  }
+  
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
   if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
@@ -382,8 +388,15 @@ export async function deletePlayerAction(personId: string) {
 }
 
 export async function generateAndSavePlayerPortraitAction(personId: string) {
-    const person = await getPerson(personId);
+    const [person, currentUserId] = await Promise.all([getPerson(personId), getUserId()]);
     if (!person) throw new Error("Person not found or permission denied.");
+
+    const currentUser = currentUserId ? await getPerson(currentUserId) : null;
+    const canManage = currentUser?.roles.includes('Admin') || false;
+
+    if (currentUserId !== personId && !canManage) {
+        throw new Error("You do not have permission to generate a portrait for this user.");
+    }
 
     try {
         const { imageUrl } = await generatePlayerPortrait({

@@ -8,7 +8,7 @@ import { collection, query, where, getDocs, addDoc, doc, getDoc, updateDoc, Time
 import type { TrainingSession, Drill } from '@/lib/data';
 import { getUserId } from '@/lib/auth';
 import { cache } from 'react';
-import { getTeam } from './teams';
+import { getTeam, isTeamManagerOrAdmin } from './teams';
 
 export const getSessionsByTeam = cache(async (teamId: string): Promise<TrainingSession[]> => {
     if (!teamId) return [];
@@ -45,6 +45,11 @@ export async function addSessionAction(data: z.infer<typeof sessionSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
+    const hasPermission = await isTeamManagerOrAdmin(data.teamId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to create sessions for this team.");
+    }
+    
     const validatedFields = sessionSchema.safeParse(data);
     if (!validatedFields.success) {
         throw new Error("Invalid session data.");
@@ -74,12 +79,10 @@ export async function addSessionAction(data: z.infer<typeof sessionSchema>) {
 }
 
 export const getSession = cache(async (sessionId: string): Promise<TrainingSession | null> => {
-    const userId = await getUserId();
-    if (!userId) return null;
     try {
         const sessionDocRef = doc(db, 'sessions', sessionId);
         const sessionSnap = await getDoc(sessionDocRef);
-        if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
+        if (!sessionSnap.exists()) {
             return null;
         }
         const data = sessionSnap.data();
@@ -112,14 +115,18 @@ export async function addDrillToSessionAction(data: z.infer<typeof addDrillSchem
     const { sessionId, drillId } = validatedFields.data;
 
     const sessionRef = doc(db, 'sessions', sessionId);
-    const [sessionSnap, drillSnap] = await Promise.all([
-        getDoc(sessionRef),
-        getDoc(doc(db, 'drills', drillId))
-    ]);
+    const sessionSnap = await getDoc(sessionRef);
 
-    if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
-        throw new Error("Session not found or you do not have permission.");
+    if (!sessionSnap.exists()) {
+        throw new Error("Session not found.");
     }
+    
+    const hasPermission = await isTeamManagerOrAdmin(sessionSnap.data().teamId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to modify this session.");
+    }
+    
+    const drillSnap = await getDoc(doc(db, 'drills', drillId));
     if (!drillSnap.exists()) {
         throw new Error("Drill not found.");
     }
@@ -156,8 +163,13 @@ export async function removeDrillFromSessionAction(sessionId: string, drillIdToR
     const sessionRef = doc(db, 'sessions', sessionId);
     const sessionSnap = await getDoc(sessionRef);
 
-    if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
-        throw new Error("Session not found or you do not have permission.");
+    if (!sessionSnap.exists()) {
+        throw new Error("Session not found.");
+    }
+    
+    const hasPermission = await isTeamManagerOrAdmin(sessionSnap.data().teamId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to modify this session.");
     }
 
     const sessionData = sessionSnap.data() as TrainingSession;
@@ -198,8 +210,13 @@ export async function updateSessionDrillsOrderAction(data: z.infer<typeof update
     const sessionRef = doc(db, 'sessions', sessionId);
     const sessionSnap = await getDoc(sessionRef);
 
-    if (!sessionSnap.exists() || sessionSnap.data().userId !== userId) {
-        throw new Error("Session not found or you do not have permission.");
+    if (!sessionSnap.exists()) {
+        throw new Error("Session not found.");
+    }
+
+    const hasPermission = await isTeamManagerOrAdmin(sessionSnap.data().teamId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to modify this session plan.");
     }
     
     try {
