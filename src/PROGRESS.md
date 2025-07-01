@@ -19,7 +19,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **6. AI Scouting Assistant**: **Complete.** Coaches can upload a photo to receive an AI-generated technical analysis of a player.
 -   [x] **7. Predictive Player Performance**: **Complete.** AI can now forecast a player's likely performance in an upcoming match.
 -   [x] **9. Natural Language Query for Stats**: **Complete.** Users can ask plain-English questions about stats and receive AI-generated answers.
--   [ ] **10. Dynamic In-Match Strategy Suggestions**: Not Started.
+-   [x] **10. Dynamic In-Match Strategy Suggestions**: **Complete.** The live scoring analysis now provides tactical advice.
 -   [x] **AI Dream Team Selector**: **Complete.** An AI can select a balanced, high-performing squad from available players.
 -   [x] **8. Automated Highlight Reels**: **Complete.** AI can analyze a scorecard to generate a list of key moments with accompanying images.
 
