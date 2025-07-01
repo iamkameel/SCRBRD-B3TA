@@ -92,59 +92,26 @@ export async function getTeamLeaderboard(teamId: string): Promise<{ topRunScorer
     return { topRunScorers, topWicketTakers };
 }
 
-export async function getAdminDashboardData(personId: string) {
+export async function getAdminDashboardData() {
     const [
-        allCompetitions,
-        allTeams,
-        allPlayers,
-        allFields,
-        allTransactions,
-        allSponsors,
-        allVehicles,
-        allEquipment,
-        allMatches,
-        teamStandings,
+        competitions,
+        teams,
+        players,
+        fields
     ] = await Promise.all([
         getCompetitions(),
         getTeams(),
         getPlayers(),
-        getFields(),
-        getTransactions(),
-        getSponsors(),
-        getVehicles(),
-        getEquipment(),
-        getMatches(),
-        getTeamStandings(),
+        getFields()
     ]);
 
-    const liveMatches = allMatches.filter(m => m.status === 'live');
-    const todayMatches = allMatches.filter(m => new Date(m.dateTime).toDateString() === new Date().toDateString());
-    const netBalance = allTransactions.reduce((acc, t) => acc + (t.type === 'Income' ? t.amount : -t.amount), 0);
-    
     return {
         kpis: {
-            competitions: allCompetitions.length,
-            teams: allTeams.length,
-            players: allPlayers.length,
-            fields: allFields.length,
-            netBalance,
-            sponsors: allSponsors.length,
+            competitions: competitions.length,
+            teams: teams.length,
+            players: players.length,
+            fields: fields.length,
         },
-        operations: {
-            liveMatches,
-            todayMatches,
-            availableFields: allFields.filter(f => f.status === 'Available').length,
-            maintenanceFields: allFields.filter(f => f.status === 'Maintenance').length,
-        },
-        resources: {
-            fieldsInUse: 0,
-            transportAssignedToday: 0,
-            equipmentAssigned: allEquipment.filter(e => e.status === 'Assigned').length,
-            totalEquipment: allEquipment.length,
-            totalVehicles: allVehicles.length,
-            totalFields: allFields.length
-        },
-        teamStandings,
     };
 }
 
