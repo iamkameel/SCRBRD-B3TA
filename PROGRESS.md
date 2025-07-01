@@ -1,3 +1,4 @@
+
 # Project Progress: Towards Market Leadership
 
 This document tracks our progress against the "Next Steps" roadmap. We've made significant strides, especially in building out our advanced AI capabilities and improving core usability with advanced filtering.
@@ -31,4 +32,4 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **15. Firestore Security & Indexing**: **Complete.** A comprehensive set of Firestore security rules has been implemented to protect data integrity and control access. Composite indexes are being added as required by new features.
 -   [x] **13. Push Notification System**: **Complete.** Users can now opt-in to receive push notifications.
 -   [x] **11. Progressive Web App (PWA) & Offline Scoring**: **Partially Complete.** App is now an installable PWA with basic offline caching for faster loading. Full offline scoring functionality is not yet implemented.
--   [ ] **12. Comprehensive Testing Suite**: Not Started.
+-   [x] **12. Comprehensive Testing Suite**: **Partially Complete.** Initial setup with Jest and React Testing Library is done, and the first component test has been written.

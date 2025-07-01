@@ -16,15 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { updatePlayerAvailabilityAction } from '@/lib/actions/matches';
-
-function StatItem({ label, value }: { label: string, value: string | number }) {
-    return (
-        <div className="flex flex-col items-center text-center">
-            <p className="font-bold text-2xl text-primary">{value}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-        </div>
-    )
-}
+import { StatItem } from '@/components/stat-item';
 
 function PlayerAvailabilityCard({ match }: { match: Match }) {
     const { person } = useAuth();

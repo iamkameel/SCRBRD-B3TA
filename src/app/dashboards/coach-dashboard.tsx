@@ -23,6 +23,7 @@ import { createAssignmentRequestAction } from '@/lib/actions/requests';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from '@/hooks/use-toast';
+import { StatItem } from '@/components/stat-item';
 
 const requestSchema = z.object({
   schoolId: z.string({ required_error: "Please select a school." }),
@@ -102,15 +103,6 @@ interface CoachDashboardProps {
     allSchools?: School[];
     allTeams?: Team[];
   }
-}
-
-function StatItem({ label, value }: { label: string, value: string | number }) {
-    return (
-        <div>
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="font-bold text-xl text-foreground">{value}</p>
-        </div>
-    )
 }
 
 function CoachDashboardInternal({ data }: CoachDashboardProps) {
