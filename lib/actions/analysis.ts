@@ -15,35 +15,40 @@ import { generateMatchCommentary } from '@/ai/flows/generate-match-commentary-fl
 import { selectLineup } from '@/ai/flows/select-lineup-flow';
 import { generateOppositionAnalysis } from '@/ai/flows/generate-opposition-analysis-flow';
 import { generateLiveMatchUpdate } from '@/ai/flows/generate-live-match-update-flow';
+import { getUserId } from '@/lib/auth';
+import { queryStats } from '@/ai/flows/stats-query-flow';
+import { generatePlayerPerformanceForecast } from '@/ai/flows/generate-player-performance-forecast-flow';
+import { scoutPlayer } from '@/ai/flows/scout-player-flow';
+import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, GenerateScorecardOutput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 
-const userId = "nOhC8mQcxDYP7acGpky6dPJVLYG2";
-
-export async function runUmpireReviewAction(photoDataUri: string): Promise<UmpireDecisionOutput> {
+export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {
+  const userId = await getUserId();
   if (!userId) {
     throw new Error("User not authenticated.");
   }
   
-  if (!photoDataUri) {
-    throw new Error("An image is required for the review.");
+  if (!input.photoDataUri) {
+    throw new Error("An image is required for the scouting report.");
   }
 
   try {
-    const result = await runUmpireReview({ photoDataUri });
+    const result = await scoutPlayer(input);
     return result;
   } catch (error) {
-    console.error("Error running umpire review:", error);
+    console.error("Error running scouting report:", error);
     if (error instanceof Error) throw error;
-    throw new Error("The AI umpire review failed to complete.");
+    throw new Error("The AI scouting report failed to complete.");
   }
 }
 
 export async function generateAndSaveScorecardAction(matchId: string) {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -96,6 +101,7 @@ export async function generateAndSaveScorecardAction(matchId: string) {
 }
 
 export async function generateMatchReportAction(matchId: string) {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -130,6 +136,7 @@ export async function generateMatchReportAction(matchId: string) {
 }
 
 export async function getMatchForecastAction(matchId: string): Promise<MatchForecast | { error: string }> {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -148,6 +155,7 @@ export async function getMatchForecastAction(matchId: string): Promise<MatchFore
 }
 
 export async function generateMatchPreviewAction(matchId: string) {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -172,6 +180,7 @@ export async function generateMatchPreviewAction(matchId: string) {
 }
 
 export async function generateMatchCommentaryAction(matchId: string) {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -204,6 +213,7 @@ export async function generateMatchCommentaryAction(matchId: string) {
 }
 
 export async function autoSelectLineupAction(matchId: string, teamId: string): Promise<{ playerIds: string[], justification: string }> {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
@@ -219,6 +229,7 @@ export async function autoSelectLineupAction(matchId: string, teamId: string): P
 }
 
 export async function generateOppositionAnalysisAction(matchId: string, opponentTeamId: string) {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
     const match = await getMatch(matchId);
@@ -250,6 +261,7 @@ export async function generateOppositionAnalysisAction(matchId: string, opponent
 }
 
 export async function generateLiveMatchUpdateAction(matchId: string): Promise<LiveMatchUpdateOutput> {
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const match = await getMatch(matchId);
     if (!match || !match.liveScore) throw new Error("Match not found or no live score data available.");
@@ -273,5 +285,87 @@ export async function generateLiveMatchUpdateAction(matchId: string): Promise<Li
         console.error("Error generating live match update:", error);
         if (error instanceof Error) throw error;
         throw new Error("The AI failed to generate a live match update.");
+    }
+}
+
+
+export async function queryStatsAction(question: string): Promise<string> {
+    const userId = await getUserId();
+    if (!userId) {
+        throw new Error("User not authenticated.");
+    }
+    if (!question) {
+        throw new Error("A question is required.");
+    }
+
+    try {
+        const answer = await queryStats(question);
+        return answer;
+    } catch (error) {
+        console.error("Error querying stats:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("The AI failed to answer your question.");
+    }
+}
+
+export async function generatePlayerPerformanceForecastAction(input: PlayerPerformanceForecastInput): Promise<PlayerPerformanceForecastOutput> {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    try {
+        const result = await generatePlayerPerformanceForecast(input);
+        return result;
+    } catch (error) {
+        console.error("Error generating player performance forecast:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("The AI failed to generate a performance forecast.");
+    }
+}
+
+export async function runUmpireReviewAction(input: ScoutingReportInput): Promise<UmpireDecisionOutput> {
+  const userId = await getUserId();
+  if (!userId) {
+    throw new Error("User not authenticated.");
+  }
+  
+  if (!input.photoDataUri) {
+    throw new Error("An image is required for the review.");
+  }
+
+  try {
+    const result = await runUmpireReview({ photoDataUri: input.photoDataUri });
+    return result;
+  } catch (error) {
+    console.error("Error running umpire review:", error);
+    if (error instanceof Error) throw error;
+    throw new Error("The AI umpire review failed to complete.");
+  }
+}
+
+export async function generateHighlightReelAction(matchId: string): Promise<HighlightReelOutput> {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    const scorecard = await getScorecard(matchId);
+    if (!scorecard) {
+        throw new Error("A complete scorecard is required to generate highlights.");
+    }
+
+    try {
+        // The flow now needs the matchId to create unique storage paths
+        const result = await generateHighlightReel(matchId, {
+            teamAName: match.teamAName,
+            teamBName: match.teamBName,
+            innings1: scorecard.innings1,
+            innings2: scorecard.innings2,
+        });
+        return result;
+    } catch (error) {
+        console.error("Error generating highlight reel:", error);
+        if (error instanceof Error) throw error;
+        throw new Error("The AI failed to generate highlights.");
     }
 }
