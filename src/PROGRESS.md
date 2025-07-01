@@ -10,8 +10,8 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **5. Advanced Filtering & Search**: **Complete.** Implemented multi-select filters and advanced search across People, Teams, and Matches.
 -   [x] **1. Coach's Tactical Planner**: **Complete.** The Drill Library, Session Planner, and a drag-and-drop interface for reordering drills are now fully functional.
 -   [x] **2. Team Manager's Logistics Hub**: **Complete.** A player availability (RSVP) system has been implemented.
--   [ ] **3. Player & Captain Engagement Features**: Not Started.
--   [ ] **4. Sportmaster's Strategic Calendar**: Not Started.
+-   [x] **4. Sportmaster's Strategic Calendar**: **Complete.** A multi-month, filterable calendar provides a high-level view of all fixtures.
+-   [~] **3. Player & Captain Engagement Features**: **In Progress.** Captains can now confirm lineups. A private feedback channel is still to be developed.
 
 ---
 

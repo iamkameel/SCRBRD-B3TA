@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth-context';
 import { getAdminDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 import type { Competition, Team, FixtureConflict, Person, StandingTeam, LeaderboardPlayer, Match, Vehicle, FullTransportAssignment, EquipmentItem, Transaction, Sponsor, Season, Division, School } from '@/lib/data';
+import { DreamTeamCard } from '@/app/dream-team-card';
 
 interface AdminDashboardData {
     allMatches: Match[];
@@ -225,10 +226,7 @@ export default function AdminDashboard() {
                         </Card>
                     </div>
                     <div className="lg:col-span-1 space-y-4">
-                        <Card>
-                           <CardHeader><CardTitle>AI Dream Team Selector</CardTitle><CardDescription>Let AI pick a top-performing squad from your players.</CardDescription></CardHeader>
-                           <CardContent className="text-center"><Bot className="w-10 h-10 mx-auto text-muted-foreground mb-2" /><Button>Generate Dream Team</Button></CardContent>
-                        </Card>
+                        <DreamTeamCard />
                         <Card>
                             <CardHeader><CardTitle>System Administration</CardTitle><CardDescription>Quick access to system-level management tools.</CardDescription></CardHeader>
                             <CardContent className="space-y-2">
