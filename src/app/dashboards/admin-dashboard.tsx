@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, ArrowRight, UserCog, Database, Loader2, Trophy, Users, ClipboardList, MapPin, Scale, Handshake, ChevronDown, Bot, BarChart2, TrendingUp, Sun, Moon } from 'lucide-react';
+import { ArrowRight, UserCog, Database, BarChart2, ChevronDown } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -35,7 +35,6 @@ interface AdminDashboardData {
     allDivisions: Division[];
     allSchools: School[];
     conflicts: FixtureConflict[];
-    unconfirmedAssignmentsCount: number;
 }
 
 function KpiCard({ title, value, description, href }: { title: string, value: string | number, description: string, href: string }) {

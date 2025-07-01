@@ -95,9 +95,6 @@ export async function getTeamLeaderboard(teamId: string): Promise<{ topRunScorer
 export async function getAdminDashboardData(personId: string) {
     const [
         allMatches,
-        topRunScorers,
-        topWicketTakers,
-        teamStandings,
         allTeams,
         allPlayers,
         allFields,
@@ -109,14 +106,9 @@ export async function getAdminDashboardData(personId: string) {
         allSeasons,
         allDivisions,
         allSchools,
-        conflicts,
-        allTransportAssignments,
-        unconfirmedAssignmentsCount,
+        teamStandings
     ] = await Promise.all([
         getMatches(),
-        getLeaderboards().then(l => l.topRunScorers),
-        getLeaderboards().then(l => l.topWicketTakers),
-        getTeamStandings(),
         getTeams(),
         getPlayers(),
         getFields(),
@@ -128,15 +120,11 @@ export async function getAdminDashboardData(personId: string) {
         getSeasons(),
         getDivisions(),
         getSchools(),
-        getFixtureConflicts(),
-        getAllTransportAssignments(),
-        getUnconfirmedAssignmentsCount(),
+        getTeamStandings(),
     ]);
 
     return {
         allMatches,
-        topRunScorers,
-        topWicketTakers,
         teamStandings,
         allTeams,
         allPlayers,
@@ -149,9 +137,10 @@ export async function getAdminDashboardData(personId: string) {
         allSeasons,
         allDivisions,
         allSchools,
-        conflicts,
-        allTransportAssignments,
-        unconfirmedAssignmentsCount,
+        // Return empty arrays for the complex data to avoid query explosion
+        conflicts: [],
+        topRunScorers: [],
+        topWicketTakers: [],
     };
 }
 
