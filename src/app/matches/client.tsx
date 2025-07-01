@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -457,5 +456,3 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
     </>
   );
 }
-
-
