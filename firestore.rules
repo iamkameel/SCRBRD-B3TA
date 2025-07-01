@@ -1,0 +1,164 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function getPersonData(userId) {
+      return get(/databases/$(database)/documents/people/$(userId)).data;
+    }
+    
+    function isAnyRole(roles) {
+      return isAuth() && getPersonData(request.auth.uid).roles.hasAny(roles);
+    }
+    
+    function isAdmin() {
+      return isAnyRole(['Admin', 'Sportsmaster']);
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // People: Logged-in users can read all profiles. Users can update their own profile. Admins can update any.
+    match /people/{personId} {
+      allow read: if isAuth();
+      allow create: if isAuth(); // For new user signup
+      allow update: if isOwner(personId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Family Links: Users can only manage their own links.
+    match /familyLinks/{linkId} {
+        allow read: if isAuth();
+        allow create: if isAuth() && (isOwner(request.resource.data.parentId) || isOwner(request.resource.data.childId));
+        allow delete: if isAuth() && (isOwner(resource.data.parentId) || isOwner(resource.data.childId));
+    }
+
+    // Core data: Schools, Seasons, Divisions, Fields
+    // Readable by all authenticated users, writable only by admins.
+    match /schools/{schoolId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+    match /seasons/{seasonId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+    match /divisions/{divisionId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+    match /fields/{fieldId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+      match /assignments/{assignmentId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+      }
+    }
+    
+    // Teams & Rosters: Readable by all. Writable by Admins/Sportsmasters.
+    match /teams/{teamId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+        
+        match /roster/{rosterId} {
+            allow read: if isAuth();
+            allow write: if isAdmin();
+        }
+    }
+
+    // Competitions: Readable by all. Writable by Admins/Sportsmasters.
+    match /competitions/{competitionId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+    }
+
+    // Matches & subcollections: Readable by all.
+    // Writes are complex: Admins/Sportsmasters can create/edit.
+    // Scorers/Umpires need to update live scores.
+    match /matches/{matchId} {
+        allow read: if isAuth();
+        allow create, delete: if isAdmin();
+        // Allow updates from admins, or specific field updates from authorized users
+        allow update: if isAdmin()
+                       || (isAuth() && request.resource.data.keys().hasOnly(['availability.' + request.auth.uid]))
+                       || (isAuth() && request.resource.data.keys().hasOnly(['lineupConfirmedByCaptainA']))
+                       || (isAuth() && request.resource.data.keys().hasOnly(['lineupConfirmedByCaptainB']))
+                       || (isAnyRole(['Scorer', 'Umpire']) && request.resource.data.keys().hasAny(['status', 'liveScore', 'previousLiveScore', 'firstInningsTotal', 'winnerTeamId', 'result']));
+
+
+        // Subcollections
+        match /lineups/{teamId} {
+            allow read: if isAuth();
+            allow write: if isAdmin() || isAnyRole(['Coach']); 
+        }
+        match /officials/{officialId} {
+            allow read: if isAuth();
+            allow create, delete: if isAdmin();
+            // Allow an official to confirm their own assignment
+            allow update: if isOwner(resource.data.personId) && request.resource.data.keys().hasOnly(['confirmed']);
+        }
+        match /scorecards/{innings} {
+            allow read: if isAuth();
+            allow write: if isAdmin() || isAnyRole(['Scorer', 'Umpire']);
+        }
+        match /transportAssignments/{assignmentId} {
+            allow read: if isAuth();
+            allow write: if isAdmin();
+        }
+    }
+
+    // Drills, Sessions
+    match /drills/{drillId} {
+        allow read: if isAuth();
+        allow write: if isAnyRole(['Admin', 'Sportsmaster', 'Coach']);
+    }
+    match /sessions/{sessionId} {
+        allow read: if isAuth();
+        allow write: if isAnyRole(['Admin', 'Sportsmaster', 'Coach']);
+    }
+
+    // Resources & Financials - Only admins can manage
+    match /vehicles/{vehicleId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+    }
+    match /equipment/{itemId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+    }
+    match /equipmentAssignments/{assignmentId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+    }
+    match /sponsors/{sponsorId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+    }
+    match /financials/{transactionId} {
+        allow read: if isAuth();
+        allow write: if isAdmin();
+    }
+    
+    // Assignment Requests
+    match /assignmentRequests/{requestId} {
+        allow read: if isAuth();
+        // A user can create their own request
+        allow create: if isAuth() && isOwner(request.resource.data.requesterId);
+        // Only an admin can update (approve/deny) a request
+        allow update: if isAdmin();
+    }
+  }
+}
