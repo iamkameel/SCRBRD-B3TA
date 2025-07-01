@@ -9,6 +9,8 @@ import PageShell from '@/components/page-shell';
 export const metadata: Metadata = {
   title: 'SCRBRD - Cricket Scorer',
   description: 'A modern cricket scoring and management tool.',
+  manifest: '/manifest.webmanifest',
+  themeColor: '#10b981',
 };
 
 export default function RootLayout({
