@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -10,6 +9,7 @@ import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowL
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -986,15 +986,22 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                             </div>
                         )}
                         {!isGeneratingHighlights && highlightReel && (
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 {highlightReel.highlights.map((highlight, index) => (
-                                    <div key={index} className="flex items-start gap-4">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted font-bold text-sm flex-shrink-0">
-                                            {highlight.over}
+                                    <div key={index} className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg bg-muted/30">
+                                        <div className="w-full sm:w-48 h-32 relative flex-shrink-0">
+                                            <Image 
+                                                src={highlight.imageUrl} 
+                                                alt={highlight.description} 
+                                                fill
+                                                className="rounded-md object-cover"
+                                                sizes="(max-width: 640px) 100vw, 12rem"
+                                                data-ai-hint="cricket action"
+                                            />
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
+                                            <Badge variant="secondary" className="mb-2">Over: {highlight.over}</Badge>
                                             <p className="font-medium text-foreground">{highlight.description}</p>
-                                            <p className="text-xs text-muted-foreground">Over: {highlight.over}</p>
                                         </div>
                                     </div>
                                 ))}

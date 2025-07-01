@@ -275,6 +275,7 @@ export type ScoutingReportOutput = z.infer<typeof ScoutingReportSchema>;
 export const HighlightEventSchema = z.object({
   over: z.string().describe("The over in which the event occurred, e.g., '19.2'."),
   description: z.string().describe("A short, exciting, one-sentence description of the key moment."),
+  imageUrl: z.string().url().describe("The public URL of the generated image highlight in Firebase Storage."),
 });
 export type HighlightEvent = z.infer<typeof HighlightEventSchema>;
 

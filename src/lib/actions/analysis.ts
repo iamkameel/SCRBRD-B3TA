@@ -355,7 +355,8 @@ export async function generateHighlightReelAction(matchId: string): Promise<High
     }
 
     try {
-        const result = await generateHighlightReel({
+        // The flow now needs the matchId to create unique storage paths
+        const result = await generateHighlightReel(matchId, {
             teamAName: match.teamAName,
             teamBName: match.teamBName,
             innings1: scorecard.innings1,
