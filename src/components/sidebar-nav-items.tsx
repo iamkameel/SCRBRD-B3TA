@@ -8,7 +8,8 @@ import {
     Cog,
     HeartPulse,
     Dumbbell,
-    Target
+    Target,
+    CalendarRange
 } from 'lucide-react';
 
 const adminTopLevelNavItems = [
@@ -21,6 +22,7 @@ const adminNavGroups = [
         icon: Swords,
         items: [
             { href: '/matches', label: 'All Matches', icon: ClipboardList },
+            { href: '/strategic-calendar', label: 'Strategic Calendar', icon: CalendarRange },
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
         ]
