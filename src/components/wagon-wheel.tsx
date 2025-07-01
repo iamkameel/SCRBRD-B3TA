@@ -3,26 +3,49 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import type { ShotData } from '@/lib/data';
 
 interface WagonWheelProps {
-    onShotSelect: () => void;
+    onShotSelect: (shot: { angle: number; distance: number }) => void;
+    shots?: ShotData[];
     disabled?: boolean;
 }
 
-export function WagonWheel({ onShotSelect, disabled }: WagonWheelProps) {
+export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelProps) {
     const svgRef = React.useRef<SVGSVGElement>(null);
-    const
-    size = 300;
+    const size = 300;
     const center = size / 2;
     const rings = [center * 0.35, center * 0.7, center];
     const sectors = 8;
 
     const handleClick = (event: React.MouseEvent<SVGSVGElement>) => {
-        if (disabled) return;
-        // In a real implementation, we would calculate angle and radius here.
-        // For this step, we just need to trigger the dialog.
-        onShotSelect();
+        if (disabled || !svgRef.current) return;
+
+        const rect = svgRef.current.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        const dx = x - center;
+        const dy = y - center;
+
+        // Calculate angle (0-360 degrees, 0 is to the right)
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        if (angle < 0) {
+            angle += 360;
+        }
+
+        // Calculate distance as a ratio of the max radius
+        const distance = Math.sqrt(dx * dx + dy * dy) / center;
+
+        onShotSelect({ angle, distance: Math.min(distance, 1) });
     };
+
+    const getShotColor = (runs: number) => {
+        if (runs === 4) return "hsl(var(--chart-3))"; // blue
+        if (runs === 6) return "hsl(var(--chart-4))"; // purple
+        if (runs > 0) return "hsl(var(--chart-2))"; // yellow/orange
+        return "hsl(var(--muted-foreground))"; // dot for 0 runs
+    }
 
     return (
         <div className="flex flex-col items-center">
@@ -62,6 +85,32 @@ export function WagonWheel({ onShotSelect, disabled }: WagonWheelProps) {
                         strokeWidth="1"
                     />
                 ))}
+                
+                {/* Rendered Shots */}
+                {shots.map((shot, index) => {
+                    const angleRad = shot.angle * (Math.PI / 180);
+                    const endX = center + (shot.distance * center) * Math.cos(angleRad);
+                    const endY = center + (shot.distance * center) * Math.sin(angleRad);
+                    const color = getShotColor(shot.runs);
+
+                    if (shot.runs === 0) {
+                        return <circle key={index} cx={endX} cy={endY} r={3} fill={color} />;
+                    }
+
+                    return (
+                        <line
+                            key={index}
+                            x1={center}
+                            y1={center}
+                            x2={endX}
+                            y2={endY}
+                            stroke={color}
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                        />
+                    );
+                })}
+
                 <circle cx={center} cy={center} r={3} fill="hsl(var(--primary))" />
             </svg>
             <p className="text-sm text-muted-foreground mt-2">Tap on the field to record a shot</p>

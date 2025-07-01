@@ -54,9 +54,10 @@ export function LiveScoringInterface({
   const [isGeneratingUpdate, startUpdateGeneration] = React.useTransition();
   const [liveUpdate, setLiveUpdate] = React.useState<LiveMatchUpdateOutput | null>(null);
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
+  const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
 
 
-  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 };
+  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] };
   const batsmenOut = liveScore.batsmenOut || [];
   
   const isFirstInnings = liveScore.liveInnings === 1;
@@ -95,12 +96,19 @@ export function LiveScoringInterface({
     });
   };
 
+  const handleShotSelect = (shotData: { angle: number; distance: number }) => {
+    setCurrentShot(shotData);
+    setIsScoringDialogOpen(true);
+  };
+
   const handleRecordBall = (eventData: { event: string; runs?: number }) => {
     startTransition(async () => {
         try {
-            await recordBallAction(match.matchId, eventData);
+            await recordBallAction(match.matchId, { ...eventData, ...currentShot });
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
+        } finally {
+            setCurrentShot(null);
         }
     });
   };
@@ -240,7 +248,11 @@ export function LiveScoringInterface({
                         <CardDescription>Tap the location on the wagon-wheel where the ball was hit.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex justify-center">
-                        <WagonWheel onShotSelect={() => setIsScoringDialogOpen(true)} disabled={isPending} />
+                        <WagonWheel
+                            onShotSelect={handleShotSelect}
+                            disabled={isPending}
+                            shots={liveScore.shots}
+                        />
                     </CardContent>
                 </Card>
             </div>

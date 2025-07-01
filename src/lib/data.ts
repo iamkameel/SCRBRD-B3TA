@@ -128,6 +128,12 @@ export interface PlayerOfTheMatch {
   justification: string;
 }
 
+export interface ShotData {
+  runs: number;
+  angle: number; // in degrees
+  distance: number; // as a ratio of radius (0 to 1)
+}
+
 export interface LiveScore {
     runs: number;
     wickets: number;
@@ -139,6 +145,7 @@ export interface LiveScore {
     bowlerId?: string;
     batsmenOut?: string[];
     liveInnings?: 1 | 2;
+    shots?: ShotData[];
 }
 
 export interface Match {

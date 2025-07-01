@@ -169,7 +169,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       dateTime: Timestamp.fromDate(dateTime),
       status: 'scheduled',
       competitionName: 'Friendly Match',
-      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 },
+      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] },
       userId: userId,
       report: '',
       preview: '',
@@ -197,7 +197,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       fieldName: fieldSnap.data().name,
       dateTime: Timestamp.fromDate(dateTime),
       status: 'scheduled',
-      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1 },
+      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] },
       userId: userId,
       report: '',
       preview: '',
@@ -640,7 +640,7 @@ export async function updateLivePlayersAction(matchId: string, updates: { onStri
     revalidatePath(`/matches/${matchId}`);
 }
 
-export async function recordBallAction(matchId: string, ball: { runs?: number, event: string }) {
+export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number }) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
@@ -652,7 +652,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const match = matchSnap.data() as Match;
     const currentLiveScore = match.liveScore || {
-        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1,
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [],
     };
 
     if (!currentLiveScore.onStrikeBatsmanId || !currentLiveScore.nonStrikerBatsmanId || !currentLiveScore.bowlerId) {
@@ -682,6 +682,17 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
     if (ball.event === 'wd' || ball.event === 'nb') {
         liveScore.runs++;
+    }
+    
+    if (ball.angle !== undefined && ball.distance !== undefined) {
+        if (!liveScore.shots) {
+            liveScore.shots = [];
+        }
+        liveScore.shots.push({
+            runs: runsScored,
+            angle: ball.angle,
+            distance: ball.distance,
+        });
     }
     
     liveScore.currentOver.push(ball.event);
@@ -751,7 +762,7 @@ export async function endInningsAction(matchId: string) {
 
     if (currentLiveScore.liveInnings === 1) {
         const newLiveScore = {
-            runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2,
+            runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2, shots: [],
             onStrikeBatsmanId: undefined, nonStrikerBatsmanId: undefined, bowlerId: undefined,
         };
         
