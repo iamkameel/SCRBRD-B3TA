@@ -5,12 +5,12 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db, app } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch, Timestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
-import type { School, Person, Team } from '@/lib/data';
+import type { School, Person, Team, Match } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
-import { getTeamRoster, getTeamsBySchool } from './teams';
+import { getTeamRoster, getTeams, getTeamsBySchool } from './teams';
 
 // This function now fetches data from Firestore for the current user
 export const getSchools = cache(async (): Promise<School[]> => {
@@ -287,3 +287,44 @@ export async function updateSchoolStaffAssignmentsAction(schoolId: string, staff
     
     revalidatePath(`/schools/${schoolId}`);
 }
+
+export const getMatchesBySchool = cache(async (schoolId: string): Promise<Match[]> => {
+  const teams = await getTeamsBySchool(schoolId);
+  if (teams.length === 0) return [];
+
+  const teamIds = teams.map(t => t.teamId);
+  
+  const matchesCollection = collection(db, 'matches');
+  // Firestore 'in' query has a limit of 30 items. If a school has more teams, this needs chunking.
+  // For this app's scale, we assume it's under 30.
+  const teamAQuery = query(matchesCollection, where("teamAId", "in", teamIds));
+  const teamBQuery = query(matchesCollection, where("teamBId", "in", teamIds));
+
+  const [teamAMatchesSnap, teamBMatchesSnap] = await Promise.all([
+    getDocs(teamAQuery),
+    getDocs(teamBQuery),
+  ]);
+
+  const allMatches = [...teamAMatchesSnap.docs, ...teamBMatchesSnap.docs];
+  const uniqueMatchesMap = new Map<string, Match>();
+
+  const allTeams = await getTeams(); // Fetch all teams to get opponent logos
+  const teamInfoMap = new Map<string, Team>();
+  allTeams.forEach(team => teamInfoMap.set(team.teamId, team));
+
+  allMatches.forEach(doc => {
+      const data = doc.data();
+      const teamA = teamInfoMap.get(data.teamAId);
+      const teamB = teamInfoMap.get(data.teamBId);
+      
+      uniqueMatchesMap.set(doc.id, {
+        matchId: doc.id,
+        ...data,
+        dateTime: (data.dateTime as Timestamp).toDate(),
+        teamALogoUrl: teamA?.logoUrl,
+        teamBLogoUrl: teamB?.logoUrl,
+      } as Match);
+  });
+
+  return Array.from(uniqueMatchesMap.values()).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
+});

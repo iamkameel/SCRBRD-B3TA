@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -6,8 +7,8 @@ import Link from 'next/link';
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube, ClipboardList, PlusCircle, Search } from 'lucide-react';
-import type { School, Team, Person } from '@/lib/data';
+import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube, ClipboardList, PlusCircle, Search, Trophy, BarChartHorizontal } from 'lucide-react';
+import type { School, Team, Person, Match } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,6 +22,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { updateSchoolStaffAssignmentsAction } from "@/lib/actions/schools";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card>
@@ -133,12 +135,21 @@ function AssignStaffDialog({ school, allStaff, open, onOpenChange }: { school: S
     );
 }
 
-export default function SchoolDetailsClient({ school, teams, staff, players, allStaff }: { school: School; teams: Team[]; staff: Person[]; players: Person[]; allStaff: Person[] }) {
+const HighlightCard = ({ title, description }: { title: string, description: string }) => (
+  <div className="bg-muted/50 p-4 rounded-lg">
+    <p className="font-bold text-primary">{title}</p>
+    <p className="text-sm text-muted-foreground">{description}</p>
+  </div>
+);
+
+export default function SchoolDetailsClient({ school, teams, staff, players, allStaff, matches }: { school: School; teams: Team[]; staff: Person[]; players: Person[]; allStaff: Person[]; matches: Match[] }) {
     const [isAssignStaffDialogOpen, setIsAssignStaffDialogOpen] = React.useState(false);
     
     const socialLinks = school.socialMedia ? Object.entries(school.socialMedia).filter(([, link]) => link) : [];
     
     const schoolWithStaff = { ...school, staff };
+    
+    const upcomingMatches = matches.filter(m => m.status === 'scheduled' || m.status === 'live').sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
 
     return (
         <>
@@ -155,23 +166,40 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">{school.name}</h1>
                         {school.abbreviation && <p className="text-lg text-muted-foreground">{school.abbreviation}</p>}
-                        {school.motto && <p className="text-md italic text-muted-foreground mt-1">"{school.motto}"</p>}
                     </div>
                 </div>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-2 space-y-8">
-                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <StatCard title="Total Teams" value={teams.length} icon={Users} />
                         <StatCard title="Active Players" value={players.length} icon={User} />
+                        <StatCard title="Fixtures" value={matches.length} icon={ClipboardList} />
                         <StatCard title="Total Staff" value={staff.length} icon={User} />
                      </div>
 
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>About the School</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                           {school.motto && <p className="text-lg italic text-muted-foreground">"{school.motto}"</p>}
+                           <p>Our motto "{school.motto}" embodies the spirit of determination and perseverance that defines every Westville boy. We offer a comprehensive education that prepares our students for success in all aspects of life.</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                               <HighlightCard title="Academic Excellence" description="Consistently achieving top matric results in KZN." />
+                               <HighlightCard title="Sports Champions" description="Multiple provincial and national titles." />
+                               <HighlightCard title="Leadership Development" description="Strong prefect system and community service." />
+                               <HighlightCard title="Modern Facilities" description="State-of-the-art classrooms and sports facilities." />
+                            </div>
+                        </CardContent>
+                    </Card>
+
                      <Tabs defaultValue="teams" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="teams">Teams</TabsTrigger>
                             <TabsTrigger value="staff">Staff</TabsTrigger>
+                            <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
                         </TabsList>
                         <TabsContent value="teams" className="mt-4">
                             <Card>
@@ -217,6 +245,43 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                                 </CardContent>
                             </Card>
                         </TabsContent>
+                        <TabsContent value="fixtures" className="mt-4">
+                             <Card>
+                                <CardHeader><CardTitle>Upcoming Fixtures</CardTitle></CardHeader>
+                                <CardContent>
+                                    {upcomingMatches.length > 0 ? (
+                                        <ul className="space-y-4">
+                                            {upcomingMatches.map(match => {
+                                                const schoolTeamsIds = new Set(teams.map(t => t.teamId));
+                                                const isTeamATheSchool = schoolTeamsIds.has(match.teamAId);
+                                                const opponentName = isTeamATheSchool ? match.teamBName : match.teamAName;
+                                                const opponentLogo = isTeamATheSchool ? match.teamBLogoUrl : match.teamALogoUrl;
+                                                
+                                                return (
+                                                    <li key={match.matchId}>
+                                                        <Link href={`/matches/${match.matchId}`} className="block p-3 rounded-lg hover:bg-muted -mx-3">
+                                                            <div className="flex items-center gap-4">
+                                                                <Avatar className="h-10 w-10 border"><AvatarImage src={opponentLogo} /><AvatarFallback>{opponentName?.[0]}</AvatarFallback></Avatar>
+                                                                <div>
+                                                                    <p className="font-semibold">vs {opponentName}</p>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {format(match.dateTime, 'eeee, MMMM d, yyyy - p')} at {match.fieldName}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </Link>
+                                                    </li>
+                                                )
+                                            })}
+                                        </ul>
+                                    ) : (
+                                        <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+                                            <p>No upcoming fixtures scheduled for {school.name}.</p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
                      </Tabs>
                 </div>
 
@@ -240,10 +305,27 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                         </CardContent>
                     </Card>
                     <Card>
+                        <CardHeader>
+                            <CardTitle>Recent News</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-1">
+                                <p className="text-xs text-primary font-semibold">June 28, 2025</p>
+                                <h4 className="font-bold">Outstanding Matric Results 2024</h4>
+                                <p className="text-sm text-muted-foreground">Westville Boys' achieves 98% pass rate with 85% Bachelor passes, ranking among the top schools in KwaZulu-Natal.</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-xs text-primary font-semibold">June 25, 2025</p>
+                                <h4 className="font-bold">Rugby Team Advances to Provincial Finals</h4>
+                                <p className="text-sm text-muted-foreground">Our 1st XV rugby team secures their place in the KZN Schools Rugby Championships after defeating Hilton College 24-18.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
                         <CardHeader><CardTitle>Brand Colors</CardTitle></CardHeader>
                         <CardContent className="flex items-center gap-4">
-                           {school.brandColors?.primary && <div className="flex items-center gap-2"><div className="h-6 w-6 rounded-full border" style={{ backgroundColor: school.brandColors.primary }}></div><span className="font-mono text-sm">{school.brandColors.primary}</span></div>}
-                           {school.brandColors?.secondary && <div className="flex items-center gap-2"><div className="h-6 w-6 rounded-full border" style={{ backgroundColor: school.brandColors.secondary }}></div><span className="font-mono text-sm">{school.brandColors.secondary}</span></div>}
+                           {school.brandColors?.primary && <div className="flex flex-col items-center gap-2"><div className="h-10 w-10 rounded-full border" style={{ backgroundColor: school.brandColors.primary }}></div><span className="font-mono text-xs">{school.brandColors.primary}</span></div>}
+                           {school.brandColors?.secondary && <div className="flex flex-col items-center gap-2"><div className="h-10 w-10 rounded-full border" style={{ backgroundColor: school.brandColors.secondary }}></div><span className="font-mono text-xs">{school.brandColors.secondary}</span></div>}
                            {!school.brandColors?.primary && !school.brandColors?.secondary && <p className="text-sm text-muted-foreground">No brand colors set.</p>}
                         </CardContent>
                     </Card>
