@@ -21,7 +21,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **9. Natural Language Query for Stats**: **Complete.** Users can ask plain-English questions about stats and receive AI-generated answers.
 -   [x] **10. Dynamic In-Match Strategy Suggestions**: **Complete.** The live scoring analysis now provides tactical advice.
 -   [x] **AI Dream Team Selector**: **Complete.** An AI can select a balanced, high-performing squad from available players.
--   [~] **8. Automated Highlight Reels**: **In Progress.** AI can analyze a scorecard to generate a list of key moments.
+-   [x] **8. Automated Highlight Reels**: **Complete.** AI can analyze a scorecard to generate a list of key moments with accompanying images.
 
 ---
 
@@ -29,6 +29,6 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 -   [x] **14. User-Uploaded Asset Management**: **Complete.** The system can handle AI-generated image uploads and user uploads for school and team logos.
 -   [x] **15. Firestore Security & Indexing**: **Complete.** A comprehensive set of Firestore security rules has been implemented to protect data integrity and control access. Composite indexes are being added as required by new features.
--   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started.
+-   [~] **11. Progressive Web App (PWA) & Offline Scoring**: **In Progress.** Initial PWA setup is complete, enabling installation on devices.
 -   [ ] **12. Comprehensive Testing Suite**: Not Started.
 -   [ ] **13. Push Notification System**: Not Started.

@@ -1,0 +1,21 @@
+{
+  "name": "SCRBRD - Cricket Management",
+  "short_name": "SCRBRD",
+  "description": "A modern cricket scoring and management tool.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://placehold.co/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
