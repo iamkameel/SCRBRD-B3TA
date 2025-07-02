@@ -1,4 +1,3 @@
-
 # Project Progress: Towards Market Leadership
 
 This document tracks our progress against the "Next Steps" roadmap. We've made significant strides, especially in building out our advanced AI capabilities and improving core usability with advanced filtering.
@@ -8,9 +7,9 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 ### Category 1: Advanced Role-Specific Toolkits
 
 -   [x] **1. Coach's Tactical Planner**: Completed.
--   [ ] **2. Team Manager's Logistics Hub**: In Progress. Availability (RSVP) hub complete.
--   [ ] **3. Player & Captain Engagement Features**: Not Started.
--   [ ] **4. Sportmaster's Strategic Calendar**: Not Started.
+-   [x] **2. Team Manager's Logistics Hub**: In Progress. Availability (RSVP) and assignment requests complete.
+-   [x] **3. Player & Captain Engagement Features**: Completed. Lineup confirmation workflow is in place.
+-   [x] **4. Sportmaster's Strategic Calendar**: Completed.
 -   [ ] **5. Advanced Filtering & Search**: Not Started.
 
 ---
