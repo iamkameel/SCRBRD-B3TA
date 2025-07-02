@@ -268,21 +268,26 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
       if (!searchMatch || !roleMatch) return false;
       
       const isAssignedToAnySchool = person.assignedSchools && person.assignedSchools.length > 0;
-      
-      switch (assignmentFilter) {
-          case 'assigned':
-              if (!isAssignedToAnySchool) return false;
-              // fallthrough to check school filter
-          case 'all':
-              if (schoolFilter.length > 0) {
-                  return person.assignedSchools?.some(id => schoolFilter.includes(id)) ?? false;
-              }
-              return true;
-          case 'unassigned':
-              return !isAssignedToAnySchool;
-          default:
-              return true;
+
+      // Assignment status filter
+      if (assignmentFilter === 'assigned' && !isAssignedToAnySchool) {
+        return false;
       }
+      if (assignmentFilter === 'unassigned' && isAssignedToAnySchool) {
+        return false;
+      }
+      
+      // If filtering by unassigned, no need to check school filter
+      if (assignmentFilter === 'unassigned') {
+        return true;
+      }
+
+      // School-specific filter (applies to 'all' and 'assigned')
+      if (schoolFilter.length > 0) {
+        return person.assignedSchools?.some(id => schoolFilter.includes(id)) ?? false;
+      }
+      
+      return true;
     });
   }, [people, searchQuery, roleFilters, schoolFilter, assignmentFilter]);
 
