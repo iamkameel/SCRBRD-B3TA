@@ -19,7 +19,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **6. AI Scouting Assistant**: Completed.
 -   [x] **7. Predictive Player Performance**: In Progress. Foundational flow and UI implemented.
 -   [x] **8. Automated Highlight Reels**: In Progress. Foundational flow and UI implemented.
--   [x] **9. Natural Language Query for Stats**: In Progress. Foundational tool and filtering implemented.
+-   [x] **9. Natural Language Query for Stats**: Completed. The tool now supports filtered queries.
 -   [ ] **10. Dynamic In-Match Strategy Suggestions**: Not Started.
 
 ---
@@ -27,7 +27,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 ### Category 3: Performance, Scalability & Production Readiness
 
 -   [x] **11. Progressive Web App (PWA) & Offline Scoring**: PWA foundation complete. Offline scoring is a future task.
--   [x] **12. Comprehensive Testing Suite**: Completed.
+-   [x] **12. Comprehensive Testing Suite**: Completed. Unit and component tests added.
 -   [x] **13. Push Notification System**: In Progress. Client-side setup and preferences are complete.
--   [x] **14. User-Uploaded Asset Management**: In Progress. School and Sponsor logo uploads complete.
+-   [x] **14. User-Uploaded Asset Management**: Completed. School and Sponsor logo uploads complete.
 -   [ ] **15. Firestore Security & Indexing**: Not Started.
