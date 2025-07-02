@@ -42,7 +42,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, confirmLineupAction } from '@/lib/actions/matches';
 import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
-import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput } from "@/lib/data";
+import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput, AvailabilityStatus } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
@@ -313,53 +313,32 @@ function LineupSelectionCard({ teamId, teamName, match, roster, lineup, isCaptai
                 render={() => (
                   <FormItem className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {roster.map((member) => {
-                         const availability = match.availability?.[member.personId];
-                         const availabilityStatus = availability?.status;
-                         let badgeVariant: "default" | "secondary" | "destructive" | "outline" | null | undefined = 'secondary';
-                         if (availabilityStatus === 'attending') badgeVariant = 'default';
-                         if (availabilityStatus === 'unavailable') badgeVariant = 'destructive';
-                         if (availabilityStatus === 'tentative') badgeVariant = 'outline';
-
-                        return (
-                            <FormField
-                            key={member.personId}
-                            control={form.control}
-                            name="playerIds"
-                            render={({ field }) => (
-                                <FormItem key={member.personId} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value?.includes(member.personId)}
-                                    onCheckedChange={(checked) => {
-                                        return checked
-                                        ? field.onChange([...field.value, member.personId])
-                                        : field.onChange(field.value?.filter((id) => id !== member.personId));
-                                    }}
-                                    disabled={isPending || isAutoSelecting}
-                                    />
-                                </FormControl>
-                                <div className="flex-1">
-                                    <FormLabel className="font-normal flex flex-col">
-                                    {member.personName}
-                                    <span className="text-xs text-muted-foreground">{member.role}</span>
-                                    </FormLabel>
-                                </div>
-                                {availabilityStatus && (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Badge variant={badgeVariant} className="capitalize">{availabilityStatus}</Badge>
-                                            </TooltipTrigger>
-                                            {availability.note && <TooltipContent><p>{availability.note}</p></TooltipContent>}
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
-                                </FormItem>
-                            )}
-                            />
-                        )
-                      })}
+                      {roster.map((member) => (
+                          <FormField
+                          key={member.personId}
+                          control={form.control}
+                          name="playerIds"
+                          render={({ field }) => (
+                              <FormItem key={member.personId} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                  <Checkbox
+                                  checked={field.value?.includes(member.personId)}
+                                  onCheckedChange={(checked) => {
+                                      return checked
+                                      ? field.onChange([...field.value, member.personId])
+                                      : field.onChange(field.value?.filter((id) => id !== member.personId));
+                                  }}
+                                  disabled={isPending || isAutoSelecting}
+                                  />
+                              </FormControl>
+                              <FormLabel className="font-normal flex flex-col">
+                                {member.personName}
+                                <span className="text-xs text-muted-foreground">{member.role}</span>
+                              </FormLabel>
+                              </FormItem>
+                          )}
+                          />
+                      ))}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -384,6 +363,51 @@ function LineupSelectionCard({ teamId, teamName, match, roster, lineup, isCaptai
       </CardContent>
     </Card>
   );
+}
+
+function AvailabilitySummaryTable({ teamName, roster, availabilityData }: { teamName: string; roster: RosterMember[]; availabilityData: Match['availability'] }) {
+    const getStatusBadge = (status: AvailabilityStatus | undefined) => {
+        if (!status) return <Badge variant="outline">No Response</Badge>;
+        switch (status) {
+            case 'attending': return <Badge variant="default" className="bg-green-600 hover:bg-green-600/90 text-white">Attending</Badge>;
+            case 'unavailable': return <Badge variant="destructive">Unavailable</Badge>;
+            case 'tentative': return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-500/90 text-black">Tentative</Badge>;
+            default: return <Badge variant="outline">No Response</Badge>;
+        }
+    };
+
+    return (
+        <div>
+            <h3 className="font-semibold mb-4">{teamName}</h3>
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Player</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Note</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {roster.length > 0 ? roster.map(member => {
+                            const availability = availabilityData?.[member.personId];
+                            return (
+                                <TableRow key={member.personId}>
+                                    <TableCell className="font-medium">{member.personName}</TableCell>
+                                    <TableCell>{getStatusBadge(availability?.status)}</TableCell>
+                                    <TableCell className="text-muted-foreground text-xs">{availability?.note || '-'}</TableCell>
+                                </TableRow>
+                            );
+                        }) : (
+                            <TableRow>
+                                <TableCell colSpan={3} className="h-24 text-center">No players on roster.</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
 }
 
 function ScorecardPlaceholder() {
@@ -757,7 +781,18 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                 </Card>
             </TabsContent>
 
-            <TabsContent value="lineups" className="mt-4">
+            <TabsContent value="lineups" className="mt-4 space-y-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Availability & RSVP</CardTitle>
+                        <CardDescription>Live availability status for all rostered players.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <AvailabilitySummaryTable teamName={match.teamAName} roster={teamARoster} availabilityData={match.availability} />
+                        {match.teamBId && <AvailabilitySummaryTable teamName={match.teamBName} roster={teamBRoster} availabilityData={match.availability} />}
+                    </CardContent>
+                </Card>
+
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} match={match} roster={teamARoster} lineup={teamALineup} isCaptain={isCaptainTeamA} lineupConfirmed={!!match.lineupConfirmedByCaptainA} />
                     {match.teamBId ?

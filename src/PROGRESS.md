@@ -7,8 +7,8 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 ### Category 1: Advanced Role-Specific Toolkits
 
--   [ ] **1. Coach's Tactical Planner**: In Progress. Drill Library and Session Planner foundations are built.
--   [ ] **2. Team Manager's Logistics Hub**: Not Started.
+-   [x] **1. Coach's Tactical Planner**: Completed.
+-   [ ] **2. Team Manager's Logistics Hub**: In Progress. Availability (RSVP) hub complete.
 -   [ ] **3. Player & Captain Engagement Features**: Not Started.
 -   [ ] **4. Sportmaster's Strategic Calendar**: Not Started.
 -   [ ] **5. Advanced Filtering & Search**: Not Started.
@@ -27,8 +27,8 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 ### Category 3: Performance, Scalability & Production Readiness
 
--   [ ] **11. Progressive Web App (PWA) & Offline Scoring**: Not Started.
--   [ ] **12. Comprehensive Testing Suite**: Not Started.
+-   [x] **11. Progressive Web App (PWA) & Offline Scoring**: PWA foundation complete. Offline scoring is a future task.
+-   [x] **12. Comprehensive Testing Suite**: Completed.
 -   [ ] **13. Push Notification System**: Not Started.
 -   [ ] **14. User-Uploaded Asset Management**: Not Started.
 -   [ ] **15. Firestore Security & Indexing**: Not Started.
