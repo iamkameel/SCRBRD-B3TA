@@ -448,3 +448,11 @@ export interface PlayerPerformanceForecast {
   predictedPerformance: string;
   justification: string;
 }
+
+export interface HighlightReelOutput {
+    highlights: {
+        over: string;
+        description: string;
+        imageUrl: string;
+    }[];
+}
