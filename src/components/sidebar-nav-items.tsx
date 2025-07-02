@@ -49,6 +49,15 @@ const adminNavGroups = [
         ]
     },
     {
+        title: "Coaching & Training",
+        icon: Target,
+        adminOnly: true,
+        items: [
+             { href: '/planner', label: 'Session Planner', icon: CalendarDays },
+             { href: '/drills', label: 'Drill Library', icon: Target },
+        ]
+    },
+    {
         title: "Resources & Logistics",
         icon: Wrench,
         adminOnly: true,

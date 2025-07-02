@@ -409,6 +409,7 @@ export interface Drill {
   description: string;
   category: 'Batting' | 'Bowling' | 'Fielding' | 'Fitness' | 'Tactical';
   duration: number; // in minutes
+  userId?: string;
 }
 
 export interface TrainingSession {
