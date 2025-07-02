@@ -457,3 +457,4 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
     </>
   );
 }
+

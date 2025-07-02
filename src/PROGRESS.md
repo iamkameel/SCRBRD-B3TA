@@ -10,7 +10,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **2. Team Manager's Logistics Hub**: In Progress. Availability (RSVP) and assignment requests complete.
 -   [x] **3. Player & Captain Engagement Features**: Completed. Lineup confirmation workflow is in place.
 -   [x] **4. Sportmaster's Strategic Calendar**: Completed.
--   [x] **5. Advanced Filtering & Search**: In Progress. People page filtering and bulk actions complete.
+-   [x] **5. Advanced Filtering & Search**: In Progress. People and Matches page filtering complete.
 
 ---
 
