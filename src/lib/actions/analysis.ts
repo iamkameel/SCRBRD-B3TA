@@ -22,7 +22,7 @@ import { scoutPlayer } from '@/ai/flows/scout-player-flow';
 import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput } from '@/ai/schemas';
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
@@ -322,7 +322,7 @@ export async function generatePlayerPerformanceForecastAction(input: PlayerPerfo
     }
 }
 
-export async function runUmpireReviewAction(input: ScoutingReportInput): Promise<UmpireDecisionOutput> {
+export async function runUmpireReviewAction(input: UmpireReviewInput): Promise<UmpireDecisionOutput> {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("User not authenticated.");
@@ -333,7 +333,7 @@ export async function runUmpireReviewAction(input: ScoutingReportInput): Promise
   }
 
   try {
-    const result = await runUmpireReview({ photoDataUri: input.photoDataUri });
+    const result = await runUmpireReview(input);
     return result;
   } catch (error) {
     console.error("Error running umpire review:", error);
