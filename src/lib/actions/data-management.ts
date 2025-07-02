@@ -302,6 +302,8 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 playerOfTheMatch: scorecardData ? scorecardData.playerOfTheMatch : null,
                 report: '',
                 preview: '',
+                lineupConfirmedByCaptainA: false,
+                lineupConfirmedByCaptainB: false,
             };
 
             if (match.round) {
@@ -539,6 +541,7 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv: s
     }
 }
     
+
 
 
 
