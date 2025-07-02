@@ -262,29 +262,27 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
 
   const filteredPeople = React.useMemo(() => {
     return people.filter(person => {
-      const matchesSearch = `${person.firstName} ${person.lastName} ${person.email}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      if (!matchesSearch) return false;
-
-      const matchesRole = roleFilters.length === 0 || roleFilters.some(role => person.roles.includes(role));
-      if (!matchesRole) return false;
-
+      const searchMatch = searchQuery ? `${person.firstName} ${person.lastName} ${person.email}`.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+      const roleMatch = roleFilters.length > 0 ? roleFilters.some(role => person.roles.includes(role)) : true;
+      
+      if (!searchMatch || !roleMatch) return false;
+      
       const isAssignedToAnySchool = person.assignedSchools && person.assignedSchools.length > 0;
-
-      // Handle assignment filter first as it's a primary toggle
-      if (assignmentFilter === 'unassigned') {
-        return !isAssignedToAnySchool;
+      
+      switch (assignmentFilter) {
+          case 'assigned':
+              if (!isAssignedToAnySchool) return false;
+              // fallthrough to check school filter
+          case 'all':
+              if (schoolFilter.length > 0) {
+                  return person.assignedSchools?.some(id => schoolFilter.includes(id)) ?? false;
+              }
+              return true;
+          case 'unassigned':
+              return !isAssignedToAnySchool;
+          default:
+              return true;
       }
-      
-      if (assignmentFilter === 'assigned' && !isAssignedToAnySchool) {
-        return false;
-      }
-      
-      // If we've passed the assignment filter, apply the school filter
-      const matchesSchool = schoolFilter.length === 0 || (isAssignedToAnySchool && schoolFilter.some(schoolId => person.assignedSchools!.includes(schoolId)));
-      
-      return matchesSchool;
     });
   }, [people, searchQuery, roleFilters, schoolFilter, assignmentFilter]);
 
@@ -477,7 +475,11 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
                             <Label>School</Label>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="col-span-2 h-8 justify-between font-normal">
+                                    <Button 
+                                      variant="outline" 
+                                      className="col-span-2 h-8 justify-between font-normal"
+                                      disabled={assignmentFilter === 'unassigned'}
+                                    >
                                         <span className="truncate">
                                             {schoolFilter.length === 0 && "Select schools..."}
                                             {schoolFilter.length === 1 && schools.find(s => s.schoolId === schoolFilter[0])?.name}
