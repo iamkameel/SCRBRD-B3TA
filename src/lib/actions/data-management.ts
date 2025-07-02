@@ -48,7 +48,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         ];
 
         for (const collName of collectionsToClear) {
-            const q = query(collection(db, collName), where("userId", "==", userId));
+            const q = query(collection(db, collName)); // No user filter needed for admin delete all
             const snapshot = await getDocs(q);
             
             for (const docSnapshot of snapshot.docs) {
@@ -120,17 +120,17 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         ];
         
         for (const collName of collectionsInOrder) {
-            for (const item of sampleData[collName]) {
+            for (const item of sampleData[collName as keyof typeof sampleData]) {
                 const idKey = idKeyMap[collName as keyof typeof idKeyMap];
                 if (!idKey) throw new Error(`No idKey mapping for collection: ${collName}`);
                 
-                const tempId = item[idKey as keyof typeof item];
+                const tempId = (item as any)[idKey as keyof typeof item];
 
                 // If the document is our admin user, we use the pre-generated ref. Otherwise, create a new one.
                 const isPredefinedAdmin = collName === 'people' && tempId === adminRecord.personId;
                 const docRef = isPredefinedAdmin ? newAdminDocRef : doc(collection(db, collName));
 
-                const { [idKey]: _, ...itemData } = item;
+                const { [idKey]: _, ...itemData } = item as any;
                 
                 const dataToSave: { [key: string]: any } = { ...itemData, userId };
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
@@ -539,5 +539,6 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv: s
     }
 }
     
+
 
 
