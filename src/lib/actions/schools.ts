@@ -328,5 +328,3 @@ export async function getMatchesBySchool(schoolId: string): Promise<Match[]> {
 
   return Array.from(uniqueMatchesMap.values()).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
 }
-
-    

@@ -10,7 +10,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **2. Team Manager's Logistics Hub**: In Progress. Availability (RSVP) and assignment requests complete.
 -   [x] **3. Player & Captain Engagement Features**: Completed. Lineup confirmation workflow is in place.
 -   [x] **4. Sportmaster's Strategic Calendar**: Completed.
--   [x] **5. Advanced Filtering & Search**: In Progress. People and Matches page filtering complete.
+-   [x] **5. Advanced Filtering & Search**: Completed. All major list views now support advanced filtering.
 
 ---
 
@@ -29,5 +29,5 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **11. Progressive Web App (PWA) & Offline Scoring**: PWA foundation complete. Offline scoring is a future task.
 -   [x] **12. Comprehensive Testing Suite**: Completed.
 -   [x] **13. Push Notification System**: In Progress. Client-side setup and preferences are complete.
--   [ ] **14. User-Uploaded Asset Management**: Not Started.
+-   [x] **14. User-Uploaded Asset Management**: In Progress. School and Sponsor logo uploads complete.
 -   [ ] **15. Firestore Security & Indexing**: Not Started.

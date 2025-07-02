@@ -4,7 +4,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { db, app } from '@/lib/firebase';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { Sponsor } from '@/lib/data';
 import { cache } from 'react';
@@ -30,7 +31,8 @@ export async function getSponsors(): Promise<Sponsor[]> {
 
 const sponsorSchema = z.object({
   name: z.string().min(1, { message: "Sponsor name is required." }),
-  logoUrl: z.string().url({ message: "A valid logo URL is required." }).or(z.literal('')),
+  logoUrl: z.string().url({ message: "A valid logo URL is required." }).optional().or(z.literal('')),
+  logoDataUri: z.string().optional(),
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
@@ -42,10 +44,24 @@ export async function addSponsorAction(data: z.infer<typeof sponsorSchema>) {
   if (!validatedFields.success) {
     throw new Error('Invalid sponsor data.');
   }
+  
+  const { logoDataUri, ...sponsorData } = validatedFields.data;
+  let finalLogoUrl = sponsorData.logoUrl || '';
+
+  if (logoDataUri) {
+    const storage = getStorage(app);
+    const storageRef = ref(storage, `logos/sponsors/${sponsorData.name.replace(/\s+/g, '-')}-${Date.now()}.png`);
+    const mimeType = logoDataUri.match(/data:(.*);/)?.[1] || 'image/png';
+    const base64Data = logoDataUri.split(',')[1];
+    
+    await uploadString(storageRef, base64Data, 'base64', { contentType: mimeType });
+    finalLogoUrl = await getDownloadURL(storageRef);
+  }
 
   try {
     await addDoc(collection(db, 'sponsors'), {
-      ...validatedFields.data,
+      ...sponsorData,
+      logoUrl: finalLogoUrl,
       userId: userId,
     });
   } catch (error) {
@@ -69,16 +85,30 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
         throw new Error('Invalid sponsor data.');
     }
 
-    const { sponsorId, ...updateData } = validatedFields.data;
+    const { sponsorId, logoDataUri, ...updateData } = validatedFields.data;
     const sponsorDocRef = doc(db, 'sponsors', sponsorId);
 
     const sponsorSnap = await getDoc(sponsorDocRef);
     if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
         throw new Error("Sponsor not found or you do not have permission to edit it.");
     }
+    
+    let finalLogoUrl = updateData.logoUrl || '';
+
+    if (logoDataUri) {
+        const storage = getStorage(app);
+        const storageRef = ref(storage, `logos/sponsors/${updateData.name.replace(/\s+/g, '-')}-${Date.now()}.png`);
+        const mimeType = logoDataUri.match(/data:(.*);/)?.[1] || 'image/png';
+        const base64Data = logoDataUri.split(',')[1];
+        
+        await uploadString(storageRef, base64Data, 'base64', { contentType: mimeType });
+        finalLogoUrl = await getDownloadURL(storageRef);
+    }
+    
+    const finalUpdateData = { ...updateData, logoUrl: finalLogoUrl };
 
     try {
-        await updateDoc(sponsorDocRef, updateData);
+        await updateDoc(sponsorDocRef, finalUpdateData);
     } catch (error) {
         console.error("Error updating sponsor:", error);
         throw new Error("Could not update sponsor.");
@@ -112,5 +142,3 @@ export async function deleteSponsorAction(sponsorId: string) {
 
   revalidatePath('/sponsors');
 }
-
-    
