@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest, TrainingSession } from '@/lib/data';
 import { getPlayers, getPerson, getPersonLinks } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
@@ -11,6 +11,7 @@ import { getCompetitions } from './competitions';
 import { getPendingAssignmentRequests } from './requests';
 import { getSessionsByTeam } from './sessions';
 import { cache } from 'react';
+import { getSchools } from './schools';
 
 
 export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
