@@ -16,7 +16,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 
 ### Category 2: Next-Generation AI & Analytics
 
--   [ ] **6. AI Scouting Assistant**: Not Started.
+-   [x] **6. AI Scouting Assistant**: Completed.
 -   [ ] **7. Predictive Player Performance**: Not Started.
 -   [ ] **8. Automated Highlight Reels**: Not Started.
 -   [ ] **9. Natural Language Query for Stats**: Not Started.

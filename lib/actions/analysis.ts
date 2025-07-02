@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -322,18 +321,18 @@ export async function generatePlayerPerformanceForecastAction(input: PlayerPerfo
     }
 }
 
-export async function runUmpireReviewAction(input: ScoutingReportInput): Promise<UmpireDecisionOutput> {
+export async function runUmpireReviewAction(photoDataUri: string): Promise<UmpireDecisionOutput> {
   const userId = await getUserId();
   if (!userId) {
     throw new Error("User not authenticated.");
   }
   
-  if (!input.photoDataUri) {
+  if (!photoDataUri) {
     throw new Error("An image is required for the review.");
   }
 
   try {
-    const result = await runUmpireReview({ photoDataUri: input.photoDataUri });
+    const result = await runUmpireReview({ photoDataUri });
     return result;
   } catch (error) {
     console.error("Error running umpire review:", error);
