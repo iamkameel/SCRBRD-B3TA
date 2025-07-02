@@ -8,7 +8,7 @@ import type { PlayerStats, PlayerMatchPerformance, Innings } from '@/lib/data';
 import { getPerson } from './players';
 import { getUserId } from '@/lib/auth';
 
-export async function getPlayerStats(personId: string): Promise<PlayerStats> {
+export async function getPlayerStats(personId: string, filters: { seasonId?: string, competitionId?: string } = {}): Promise<PlayerStats> {
     const userId = await getUserId();
     const defaultStats: PlayerStats = {
         matchesPlayed: 0, inningsBatted: 0, notOuts: 0, totalRuns: 0, highestScore: 0, highestScoreNotOut: false, ballsFaced: 0, hundreds: 0, fifties: 0, fours: 0, sixes: 0,
@@ -26,7 +26,15 @@ export async function getPlayerStats(personId: string): Promise<PlayerStats> {
     const personName = `${person.firstName} ${person.lastName}`;
 
     const matchesCollection = collection(db, 'matches');
-    const q = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"));
+    
+    let q = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"));
+    if (filters.seasonId) {
+        q = query(q, where("seasonId", "==", filters.seasonId));
+    }
+    if (filters.competitionId) {
+        q = query(q, where("competitionId", "==", filters.competitionId));
+    }
+
     const completedMatchesSnapshot = await getDocs(q);
 
     let stats = { ...defaultStats };

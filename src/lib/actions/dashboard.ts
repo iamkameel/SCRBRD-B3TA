@@ -14,12 +14,20 @@ import { cache } from 'react';
 import { getSchools } from './schools';
 
 
-export async function getLeaderboards(): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
-    const players = await getPlayers();
+export async function getLeaderboards(filters: { seasonId?: string, competitionId?: string, teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
+    let players: Person[];
+
+    if (filters.teamId) {
+        const roster = await getTeamRoster(filters.teamId);
+        const playerPromises = roster.filter(m => m.role === 'Player').map(m => getPerson(m.personId));
+        players = (await Promise.all(playerPromises)).filter((p): p is Person => p !== null);
+    } else {
+        players = await getPlayers();
+    }
     
     const playersWithStats: LeaderboardPlayer[] = await Promise.all(
         players.map(async (player) => {
-            const stats = await getPlayerStats(player.personId);
+            const stats = await getPlayerStats(player.personId, { seasonId: filters.seasonId, competitionId: filters.competitionId });
             return { ...player, stats };
         })
     );

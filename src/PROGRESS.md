@@ -19,7 +19,7 @@ This document tracks our progress against the "Next Steps" roadmap. We've made s
 -   [x] **6. AI Scouting Assistant**: Completed.
 -   [ ] **7. Predictive Player Performance**: Not Started.
 -   [ ] **8. Automated Highlight Reels**: Not Started.
--   [ ] **9. Natural Language Query for Stats**: Not Started.
+-   [x] **9. Natural Language Query for Stats**: In Progress. Foundational tool and filtering implemented.
 -   [ ] **10. Dynamic In-Match Strategy Suggestions**: Not Started.
 
 ---
