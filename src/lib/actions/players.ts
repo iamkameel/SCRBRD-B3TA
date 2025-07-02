@@ -1,12 +1,11 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup, arrayUnion, arrayRemove } from 'firebase/firestore';
-import type { Person, PlayerDevelopmentPlanOutput, Match } from '@/lib/data';
+import type { Person, PlayerDevelopmentPlanOutput, Match, PersonSkills } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
@@ -620,4 +619,46 @@ export async function assignPersonToSchoolAction(personId: string, schoolId: str
 
   revalidatePath('/people');
   revalidatePath(`/people/${personId}`);
+}
+
+
+const skillsSchema = z.object({
+  batting: z.object({
+    power: z.number().min(0).max(100).optional(),
+    timing: z.number().min(0).max(100).optional(),
+    running: z.number().min(0).max(100).optional(),
+  }).optional(),
+  bowling: z.object({
+    pace: z.number().min(0).max(100).optional(),
+    spin: z.number().min(0).max(100).optional(),
+    accuracy: z.number().min(0).max(100).optional(),
+  }).optional(),
+  fielding: z.object({
+    catching: z.number().min(0).max(100).optional(),
+    throwing: z.number().min(0).max(100).optional(),
+    agility: z.number().min(0).max(100).optional(),
+  }).optional(),
+});
+export async function updatePlayerSkillsAction(personId: string, skills: PersonSkills) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    const person = await getPerson(userId);
+    if (!person || (!person.roles.includes('Admin') && !person.roles.includes('Coach'))) {
+        throw new Error("You do not have permission to edit player skills.");
+    }
+    
+    const validatedSkills = skillsSchema.safeParse(skills);
+    if (!validatedSkills.success) {
+        throw new Error("Invalid skills data provided.");
+    }
+
+    try {
+        const personRef = doc(db, 'people', personId);
+        await updateDoc(personRef, { skills: validatedSkills.data });
+        revalidatePath(`/people/${personId}`);
+    } catch (error) {
+        console.error("Error updating player skills:", error);
+        throw new Error("Could not update player skills.");
+    }
 }

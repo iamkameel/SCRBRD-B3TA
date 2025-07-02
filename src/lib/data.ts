@@ -2,6 +2,26 @@
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 
 // Interfaces
+
+export interface PersonSkills {
+  batting?: {
+    power?: number;
+    timing?: number;
+    running?: number;
+  };
+  bowling?: {
+    pace?: number;
+    spin?: number;
+    accuracy?: number;
+  };
+  fielding?: {
+    catching?: number;
+    throwing?: number;
+    agility?: number;
+  };
+}
+
+
 export interface Person {
   personId: string;
   firstName: string;
@@ -35,6 +55,7 @@ export interface Person {
   developmentPlan?: PlayerDevelopmentPlanOutput;
   developmentPlanGeneratedAt?: Date;
   fcmTokens?: string[];
+  skills?: PersonSkills;
 }
 
 export interface School {

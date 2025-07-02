@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import * as React from "react";
-import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle, User, BarChart2, Heart, Shield, Dumbbell, Briefcase, Mail, Phone } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle, User, BarChart2, Heart, Shield, Dumbbell, Briefcase, Mail, Phone, Target } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -39,6 +38,7 @@ import { AddLinkDialog } from "./add-link-dialog";
 import { PlayerDevelopmentCard } from "./player-development-card";
 import { useAuth } from "@/lib/auth-context";
 import { AssignTeamDialog, EditTeamAssignmentDialog } from "./team-assignment-dialogs";
+import { PlayerSkillsCard } from "./player-skills-card";
 
 interface PersonDetailsClientProps {
     person: Person;
@@ -167,8 +167,9 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
         </header>
 
          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="skills" disabled={!isPlayer}>Skills</TabsTrigger>
                 <TabsTrigger value="profile">Profile Details</TabsTrigger>
                 <TabsTrigger value="assignments">Assignments</TabsTrigger>
                 <TabsTrigger value="history">Match History</TabsTrigger>
@@ -205,10 +206,14 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                 </Card>
             </TabsContent>
             
+             <TabsContent value="skills" className="mt-4">
+                <PlayerSkillsCard person={person} canManage={canManage} />
+             </TabsContent>
+
             <TabsContent value="profile" className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2">
-                    <CardHeader><CardTitle>Biography & Qualifications</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Biography &amp; Qualifications</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         {person.biography && <div className="space-y-2"><h3 className="font-semibold">Biography</h3><p className="text-muted-foreground text-sm whitespace-pre-wrap">{person.biography}</p></div>}
                         {person.qualifications && person.qualifications.length > 0 && (

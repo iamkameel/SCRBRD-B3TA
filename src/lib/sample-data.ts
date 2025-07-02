@@ -1,5 +1,4 @@
 
-
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -109,8 +108,8 @@ const sampleDataPrecursor = {
         
         // Michaelhouse Players & Coach
         { personId: 'p_1', firstName: 'James', lastName: 'Anderson', email: 'james.a@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', profileImageUrl: 'https://placehold.co/400x400.png', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
-        { personId: 'p_2', firstName: 'Ben', lastName: 'Stokes', email: 'ben.s@example.com', roles: ['Player', 'Vice-Captain'], activeRole: 'Player', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
-        { personId: 'p_3', firstName: 'Joe', lastName: 'Root', email: 'joe.r@example.com', roles: ['Player'], activeRole: 'Player', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_2', firstName: 'Ben', lastName: 'Stokes', email: 'ben.s@example.com', roles: ['Player', 'Vice-Captain'], activeRole: 'Player', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false }, skills: { batting: { power: 90, timing: 85, running: 80 }, bowling: { pace: 88, accuracy: 82 }, fielding: { catching: 85, throwing: 88, agility: 80 } } },
+        { personId: 'p_3', firstName: 'Joe', lastName: 'Root', email: 'joe.r@example.com', roles: ['Player'], activeRole: 'Player', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false }, skills: { batting: { power: 80, timing: 95, running: 82 }, bowling: { spin: 70, accuracy: 75 }, fielding: { catching: 90, throwing: 80, agility: 85 } } },
         { personId: 'p_4', firstName: 'Stuart', lastName: 'Broad', email: 'stuart.b@example.com', roles: ['Player'], activeRole: 'Player', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_5', firstName: 'Jonny', lastName: 'Bairstow', email: 'jonny.b@example.com', roles: ['Player'], activeRole: 'Player', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_6', firstName: 'Jos', lastName: 'Buttler', email: 'jos.b@example.com', roles: ['Player'], activeRole: 'Player', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
@@ -122,7 +121,7 @@ const sampleDataPrecursor = {
         { personId: 'p_12', firstName: 'Trevor', lastName: 'Bayliss', email: 'trevor.b@coach.com', roles: ['Coach'], activeRole: 'Coach', assignedSchools: ['school_1'], notificationPreferences: { email: true, push: false } },
 
         // Hilton College Players & Coach
-        { personId: 'p_13', firstName: 'Virat', lastName: 'Kohli', email: 'virat.k@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', profileImageUrl: 'https://placehold.co/400x400.png', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
+        { personId: 'p_13', firstName: 'Virat', lastName: 'Kohli', email: 'virat.k@example.com', roles: ['Player', 'Captain'], activeRole: 'Player', profileImageUrl: 'https://placehold.co/400x400.png', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false }, skills: { batting: { power: 92, timing: 98, running: 88 }, fielding: { catching: 95, throwing: 90, agility: 92 } } },
         { personId: 'p_14', firstName: 'Rohit', lastName: 'Sharma', email: 'rohit.s@example.com', roles: ['Player', 'Vice-Captain'], activeRole: 'Player', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_15', firstName: 'Jasprit', lastName: 'Bumrah', email: 'jasprit.b@example.com', roles: ['Player'], activeRole: 'Player', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
         { personId: 'p_16', firstName: 'KL', lastName: 'Rahul', email: 'kl.rahul@example.com', roles: ['Player'], activeRole: 'Player', assignedSchools: ['school_2'], notificationPreferences: { email: true, push: false } },
@@ -462,9 +461,3 @@ export const sampleScorecardData = {
         }
     }
 };
-
-    
-
-
-
-
