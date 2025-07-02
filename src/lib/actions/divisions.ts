@@ -16,8 +16,8 @@ export async function getDivisions(): Promise<Division[]> {
   if (!userId) return [];
   try {
     const divisionsCollection = collection(db, 'divisions');
-    // Fetch all divisions, assuming a single-organization context.
-    const divisionSnapshot = await getDocs(divisionsCollection);
+    const q = query(divisionsCollection, where("userId", "==", userId));
+    const divisionSnapshot = await getDocs(q);
     const divisionsList = divisionSnapshot.docs.map(doc => ({
       divisionId: doc.id,
       name: doc.data().name,
@@ -144,3 +144,5 @@ export async function deleteDivisionAction(divisionId: string) {
   revalidatePath('/divisions');
   revalidatePath('/teams');
 }
+
+    

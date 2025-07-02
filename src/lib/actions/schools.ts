@@ -18,8 +18,8 @@ export async function getSchools(): Promise<School[]> {
   if (!userId) return [];
   try {
     const schoolsCollection = collection(db, 'schools');
-    // Fetch all schools, assuming a single-organization context.
-    const schoolSnapshot = await getDocs(schoolsCollection);
+    const q = query(schoolsCollection, where("userId", "==", userId));
+    const schoolSnapshot = await getDocs(q);
     const schoolsList = schoolSnapshot.docs.map(doc => ({
       schoolId: doc.id,
       ...doc.data(),
@@ -38,7 +38,7 @@ export const getSchool = cache(async (schoolId: string): Promise<School | null> 
   try {
     const schoolDocRef = doc(db, 'schools', schoolId);
     const schoolSnap = await getDoc(schoolDocRef);
-    if (!schoolSnap.exists()) {
+    if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) {
       return null;
     }
     return {
@@ -328,3 +328,5 @@ export async function getMatchesBySchool(schoolId: string): Promise<Match[]> {
 
   return Array.from(uniqueMatchesMap.values()).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
 }
+
+    

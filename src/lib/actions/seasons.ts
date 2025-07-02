@@ -15,8 +15,8 @@ export async function getSeasons(): Promise<Season[]> {
   if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
-    // Fetch all seasons, assuming a single-organization context.
-    const seasonSnapshot = await getDocs(seasonsCollection);
+    const q = query(seasonsCollection, where("userId", "==", userId));
+    const seasonSnapshot = await getDocs(q);
     const seasonsList = seasonSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -129,3 +129,5 @@ export async function deleteSeasonAction(seasonId: string) {
   }
   revalidatePath('/seasons'); revalidatePath('/teams'); revalidatePath('/new-match');
 }
+
+    
