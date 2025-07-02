@@ -1,164 +1,158 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isAuth() {
+  
+    // Helper Functions
+    function isSignedIn() {
       return request.auth != null;
     }
-
+    
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    function getPersonData(userId) {
-      return get(/databases/$(database)/documents/people/$(userId)).data;
+    function getUserData() {
+      // Use the personId which should match the auth UID
+      return get(/databases/$(database)/documents/people/$(request.auth.uid)).data;
     }
     
-    function isAnyRole(roles) {
-      return isAuth() && getPersonData(request.auth.uid).roles.hasAny(roles);
+    function hasRole(role) {
+      return role in getUserData().roles;
     }
     
     function isAdmin() {
-      return isAnyRole(['Admin', 'Sportsmaster']);
+      return hasRole('Admin');
     }
-
-    // Default deny all
-    match /{document=**} {
-      allow read, write: if false;
+    
+    function isSportsmaster() {
+      return hasRole('Sportsmaster');
     }
-
-    // People: Logged-in users can read all profiles. Users can update their own profile. Admins can update any.
+    
+    function canManageData() {
+        return isAdmin() || isSportsmaster();
+    }
+    
+    // People: Users can read/update their own profile. Admins can read/write any.
     match /people/{personId} {
-      allow read: if isAuth();
-      allow create: if isAuth(); // For new user signup
+      allow read: if isSignedIn();
+      allow create: if isSignedIn(); // User creation is handled by a server action, but allow for signup.
       allow update: if isOwner(personId) || isAdmin();
       allow delete: if isAdmin();
     }
     
-    // Family Links: Users can only manage their own links.
-    match /familyLinks/{linkId} {
-        allow read: if isAuth();
-        allow create: if isAuth() && (isOwner(request.resource.data.parentId) || isOwner(request.resource.data.childId));
-        allow delete: if isAuth() && (isOwner(resource.data.parentId) || isOwner(resource.data.childId));
-    }
-
-    // Core data: Schools, Seasons, Divisions, Fields
-    // Readable by all authenticated users, writable only by admins.
+    // Core Data: Schools, Divisions, Seasons, Fields are managed by Admins/Sportsmasters.
+    // Read access is generally open to any authenticated user.
     match /schools/{schoolId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageData();
     }
-    match /seasons/{seasonId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
-    }
+    
     match /divisions/{divisionId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageData();
     }
+    
+    match /seasons/{seasonId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageData();
+    }
+    
     match /fields/{fieldId} {
-      allow read: if isAuth();
-      allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageData();
+      
+      // Groundskeeper assignments on fields
       match /assignments/{assignmentId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
+        allow read, create, delete: if canManageData();
       }
     }
     
-    // Teams & Rosters: Readable by all. Writable by Admins/Sportsmasters.
-    match /teams/{teamId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
-        
-        match /roster/{rosterId} {
-            allow read: if isAuth();
-            allow write: if isAdmin();
-        }
-    }
-
-    // Competitions: Readable by all. Writable by Admins/Sportsmasters.
+    // Competitions & Teams
     match /competitions/{competitionId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
-    }
-
-    // Matches & subcollections: Readable by all.
-    // Writes are complex: Admins/Sportsmasters can create/edit.
-    // Scorers/Umpires need to update live scores.
-    match /matches/{matchId} {
-        allow read: if isAuth();
-        allow create, delete: if isAdmin();
-        // Allow updates from admins, or specific field updates from authorized users
-        allow update: if isAdmin()
-                       || (isAuth() && request.resource.data.keys().hasOnly(['availability.' + request.auth.uid]))
-                       || (isAuth() && request.resource.data.keys().hasOnly(['lineupConfirmedByCaptainA']))
-                       || (isAuth() && request.resource.data.keys().hasOnly(['lineupConfirmedByCaptainB']))
-                       || (isAnyRole(['Scorer', 'Umpire']) && request.resource.data.keys().hasAny(['status', 'liveScore', 'previousLiveScore', 'firstInningsTotal', 'winnerTeamId', 'result']));
-
-
-        // Subcollections
-        match /lineups/{teamId} {
-            allow read: if isAuth();
-            allow write: if isAdmin() || isAnyRole(['Coach']); 
-        }
-        match /officials/{officialId} {
-            allow read: if isAuth();
-            allow create, delete: if isAdmin();
-            // Allow an official to confirm their own assignment
-            allow update: if isOwner(resource.data.personId) && request.resource.data.keys().hasOnly(['confirmed']);
-        }
-        match /scorecards/{innings} {
-            allow read: if isAuth();
-            allow write: if isAdmin() || isAnyRole(['Scorer', 'Umpire']);
-        }
-        match /transportAssignments/{assignmentId} {
-            allow read: if isAuth();
-            allow write: if isAdmin();
-        }
-    }
-
-    // Drills, Sessions
-    match /drills/{drillId} {
-        allow read: if isAuth();
-        allow write: if isAnyRole(['Admin', 'Sportsmaster', 'Coach']);
-    }
-    match /sessions/{sessionId} {
-        allow read: if isAuth();
-        allow write: if isAnyRole(['Admin', 'Sportsmaster', 'Coach']);
-    }
-
-    // Resources & Financials - Only admins can manage
-    match /vehicles/{vehicleId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
-    }
-    match /equipment/{itemId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
-    }
-    match /equipmentAssignments/{assignmentId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
-    }
-    match /sponsors/{sponsorId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
-    }
-    match /financials/{transactionId} {
-        allow read: if isAuth();
-        allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageData();
     }
     
-    // Assignment Requests
-    match /assignmentRequests/{requestId} {
-        allow read: if isAuth();
-        // A user can create their own request
-        allow create: if isAuth() && isOwner(request.resource.data.requesterId);
-        // Only an admin can update (approve/deny) a request
-        allow update: if isAdmin();
+    match /teams/{teamId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageData();
+      
+      match /roster/{rosterId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if canManageData();
+      }
+    }
+    
+    // Matches
+    match /matches/{matchId} {
+      allow read: if isSignedIn();
+      allow create, delete: if canManageData();
+      // Updates are more complex, handled by specific actions, but a general rule is useful.
+      // E.g., a Coach can update a lineup, an Umpire can update a score.
+      allow update: if isSignedIn();
+      
+      // Officials can confirm their own assignment.
+      match /officials/{officialId} {
+        allow read: if isSignedIn();
+        allow create, delete: if canManageData();
+        allow update: if canManageData() || isOwner(get(/databases/$(database)/documents/matches/$(matchId)/officials/$(officialId)).data.personId);
+      }
+      
+      match /lineups/{teamId} {
+        allow read, create, update: if isSignedIn();
+      }
+
+      match /scorecards/{innings} {
+         allow read: if isSignedIn();
+         allow create, update, delete: if hasRole('Scorer') || hasRole('Umpire') || canManageData();
+      }
+
+      match /transportAssignments/{assignmentId} {
+        allow read, create, delete: if canManageData();
+      }
+    }
+    
+    // Other top-level collections
+    match /vehicles/{vehicleId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageData();
+    }
+    
+    match /familyLinks/{linkId} {
+        allow read, create, delete: if isSignedIn();
+    }
+    
+    match /financials/{transactionId} {
+        allow read, create, update, delete: if canManageData();
+    }
+    
+    match /equipment/{itemId} {
+        allow read, create, update, delete: if canManageData();
+    }
+    
+    match /equipmentAssignments/{assignmentId} {
+        allow read, create, update, delete: if canManageData();
+    }
+    
+    match /sponsors/{sponsorId} {
+        allow read, create, update, delete: if canManageData();
+    }
+    
+    match /drills/{drillId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if hasRole('Coach') || canManageData();
+    }
+
+    match /sessions/{sessionId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if hasRole('Coach') || canManageData();
+    }
+    
+    match /assignmentRequests/{reqId} {
+      allow read: if isOwner(resource.data.userId) || isOwner(resource.data.requesterId);
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.userId); // Only the reviewer can update the status
     }
   }
 }
