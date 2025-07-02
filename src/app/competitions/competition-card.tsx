@@ -65,3 +65,5 @@ export function CompetitionCard({ competition, onEdit, onDelete, isAdmin }: Comp
         </Card>
     );
 }
+
+    

@@ -613,3 +613,5 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
     </>
   );
 }
+
+    
