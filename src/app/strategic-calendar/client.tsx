@@ -11,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,6 @@ import {
 import type { Match, Competition, Division } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { ScrollBar } from '@/components/ui/scroll-area';
 
 
 interface StrategicCalendarClientProps {
@@ -63,7 +62,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
         return filteredMatches.map((match) => match.dateTime);
     }, [filteredMatches]);
 
-    function Day({ date, displayMonth: _displayMonth, ...props }: { date: Date, displayMonth: Date } & React.HTMLAttributes<HTMLDivElement>) {
+    function Day({ date, ...props }: { date: Date } & Omit<React.HTMLAttributes<HTMLDivElement>, 'date'>) {
         const dayKey = format(date, 'yyyy-MM-dd');
         const matchesForDay = dayToMatchesMap.get(dayKey) || [];
 
@@ -72,9 +71,12 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                 {format(date, 'd')}
                 {matchesForDay.length > 0 && (
                      <div className="absolute bottom-1 flex items-center gap-0.5">
-                        {Array.from({ length: Math.min(matchesForDay.length, 3) }).map((_, i) => (
-                            <div key={i} className="w-1 h-1 rounded-full bg-primary" />
+                        {matchesForDay.slice(0, 3).map((match, i) => (
+                            <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary" />
                         ))}
+                        {matchesForDay.length > 3 && (
+                            <div className="text-[10px] font-bold text-primary/80">+{matchesForDay.length - 3}</div>
+                        )}
                     </div>
                 )}
             </div>
@@ -107,7 +109,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                                                 <Avatar className="h-4 w-4"><AvatarImage src={match.teamBLogoUrl} /></Avatar>
                                                 <span className="font-semibold">{match.teamBName}</span>
                                             </div>
-                                            <p className="text-xs text-muted-foreground mt-1">{match.competitionName}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">{match.competitionName} at {format(match.dateTime, 'p')}</p>
                                         </Link>
                                     </li>
                                 ))}
@@ -151,7 +153,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                 <CardContent>
                     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                         <Calendar
-                            mode="single"
+                            mode="multiple"
                             numberOfMonths={3}
                             className="p-4"
                             components={{ Day }}
