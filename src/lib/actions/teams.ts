@@ -222,7 +222,7 @@ export async function bulkAddPlayersToRosterAction(teamId: string, data: Omit<z.
 
     const { playerIds, status } = validatedFields.data;
     const rosterCol = collection(db, 'teams', teamId, 'roster');
-    const existingRoster = await getTeamRoster(teamId);
+    const existingRoster = await getTeamRoster(teamId); // This is cached, so it's fine.
     const existingPlayerIds = new Set(existingRoster.map(p => p.personId));
 
     const batch = writeBatch(db);
@@ -245,6 +245,7 @@ export async function bulkAddPlayersToRosterAction(teamId: string, data: Omit<z.
         console.error("Error bulk adding players to roster:", error);
         throw new Error("Could not add players to roster.");
     }
+    revalidatePath('/people');
     revalidatePath(`/teams/${teamId}`);
 }
 
