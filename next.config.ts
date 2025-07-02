@@ -9,9 +9,6 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
-    allowedDevOrigins: ["*.cloudworkstations.dev"],
-  },
   serverExternalPackages: ['handlebars', '@opentelemetry/instrumentation'],
   typescript: {
     ignoreBuildErrors: true,
