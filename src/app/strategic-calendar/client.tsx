@@ -62,7 +62,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
         return filteredMatches.map((match) => match.dateTime);
     }, [filteredMatches]);
 
-    function Day({ date, ...props }: { date: Date } & Omit<React.HTMLAttributes<HTMLDivElement>, 'date'>) {
+    function Day({ date, displayMonth, ...props }: { date: Date; displayMonth: Date } & React.HTMLAttributes<HTMLDivElement>) {
         const dayKey = format(date, 'yyyy-MM-dd');
         const matchesForDay = dayToMatchesMap.get(dayKey) || [];
 
