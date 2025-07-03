@@ -187,8 +187,8 @@ const competitions = [
 ];
 
 const matches = [
-    { matchId: 'match_1', teamAId: 'MHS_open_1xi', teamBId: 'HC_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed' },
-    { matchId: 'match_2', teamAId: 'DHS_open_1xi', teamBId: 'WBHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed' },
+    { matchId: 'match_1', teamAId: 'MHS_open_1xi', teamBId: 'HC_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed', winnerTeamId: 'MHS_open_1xi', result: 'Michaelhouse won by 7 runs' },
+    { matchId: 'match_2', teamAId: 'DHS_open_1xi', teamBId: 'WBHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed', winnerTeamId: 'DHS_open_1xi', result: 'DHS won by 25 runs' },
     { matchId: 'match_3', teamAId: 'MHS_open_1xi', teamBId: 'DHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: futureDate(7), status: 'scheduled' },
 ];
 
@@ -206,13 +206,94 @@ export const sampleData = {
     officials
 };
 
-const generateDummyScorecard = (teamAName: string, teamBName: string) => ({
-  playerOfTheMatch: { name: "Sample Player", teamName: teamAName, justification: "An outstanding sample performance." },
-  innings1: { teamName: teamAName, totalRuns: 182, wickets: 7, overs: 20, battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 16, details: "(w 8, nb 2, b 4, lb 2)" } },
-  innings2: { teamName: teamBName, totalRuns: 175, wickets: 9, overs: 20, battingCard: [], bowlingCard: [], fallOfWickets: [], extras: { total: 21, details: "(w 10, nb 3, b 4, lb 4)" } },
-});
-
 export const sampleScorecardData = {
-    "match_1": generateDummyScorecard("Michaelhouse 1st XI", "Hilton College 1st XI"),
-    "match_2": generateDummyScorecard("Durban High School 1st XI", "Westville Boys' High School 1st XI"),
+  "match_1": {
+    "playerOfTheMatch": {
+      "name": "S. Dlamini",
+      "teamName": "Michaelhouse 1st XI",
+      "justification": "For a match-winning 78 runs off 45 balls and taking two crucial wickets."
+    },
+    "innings1": {
+      "teamName": "Michaelhouse 1st XI",
+      "totalRuns": 182, "wickets": 7, "overs": 20,
+      "battingCard": [
+        { "name": "Sipho Ngcobo", "status": "c Fielder b Bowler A", "runs": 15, "balls": 12, "fours": 2, "sixes": 0, "strikeRate": 125.00 },
+        { "name": "Themba Dlamini", "status": "b Bowler B", "runs": 25, "balls": 20, "fours": 3, "sixes": 0, "strikeRate": 125.00 },
+        { "name": "Lunga Zulu", "status": "not out", "runs": 78, "balls": 45, "fours": 6, "sixes": 4, "strikeRate": 173.33 },
+        { "name": "Jabulani Ndlovu", "status": "c Fielder b Bowler C", "runs": 32, "balls": 22, "fours": 3, "sixes": 1, "strikeRate": 145.45 },
+        { "name": "Thabo Khumalo", "status": "run out", "runs": 8, "balls": 7, "fours": 1, "sixes": 0, "strikeRate": 114.29 },
+        { "name": "Nkosi Sithole", "status": "lbw b Bowler D", "runs": 4, "balls": 5, "fours": 0, "sixes": 0, "strikeRate": 80.00 },
+        { "name": "Sandile Mkhize", "status": "b Bowler A", "runs": 1, "balls": 3, "fours": 0, "sixes": 0, "strikeRate": 33.33 },
+        { "name": "Mandla Cele", "status": "not out", "runs": 3, "balls": 6, "fours": 0, "sixes": 0, "strikeRate": 50.00 },
+        { "name": "Bongi Van der Merwe", "status": "did not bat", "runs": 0, "balls": 0, "fours": 0, "sixes": 0, "strikeRate": 0 },
+        { "name": "Siyabonga Botha", "status": "did not bat", "runs": 0, "balls": 0, "fours": 0, "sixes": 0, "strikeRate": 0 },
+        { "name": "David Du Plessis", "status": "did not bat", "runs": 0, "balls": 0, "fours": 0, "sixes": 0, "strikeRate": 0 }
+      ],
+      "bowlingCard": [
+        { "name": "Player 1 (HC)", "overs": 4, "maidens": 0, "runs": 35, "wickets": 2, "economy": 8.75 },
+        { "name": "Player 2 (HC)", "overs": 4, "maidens": 0, "runs": 28, "wickets": 1, "economy": 7.00 },
+        { "name": "Player 3 (HC)", "overs": 4, "maidens": 0, "runs": 30, "wickets": 1, "economy": 7.50 },
+        { "name": "Player 4 (HC)", "overs": 4, "maidens": 0, "runs": 40, "wickets": 1, "economy": 10.00 },
+        { "name": "Player 5 (HC)", "overs": 4, "maidens": 0, "runs": 42, "wickets": 1, "economy": 10.50 }
+      ],
+      "fallOfWickets": [
+        { "wicket": 1, "runs": 28, "batsmanName": "Sipho Ngcobo", "over": 3.4 },
+        { "wicket": 2, "runs": 65, "batsmanName": "Themba Dlamini", "over": 8.1 },
+        { "wicket": 3, "runs": 130, "batsmanName": "Jabulani Ndlovu", "over": 14.2 }
+      ],
+      "extras": { "total": 16, "details": "(w 8, nb 2, b 4, lb 2)" }
+    },
+    "innings2": {
+      "teamName": "Hilton College 1st XI",
+      "totalRuns": 175, "wickets": 9, "overs": 20,
+      "battingCard": [
+        { "name": "Player 1 (HC)", "status": "c Fielder b Dlamini", "runs": 45, "balls": 30, "fours": 5, "sixes": 1, "strikeRate": 150.00 },
+        { "name": "Player 2 (HC)", "status": "b Khumalo", "runs": 12, "balls": 15, "fours": 1, "sixes": 0, "strikeRate": 80.00 },
+        { "name": "Player 3 (HC)", "status": "not out", "runs": 65, "balls": 40, "fours": 7, "sixes": 2, "strikeRate": 162.50 },
+        { "name": "Player 4 (HC)", "status": "run out", "runs": 18, "balls": 15, "fours": 2, "sixes": 0, "strikeRate": 120.00 },
+        { "name": "Player 5 (HC)", "status": "lbw b Dlamini", "runs": 5, "balls": 8, "fours": 0, "sixes": 0, "strikeRate": 62.50 }
+      ],
+      "bowlingCard": [
+        { "name": "Thabo Khumalo", "overs": 4, "maidens": 0, "runs": 30, "wickets": 3, "economy": 7.50 },
+        { "name": "S. Dlamini", "overs": 4, "maidens": 0, "runs": 25, "wickets": 2, "economy": 6.25 }
+      ],
+      "fallOfWickets": [
+        { "wicket": 1, "runs": 50, "batsmanName": "Player 1 (HC)", "over": 6.2 },
+        { "wicket": 2, "runs": 70, "batsmanName": "Player 2 (HC)", "over": 9.1 }
+      ],
+      "extras": { "total": 10, "details": "(w 5, nb 1, b 2, lb 2)" }
+    }
+  },
+  "match_2": {
+    "playerOfTheMatch": {
+      "name": "David Smith",
+      "teamName": "Durban High School 1st XI",
+      "justification": "A brilliant all-round performance, scoring 55 runs and taking 3 key wickets."
+    },
+    "innings1": {
+      "teamName": "Durban High School 1st XI",
+      "totalRuns": 195, "wickets": 5, "overs": 20,
+      "battingCard": [
+        { "name": "Michael Johnson", "status": "c Fielder b Bowler X", "runs": 30, "balls": 20, "fours": 4, "sixes": 1, "strikeRate": 150.00 },
+        { "name": "David Smith", "status": "not out", "runs": 55, "balls": 35, "fours": 5, "sixes": 2, "strikeRate": 157.14 }
+      ],
+      "bowlingCard": [
+        { "name": "Bowler X (WBHS)", "overs": 4, "maidens": 0, "runs": 40, "wickets": 2, "economy": 10.00 }
+      ],
+      "fallOfWickets": [],
+      "extras": { "total": 12, "details": "(w 6, nb 1, b 3, lb 2)" }
+    },
+    "innings2": {
+      "teamName": "Westville Boys' High School 1st XI",
+      "totalRuns": 170, "wickets": 8, "overs": 20,
+      "battingCard": [
+        { "name": "Chris Jones", "status": "b David Smith", "runs": 50, "balls": 40, "fours": 6, "sixes": 0, "strikeRate": 125.00 }
+      ],
+      "bowlingCard": [
+        { "name": "David Smith", "overs": 4, "maidens": 0, "runs": 25, "wickets": 3, "economy": 6.25 }
+      ],
+      "fallOfWickets": [],
+      "extras": { "total": 8, "details": "(w 4, b 4)" }
+    }
+  }
 };
