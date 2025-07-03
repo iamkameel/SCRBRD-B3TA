@@ -33,7 +33,7 @@ export function Sidebar() {
   return (
     <aside className="w-64 flex-col fixed inset-y-0 z-50 bg-sidebar text-sidebar-foreground border-r border-sidebar-border hidden md:flex">
       <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
-        <Link href="/" className="flex items-center gap-2 font-bold">
+        <Link href="/" className="flex items-center gap-2 font-bold text-sidebar-foreground">
           <CricketIcon className="h-6 w-6 text-sidebar-primary" />
           <span>SCRBRD</span>
         </Link>

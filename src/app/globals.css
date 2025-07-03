@@ -34,6 +34,16 @@
         --chart-3: 198 93% 45%;
         --chart-4: 282 78% 52%;
         --chart-5: 21 84% 54%;
+
+        /* Sidebar - Always dark for a modern look */
+        --sidebar-background: 222 25% 8%;
+        --sidebar-foreground: 210 20% 90%;
+        --sidebar-border: 215 20% 25%;
+        --sidebar-accent: 215 20% 25%;
+        --sidebar-accent-foreground: 210 20% 98%;
+        --sidebar-primary: 162 72% 50%;
+        --sidebar-primary-foreground: 210 20% 98%;
+        --sidebar-ring: 162 72% 50%;
     }
 
     .dark {
@@ -66,6 +76,16 @@
         --chart-3: 198 93% 50%;
         --chart-4: 282 78% 57%;
         --chart-5: 21 84% 59%;
+
+        /* Sidebar - Explicitly defined for dark mode for clarity */
+        --sidebar-background: 222 25% 8%;
+        --sidebar-foreground: 210 20% 90%;
+        --sidebar-border: 215 20% 25%;
+        --sidebar-accent: 215 20% 25%;
+        --sidebar-accent-foreground: 210 20% 98%;
+        --sidebar-primary: 162 72% 50%;
+        --sidebar-primary-foreground: 210 20% 98%;
+        --sidebar-ring: 162 72% 50%;
     }
 }
 
