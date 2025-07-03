@@ -20,6 +20,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     officials,
     people,
     teamARoster,
+    teamBRoster,
+    teamALineup,
     teamBLineup,
     scorecardData,
     transportAssignments,
@@ -29,6 +31,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getMatchOfficials(matchId),
     getPlayers(), // To populate the assignment dialog
     getTeamRoster(match.teamAId),
+    match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
+    getMatchLineup(matchId, match.teamAId),
     match.teamBId ? getMatchLineup(matchId, match.teamBId) : Promise.resolve([]),
     getScorecard(matchId),
     getMatchTransportAssignments(matchId),
@@ -41,6 +45,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     initialOfficials={officials} 
     people={people} 
     teamARoster={teamARoster}
+    teamBRoster={teamBRoster}
+    teamALineup={teamALineup}
     teamBLineup={teamBLineup}
     innings1={scorecardData?.innings1}
     innings2={scorecardData?.innings2}
@@ -49,3 +55,4 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     drivers={drivers}
   />;
 }
+
