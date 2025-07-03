@@ -14,8 +14,8 @@ This document tracks our progress against the new "Next Steps" roadmap.
 ### Category 2: Logistics & Resource Management
 
 -   [x] **3. Equipment Management Module**: Completed.
--   [ ] **4. Player Availability & RSVP**: Not Started.
--   [ ] **5. Lineup Confirmation Workflow**: Not Started.
+-   [x] **4. Player Availability & RSVP**: Completed.
+-   [x] **5. Lineup Confirmation Workflow**: Completed.
 
 ---
 
@@ -30,4 +30,4 @@ This document tracks our progress against the new "Next Steps" roadmap.
 
 -   [ ] **8. Enhanced Theming & Branding**: Not Started.
 -   [ ] **9. User Onboarding & Help System**: Not Started.
--   [ ] **10. Performance & Scalability Audit**: Not Started.
+-   [ ] **10. Performance & Scalability Audit**: Completed.
