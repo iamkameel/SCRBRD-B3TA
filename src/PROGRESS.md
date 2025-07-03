@@ -1,3 +1,4 @@
+
 # Project Progress: The New Horizon
 
 This document tracks our progress against the new "Next Steps" roadmap.
@@ -6,8 +7,8 @@ This document tracks our progress against the new "Next Steps" roadmap.
 
 ### Category 1: Advanced Coaching & Training Tools
 
--   [ ] **1. Training Session Planner**: Not Started.
--   [ ] **2. Drill Library**: Not Started.
+-   [x] **1. Training Session Planner**: Completed.
+-   [x] **2. Drill Library**: Completed.
 
 ---
 
