@@ -11,13 +11,23 @@ import {
     Target,
     CalendarRange,
     UserSearch,
-    HelpCircle
+    HelpCircle,
+    ScrollText,
+    BookOpen
 } from 'lucide-react';
 
 const topLevelNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/help', label: 'Help', icon: HelpCircle },
 ];
+
+const referenceGroup = {
+    title: "Reference",
+    icon: BookOpen,
+    items: [
+        { href: '/rulebook', label: 'Rule Book', icon: ScrollText },
+        { href: '/help', label: 'Help & Onboarding', icon: HelpCircle },
+    ]
+};
 
 const adminNavGroups = [
     {
@@ -87,7 +97,8 @@ const adminNavGroups = [
             { href: '/user-management', label: 'User Management', icon: UserCog },
             { href: '/data-management', label: 'Data Management', icon: Database },
         ]
-    }
+    },
+    referenceGroup
 ];
 
 const sportsmasterNavGroups = adminNavGroups.filter(g => !g.adminOnly);
@@ -113,6 +124,7 @@ const coachNavGroups = [
             { href: '/people', label: 'Player Profiles', icon: User },
         ]
     },
+    referenceGroup
 ];
 
 const playerNavGroups = [
@@ -139,6 +151,7 @@ const playerNavGroups = [
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
         ]
     },
+    referenceGroup,
 ];
 
 const officialNavGroups = [
@@ -156,6 +169,7 @@ const officialNavGroups = [
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
         ]
     },
+    referenceGroup,
 ];
 
 const driverNavGroups = [
@@ -166,6 +180,7 @@ const driverNavGroups = [
             { href: '/transport', label: 'My Schedule', icon: Bus },
         ]
     },
+    referenceGroup,
 ];
 
 const groundskeeperNavGroups = [
@@ -176,6 +191,7 @@ const groundskeeperNavGroups = [
             { href: '/fields', label: 'All Fields', icon: MapPin },
         ]
     },
+    referenceGroup,
 ];
 
 const guardianNavGroups = [
@@ -188,6 +204,7 @@ const guardianNavGroups = [
             { href: '/people', label: 'Profiles', icon: User },
         ]
     },
+    referenceGroup,
 ];
 
 const trainerNavGroups = [
@@ -198,6 +215,7 @@ const trainerNavGroups = [
             { href: '/people', label: 'Athlete Roster', icon: Users },
         ]
     },
+    referenceGroup,
 ];
 
 const spectatorNavGroups = [
@@ -210,6 +228,7 @@ const spectatorNavGroups = [
             { href: '/rankings', label: 'Rankings', icon: Trophy },
         ]
     },
+    referenceGroup,
 ];
 
 
