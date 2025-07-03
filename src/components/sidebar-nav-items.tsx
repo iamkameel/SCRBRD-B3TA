@@ -10,11 +10,13 @@ import {
     Dumbbell,
     Target,
     CalendarRange,
-    UserSearch
+    UserSearch,
+    HelpCircle
 } from 'lucide-react';
 
-const adminTopLevelNavItems = [
+const topLevelNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/help', label: 'Help', icon: HelpCircle },
 ];
 
 const adminNavGroups = [
@@ -112,10 +114,6 @@ const coachNavGroups = [
     },
 ];
 
-const playerTopLevelNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-];
-
 const playerNavGroups = [
     {
         title: "My Matches",
@@ -142,10 +140,6 @@ const playerNavGroups = [
     },
 ];
 
-const officialTopLevelNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-];
-
 const officialNavGroups = [
     {
         title: "Assignments",
@@ -163,10 +157,6 @@ const officialNavGroups = [
     },
 ];
 
-const driverTopLevelNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-];
-
 const driverNavGroups = [
     {
         title: "Assignments",
@@ -177,10 +167,6 @@ const driverNavGroups = [
     },
 ];
 
-const groundskeeperTopLevelNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-];
-
 const groundskeeperNavGroups = [
     {
         title: "Facilities",
@@ -189,10 +175,6 @@ const groundskeeperNavGroups = [
             { href: '/fields', label: 'All Fields', icon: MapPin },
         ]
     },
-];
-
-const guardianTopLevelNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
 
 const guardianNavGroups = [
@@ -207,10 +189,6 @@ const guardianNavGroups = [
     },
 ];
 
-const trainerTopLevelNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-];
-
 const trainerNavGroups = [
      {
         title: "Athletes",
@@ -219,10 +197,6 @@ const trainerNavGroups = [
             { href: '/people', label: 'Athlete Roster', icon: Users },
         ]
     },
-];
-
-const spectatorTopLevelNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
 
 const spectatorNavGroups = [
@@ -240,33 +214,33 @@ const spectatorNavGroups = [
 export function getNavConfig(role: string) {
     switch (role) {
         case 'Admin':
-            return { topLevel: adminTopLevelNavItems, groups: adminNavGroups };
+            return { topLevel: topLevelNavItems, groups: adminNavGroups };
         case 'Sportsmaster':
-            return { topLevel: adminTopLevelNavItems, groups: sportsmasterNavGroups };
+            return { topLevel: topLevelNavItems, groups: sportsmasterNavGroups };
         case 'Coach':
-            return { topLevel: playerTopLevelNavItems, groups: coachNavGroups };
+            return { topLevel: topLevelNavItems, groups: coachNavGroups };
         case 'Assistant Coach':
         case 'Captain':
         case 'Team Manager':
-            return { topLevel: playerTopLevelNavItems, groups: playerNavGroups };
+            return { topLevel: topLevelNavItems, groups: playerNavGroups };
         case 'Player':
-             return { topLevel: playerTopLevelNavItems, groups: playerNavGroups };
+             return { topLevel: topLevelNavItems, groups: playerNavGroups };
         case 'Umpire':
         case 'Scorer':
-            return { topLevel: officialTopLevelNavItems, groups: officialNavGroups };
+            return { topLevel: topLevelNavItems, groups: officialNavGroups };
         case 'Driver':
-            return { topLevel: driverTopLevelNavItems, groups: driverNavGroups };
+            return { topLevel: topLevelNavItems, groups: driverNavGroups };
         case 'Grounds-Keeper':
-            return { topLevel: groundskeeperTopLevelNavItems, groups: groundskeeperNavGroups };
+            return { topLevel: topLevelNavItems, groups: groundskeeperNavGroups };
         case 'Guardian':
-            return { topLevel: guardianTopLevelNavItems, groups: guardianNavGroups };
+            return { topLevel: topLevelNavItems, groups: guardianNavGroups };
         case 'Trainer':
-            return { topLevel: trainerTopLevelNavItems, groups: trainerNavGroups };
+            return { topLevel: topLevelNavItems, groups: trainerNavGroups };
         case 'Spectator':
         case 'School Admin':
-            return { topLevel: spectatorTopLevelNavItems, groups: spectatorNavGroups };
+            return { topLevel: topLevelNavItems, groups: spectatorNavGroups };
         default:
              // Default to a safe, minimal navigation for any other roles
-            return { topLevel: spectatorTopLevelNavItems, groups: spectatorNavGroups };
+            return { topLevel: topLevelNavItems, groups: spectatorNavGroups };
     }
 }
