@@ -23,7 +23,7 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     teamBRoster,
     teamALineup,
     teamBLineup,
-    scorecardData,
+    scorecard,
     transportAssignments,
     vehicles,
     drivers,
@@ -48,11 +48,11 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     teamBRoster={teamBRoster}
     teamALineup={teamALineup}
     teamBLineup={teamBLineup}
-    innings1={scorecardData?.innings1}
-    innings2={scorecardData?.innings2}
+    scorecard={scorecard}
     transportAssignments={transportAssignments}
     vehicles={vehicles}
     drivers={drivers}
   />;
 }
+
 
