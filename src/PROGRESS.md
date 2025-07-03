@@ -28,6 +28,6 @@ This document tracks our progress against the new "Next Steps" roadmap.
 
 ### Category 4: UI/UX & Platform Refinements
 
--   [ ] **8. Enhanced Theming & Branding**: Not Started.
+-   [x] **8. Enhanced Theming & Branding**: Completed.
 -   [ ] **9. User Onboarding & Help System**: Not Started.
--   [ ] **10. Performance & Scalability Audit**: Completed.
+-   [x] **10. Performance & Scalability Audit**: Completed.
