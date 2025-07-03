@@ -90,7 +90,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 }
 
 
-export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
+export async function migrateSampleDataAction(): Promise<{ success: boolean; message: string }> {
     const userId = await getUserId();
     if (!userId) {
         return { success: false, message: "Admin user not found. Please ensure an admin account exists or sign up before migrating data." };
@@ -99,7 +99,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
     try {
         await deleteAllDataAction();
 
-        const batch = writeBatch(db);
+        let batch = writeBatch(db);
         const idMap = new Map<string, string>();
         let itemCount = 0;
 
@@ -154,7 +154,13 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 itemCount++;
             }
         }
-        
+
+        // Commit independent collections first
+        await batch.commit();
+        batch = writeBatch(db);
+
+
+        // --- Second Batch: Dependent collections ---
         if (sampleData.familyLinks) {
             for (const link of sampleData.familyLinks) {
                 const { linkId: tempId, ...linkData } = link;
@@ -163,11 +169,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 
                 if (newParentId && newChildId) {
                     const linkDocRef = doc(collection(db, 'familyLinks'));
-                    batch.set(linkDocRef, {
-                        parentId: newParentId,
-                        childId: newChildId,
-                        userId
-                    });
+                    batch.set(linkDocRef, { parentId: newParentId, childId: newChildId, userId });
                     idMap.set(tempId, linkDocRef.id);
                     itemCount++;
                 }
@@ -184,7 +186,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                     newFieldData.schoolName = sampleData.schools.find(s => s.schoolId === item.schoolId)?.name;
                 }
             }
-             if (!newFieldData.status) newFieldData.status = 'Available';
+            if (!newFieldData.status) newFieldData.status = 'Available';
             const docRef = doc(collection(db, 'fields'));
             batch.set(docRef, newFieldData);
             idMap.set(tempId, docRef.id);
@@ -238,7 +240,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 itemCount++;
             }
         }
-        
+
+        // Commit second batch
+        await batch.commit();
+        batch = writeBatch(db);
+
+        // --- Third Batch: Final dependent collections ---
         for (const competition of sampleData.competitions) {
             const { competitionId: tempCompId, ...compData } = competition;
             const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
