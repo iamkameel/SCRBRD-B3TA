@@ -1,4 +1,5 @@
 
+
 import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
 import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
 import { getTeamRoster } from '@/lib/actions/teams';
@@ -7,7 +8,8 @@ import MatchDetailsClient from './client';
 import { notFound } from 'next/navigation';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
-  const match = await getMatch(params.matchId);
+  const { matchId } = params;
+  const match = await getMatch(matchId);
   
   if (!match) {
     notFound();
@@ -18,22 +20,18 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     officials,
     people,
     teamARoster,
-    teamBRoster,
-    teamALineup,
     teamBLineup,
     scorecardData,
     transportAssignments,
     vehicles,
     drivers,
   ] = await Promise.all([
-    getMatchOfficials(params.matchId),
+    getMatchOfficials(matchId),
     getPlayers(), // To populate the assignment dialog
     getTeamRoster(match.teamAId),
-    match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
-    getMatchLineup(params.matchId, match.teamAId),
-    match.teamBId ? getMatchLineup(params.matchId, match.teamBId) : Promise.resolve([]),
-    getScorecard(params.matchId),
-    getMatchTransportAssignments(params.matchId),
+    match.teamBId ? getMatchLineup(matchId, match.teamBId) : Promise.resolve([]),
+    getScorecard(matchId),
+    getMatchTransportAssignments(matchId),
     getVehicles(),
     getPeopleByRole('Driver'),
   ]);
@@ -43,8 +41,6 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     initialOfficials={officials} 
     people={people} 
     teamARoster={teamARoster}
-    teamBRoster={teamBRoster}
-    teamALineup={teamALineup}
     teamBLineup={teamBLineup}
     innings1={scorecardData?.innings1}
     innings2={scorecardData?.innings2}

@@ -179,6 +179,14 @@
       ]
     },
     {
+      "collectionGroup": "officials",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "confirmed", "order": "ASCENDING" },
+        { "fieldPath": "personId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "people",
       "queryScope": "COLLECTION",
       "fields": [
