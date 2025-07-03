@@ -9,6 +9,9 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  experimental: {
+    allowedDevOrigins: ["*.cloudworkstations.dev"],
+  },
   serverExternalPackages: ['handlebars', '@opentelemetry/instrumentation'],
   typescript: {
     ignoreBuildErrors: true,
@@ -27,6 +30,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'maverickdesign.co.za',
         port: '',
         pathname: '/**',
       },
