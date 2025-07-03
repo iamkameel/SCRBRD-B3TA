@@ -1,5 +1,5 @@
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: 'SCRBRD - Cricket Scorer',
   description: 'A modern cricket scoring and management tool.',
   manifest: '/manifest.webmanifest',
+};
+
+export const viewport: Viewport = {
   themeColor: '#10b981',
 };
 
