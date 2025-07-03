@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { getNavConfig } from './sidebar-nav-items';
 import { cn } from '@/lib/utils';
-import { CricketIcon } from '@/components/icons/cricket-icon';
+import { Logo } from '@/components/icons/logo';
 import { useAuth } from '@/lib/auth-context';
 import { updateActiveRoleAction } from '@/lib/actions/players';
 import { signOutAction } from '@/lib/actions/auth';
@@ -201,8 +201,7 @@ export function Header() {
                     <SheetDescription className="sr-only">A list of pages to navigate through the application.</SheetDescription>
                     <div className="flex items-center h-16 px-6 border-b">
                         <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
-                          <CricketIcon className="w-6 h-6 text-primary" />
-                          <span>SCRBRD</span>
+                          <Logo />
                         </Link>
                     </div>
                     <ScrollArea className="flex-1">

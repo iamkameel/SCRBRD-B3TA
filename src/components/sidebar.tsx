@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CricketIcon } from '@/components/icons/cricket-icon';
+import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
 import { getNavConfig } from './sidebar-nav-items';
 import { useAuth } from '@/lib/auth-context';
@@ -34,8 +34,7 @@ export function Sidebar() {
     <aside className="w-64 flex-col fixed inset-y-0 z-50 bg-sidebar text-sidebar-foreground border-r border-sidebar-border hidden md:flex">
       <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
         <Link href="/" className="flex items-center gap-2 font-bold text-sidebar-foreground">
-          <CricketIcon className="h-6 w-6 text-sidebar-primary" />
-          <span>SCRBRD</span>
+          <Logo />
         </Link>
       </div>
       <ScrollArea className="flex-1">
