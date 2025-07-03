@@ -268,24 +268,40 @@ const personSchema = z.object({
   qualifications: z.array(z.string()).optional(),
 });
 
-function hasPermissionToAssign(assignerRoles: string[], targetRoles: string[]): boolean {
-    if (assignerRoles.includes('Admin')) return true;
+function hasPermissionToAssign(assigner: Person, targetRoles: string[], originalTargetRoles: string[] = []): boolean {
+    const assignerRoles = new Set(assigner.roles);
 
+    // Rule 1: Admins can do anything.
+    if (assignerRoles.has('Admin')) {
+        return true;
+    }
+
+    // Rule 2: Non-admins cannot grant or revoke the 'Admin' role.
+    const isTryingToGrantAdmin = targetRoles.includes('Admin') && !originalTargetRoles.includes('Admin');
+    const isTryingToRevokeAdmin = !targetRoles.includes('Admin') && originalTargetRoles.includes('Admin');
+
+    if (isTryingToGrantAdmin || isTryingToRevokeAdmin) {
+        return false; // Only Admins can do this, and we already checked for that.
+    }
+    
+    // Rule 3: Hierarchical role assignment.
     const permissions: { [key: string]: string[] } = {
         'Sportsmaster': ['School Admin', 'Umpire', 'Scorer'],
-        'School Admin': ['Coach', 'Assistant Coach', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid', 'Grounds-Keeper', 'Driver'],
-        'Coach': ['Assistant Coach', 'Captain']
+        'School Admin': ['Coach', 'Assistant Coach', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid', 'Grounds-Keeper', 'Driver', 'Player', 'Guardian', 'Spectator', 'Team Manager', 'Captain', 'Vice-Captain'],
+        'Coach': ['Assistant Coach', 'Captain', 'Player']
     };
 
     const allowedToAssign = new Set<string>();
-    assignerRoles.forEach(role => {
+    assigner.roles.forEach(role => {
         const allowed = permissions[role as keyof typeof permissions];
         if (allowed) {
             allowed.forEach(p => allowedToAssign.add(p));
         }
     });
 
-    return targetRoles.every(target => allowedToAssign.has(target));
+    // Check if any of the newly added roles are not in the allowed set.
+    const newRoles = targetRoles.filter(r => !originalTargetRoles.includes(r));
+    return newRoles.every(target => allowedToAssign.has(target));
 }
 
 export async function addPlayerAction(data: z.infer<typeof personSchema>) {
@@ -298,7 +314,7 @@ export async function addPlayerAction(data: z.infer<typeof personSchema>) {
   const currentUser = await getPerson(currentUserId);
   if (!currentUser) throw new Error("Could not verify your identity.");
 
-  if (!hasPermissionToAssign(currentUser.roles, data.roles)) {
+  if (!hasPermissionToAssign(currentUser, data.roles)) {
     throw new Error("You do not have permission to assign one or more of the selected roles.");
   }
   
@@ -335,10 +351,9 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
   
   const originalRoles = personSnap.data().roles || [];
   const newRoles = updateData.roles;
-  const changedRoles = newRoles.filter(r => !originalRoles.includes(r));
 
-  if (changedRoles.length > 0 && !hasPermissionToAssign(currentUser.roles, changedRoles)) {
-      throw new Error("You do not have permission to assign one or more of the selected roles.");
+  if (!hasPermissionToAssign(currentUser, newRoles, originalRoles)) {
+      throw new Error("You do not have permission to assign or remove one or more of the selected roles.");
   }
 
   const updatePayload = {

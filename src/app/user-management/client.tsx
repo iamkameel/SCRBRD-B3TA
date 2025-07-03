@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { PlusCircle, Search, ChevronDown, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, ChevronDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,8 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
   const [isPersonDialogOpen, setIsPersonDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
+  const canAddUsers = currentUser?.roles.includes('Admin') ?? false;
+
   const filteredUsers = React.useMemo(() => {
     return users.filter(user => {
       const matchesSearch = `${user.firstName} ${user.lastName} ${user.email}`
@@ -92,7 +94,7 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
             Invite and manage users with access to the system.
             </p>
         </div>
-        <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add User</Button>
+        {canAddUsers && <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add User</Button>}
       </header>
 
       <Card>
@@ -171,37 +173,43 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
             </TableHeader>
             <TableBody>
               {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.personId}>
-                    <TableCell className="font-medium flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={user.profileImageUrl} alt={`${user.firstName} ${user.lastName}`} />
-                            <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <span>{user.firstName} {user.lastName}</span>
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {user.roles.map((role) => (
-                          <Badge key={role} variant="secondary" className="capitalize">
-                            {role}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setDialogMode('edit'); setIsPersonDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit Profile & Roles</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete User</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredUsers.map((user) => {
+                  const isTargetAdmin = user.roles.includes('Admin');
+                  const canCurrentUserEdit = currentUser.roles.includes('Admin') || !isTargetAdmin;
+                  const canCurrentUserDelete = currentUser.roles.includes('Admin') && currentUser.personId !== user.personId;
+
+                  return (
+                    <TableRow key={user.personId}>
+                      <TableCell className="font-medium flex items-center gap-3">
+                          <Avatar>
+                              <AvatarImage src={user.profileImageUrl} alt={`${user.firstName} ${user.lastName}`} />
+                              <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <Link href={`/people/${user.personId}`}>{user.firstName} {user.lastName}</Link>
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles.map((role) => (
+                            <Badge key={role} variant="secondary" className="capitalize">
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {canCurrentUserEdit && <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setDialogMode('edit'); setIsPersonDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit Profile & Roles</DropdownMenuItem>}
+                                {canCurrentUserDelete && <DropdownMenuSeparator />}
+                                {canCurrentUserDelete && <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete User</DropdownMenuItem>}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">

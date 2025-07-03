@@ -85,6 +85,8 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
   const hasPlayerRole = selectedRoles?.includes('Player');
 
   const canAssignRoles = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster') || currentUser?.roles.includes('School Admin');
+  const isCurrentUserAdmin = currentUser?.roles.includes('Admin') ?? false;
+
 
   React.useEffect(() => {
     if (open) {
@@ -165,16 +167,22 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                           <div key={group.group}>
                             <h4 className="font-medium text-sm text-muted-foreground mb-2">{group.group}</h4>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border p-4 rounded-md">
-                              {group.roles.map((item) => (<FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
-                                <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                  <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
-                                      const newRoles = checked ? [...field.value, item.id] : field.value?.filter((v) => v !== item.id);
-                                      field.onChange(newRoles);
-                                      if (newRoles && !newRoles.includes(form.getValues('activeRole'))) { form.setValue('activeRole', newRoles[0]); }
-                                  }} disabled={isPending || !canAssignRoles} /></FormControl>
-                                  <FormLabel className="font-normal">{item.label}</FormLabel>
-                                </FormItem>
-                              )} />))}
+                              {group.roles.map((item) => {
+                                const isAdminRole = item.id === 'Admin';
+                                const isDisabled = isPending || !canAssignRoles || (isAdminRole && !isCurrentUserAdmin);
+                                return (
+                                <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
+                                  <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
+                                        const newRoles = checked ? [...field.value, item.id] : field.value?.filter((v) => v !== item.id);
+                                        field.onChange(newRoles);
+                                        if (newRoles && !newRoles.includes(form.getValues('activeRole'))) { form.setValue('activeRole', newRoles[0]); }
+                                    }} disabled={isDisabled} /></FormControl>
+                                    <FormLabel className="font-normal">{item.label}</FormLabel>
+                                  </FormItem>
+                                )} />
+                                )
+                              })}
                             </div>
                           </div>
                         ))}

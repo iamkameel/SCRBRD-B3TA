@@ -14,7 +14,7 @@ export default async function UserManagementPage() {
     const user = userId ? await getPerson(userId) : null;
 
     // Role-based access control check
-    if (!user?.roles.includes('Admin')) {
+    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster'].includes(r))) {
         return (
             <Card className="w-full max-w-md mx-auto mt-16">
                 <CardHeader className="text-center">
