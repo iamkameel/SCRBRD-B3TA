@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -167,6 +168,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
 
+        // Process Fields (now that schools exist)
         for (const item of sampleData.fields) {
             const { fieldId: tempId, ...itemData } = item;
             const newFieldData: { [key: string]: any } = { ...itemData, userId };
@@ -184,6 +186,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             itemCount++;
         }
         
+        // Process Equipment Assignments
         for (const assignment of sampleData.equipmentAssignments) {
             const { assignmentId: tempId, ...assignmentData } = assignment;
             const newAssignmentData = {
@@ -198,10 +201,44 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             idMap.set(tempId, assignmentRef.id);
             itemCount++;
 
+            // Update the equipment item's status
             const itemRef = doc(db, 'equipment', idMap.get(assignment.itemId)!);
             batch.update(itemRef, { status: 'Assigned', currentAssignmentId: assignmentRef.id, currentHolderId: newAssignmentData.personId, currentHolderName: sampleData.people.find(p => p.personId === assignment.personId)!.firstName + ' ' + sampleData.people.find(p => p.personId === assignment.personId)!.lastName });
         }
 
+        // Process Teams and their Rosters
+        for (const team of sampleData.teams) {
+            const { teamId: tempTeamId, roster, ...teamData } = team;
+            
+            const newTeamData = {
+                ...teamData,
+                schoolId: idMap.get(teamData.schoolId),
+                divisionId: idMap.get(teamData.divisionId),
+                seasonId: idMap.get(teamData.seasonId),
+                schoolName: sampleData.schools.find(s => s.schoolId === teamData.schoolId)?.name,
+                divisionName: sampleData.divisions.find(d => d.divisionId === teamData.divisionId)?.name,
+                seasonName: sampleData.seasons.find(s => s.seasonId === teamData.seasonId)?.name,
+                userId
+            };
+
+            const teamDocRef = doc(collection(db, 'teams'));
+            batch.set(teamDocRef, newTeamData);
+            idMap.set(tempTeamId, teamDocRef.id);
+            itemCount++;
+
+            // Process Roster subcollection
+            for (const member of roster) {
+                const rosterMemberData = {
+                    ...member,
+                    personId: idMap.get(member.personId)
+                };
+                const rosterDocRef = doc(collection(db, 'teams', teamDocRef.id, 'roster'));
+                batch.set(rosterDocRef, rosterMemberData);
+                itemCount++;
+            }
+        }
+
+        // Process Competitions
         for (const competition of sampleData.competitions) {
             const { competitionId: tempCompId, ...compData } = competition;
             const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
@@ -227,36 +264,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             itemCount++;
         }
 
-        for (const team of sampleData.teams) {
-            const { teamId: tempTeamId, roster, ...teamData } = team;
-            
-            const newTeamData = {
-                ...teamData,
-                schoolId: idMap.get(teamData.schoolId),
-                divisionId: idMap.get(teamData.divisionId),
-                seasonId: idMap.get(teamData.seasonId),
-                schoolName: sampleData.schools.find(s => s.schoolId === teamData.schoolId)?.name,
-                divisionName: sampleData.divisions.find(d => d.divisionId === teamData.divisionId)?.name,
-                seasonName: sampleData.seasons.find(s => s.seasonId === teamData.seasonId)?.name,
-                userId
-            };
-
-            const teamDocRef = doc(collection(db, 'teams'));
-            batch.set(teamDocRef, newTeamData);
-            idMap.set(tempTeamId, teamDocRef.id);
-            itemCount++;
-
-            for (const member of roster) {
-                const rosterMemberData = {
-                    ...member,
-                    personId: idMap.get(member.personId)
-                };
-                const rosterDocRef = doc(collection(db, 'teams', teamDocRef.id, 'roster'));
-                batch.set(rosterDocRef, rosterMemberData);
-                itemCount++;
-            }
-        }
-
+        // Process Field Assignments
         for (const assignment of sampleData.fieldAssignments) {
             const { assignmentId: tempId, ...assignmentData } = assignment;
             const newFieldId = idMap.get(assignment.fieldId);
@@ -269,6 +277,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
         
+        // Process Matches
         for (const match of sampleData.matches) {
             const { matchId: tempMatchId, competitionId: tempCompId, ...matchData } = match;
             const competition = sampleData.competitions.find(c => c.competitionId === tempCompId);
