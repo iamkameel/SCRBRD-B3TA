@@ -1,14 +1,16 @@
+
 'use client';
 
 import * as React from "react";
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { PlusCircle, Search, ChevronDown, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, User, Search, ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import type { Person } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -19,14 +21,36 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ROLE_GROUPS } from "@/lib/roles";
+import type { Person } from '@/lib/data';
+import { useToast } from "@/hooks/use-toast";
+import { deletePlayerAction } from '@/lib/actions/players';
+
+const PersonDialog = dynamic(() => import('../people/person-dialog').then(mod => mod.PersonDialog), {
+  ssr: false,
+});
 
 const ALL_ROLES = ROLE_GROUPS.flatMap(group => group.roles);
 
-
-export default function UserManagementClient({ users }: { users: Person[] }) {
+export default function UserManagementClient({ users, currentUser }: { users: Person[], currentUser: Person }) {
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
+  const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
+  const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
+  const [isPersonDialogOpen, setIsPersonDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   const filteredUsers = React.useMemo(() => {
     return users.filter(user => {
@@ -39,8 +63,25 @@ export default function UserManagementClient({ users }: { users: Person[] }) {
   }, [users, searchQuery, roleFilters]);
 
   const filtersApplied = searchQuery || roleFilters.length > 0;
+  
+  const handleDelete = () => {
+    if (!selectedPerson) return;
+    startTransition(async () => {
+      try {
+        await deletePlayerAction(selectedPerson.personId);
+        toast({ title: "Person Deleted", description: `${selectedPerson.firstName} ${selectedPerson.lastName} has been deleted.` });
+        setIsDeleteDialogOpen(false);
+        setSelectedPerson(null);
+      } catch (error) {
+        toast({ title: "Error", description: error instanceof Error ? error.message : "Could not delete person.", variant: "destructive" });
+        setIsDeleteDialogOpen(false);
+        setSelectedPerson(null);
+      }
+    });
+  };
 
   return (
+    <>
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between">
         <div>
@@ -51,7 +92,7 @@ export default function UserManagementClient({ users }: { users: Person[] }) {
             Invite and manage users with access to the system.
             </p>
         </div>
-        <Button disabled><PlusCircle className="mr-2" />Invite User</Button>
+        <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add User</Button>
       </header>
 
       <Card>
@@ -150,12 +191,14 @@ export default function UserManagementClient({ users }: { users: Person[] }) {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                        <Button asChild variant="outline" size="sm">
-                            <Link href={`/people/${user.personId}`}>
-                                <User className="mr-2 h-4 w-4" />
-                                View Profile
-                            </Link>
-                        </Button>
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setDialogMode('edit'); setIsPersonDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit Profile & Roles</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete User</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
@@ -171,5 +214,16 @@ export default function UserManagementClient({ users }: { users: Person[] }) {
         </CardContent>
       </Card>
     </div>
+    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete <strong>{selectedPerson?.firstName} {selectedPerson?.lastName}</strong> and all associated data.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setSelectedPerson(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Person"}</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} currentUser={currentUser} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} schools={[]}/>}
+    </>
   );
 }

@@ -29,5 +29,5 @@ export default async function UserManagementPage() {
     }
     
     const users = await getPlayers();
-    return <UserManagementClient users={users} />;
+    return <UserManagementClient users={users} currentUser={user} />;
 }
