@@ -33,6 +33,11 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const batch = writeBatch(db);
         let deletedCount = 0;
 
+        // Get all Admins first to protect them.
+        const adminQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Admin'));
+        const adminSnapshot = await getDocs(adminQuery);
+        const adminIds = new Set(adminSnapshot.docs.map(d => d.id));
+
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
             'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
@@ -44,14 +49,9 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
             const snapshot = await getDocs(q);
             
             for (const docSnapshot of snapshot.docs) {
-                if (collName === 'people') {
-                    const personData = docSnapshot.data();
-                    if (
-                        (personData.roles && personData.roles.includes('Admin')) ||
-                        personData.email === 'kameel@maverickdesign.co.za'
-                    ) {
-                        continue;
-                    }
+                // If the collection is 'people', check if the person is an admin before deleting.
+                if (collName === 'people' && adminIds.has(docSnapshot.id)) {
+                    continue; // Skip deleting admin users.
                 }
 
                 if (collName === 'teams') {
@@ -88,6 +88,11 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
+    const userId = await getUserId();
+    if (!userId) {
+        return { success: false, message: "Admin user not found. Please ensure an admin account exists or sign up before migrating data." };
+    }
+
     try {
         await deleteAllDataAction();
 
@@ -95,14 +100,13 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const idMap = new Map<string, string>();
         let itemCount = 0;
 
+        // Map the temporary admin ID from sample data to the REAL admin ID.
         const adminRecord = sampleData.people.find(p => p.personId === 'p_admin');
-        if (!adminRecord) {
-            throw new Error("Sample data is corrupt: 'p_admin' user not found.");
+        if (adminRecord) {
+            idMap.set(adminRecord.personId, userId);
+        } else {
+             throw new Error("Sample data is corrupt: 'p_admin' user not found.");
         }
-        
-        const newAdminDocRef = doc(collection(db, 'people'));
-        const userId = newAdminDocRef.id;
-        idMap.set(adminRecord.personId, userId);
 
         const idKeyMap: { [key: string]: string } = {
             schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', fields: 'fieldId',
@@ -121,9 +125,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 if (!idKey) throw new Error(`No idKey mapping for collection: ${collName}`);
                 
                 const tempId = (item as any)[idKey as keyof typeof item];
-                const isPredefinedAdmin = collName === 'people' && tempId === adminRecord.personId;
-                const docRef = isPredefinedAdmin ? newAdminDocRef : doc(collection(db, collName));
 
+                // Skip creating a new document for the admin, as it's preserved.
+                if (collName === 'people' && tempId === 'p_admin') {
+                    continue;
+                }
+                
                 const { [idKey]: _, ...itemData } = item as any;
                 
                 const dataToSave: { [key: string]: any } = { ...itemData, userId };
@@ -132,8 +139,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
                 if (collName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
+                const docRef = doc(collection(db, collName));
                 batch.set(docRef, dataToSave);
-                if (tempId && !idMap.has(tempId)) {
+                if (tempId) {
                     idMap.set(tempId, docRef.id);
                 }
                 itemCount++;
