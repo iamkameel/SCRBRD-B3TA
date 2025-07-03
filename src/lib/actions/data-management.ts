@@ -36,7 +36,8 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         let deletedCount = 0;
 
         // Get all Admins first to protect them.
-        const adminQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Admin'));
+        const godTierEmails = ['kameel@maverickdesign.co.za', 'admin@scrbrd.app'];
+        const adminQuery = query(collection(db, 'people'), where('email', 'in', godTierEmails));
         const adminSnapshot = await getDocs(adminQuery);
         const adminIds = new Set(adminSnapshot.docs.map(d => d.id));
 
@@ -90,7 +91,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
-    const userId = await getUserId(); // This is just for associating data with an owner.
+    const userId = await getUserId();
     if (!userId) {
         return { success: false, message: "Admin user not found. Please ensure an admin account exists or sign up before migrating data." };
     }
@@ -102,7 +103,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const idMap = new Map<string, string>();
         let itemCount = 0;
 
-        // Get all existing admins' emails and IDs to prevent duplication
         const existingAdminsByEmail = new Map<string, string>();
         const adminQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Admin'));
         const adminSnapshot = await getDocs(adminQuery);
@@ -110,11 +110,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             existingAdminsByEmail.set(doc.data().email, doc.id);
         });
 
-        // Pre-populate the idMap for existing admins found in sample data
         sampleData.people.forEach(person => {
             if (person.roles.includes('Admin') && existingAdminsByEmail.has(person.email)) {
-                const existingId = existingAdminsByEmail.get(person.email)!;
-                idMap.set(person.personId, existingId);
+                idMap.set(person.personId, existingAdminsByEmail.get(person.email)!);
             }
         });
 
@@ -136,7 +134,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 
                 const tempId = (item as any)[idKey as keyof typeof item];
 
-                // **RULE**: If the person is an admin from sample data, and they already exist, skip creating a new document for them.
                 if (collName === 'people' && (item as Person).roles.includes('Admin') && existingAdminsByEmail.has((item as Person).email)) {
                     continue; 
                 }
@@ -253,7 +250,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 divisionId: idMap.get(compData.divisionId),
                 seasonName: sampleData.seasons.find(s => s.seasonId === compData.seasonId)?.name,
                 divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
-                teamIds: compData.teamIds.map(id => idMap.get(id)),
+                teamIds: compData.teamIds ? compData.teamIds.map(id => idMap.get(id)) : [],
                 userId
             };
 
@@ -337,7 +334,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unexpected error occurred during migration.";
         console.error("Migration Error:", message);
-        return { success: false, message };
+        return { success: false, message: `Migration failed. Please check server logs. Error: ${message}` };
     }
 }
 
@@ -354,8 +351,8 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         const getAction = {
             'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
             'Divisions': getDivisions, 'Seasons': getSeasons, 'Fields': getFields, 'Competitions': getCompetitions,
-            'Equipment': getEquipment, 'Financials': async () => getDocs(query(collection(db, 'financials'), where("userId", "==", userId))).then(snap => snap.docs.map(d => ({...d.data(), transactionId: d.id}))),
-            'Sponsors': async () => getDocs(query(collection(db, 'sponsors'), where("userId", "==", userId))).then(snap => snap.docs.map(d => ({...d.data(), sponsorId: d.id}))),
+            'Equipment': getEquipment, 'Financials': getTransactions,
+            'Sponsors': getSponsors,
             'Drills': getDrills,
         }[subsetName];
         
@@ -498,3 +495,5 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
         return { error: `Failed to export ${subsetName} data.` };
     }
 }
+
+    
