@@ -196,11 +196,11 @@ export function Header() {
                         <span className="sr-only">Toggle navigation menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="flex flex-col p-0">
+                <SheetContent side="left" className="flex flex-col p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
                     <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     <SheetDescription className="sr-only">A list of pages to navigate through the application.</SheetDescription>
-                    <div className="flex items-center h-16 px-6 border-b">
-                        <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
+                    <div className="flex items-center h-16 px-6 border-b border-sidebar-border">
+                        <Link href="/" className="flex items-center gap-2 font-bold text-sidebar-foreground">
                           <Logo />
                         </Link>
                     </div>
@@ -213,8 +213,8 @@ export function Header() {
                                         <Link
                                         href={item.href}
                                         className={cn(
-                                            "flex items-center gap-3 px-3 py-2 text-base font-semibold text-muted-foreground transition-colors rounded-lg hover:text-foreground",
-                                            isActive && "bg-muted text-foreground"
+                                            "flex items-center gap-3 px-3 py-2 text-base font-semibold transition-all rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                            isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
                                         )}
                                         >
                                         <item.icon className="w-4 h-4" />
@@ -232,9 +232,9 @@ export function Header() {
                                     
                                     return (
                                         <AccordionItem value={group.title} key={group.title} className="border-b-0">
-                                            <AccordionTrigger className="flex items-center gap-3 px-3 py-2 text-sm font-normal text-muted-foreground transition-all rounded-lg hover:bg-accent hover:text-foreground hover:no-underline [&[data-state=open]]:bg-accent [&[data-state=open]]:text-foreground">
+                                            <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:no-underline [&[data-state=open]]:bg-sidebar-accent [&[data-state=open]]:text-sidebar-accent-foreground">
                                                 <group.icon className="w-4 h-4" />
-                                                <span className="flex-1 text-left">{group.title}</span>
+                                                <span className="flex-1 text-left font-normal">{group.title}</span>
                                             </AccordionTrigger>
                                             <AccordionContent className="pt-1 pb-0 pl-8">
                                                 <div className="flex flex-col gap-1">
@@ -245,8 +245,8 @@ export function Header() {
                                                                 <Link
                                                                     href={item.href}
                                                                     className={cn(
-                                                                        "flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground transition-all rounded-lg hover:bg-accent hover:text-foreground",
-                                                                        isActive && "bg-accent text-foreground"
+                                                                        "flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground/80 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                                                        isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
                                                                     )}
                                                                 >
                                                                     <item.icon className="w-4 h-4" />

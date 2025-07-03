@@ -66,7 +66,7 @@ export function Sidebar() {
 
                   return (
                       <AccordionItem value={group.title} key={group.title} className="border-b-0">
-                          <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:no-underline [&[data-state=open]]:bg-sidebar-accent">
+                          <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:no-underline [&[data-state=open]]:bg-sidebar-accent [&[data-state=open]]:text-sidebar-accent-foreground">
                                <group.icon className="h-4 w-4" />
                                <span className="flex-1 text-left font-normal">{group.title}</span>
                           </AccordionTrigger>
