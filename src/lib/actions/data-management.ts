@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -30,13 +29,6 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
-    const userId = await getUserId();
-    if (!userId) {
-        // If there is no admin user, it's very likely there's no data to delete.
-        // We can treat this as a success case to unblock other actions.
-        return { success: true, message: "No active admin user found, assuming no data to delete." };
-    }
-    
     try {
         const batch = writeBatch(db);
         let deletedCount = 0;
@@ -48,22 +40,20 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         ];
 
         for (const collName of collectionsToClear) {
-            const q = query(collection(db, collName)); // No user filter needed for admin delete all
+            const q = query(collection(db, collName));
             const snapshot = await getDocs(q);
             
             for (const docSnapshot of snapshot.docs) {
-                // Special handling for the 'people' collection to preserve admins
                 if (collName === 'people') {
                     const personData = docSnapshot.data();
                     if (
                         (personData.roles && personData.roles.includes('Admin')) ||
                         personData.email === 'kameel@maverickdesign.co.za'
                     ) {
-                        continue; // Skip deleting admin users and god-tier admin
+                        continue;
                     }
                 }
 
-                // Handle subcollections before deleting the parent document
                 if (collName === 'teams') {
                     const rosterSnapshot = await getDocs(collection(db, docSnapshot.ref.path, 'roster'));
                     rosterSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
@@ -80,7 +70,6 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
                     assignmentsSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
                 }
                 
-                // Delete the main document
                 batch.delete(docSnapshot.ref);
                 deletedCount++;
             }
@@ -100,23 +89,19 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
     try {
-        // This will clear data for an existing admin or do nothing if the DB is empty.
         await deleteAllDataAction();
 
         const batch = writeBatch(db);
         const idMap = new Map<string, string>();
         let itemCount = 0;
 
-        // Find the admin user in the sample data to establish the owner ID for this new data set.
         const adminRecord = sampleData.people.find(p => p.personId === 'p_admin');
         if (!adminRecord) {
             throw new Error("Sample data is corrupt: 'p_admin' user not found.");
         }
-
-        // Generate a new, real Firestore ID for the admin user. This will be the owner ID for ALL migrated data.
+        
         const newAdminDocRef = doc(collection(db, 'people'));
         const userId = newAdminDocRef.id;
-        
         idMap.set(adminRecord.personId, userId);
 
         const idKeyMap: { [key: string]: string } = {
@@ -136,8 +121,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 if (!idKey) throw new Error(`No idKey mapping for collection: ${collName}`);
                 
                 const tempId = (item as any)[idKey as keyof typeof item];
-
-                // If the document is our admin user, we use the pre-generated ref. Otherwise, create a new one.
                 const isPredefinedAdmin = collName === 'people' && tempId === adminRecord.personId;
                 const docRef = isPredefinedAdmin ? newAdminDocRef : doc(collection(db, collName));
 
@@ -157,7 +140,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
         
-        // Process Family Links (after people are created)
         if (sampleData.familyLinks) {
             for (const link of sampleData.familyLinks) {
                 const { linkId: tempId, ...linkData } = link;
@@ -177,7 +159,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
 
-        // Process Fields (now that schools exist)
         for (const item of sampleData.fields) {
             const { fieldId: tempId, ...itemData } = item;
             const newFieldData: { [key: string]: any } = { ...itemData, userId };
@@ -195,7 +176,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             itemCount++;
         }
         
-        // Process Equipment Assignments
         for (const assignment of sampleData.equipmentAssignments) {
             const { assignmentId: tempId, ...assignmentData } = assignment;
             const newAssignmentData = {
@@ -210,12 +190,10 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             idMap.set(tempId, assignmentRef.id);
             itemCount++;
 
-            // Update the equipment item's status
             const itemRef = doc(db, 'equipment', idMap.get(assignment.itemId)!);
             batch.update(itemRef, { status: 'Assigned', currentAssignmentId: assignmentRef.id, currentHolderId: newAssignmentData.personId, currentHolderName: sampleData.people.find(p => p.personId === assignment.personId)!.firstName + ' ' + sampleData.people.find(p => p.personId === assignment.personId)!.lastName });
         }
 
-        // Process Competitions
         for (const competition of sampleData.competitions) {
             const { competitionId: tempCompId, ...compData } = competition;
             const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
@@ -241,7 +219,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             itemCount++;
         }
 
-        // Process Teams and their Rosters
         for (const team of sampleData.teams) {
             const { teamId: tempTeamId, roster, ...teamData } = team;
             
@@ -261,7 +238,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             idMap.set(tempTeamId, teamDocRef.id);
             itemCount++;
 
-            // Process Roster subcollection
             for (const member of roster) {
                 const rosterMemberData = {
                     ...member,
@@ -273,7 +249,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
 
-        // Process Field Assignments
         for (const assignment of sampleData.fieldAssignments) {
             const { assignmentId: tempId, ...assignmentData } = assignment;
             const newFieldId = idMap.get(assignment.fieldId);
@@ -286,7 +261,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
         
-        // Process Matches
         for (const match of sampleData.matches) {
             const { matchId: tempMatchId, competitionId: tempCompId, ...matchData } = match;
             const competition = sampleData.competitions.find(c => c.competitionId === tempCompId);
