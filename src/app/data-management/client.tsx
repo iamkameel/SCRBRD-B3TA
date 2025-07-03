@@ -282,7 +282,7 @@ export default function DataManagementClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-                {actionToConfirm === 'migrateAll' && "This will delete all your current data before importing the sample data set. This action cannot be undone."}
+                {actionToConfirm === 'migrateAll' && "This will replace all current application data with the sample dataset. This action cannot be undone."}
                 {actionToConfirm === 'deleteAll' && "This will permanently delete all of your application data. This action cannot be undone."}
                 {actionToConfirm && actionToConfirm !== 'migrateAll' && actionToConfirm !== 'deleteAll' && `This will permanently delete all ${actionToConfirm} data. This action cannot be undone.`}
             </AlertDialogDescription>
