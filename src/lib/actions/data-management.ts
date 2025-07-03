@@ -52,6 +52,14 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
             const snapshot = await getDocs(q);
             
             for (const docSnapshot of snapshot.docs) {
+                // Special handling for the 'people' collection to preserve admins
+                if (collName === 'people') {
+                    const personData = docSnapshot.data();
+                    if (personData.roles && personData.roles.includes('Admin')) {
+                        continue; // Skip deleting admin users
+                    }
+                }
+
                 // Handle subcollections before deleting the parent document
                 if (collName === 'teams') {
                     const rosterSnapshot = await getDocs(collection(db, docSnapshot.ref.path, 'roster'));
@@ -78,7 +86,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         await batch.commit();
 
         revalidatePath('/data-management');
-        return { success: true, message: "All application data has been deleted." };
+        return { success: true, message: "All non-admin application data has been deleted." };
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to delete all data.";
         console.error("Deletion Error:", message);
