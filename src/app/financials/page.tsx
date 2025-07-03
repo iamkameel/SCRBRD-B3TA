@@ -1,5 +1,4 @@
 
-
 import FinancialsClient from './client';
 import { getTransactions } from '@/lib/actions/financials';
 import { getPerson } from '@/lib/actions/players';

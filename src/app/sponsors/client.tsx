@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -42,7 +41,6 @@ import { Label } from "@/components/ui/label";
 const sponsorSchema = z.object({
   name: z.string().min(1, { message: "Sponsor name is required." }),
   logoUrl: z.string().url({ message: "A valid logo URL is required." }).optional().or(z.literal('')),
-  logoDataUri: z.string().optional(),
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
@@ -51,7 +49,6 @@ type SponsorFormValues = z.infer<typeof sponsorSchema>;
 function SponsorDialog({ mode, sponsor, open, onOpenChange }: { mode: 'add' | 'edit', sponsor?: Sponsor, open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
-  const [logoPreview, setLogoPreview] = React.useState<string | null>(null);
 
   const form = useForm<SponsorFormValues>({
     resolver: zodResolver(sponsorSchema),
@@ -64,27 +61,11 @@ function SponsorDialog({ mode, sponsor, open, onOpenChange }: { mode: 'add' | 'e
     if (open) {
       if (mode === 'edit' && sponsor) {
         form.reset({ name: sponsor.name, logoUrl: sponsor.logoUrl, website: sponsor.website });
-        setLogoPreview(sponsor.logoUrl || null);
       } else {
         form.reset({ name: "", logoUrl: "", website: "" });
-        setLogoPreview(null);
       }
     }
   }, [sponsor, mode, open, form]);
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const dataUri = reader.result as string;
-            setLogoPreview(dataUri);
-            form.setValue('logoDataUri', dataUri);
-            form.setValue('logoUrl', '');
-        };
-        reader.readAsDataURL(file);
-    }
-  };
 
   function onSubmit(data: SponsorFormValues) {
     startTransition(async () => {
@@ -113,24 +94,8 @@ function SponsorDialog({ mode, sponsor, open, onOpenChange }: { mode: 'add' | 'e
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Sponsor Name</FormLabel><FormControl><Input placeholder="e.g. Awesome Inc." {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website URL (Optional)</FormLabel><FormControl><Input placeholder="https://example.com" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <Separator />
-            <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormItem><FormLabel>Logo URL</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <div className="relative flex items-center justify-center text-sm text-muted-foreground"><Separator className="w-full" /><span className="absolute bg-popover px-2">OR</span></div>
-            <FormItem>
-                <FormLabel>Upload Logo File</FormLabel>
-                <FormControl><Input type="file" accept="image/*" onChange={handleFileChange} disabled={isPending} /></FormControl>
-                <FormMessage />
-            </FormItem>
-            {logoPreview && (
-                <div className="flex flex-col items-center">
-                    <Label className="mb-2">Logo Preview</Label>
-                    <Avatar className="h-24 w-24 rounded-md">
-                        <AvatarImage src={logoPreview} alt="Logo Preview" className="object-contain" />
-                        <AvatarFallback>Logo</AvatarFallback>
-                    </Avatar>
-                </div>
-            )}
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                 <Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Sponsor"}</Button>

@@ -1,5 +1,4 @@
 
-
 import { getSponsors } from '@/lib/actions/sponsors';
 import SponsorsClient from './client';
 import { getPerson } from '@/lib/actions/players';

@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -119,5 +118,3 @@ export async function deleteTransactionAction(transactionId: string) {
 
   revalidatePath('/financials');
 }
-
-    
