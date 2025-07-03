@@ -351,6 +351,9 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         return { success: true, message: "No active user, so no data to delete." };
     }
 
+    if (!independentSubsets.includes(subsetName)) {
+        return { success: false, message: `Individual deletion for ${subsetName} is not supported due to data dependencies. Please use the 'Delete All Data' function.` };
+    }
     try {
         const getAction = {
             'People': getPlayers, 'Teams': getTeams, 'Matches': getMatches, 'Schools': getSchools,
@@ -457,5 +460,45 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
          const message = error instanceof Error ? error.message : `Failed to migrate ${subsetName} data.`;
         console.error(message);
         return { success: false, message };
+    }
+}
+
+export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: string; error?: string }> {
+    const userId = await getUserId();
+    if (!userId) {
+        return { error: "User not authenticated." };
+    }
+
+    try {
+        const collectionName = collectionNameMap[subsetName];
+        const q = query(collection(db, collectionName), where("userId", "==", userId));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { csv: "" };
+        }
+
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const headers = Object.keys(data[0]);
+        const replacer = (key: string, value: any) => value === null ? '' : value;
+        const csvRows = data.map(row =>
+            headers.map(fieldName => {
+                let value = (row as any)[fieldName];
+                if (value instanceof Timestamp) {
+                    value = value.toDate().toISOString();
+                } else if (typeof value === 'object' && value !== null) {
+                    value = JSON.stringify(value);
+                }
+                return JSON.stringify(value, replacer);
+            }).join(',')
+        );
+
+        const csv = [headers.join(','), ...csvRows].join('\r\n');
+        return { csv };
+
+    } catch (error) {
+        console.error(`Error exporting ${subsetName}:`, error);
+        return { error: `Failed to export ${subsetName} data.` };
     }
 }
