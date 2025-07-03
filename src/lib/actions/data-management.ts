@@ -303,7 +303,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 seasonId: idMap.get(competition.seasonId),
                 seasonName: sampleData.seasons.find(s => s.seasonId === competition.seasonId)?.name,
                 divisionId: idMap.get(competition.divisionId),
-                divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
+                divisionName: sampleData.divisions.find(d => d.divisionId === competition.divisionId)?.name,
                 fieldId: idMap.get(matchData.fieldId),
                 teamAName: sampleData.teams.find(t => t.teamId === matchData.teamAId)?.name,
                 teamBName: matchData.teamBId ? sampleData.teams.find(t => t.teamId === matchData.teamBId)?.name : 'TBD',
