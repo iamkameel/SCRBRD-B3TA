@@ -1,4 +1,3 @@
-
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -181,9 +180,28 @@ const sampleDataPrecursor = {
     ],
 };
 
+interface RosterEntry {
+  personId: string;
+  role: string;
+  status: string;
+  isCaptain?: boolean;
+  isViceCaptain?: boolean;
+}
+
+interface TeamWithRoster {
+  teamId: string;
+  name: string;
+  schoolId: string;
+  divisionId: string;
+  seasonId: string;
+  teamClass: string;
+  logoUrl: string;
+  roster: RosterEntry[];
+}
+
 const generateTeams = () => {
-    const teams = [];
-    const teamNameMap = {};
+    const teams: TeamWithRoster[] = [];
+    const teamNameMap: { [key: string]: string } = {};
     let teamIdCounter = 1;
 
     const openClasses = ['1st XI', '2nd XI', '3rd XI', '4th XI', '5th XI', '6th XI'];
@@ -230,7 +248,7 @@ const generateTeams = () => {
         });
     });
 
-    const originalRosters = {
+    const originalRosters: Record<string, RosterEntry[]> = {
         'Michaelhouse 1st XI': [
             ...Array.from({length: 11}, (_, i) => ({ personId: `p_${i + 1}`, role: 'Player', status: 'active', isCaptain: i === 0, isViceCaptain: i === 1 })),
             { personId: 'p_12', role: 'Coach', status: 'active' },
@@ -260,7 +278,7 @@ const generateTeams = () => {
 
 const { teams, teamNameMap } = generateTeams();
 
-const getTeamId = (name) => teamNameMap[name] || null;
+const getTeamId = (name: string) => teamNameMap[name] || null;
 
 const competitions = [
     { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: [getTeamId('Michaelhouse 1st XI'), getTeamId('Hilton College 1st XI'), getTeamId('Maritzburg College 1st XI'), getTeamId('Durban High School 1st XI')] },
