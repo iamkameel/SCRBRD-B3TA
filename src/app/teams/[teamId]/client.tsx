@@ -63,9 +63,10 @@ const STAFF_ROLES = ["Coach", "Assistant Coach", "Team Manager", "Trainer", "Phy
 const TEAM_ASSIGNABLE_ROLES = [...PLAYER_ROLES, ...STAFF_ROLES];
 const STATUSES = ["active", "on_trial", "injured", "retired", "on_loan"];
 
-function AddStaffDialog({ teamId, teamSchoolId, people, assignableRoles, open, onOpenChange, title, description }: { teamId: string, teamSchoolId: string, people: Person[], assignableRoles: string[], open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
+function AddStaffDialog({ teamId, people, assignableRoles, open, onOpenChange, title, description }: { teamId: string, people: Person[], assignableRoles: string[], open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
@@ -74,29 +75,33 @@ function AddStaffDialog({ teamId, teamSchoolId, people, assignableRoles, open, o
   
   const selectedRole = form.watch('role');
 
-  const rolesRequiringSchoolAssignment = ['Coach', 'Assistant Coach', 'Team Manager', 'Trainer', 'Physiotherapist'];
-
   React.useEffect(() => {
     if (open) {
       form.reset({
         isCaptain: false, isViceCaptain: false, status: "active",
         role: assignableRoles[0], personId: undefined
       });
+      setSearchTerm('');
     }
   }, [open, assignableRoles, form]);
 
   React.useEffect(() => {
     form.resetField('personId');
+    setSearchTerm('');
   }, [selectedRole, form]);
 
   const filteredPeople = React.useMemo(() => {
     if (!selectedRole) return [];
+    
     let peopleForRole = people.filter(p => p.roles.includes(selectedRole as string));
-    if (rolesRequiringSchoolAssignment.includes(selectedRole as string)) {
-        peopleForRole = peopleForRole.filter(p => p.assignedSchools?.includes(teamSchoolId));
+    
+    if (searchTerm) {
+        return peopleForRole.filter(p => 
+            `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+        );
     }
     return peopleForRole;
-  }, [people, selectedRole, teamSchoolId]);
+  }, [people, selectedRole, searchTerm]);
 
   function onSubmit(data: AssignmentFormValues) {
     startTransition(async () => {
@@ -123,11 +128,41 @@ function AddStaffDialog({ teamId, teamSchoolId, people, assignableRoles, open, o
             )}
             
             <FormField control={form.control} name="personId" render={({ field }) => (
-                <FormItem><FormLabel>Person</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedRole}>
-                        <FormControl><SelectTrigger><SelectValue placeholder={!selectedRole ? "Select a role first" : "Select a person"} /></SelectTrigger></FormControl>
-                        <SelectContent>{filteredPeople.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}</SelectContent>
-                    </Select><FormMessage />
+                <FormItem>
+                    <FormLabel>Person</FormLabel>
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search by name..." 
+                            className="pl-8"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            disabled={isPending || !selectedRole}
+                        />
+                    </div>
+                    <ScrollArea className="h-60 rounded-md border">
+                         <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className="p-2"
+                        >
+                            {filteredPeople.length > 0 ? filteredPeople.map(p => (
+                                <FormItem key={p.personId} className="flex items-center space-x-3 space-y-0 p-2 hover:bg-muted/50 rounded-md">
+                                    <FormControl>
+                                        <RadioGroupItem value={p.personId} id={`person-${p.personId}`} />
+                                    </FormControl>
+                                    <Label htmlFor={`person-${p.personId}`} className="font-normal w-full cursor-pointer">
+                                        {p.firstName} {p.lastName}
+                                    </Label>
+                                </FormItem>
+                            )) : (
+                                <p className="text-sm text-center text-muted-foreground py-4">
+                                    {searchTerm ? 'No matching people found.' : 'No eligible people for this role.'}
+                                </p>
+                            )}
+                        </RadioGroup>
+                    </ScrollArea>
+                    <FormMessage />
                 </FormItem>
             )} />
             
@@ -146,6 +181,7 @@ function AddStaffDialog({ teamId, teamSchoolId, people, assignableRoles, open, o
     </Dialog>
   );
 }
+
 
 const bulkAddPlayersSchema = z.object({
   playerIds: z.array(z.string()).min(1, { message: "Please select at least one player." }),
@@ -524,7 +560,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                                                         vs {opponentName}
                                                     </Link>
                                                 </TableCell>
-                                                <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                                                <TableCell>{isClient ? format(match.dateTime, "PPP p") : ' '}</TableCell>
                                                 <TableCell>{match.fieldName}</TableCell>
                                                 <TableCell>
                                                     <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
