@@ -55,8 +55,11 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
                 // Special handling for the 'people' collection to preserve admins
                 if (collName === 'people') {
                     const personData = docSnapshot.data();
-                    if (personData.roles && personData.roles.includes('Admin')) {
-                        continue; // Skip deleting admin users
+                    if (
+                        (personData.roles && personData.roles.includes('Admin')) ||
+                        personData.email === 'kameel@maverickdesign.co.za'
+                    ) {
+                        continue; // Skip deleting admin users and god-tier admin
                     }
                 }
 
@@ -300,7 +303,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 seasonId: idMap.get(competition.seasonId),
                 seasonName: sampleData.seasons.find(s => s.seasonId === competition.seasonId)?.name,
                 divisionId: idMap.get(competition.divisionId),
-                divisionName: sampleData.divisions.find(d => d.divisionId === competition.divisionId)?.name,
+                divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
                 fieldId: idMap.get(matchData.fieldId),
                 teamAName: sampleData.teams.find(t => t.teamId === matchData.teamAId)?.name,
                 teamBName: matchData.teamBId ? sampleData.teams.find(t => t.teamId === matchData.teamBId)?.name : 'TBD',
