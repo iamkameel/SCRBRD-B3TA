@@ -1,4 +1,3 @@
-
 # Project Progress: The New Horizon
 
 This document tracks our progress against the new "Next Steps" roadmap.
@@ -14,7 +13,7 @@ This document tracks our progress against the new "Next Steps" roadmap.
 
 ### Category 2: Logistics & Resource Management
 
--   [ ] **3. Equipment Management Module**: Not Started.
+-   [x] **3. Equipment Management Module**: Completed.
 -   [ ] **4. Player Availability & RSVP**: Not Started.
 -   [ ] **5. Lineup Confirmation Workflow**: Not Started.
 
