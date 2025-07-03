@@ -22,7 +22,7 @@ export const getFcmToken = async (): Promise<string | null> => {
         const messaging = getMessaging(app);
         
         // Register the service worker
-        const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw/route.ts');
+        const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw');
 
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {

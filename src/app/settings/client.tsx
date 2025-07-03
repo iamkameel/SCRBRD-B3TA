@@ -81,7 +81,7 @@ export default function SettingsClient({ userProfile }: { userProfile: Person | 
     });
   };
   
-  const handlePushNotificationChange = async (enabled: boolean) => {
+  const handlePushNotificationChange = (enabled: boolean) => {
     if (!userProfile) return;
 
     startNotificationTransition(async () => {
