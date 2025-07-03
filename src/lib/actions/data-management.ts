@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp, writeBatch, getDocs, doc, query, where, deleteDoc } from 'firebase/firestore';
 import { sampleData, sampleScorecardData } from '@/lib/sample-data';
-import { getPlayers, deletePlayerAction } from './players';
+import { getPlayers, deletePlayerAction, getPersonByEmail } from './players';
 import { getTeams, deleteTeamAction } from './teams';
 import { getMatches, deleteMatchAction } from './matches';
 import { getSchools, deleteSchoolAction } from './schools';
@@ -19,6 +19,7 @@ import { getDrills, deleteDrillAction } from './drills';
 import { getUserId } from '@/lib/auth';
 import { getSponsors } from './sponsors';
 import { getTransactions } from './financials';
+import type { Person } from '../data';
 
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
@@ -42,7 +43,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const collectionsToClear = [
             'schools', 'divisions', 'seasons', 'fields', 'people', 
             'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
-            'equipment', 'equipmentAssignments', 'sponsors', 'sessions', 'drills'
+            'equipment', 'equipmentAssignments', 'sponsors', 'sessions', 'drills', 'assignmentRequests'
         ];
 
         for (const collName of collectionsToClear) {
@@ -89,7 +90,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
-    const userId = await getUserId();
+    const userId = await getUserId(); // This is just for associating data with an owner.
     if (!userId) {
         return { success: false, message: "Admin user not found. Please ensure an admin account exists or sign up before migrating data." };
     }
@@ -101,13 +102,21 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const idMap = new Map<string, string>();
         let itemCount = 0;
 
-        // Map the temporary admin ID from sample data to the REAL admin ID.
-        const adminRecord = sampleData.people.find(p => p.personId === 'p_admin');
-        if (adminRecord) {
-            idMap.set(adminRecord.personId, userId);
-        } else {
-             throw new Error("Sample data is corrupt: 'p_admin' user not found.");
-        }
+        // Get all existing admins' emails and IDs to prevent duplication
+        const existingAdminsByEmail = new Map<string, string>();
+        const adminQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Admin'));
+        const adminSnapshot = await getDocs(adminQuery);
+        adminSnapshot.forEach(doc => {
+            existingAdminsByEmail.set(doc.data().email, doc.id);
+        });
+
+        // Pre-populate the idMap for existing admins found in sample data
+        sampleData.people.forEach(person => {
+            if (person.roles.includes('Admin') && existingAdminsByEmail.has(person.email)) {
+                const existingId = existingAdminsByEmail.get(person.email)!;
+                idMap.set(person.personId, existingId);
+            }
+        });
 
         const idKeyMap: { [key: string]: string } = {
             schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', fields: 'fieldId',
@@ -127,9 +136,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 
                 const tempId = (item as any)[idKey as keyof typeof item];
 
-                // Skip creating a new document for the admin, as it's preserved.
-                if (collName === 'people' && tempId === 'p_admin') {
-                    continue;
+                // **RULE**: If the person is an admin from sample data, and they already exist, skip creating a new document for them.
+                if (collName === 'people' && (item as Person).roles.includes('Admin') && existingAdminsByEmail.has((item as Person).email)) {
+                    continue; 
                 }
                 
                 const { [idKey]: _, ...itemData } = item as any;
@@ -168,7 +177,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
 
-        // Process Fields (now that schools exist)
         for (const item of sampleData.fields) {
             const { fieldId: tempId, ...itemData } = item;
             const newFieldData: { [key: string]: any } = { ...itemData, userId };
@@ -186,7 +194,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             itemCount++;
         }
         
-        // Process Equipment Assignments
         for (const assignment of sampleData.equipmentAssignments) {
             const { assignmentId: tempId, ...assignmentData } = assignment;
             const newAssignmentData = {
@@ -200,13 +207,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             batch.set(assignmentRef, newAssignmentData);
             idMap.set(tempId, assignmentRef.id);
             itemCount++;
-
-            // Update the equipment item's status
+            
             const itemRef = doc(db, 'equipment', idMap.get(assignment.itemId)!);
             batch.update(itemRef, { status: 'Assigned', currentAssignmentId: assignmentRef.id, currentHolderId: newAssignmentData.personId, currentHolderName: sampleData.people.find(p => p.personId === assignment.personId)!.firstName + ' ' + sampleData.people.find(p => p.personId === assignment.personId)!.lastName });
         }
 
-        // Process Teams and their Rosters
         for (const team of sampleData.teams) {
             const { teamId: tempTeamId, roster, ...teamData } = team;
             
@@ -226,7 +231,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             idMap.set(tempTeamId, teamDocRef.id);
             itemCount++;
 
-            // Process Roster subcollection
             for (const member of roster) {
                 const rosterMemberData = {
                     ...member,
@@ -237,8 +241,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 itemCount++;
             }
         }
-
-        // Process Competitions
+        
         for (const competition of sampleData.competitions) {
             const { competitionId: tempCompId, ...compData } = competition;
             const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
@@ -250,6 +253,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 divisionId: idMap.get(compData.divisionId),
                 seasonName: sampleData.seasons.find(s => s.seasonId === compData.seasonId)?.name,
                 divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
+                teamIds: compData.teamIds.map(id => idMap.get(id)),
                 userId
             };
 
@@ -264,7 +268,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             itemCount++;
         }
 
-        // Process Field Assignments
         for (const assignment of sampleData.fieldAssignments) {
             const { assignmentId: tempId, ...assignmentData } = assignment;
             const newFieldId = idMap.get(assignment.fieldId);
@@ -277,7 +280,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         }
         
-        // Process Matches
         for (const match of sampleData.matches) {
             const { matchId: tempMatchId, competitionId: tempCompId, ...matchData } = match;
             const competition = sampleData.competitions.find(c => c.competitionId === tempCompId);
@@ -308,15 +310,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 lineupConfirmedByCaptainB: false,
             };
 
-            if (match.round) {
-                newMatchData.round = match.round;
-            }
-             if (match.winnerTeamId) {
-                newMatchData.winnerTeamId = idMap.get(match.winnerTeamId);
-            }
-            if (match.result) {
-                newMatchData.result = match.result;
-            }
+            if (match.round) newMatchData.round = match.round;
+            if (match.winnerTeamId) newMatchData.winnerTeamId = idMap.get(match.winnerTeamId);
+            if (match.result) newMatchData.result = match.result;
 
             const matchDocRef = doc(collection(db, 'matches'));
             batch.set(matchDocRef, newMatchData);
@@ -335,9 +331,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         }
 
         await batch.commit();
-
         revalidatePath('/', 'layout');
-
         return { success: true, message: `${itemCount} sample items migrated successfully.` };
 
     } catch (error) {
