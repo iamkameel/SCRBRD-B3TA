@@ -65,7 +65,7 @@ export default function UmpireReviewClient() {
             reader.onloadend = async () => {
                 const base64data = reader.result as string;
                 try {
-                    const reviewResult = await runUmpireReviewAction(base64data);
+                    const reviewResult = await runUmpireReviewAction({ photoDataUri: base64data });
                     setResult(reviewResult);
                 } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -123,7 +123,7 @@ export default function UmpireReviewClient() {
                     </CardContent>
                 </Card>
 
-                <Card className={cn(result ? '' : 'flex items-center justify-center')}>
+                <Card className={cn('sticky top-24', result || isPending ? '' : 'flex items-center justify-center')}>
                     {isPending && (
                         <div className="flex flex-col items-center justify-center p-8 min-h-[400px]">
                             <Loader2 className="h-12 w-12 animate-spin text-primary" />
