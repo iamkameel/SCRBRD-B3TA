@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight } from 'lucide-react';
+import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight, Bus, Backpack } from 'lucide-react';
 import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession, School, Person } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { getCoachDashboardData } from '@/lib/actions/dashboard';
@@ -236,7 +236,7 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
                         <h4 className="font-semibold text-sm flex items-center gap-2"><Target className="text-primary"/>Top Run Scorers</h4>
                         {leaderboards.topRunScorers.length > 0 ? leaderboards.topRunScorers.slice(0, 3).map(p => (
                             <div key={p.personId} className="flex items-center gap-3 text-sm">
-                                <Avatar className="h-8 w-8"><AvatarImage src={p.profileImageUrl} /><AvatarFallback>{p.firstName[0]}{p.lastName[0]}</AvatarFallback></Avatar>
+                                <Avatar className="h-8 w-8"><AvatarImage src={p.profileImageUrl} /><AvatarFallback>{p.firstName?.[0]}{p.lastName?.[0]}</AvatarFallback></Avatar>
                                 <Link href={`/people/${p.personId}`} className="font-medium hover:underline flex-1 truncate">{p.firstName} {p.lastName}</Link>
                                 <span className="font-bold">{p.stats.totalRuns}</span>
                             </div>
@@ -246,7 +246,7 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
                         <h4 className="font-semibold text-sm flex items-center gap-2"><Medal className="text-primary"/>Top Wicket Takers</h4>
                         {leaderboards.topWicketTakers.length > 0 ? leaderboards.topWicketTakers.slice(0, 3).map(p => (
                             <div key={p.personId} className="flex items-center gap-3 text-sm">
-                                <Avatar className="h-8 w-8"><AvatarImage src={p.profileImageUrl} /><AvatarFallback>{p.firstName[0]}{p.lastName[0]}</AvatarFallback></Avatar>
+                                <Avatar className="h-8 w-8"><AvatarImage src={p.profileImageUrl} /><AvatarFallback>{p.firstName?.[0]}{p.lastName?.[0]}</AvatarFallback></Avatar>
                                 <Link href={`/people/${p.personId}`} className="font-medium hover:underline flex-1 truncate">{p.firstName} {p.lastName}</Link>
                                 <span className="font-bold">{p.stats.wicketsTaken}</span>
                             </div>
@@ -256,11 +256,12 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
             </Card>
             {/* Quick Actions */}
             <Card>
-                <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
-                <CardContent className="flex flex-col gap-2">
-                    <Button asChild variant="outline"><Link href={`/teams/${team.teamId}`}><Users className="mr-2"/>Manage Roster</Link></Button>
-                    <Button asChild variant="outline"><Link href="/matches"><ClipboardList className="mr-2"/>View All Fixtures</Link></Button>
-                    <Button asChild variant="outline"><Link href="/analysis"><BarChart2 className="mr-2"/>Head-to-Head Analysis</Link></Button>
+                <CardHeader><CardTitle>Logistics & Management</CardTitle></CardHeader>
+                <CardContent className="grid grid-cols-2 gap-2">
+                    <Button asChild variant="outline"><Link href={`/teams/${team.teamId}`}><Users />Roster</Link></Button>
+                    <Button asChild variant="outline"><Link href="/matches"><ClipboardList />Fixtures</Link></Button>
+                    <Button asChild variant="outline"><Link href="/equipment"><Backpack />Equipment</Link></Button>
+                    <Button asChild variant="outline"><Link href="/transport"><Bus />Transport</Link></Button>
                 </CardContent>
             </Card>
         </div>

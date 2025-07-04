@@ -11,6 +11,7 @@ import { getMatch, getMatches } from './matches';
 import { getPerson } from './players';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { isTeamManagerOrAdmin } from './teams';
 
 export async function getVehicles(): Promise<Vehicle[]> {
   const userId = await getUserId();
@@ -236,6 +237,14 @@ export async function assignVehicleToMatchAction(matchId: string, data: z.infer<
   const match = await getMatch(matchId);
   if (!match) throw new Error("Match not found or permission denied.");
 
+  const [isManagerForA, isManagerForB] = await Promise.all([
+      isTeamManagerOrAdmin(match.teamAId, userId),
+      match.teamBId ? isTeamManagerOrAdmin(match.teamBId, userId) : Promise.resolve(false)
+  ]);
+  if (!isManagerForA && !isManagerForB) {
+    throw new Error("You do not have permission to manage transport for this match.");
+  }
+
   const validatedFields = transportAssignmentSchema.safeParse(data);
   if (!validatedFields.success) throw new Error('Invalid assignment data.');
 
@@ -271,6 +280,14 @@ export async function removeVehicleFromMatchAction(matchId: string, assignmentId
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
+    
+    const [isManagerForA, isManagerForB] = await Promise.all([
+        isTeamManagerOrAdmin(match.teamAId, userId),
+        match.teamBId ? isTeamManagerOrAdmin(match.teamBId, userId) : Promise.resolve(false)
+    ]);
+    if (!isManagerForA && !isManagerForB) {
+        throw new Error("You do not have permission to manage transport for this match.");
+    }
     
     if (!assignmentId) throw new Error("Assignment ID is required.");
 

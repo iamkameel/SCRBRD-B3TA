@@ -34,9 +34,24 @@ const itemSchema = z.object({
   status: z.enum(['Available', 'Maintenance']).default('Available'),
 });
 
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster'].includes(r))) {
+        throw new Error("You do not have permission to manage the equipment inventory.");
+    }
+};
+
+const checkAssignmentPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'Team Manager', 'Coach'].includes(r))) {
+        throw new Error("You do not have permission to assign or return equipment.");
+    }
+};
+
 export async function addEquipmentItemAction(data: z.infer<typeof itemSchema>) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = itemSchema.safeParse(data);
   if (!validatedFields.success) throw new Error('Invalid item data.');
   try {
@@ -51,6 +66,7 @@ const updateItemSchema = itemSchema.extend({ itemId: z.string() });
 export async function updateEquipmentItemAction(data: z.infer<typeof updateItemSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateItemSchema.safeParse(data);
     if (!validatedFields.success) throw new Error('Invalid item data.');
     const { itemId, ...updateData } = validatedFields.data;
@@ -68,6 +84,7 @@ export async function updateEquipmentItemAction(data: z.infer<typeof updateItemS
 export async function deleteEquipmentItemAction(itemId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const itemRef = doc(db, 'equipment', itemId);
   const itemSnap = await getDoc(itemRef);
   if (!itemSnap.exists() || itemSnap.data().userId !== userId) throw new Error("Item not found or permission denied.");
@@ -89,6 +106,7 @@ export async function deleteEquipmentItemAction(itemId: string) {
 export async function assignEquipmentAction(itemId: string, personId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkAssignmentPermission(userId);
   const itemRef = doc(db, 'equipment', itemId);
   const [itemSnap, person] = await Promise.all([ getDoc(itemRef), getPerson(personId) ]);
   if (!itemSnap.exists() || itemSnap.data().userId !== userId) throw new Error("Item not found or permission denied.");
@@ -121,6 +139,7 @@ export async function assignEquipmentAction(itemId: string, personId: string) {
 export async function returnEquipmentAction(assignmentId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkAssignmentPermission(userId);
   const assignmentRef = doc(db, 'equipmentAssignments', assignmentId);
   const assignmentSnap = await getDoc(assignmentRef);
   if (!assignmentSnap.exists() || assignmentSnap.data().userId !== userId) throw new Error("Assignment not found or permission denied.");

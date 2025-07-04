@@ -13,7 +13,7 @@ export const ROLE_GROUPS = [
     roles: [ 
       { id: "Coach", label: "Coach", description: "Manages a specific team's roster, training sessions, and match day strategy. Can edit lineups and view detailed player analytics." }, 
       { id: "Assistant Coach", label: "Assistant Coach", description: "Supports the Head Coach in training, player development, and match day operations. Has similar but slightly restricted permissions." }, 
-      { id: "Team Manager", label: "Team Manager", description: "Handles team logistics, including player availability, transport, and communications, freeing up coaches to focus on performance." },
+      { id: "Team Manager", label: "Team Manager", description: "The operational backbone of a team, handling all non-technical logistics like availability, transport, and communications to free coaches to focus on performance." },
       { id: "Captain", label: "Captain", description: "The on-field leader of the team. Can confirm final lineups and has access to strategic team data." }
     ] 
   },

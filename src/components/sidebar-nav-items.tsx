@@ -127,6 +127,14 @@ const coachNavGroups = [
             { href: '/people', label: 'Player Profiles', icon: User },
         ]
     },
+    {
+        title: "Logistics",
+        icon: Wrench,
+        items: [
+            { href: '/equipment', label: 'Equipment', icon: Backpack },
+            { href: '/transport', label: 'Transport', icon: Bus },
+        ]
+    },
     referenceGroup
 ];
 
