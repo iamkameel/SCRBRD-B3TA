@@ -6,7 +6,10 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -20,12 +23,15 @@ import { ROLE_GROUPS } from "@/lib/roles";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 
 const personSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   displayName: z.string().optional(),
+  dateOfBirth: z.date().optional(),
   email: z.string().email({ message: "Invalid email address." }),
   phone: z.string().optional(),
   profileImageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
@@ -98,10 +104,11 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
           assignedSchoolId: person.assignedSchools?.[0] || undefined,
           qualifications: person.qualifications || [],
           physicalAttributes: person.physicalAttributes || {},
+          dateOfBirth: person.dateOfBirth ? new Date(person.dateOfBirth) : undefined,
         });
       } else {
         form.reset({
-          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: undefined,
+          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: undefined, dateOfBirth: undefined
         });
       }
     }
@@ -150,6 +157,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                    <FormField control={form.control} name="displayName" render={({ field }) => (<FormItem><FormLabel>Display Name (Optional)</FormLabel><FormControl><Input placeholder="e.g. JD" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl></FormItem>)} />
                   <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (Optional)</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} value={field.value ?? ''} disabled={isPending}/></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Date of Birth</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : (<span>Pick a date</span>)}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} disabled={(date) => date > new Date() || date < new Date("1900-01-01")} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="profileImageUrl" render={({ field }) => (<FormItem><FormLabel>Profile Image URL (Optional)</FormLabel><FormDescription>Provide a URL or leave blank. You can generate an AI portrait later on the person's profile page.</FormDescription><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
               </TabsContent>
               

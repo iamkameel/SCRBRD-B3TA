@@ -76,6 +76,9 @@ schoolData.forEach(school => {
             const personId = `${school.schoolId}_${template.teamId}_${playerNumber}`;
             const battingHand = battingStyles[Math.floor(Math.random() * battingStyles.length)];
             const bowlingStyle = bowlingStyles[Math.floor(Math.random() * bowlingStyles.length)];
+            
+            const birthYear = new Date().getFullYear() - (template.divisionName === 'Open' ? 18 : parseInt(template.divisionName.substring(1), 10));
+            const dateOfBirth = new Date(birthYear, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString();
 
             generatedPlayers.push({
                 personId: personId,
@@ -85,6 +88,7 @@ schoolData.forEach(school => {
                 roles: ['Player'],
                 activeRole: 'Player',
                 assignedSchools: [school.schoolId],
+                dateOfBirth: dateOfBirth,
                 physicalAttributes: {
                     battingHand: battingHand,
                     bowlingStyles: bowlingStyle === "None" ? [] : [bowlingStyle],

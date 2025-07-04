@@ -65,8 +65,8 @@ const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.Per
 
 const ALL_ROLES = ROLE_GROUPS.flatMap(group => group.roles);
 
-
-type SortableColumn = 'name' | 'email' | 'schoolName';
+type AugmentedPerson = Person & { age?: number; divisionName?: string; };
+type SortableColumn = 'name' | 'email' | 'schoolName' | 'age' | 'divisionName';
 
 const bulkAssignTeamSchema = z.object({
   teamId: z.string({ required_error: "Please select a team." }),
@@ -233,10 +233,10 @@ function BulkAssignTeamDialog({
 
 
 
-export default function PeopleClient({ people, user, schools, teams, divisions }: { people: Person[], user: Person | null, schools: School[], teams: Team[], divisions: Division[] }) {
+export default function PeopleClient({ people, user, schools, teams, divisions }: { people: AugmentedPerson[], user: Person | null, schools: School[], teams: Team[], divisions: Division[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
-  const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
+  const [selectedPerson, setSelectedPerson] = React.useState<AugmentedPerson | null>(null);
   const [personToAssign, setPersonToAssign] = React.useState<Person | null>(null);
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isPersonDialogOpen, setIsPersonDialogOpen] = React.useState(false);
@@ -294,20 +294,31 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
   const sortedPeople = React.useMemo(() => {
     let sortableItems = [...filteredPeople];
     sortableItems.sort((a, b) => {
-        let aValue: string;
-        let bValue: string;
+        let aValue: string | number;
+        let bValue: string | number;
 
-        if (sortConfig.key === 'schoolName') {
-            const schoolA = schools.find(s => s.schoolId === a.assignedSchools?.[0]);
-            const schoolB = schools.find(s => s.schoolId === b.assignedSchools?.[0]);
-            aValue = schoolA?.name?.toLowerCase() ?? '';
-            bValue = schoolB?.name?.toLowerCase() ?? '';
-        } else if (sortConfig.key === 'name') {
-            aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
-            bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
-        } else { // email
-            aValue = a[sortConfig.key]?.toLowerCase() ?? '';
-            bValue = b[sortConfig.key]?.toLowerCase() ?? '';
+        switch(sortConfig.key) {
+            case 'age':
+                aValue = a.age ?? -1;
+                bValue = b.age ?? -1;
+                break;
+            case 'schoolName':
+                const schoolA = schools.find(s => s.schoolId === a.assignedSchools?.[0]);
+                const schoolB = schools.find(s => s.schoolId === b.assignedSchools?.[0]);
+                aValue = schoolA?.name?.toLowerCase() ?? '';
+                bValue = schoolB?.name?.toLowerCase() ?? '';
+                break;
+            case 'divisionName':
+                 aValue = a.divisionName?.toLowerCase() ?? '';
+                 bValue = b.divisionName?.toLowerCase() ?? '';
+                 break;
+            case 'name':
+                aValue = `${a.firstName} ${a.lastName}`.toLowerCase();
+                bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
+                break;
+            default: // email
+                aValue = a[sortConfig.key]?.toLowerCase() ?? '';
+                bValue = b[sortConfig.key]?.toLowerCase() ?? '';
         }
 
         if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -572,6 +583,8 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
                         />
                      </TableHead>
                     <SortableHeader column="name">Name</SortableHeader>
+                    <SortableHeader column="age">Age</SortableHeader>
+                    <SortableHeader column="divisionName">Division</SortableHeader>
                     <SortableHeader column="schoolName">Assigned School</SortableHeader>
                     <SortableHeader column="email">Email</SortableHeader>
                     <TableHead>Roles</TableHead>
@@ -601,6 +614,8 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
                           <Avatar><AvatarImage src={person.profileImageUrl} alt={`${person.firstName} ${person.lastName}`} /><AvatarFallback>{person.firstName?.[0]}{person.lastName?.[0]}</AvatarFallback></Avatar>
                           <Link href={`/people/${person.personId}`} className="hover:underline">{person.firstName} {person.lastName}</Link>
                         </TableCell>
+                         <TableCell>{person.age ?? 'N/A'}</TableCell>
+                        <TableCell>{person.divisionName ?? <span className="text-muted-foreground">N/A</span>}</TableCell>
                         <TableCell>
                           {assignedSchool ? (
                             <Link href={`/schools/${assignedSchool.schoolId}`} className="hover:underline">{assignedSchool.name}</Link>
@@ -646,7 +661,7 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
                       </TableRow>
                     )})
                   ) : (
-                    <TableRow><TableCell colSpan={canManage ? 6 : 5} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={canManage ? 8 : 7} className="h-24 text-center">{filtersApplied ? "No people found matching your filters." : 'No people found. Get started by adding someone.'}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

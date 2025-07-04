@@ -181,6 +181,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
                 if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
                 if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
+                if (dataToSave.dateOfBirth) dataToSave.dateOfBirth = Timestamp.fromDate(new Date(dataToSave.dateOfBirth));
                 if (collName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
                 const docRef = doc(collection(db, collName));
@@ -441,7 +442,8 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
             const dataToSave: {[key: string]: any} = { ...itemData, userId };
             if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
             if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
-             if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
+            if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
+            if (dataToSave.dateOfBirth) dataToSave.dateOfBirth = Timestamp.fromDate(new Date(dataToSave.dateOfBirth));
             if (collectionName === 'fields' && !dataToSave.status) dataToSave.status = 'Available';
 
 

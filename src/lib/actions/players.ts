@@ -27,9 +27,14 @@ export async function getPlayers(): Promise<Person[]> {
   if (currentUser.activeRole === 'Admin') {
       try {
         const peopleSnapshot = await getDocs(peopleCollection);
-        return peopleSnapshot.docs.map(doc => ({
-          personId: doc.id, ...doc.data()
-        } as Person));
+        return peopleSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                personId: doc.id,
+                ...data,
+                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
+            } as Person
+        });
       } catch (error) {
         console.error("Error fetching all people for admin:", error);
         return [];
@@ -88,7 +93,12 @@ export async function getPlayers(): Promise<Person[]> {
             const peopleQuery = query(peopleCollection, where(documentId(), 'in', chunk));
             const peopleSnapshot = await getDocs(peopleQuery);
             peopleSnapshot.forEach(doc => {
-                people.push({ personId: doc.id, ...doc.data() } as Person);
+                 const data = doc.data();
+                people.push({ 
+                    personId: doc.id, 
+                    ...data,
+                    dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
+                } as Person);
             });
         }
         return people;
@@ -102,9 +112,14 @@ export async function getPlayers(): Promise<Person[]> {
   // Default behavior for other roles: fetch all people.
   try {
     const peopleSnapshot = await getDocs(peopleCollection);
-    return peopleSnapshot.docs.map(doc => ({
-      personId: doc.id, ...doc.data()
-    } as Person));
+    return peopleSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            personId: doc.id,
+            ...data,
+            dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
+        } as Person
+    });
   } catch (error) {
     console.error("Error fetching people:", error);
     return [];
@@ -143,6 +158,7 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
         return {
             personId: personSnap.id,
             ...data,
+            dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
             activeRole
         } as Person;
 
@@ -161,7 +177,12 @@ export const getPersonByEmail = cache(async (email: string): Promise<Person | nu
             return null;
         }
         const doc = snapshot.docs[0];
-        return { personId: doc.id, ...doc.data() } as Person;
+        const data = doc.data();
+        return { 
+            personId: doc.id, 
+            ...data,
+            dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
+        } as Person;
     } catch (e) {
         console.error("Error fetching person by email", e);
         return null;
@@ -244,13 +265,16 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
 }
 
 const personSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  firstName: z.string().min(1, { message: "First name is required." }),
+  lastName: z.string().min(1, { message: "Last name is required." }),
   displayName: z.string().optional(),
-  email: z.string().email(),
+  dateOfBirth: z.date().optional(),
+  email: z.string().email({ message: "Invalid email address." }),
   phone: z.string().optional(),
-  profileImageUrl: z.string().url().optional().or(z.literal('')),
-  roles: z.array(z.string()).min(1),
+  profileImageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  roles: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: "You have to select at least one role.",
+  }),
   assignedSchoolId: z.string().optional(),
   activeRole: z.string().optional(),
   emergencyContact: z.object({
@@ -267,7 +291,20 @@ const personSchema = z.object({
   }).optional(),
   biography: z.string().optional(),
   qualifications: z.array(z.string()).optional(),
+}).refine(data => {
+    if (data.roles && data.roles.length > 0 && !data.activeRole) {
+        return false;
+    }
+    if (data.activeRole && !data.roles.includes(data.activeRole)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "An active role must be selected from the assigned roles.",
+    path: ["activeRole"],
 });
+
+type PersonFormValues = z.infer<typeof personSchema>;
 
 function hasPermissionToAssign(assigner: Person, targetRoles: string[], originalTargetRoles: string[] = []): boolean {
     const assignerRoles = new Set(assigner.roles);
@@ -324,6 +361,7 @@ export async function addPlayerAction(data: z.infer<typeof personSchema>) {
   try {
     await addDoc(collection(db, 'people'), { 
       ...restOfData,
+      dateOfBirth: restOfData.dateOfBirth ? Timestamp.fromDate(restOfData.dateOfBirth) : null,
       assignedSchools: assignedSchoolId ? [assignedSchoolId] : [],
       notificationPreferences: { email: true, push: false },
     });
@@ -357,8 +395,9 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
       throw new Error("You do not have permission to assign or remove one or more of the selected roles.");
   }
 
-  const updatePayload = {
+  const updatePayload: {[key: string]: any} = {
     ...updateData,
+    dateOfBirth: updateData.dateOfBirth ? Timestamp.fromDate(updateData.dateOfBirth) : null,
     assignedSchools: assignedSchoolId ? [assignedSchoolId] : []
   };
 

@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import * as React from "react";
 import Link from "next/link";
-import { MoreHorizontal, Trash2, Edit, Building } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Building, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import type { Person, School } from "@/lib/data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PersonCardProps {
-    person: Person;
+    person: Person & { age?: number; divisionName?: string; };
     schools: School[];
     onEdit: () => void;
     onDelete: () => void;
@@ -52,12 +53,11 @@ export function PersonCard({ person, schools, onEdit, onDelete, canManage }: Per
                 </div>
             </CardHeader>
             <CardContent>
-                {assignedSchool && (
-                    <div className="flex items-center gap-2 mb-2">
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">{assignedSchool.name}</p>
-                    </div>
-                )}
+                 <div className="text-sm text-muted-foreground space-y-1 mb-2">
+                    {assignedSchool && <p className="flex items-center gap-1.5"><Building className="h-4 w-4" />{assignedSchool.name}</p>}
+                    {person.age && <p><span className="font-semibold">Age:</span> {person.age}</p>}
+                    {person.divisionName && <p><span className="font-semibold">Division:</span> {person.divisionName}</p>}
+                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className="capitalize">{person.activeRole}</Badge>
                     {person.roles.length > 1 && (

@@ -27,6 +27,7 @@ export interface Person {
   firstName: string;
   lastName: string;
   displayName?: string;
+  dateOfBirth?: Date;
   email: string;
   phone?: string;
   emergencyContact?: {
