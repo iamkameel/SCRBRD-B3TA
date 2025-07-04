@@ -16,7 +16,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { GripVertical, Save, Wand2, Loader2, User, Swords, ShieldHalf, UserCheck } from 'lucide-react';
+import { GripVertical, Save, Wand2, Loader2, User, Swords, ShieldHalf, UserCheck, Users } from 'lucide-react';
 
 import type { Match, RosterMemberWithStats, AvailabilityStatus } from '@/lib/data';
 import { Button } from '@/components/ui/button';
