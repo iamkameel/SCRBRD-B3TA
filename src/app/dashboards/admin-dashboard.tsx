@@ -4,10 +4,29 @@
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle, HeartPulse, Wrench, Medal } from 'lucide-react';
+import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle, HeartPulse, Wrench, Medal, Mail, ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react';
 import { getAdminDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@/components/ui/table';
+import { format } from 'date-fns';
+import { reviewAssignmentRequestAction } from '@/lib/actions/requests';
+import type { AssignmentRequest } from '@/lib/data';
+import { TeamDialog } from '@/app/teams/team-dialog';
+import { CompetitionDialog } from '@/app/competitions/competition-dialog';
+import { SchoolDialog } from '@/app/schools/school-dialog';
+import { FieldDialog } from '@/app/fields/field-dialog';
+import { TransactionDialog } from '@/app/financials/transaction-dialog';
+import { SponsorDialog } from '@/app/sponsors/sponsor-dialog';
+import { getTeams } from '@/lib/actions/teams';
+import { getSchools } from '@/lib/actions/schools';
+import { getDivisions } from '@/lib/actions/divisions';
+import { getSeasons } from '@/lib/actions/seasons';
+import { getCompetitions } from '@/lib/actions/competitions';
+import { getFields } from '@/lib/actions/fields';
+import { getPeopleByRole } from '@/lib/actions/players';
+import type { Team, School, Division, Season, Person, Field, Competition } from '@/lib/data';
 
 interface AdminDashboardData {
     kpis: {
@@ -24,6 +43,17 @@ interface AdminDashboardData {
         transport: number;
         awards: number;
     };
+    pendingRequests: AssignmentRequest[];
+}
+
+interface DialogData {
+    teams: Team[];
+    schools: School[];
+    divisions: Division[];
+    seasons: Season[];
+    competitions: Competition[];
+    fields: Field[];
+    groundskeeper: Person[];
 }
 
 function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
@@ -40,7 +70,7 @@ function StatCard({ title, value, icon: Icon }: { title: string, value: string |
     );
 }
 
-function ManagementLink({ href, title, description, icon: Icon, addHref }: { href: string; title:string; description: string; icon: React.ElementType; addHref?: string }) {
+function ManagementLink({ href, title, description, icon: Icon, onAddClick }: { href: string; title:string; description: string; icon: React.ElementType; onAddClick?: () => void; }) {
     return (
         <div className="p-4 transition-colors border rounded-lg hover:bg-muted/50 flex items-center gap-4">
             <Icon className="w-8 h-8 text-muted-foreground shrink-0" />
@@ -49,11 +79,10 @@ function ManagementLink({ href, title, description, icon: Icon, addHref }: { hre
                 <p className="text-sm text-muted-foreground">{description}</p>
             </Link>
             <div className="flex items-center shrink-0">
-                {addHref ? (
-                    <Button asChild variant="outline" size="icon" className="h-9 w-9">
-                        <Link href={addHref} aria-label={`Add new for ${title}`}>
-                            <PlusCircle className="h-4 w-4" />
-                        </Link>
+                {onAddClick ? (
+                    <Button onClick={onAddClick} variant="outline" size="icon" className="h-9 w-9">
+                        <PlusCircle className="h-4 w-4" />
+                        <span className="sr-only">Add new for {title}</span>
                     </Button>
                 ) : (
                      <Button asChild variant="ghost" size="icon" className="h-9 w-9">
@@ -69,38 +98,88 @@ function ManagementLink({ href, title, description, icon: Icon, addHref }: { hre
 
 export default function AdminDashboard() {
   const [data, setData] = React.useState<AdminDashboardData | null>(null);
+  const [dialogData, setDialogData] = React.useState<DialogData | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
+  const [isReviewing, startReviewTransition] = React.useTransition();
+  const [reviewingId, setReviewingId] = React.useState<string | null>(null);
+
+  const [dialogState, setDialogState] = React.useState({
+      school: false,
+      competition: false,
+      team: false,
+      field: false,
+      financial: false,
+      sponsor: false,
+  });
+
+  const handleReview = (requestId: string, decision: 'approve' | 'deny') => {
+    startReviewTransition(async () => {
+        setReviewingId(requestId);
+        try {
+            await reviewAssignmentRequestAction({ requestId, decision });
+            toast({ title: 'Request Reviewed', description: `The request has been ${decision}d.`});
+            // The useEffect will refetch data because its dependency `isReviewing` changes.
+        } catch (error) {
+            toast({ title: 'Error', description: error instanceof Error ? error.message : "Could not review request.", variant: "destructive"});
+        } finally {
+            setReviewingId(null);
+        }
+    });
+  }
 
   React.useEffect(() => {
-    getAdminDashboardData().then(fetchedData => {
-      setData(fetchedData as AdminDashboardData);
-      setLoading(false);
-    }).catch(error => {
-      console.error("Failed to load admin dashboard data:", error);
-      setLoading(false);
-    });
-  }, []);
+    async function loadData() {
+        try {
+            const dashboardDataPromise = getAdminDashboardData();
+            
+            // Fetch data needed for dialogs
+            const teamsPromise = getTeams();
+            const schoolsPromise = getSchools();
+            const divisionsPromise = getDivisions();
+            const seasonsPromise = getSeasons();
+            const competitionsPromise = getCompetitions();
+            const fieldsPromise = getFields();
+            const groundskeeperPromise = getPeopleByRole('Grounds-Keeper');
+
+            const [dashboard, teams, schools, divisions, seasons, competitions, fields, groundskeeper] = await Promise.all([
+                dashboardDataPromise, teamsPromise, schoolsPromise, divisionsPromise, seasonsPromise, competitionsPromise, fieldsPromise, groundskeeperPromise
+            ]);
+
+            setData(dashboard as AdminDashboardData);
+            setDialogData({ teams, schools, divisions, seasons, competitions, fields, groundskeeper });
+
+        } catch (error) {
+            console.error("Failed to load admin dashboard data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    loadData();
+  }, [isReviewing]);
 
   if (loading || !data) {
     return <DashboardSkeleton />;
   }
 
-  const { kpis } = data;
+  const { kpis, pendingRequests } = data;
 
   const managementLinks = [
     { href: "/people", title: "Personnel Management", description: "Manage all players, staff, and officials.", icon: UserCog, addHref: "/people" },
-    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users, addHref: "/teams" },
-    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy, addHref: "/competitions" },
+    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users, onAddClick: () => setDialogState(s => ({...s, team: true})) },
+    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
     { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList, addHref: "/new-match" },
-    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: Building, addHref: "/schools" },
-    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: MapPin, addHref: "/fields" },
+    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: Building, onAddClick: () => setDialogState(s => ({...s, school: true})) },
+    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: MapPin, onAddClick: () => setDialogState(s => ({...s, field: true})) },
     { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus, addHref: "/transport" },
-    { href: "/financials", title: "Financials & Sponsors", description: "Track income, expenses, and sponsors.", icon: Banknote, addHref: "/financials" },
-    { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
+    { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: Banknote, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
+    { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: Handshake, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
     { href: "/user-management", title: "User Management", description: "Invite and manage system users.", icon: UserCog },
+    { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
   ];
 
   return (
+    <>
     <div className="flex flex-col gap-8">
         <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center">
@@ -111,12 +190,51 @@ export default function AdminDashboard() {
             </div>
         </header>
 
+        {pendingRequests && pendingRequests.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Mail />Assignment Requests</CardTitle>
+                    <CardDescription>Review pending requests from coaches and other staff.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Request</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {pendingRequests.map(req => (
+                                <TableRow key={req.requestId}>
+                                    <TableCell>
+                                        <p className="font-semibold">{req.requesterName}</p>
+                                        <p className="text-sm text-muted-foreground">requests to be a {req.role} for {req.targetName}</p>
+                                    </TableCell>
+                                    <TableCell>{format(req.createdAt, 'dd MMM yyyy')}</TableCell>
+                                    <TableCell className="text-right space-x-2">
+                                        <Button size="icon" variant="outline" className="text-green-600 hover:bg-green-100" onClick={() => handleReview(req.requestId, 'approve')} disabled={isReviewing}>
+                                            {isReviewing && reviewingId === req.requestId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4" />}
+                                        </Button>
+                                         <Button size="icon" variant="outline" className="text-red-600 hover:bg-red-100" onClick={() => handleReview(req.requestId, 'deny')} disabled={isReviewing}>
+                                            {isReviewing && reviewingId === req.requestId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsDown className="h-4 w-4" />}
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
+
         <Card>
             <CardHeader>
                 <CardTitle>Global Overview</CardTitle>
                 <CardDescription>High-level metrics across the entire system.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} />
                 <StatCard title="Schools" value={kpis.schools} icon={Building} />
                 <StatCard title="Teams" value={kpis.teams} icon={Users} />
@@ -144,5 +262,17 @@ export default function AdminDashboard() {
             </CardContent>
         </Card>
     </div>
+
+    {dialogData && (
+        <>
+            <SchoolDialog mode="add" open={dialogState.school} onOpenChange={(open) => setDialogState(s => ({...s, school: open}))} />
+            <TeamDialog mode="add" open={dialogState.team} onOpenChange={(open) => setDialogState(s => ({...s, team: open}))} schools={dialogData.schools} divisions={dialogData.divisions} seasons={dialogData.seasons} />
+            <CompetitionDialog mode="add" open={dialogState.competition} onOpenChange={(open) => setDialogState(s => ({...s, competition: open}))} seasons={dialogData.seasons} divisions={dialogData.divisions} teams={dialogData.teams} />
+            <FieldDialog mode="add" open={dialogState.field} onOpenChange={(open) => setDialogState(s => ({...s, field: open}))} schools={dialogData.schools} groundskeepers={dialogData.groundskeeper} />
+            <TransactionDialog mode="add" open={dialogState.financial} onOpenChange={(open) => setDialogState(s => ({...s, financial: open}))} />
+            <SponsorDialog mode="add" open={dialogState.sponsor} onOpenChange={(open) => setDialogState(s => ({...s, sponsor: open}))} />
+        </>
+    )}
+    </>
   );
 }

@@ -102,6 +102,7 @@ export async function getAdminDashboardData() {
         fields,
         matches,
         vehicles,
+        pendingRequests,
     ] = await Promise.all([
         getCompetitions(),
         getSchools(),
@@ -110,6 +111,7 @@ export async function getAdminDashboardData() {
         getFields(),
         getMatches(),
         getVehicles(),
+        getPendingAssignmentRequests(),
     ]);
 
     const staffRoles = new Set(['Coach', 'Assistant Coach', 'Team Manager', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid', 'Umpire', 'Scorer', 'Grounds-Keeper', 'Driver', 'Admin', 'Sportsmaster', 'School Admin']);
@@ -158,6 +160,7 @@ export async function getAdminDashboardData() {
             transport: vehicles.length,
             awards: awardsCount,
         },
+        pendingRequests,
     };
 }
 
@@ -340,4 +343,3 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
     
     return dashboardData;
 });
-
