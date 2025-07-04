@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, User } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,10 +38,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import type { Team, School, Division, Season } from "@/lib/data";
+import type { Team, School, Division, Season, Person } from "@/lib/data";
 import { addTeamAction, updateTeamAction, deleteTeamAction } from '@/lib/actions/teams';
 import { TeamCard } from './team-card';
 import { Separator } from "@/components/ui/separator";
+import { AssignCoachDialog } from "./assign-coach-dialog";
 
 const teamSchema = z.object({
   name: z.string().min(1, { message: "Team name is required." }),
@@ -169,12 +170,14 @@ function TeamDialog({ mode, team, schools, divisions, seasons, open, onOpenChang
 }
 
 
-export default function TeamsClient({ teams, schools, divisions, seasons, canManage }: { teams: Team[]; schools: School[]; divisions: Division[]; seasons: Season[], canManage: boolean }) {
+export default function TeamsClient({ teams, schools, divisions, seasons, canManage, coaches }: { teams: Team[]; schools: School[]; divisions: Division[]; seasons: Season[], canManage: boolean; coaches: Person[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedTeam, setSelectedTeam] = React.useState<Team | null>(null);
+  const [teamToAssignCoach, setTeamToAssignCoach] = React.useState<Team | null>(null);
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isTeamDialogOpen, setIsTeamDialogOpen] = React.useState(false);
+  const [isAssignCoachDialogOpen, setIsAssignCoachDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   
   // View and Pagination state
@@ -490,6 +493,8 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={() => { setSelectedTeam(team); setDialogMode('edit'); setIsTeamDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => { setTeamToAssignCoach(team); setIsAssignCoachDialogOpen(true); }}><User className="mr-2 h-4 w-4" /> Assign Coach</DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onSelect={() => { setSelectedTeam(team); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                             </DropdownMenuContent>
                             </DropdownMenu>
@@ -511,6 +516,7 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
                                 team={team} 
                                 onEdit={() => { setSelectedTeam(team); setDialogMode('edit'); setIsTeamDialogOpen(true); }}
                                 onDelete={() => { setSelectedTeam(team); setIsDeleteDialogOpen(true); }}
+                                onAssignCoach={() => { setTeamToAssignCoach(team); setIsAssignCoachDialogOpen(true); }}
                                 canManage={canManage}
                             />
                         ))
@@ -531,6 +537,18 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
       </div>
 
       {canManage && <TeamDialog mode={dialogMode} team={selectedTeam ?? undefined} schools={schools} divisions={divisions} seasons={seasons} open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen} />}
+
+      {canManage && teamToAssignCoach && (
+        <AssignCoachDialog
+            team={teamToAssignCoach}
+            coaches={coaches}
+            open={isAssignCoachDialogOpen}
+            onOpenChange={(open) => {
+                setIsAssignCoachDialogOpen(open);
+                if (!open) setTeamToAssignCoach(null);
+            }}
+        />
+       )}
 
       {canManage && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { MoreHorizontal, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Team } from "@/lib/data";
@@ -20,10 +21,11 @@ interface TeamCardProps {
     team: Team;
     onEdit: () => void;
     onDelete: () => void;
+    onAssignCoach: () => void;
     canManage: boolean;
 }
 
-export function TeamCard({ team, onEdit, onDelete, canManage }: TeamCardProps) {
+export function TeamCard({ team, onEdit, onDelete, onAssignCoach, canManage }: TeamCardProps) {
     return (
         <Card className="flex flex-col h-full relative">
             <CardHeader>
@@ -49,6 +51,8 @@ export function TeamCard({ team, onEdit, onDelete, canManage }: TeamCardProps) {
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 -mr-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={onAssignCoach}><User className="mr-2 h-4 w-4" /> Assign Coach</DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>}
