@@ -1,11 +1,13 @@
+
 'use client';
 
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User } from 'lucide-react';
+import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle } from 'lucide-react';
 import { getAdminDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
+import { Button } from '@/components/ui/button';
 
 interface AdminDashboardData {
     kpis: {
@@ -31,18 +33,30 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
     );
 }
 
-function ManagementLink({ href, title, description, icon: Icon }: { href: string; title: string; description: string; icon: React.ElementType }) {
+function ManagementLink({ href, title, description, icon: Icon, addHref }: { href: string; title:string; description: string; icon: React.ElementType; addHref?: string }) {
     return (
-        <Link href={href} className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
-            <div className="flex items-center gap-4">
-                <Icon className="w-8 h-8 text-muted-foreground shrink-0" />
-                <div className="flex-1">
-                    <h3 className="font-semibold">{title}</h3>
-                    <p className="text-sm text-muted-foreground">{description}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
+        <div className="p-4 transition-colors border rounded-lg hover:bg-muted/50 flex items-center gap-4">
+            <Icon className="w-8 h-8 text-muted-foreground shrink-0" />
+            <Link href={href} className="flex-1 group">
+                <h3 className="font-semibold group-hover:underline">{title}</h3>
+                <p className="text-sm text-muted-foreground">{description}</p>
+            </Link>
+            <div className="flex items-center shrink-0">
+                {addHref ? (
+                    <Button asChild variant="outline" size="icon" className="h-9 w-9">
+                        <Link href={addHref} aria-label={`Add new for ${title}`}>
+                            <PlusCircle className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                ) : (
+                     <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                        <Link href={href} aria-label={`Navigate to ${title}`}>
+                           <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                        </Link>
+                    </Button>
+                )}
             </div>
-        </Link>
+        </div>
     );
 }
 
@@ -52,7 +66,7 @@ export default function AdminDashboard() {
 
   React.useEffect(() => {
     getAdminDashboardData().then(fetchedData => {
-      setData(fetchedData as AdminDashboardData); // Cast to the simplified version
+      setData(fetchedData as AdminDashboardData);
       setLoading(false);
     }).catch(error => {
       console.error("Failed to load admin dashboard data:", error);
@@ -67,14 +81,14 @@ export default function AdminDashboard() {
   const { kpis } = data;
 
   const managementLinks = [
-    { href: "/people", title: "Personnel Management", description: "Manage all players, staff, and officials.", icon: UserCog },
-    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users },
-    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy },
-    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList },
-    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: Building },
-    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: MapPin },
-    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus },
-    { href: "/financials", title: "Financials & Sponsors", description: "Track income, expenses, and sponsors.", icon: Banknote },
+    { href: "/people", title: "Personnel Management", description: "Manage all players, staff, and officials.", icon: UserCog, addHref: "/people" },
+    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users, addHref: "/teams" },
+    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy, addHref: "/competitions" },
+    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList, addHref: "/new-match" },
+    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: Building, addHref: "/schools" },
+    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: MapPin, addHref: "/fields" },
+    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus, addHref: "/transport" },
+    { href: "/financials", title: "Financials & Sponsors", description: "Track income, expenses, and sponsors.", icon: Banknote, addHref: "/financials" },
     { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
   ];
 
