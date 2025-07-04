@@ -32,53 +32,82 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
     try {
-        const batch = writeBatch(db);
+        const BATCH_LIMIT = 490; // Stay safely under the 500 limit
+        let batch = writeBatch(db);
+        let operationCount = 0;
         let deletedCount = 0;
 
-        // Get all Admins first to protect them.
         const godTierEmails = ['kameel@maverickdesign.co.za', 'admin@scrbrd.app'];
         const adminQuery = query(collection(db, 'people'), where('email', 'in', godTierEmails));
         const adminSnapshot = await getDocs(adminQuery);
         const adminIds = new Set(adminSnapshot.docs.map(d => d.id));
 
         const collectionsToClear = [
-            'schools', 'divisions', 'seasons', 'fields', 'people', 
-            'competitions', 'teams', 'matches', 'vehicles', 'familyLinks', 'financials',
-            'equipment', 'equipmentAssignments', 'sponsors', 'sessions', 'drills', 'assignmentRequests'
+            'sessions', 'drills', 'assignmentRequests',
+            'equipmentAssignments', 'financials', 'sponsors', 'equipment',
+            'transportAssignments', 'familyLinks', 'vehicles',
+            'matches', 'teams', 'competitions',
+            'fields', 'people', 'schools', 'divisions', 'seasons'
         ];
+        
+        const commitBatchIfNeeded = async () => {
+            if (operationCount >= BATCH_LIMIT) {
+                await batch.commit();
+                batch = writeBatch(db);
+                operationCount = 0;
+            }
+        };
 
         for (const collName of collectionsToClear) {
             const q = query(collection(db, collName));
             const snapshot = await getDocs(q);
             
             for (const docSnapshot of snapshot.docs) {
-                // If the collection is 'people', check if the person is an admin before deleting.
                 if (collName === 'people' && adminIds.has(docSnapshot.id)) {
                     continue; // Skip deleting admin users.
                 }
 
                 if (collName === 'teams') {
                     const rosterSnapshot = await getDocs(collection(db, docSnapshot.ref.path, 'roster'));
-                    rosterSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
+                    for (const subDoc of rosterSnapshot.docs) {
+                        batch.delete(subDoc.ref);
+                        operationCount++;
+                        deletedCount++;
+                        await commitBatchIfNeeded();
+                    }
                 }
                 if (collName === 'matches') {
                     const subcollections = ['lineups', 'officials', 'scorecards', 'transportAssignments'];
                     for (const sub of subcollections) {
                          const subSnapshot = await getDocs(collection(db, docSnapshot.ref.path, sub));
-                         subSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
+                         for (const subDoc of subSnapshot.docs) {
+                             batch.delete(subDoc.ref);
+                             operationCount++;
+                             deletedCount++;
+                             await commitBatchIfNeeded();
+                         }
                     }
                 }
                 if (collName === 'fields') {
                     const assignmentsSnapshot = await getDocs(collection(db, docSnapshot.ref.path, 'assignments'));
-                    assignmentsSnapshot.forEach(subDoc => { batch.delete(subDoc.ref); deletedCount++; });
+                     for (const subDoc of assignmentsSnapshot.docs) {
+                        batch.delete(subDoc.ref);
+                        operationCount++;
+                        deletedCount++;
+                        await commitBatchIfNeeded();
+                    }
                 }
                 
                 batch.delete(docSnapshot.ref);
+                operationCount++;
                 deletedCount++;
+                await commitBatchIfNeeded();
             }
         }
         
-        await batch.commit();
+        if (operationCount > 0) {
+            await batch.commit();
+        }
 
         revalidatePath('/data-management');
         return { success: true, message: "All non-admin application data has been deleted." };
@@ -102,6 +131,14 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
         let batch = writeBatch(db);
         const idMap = new Map<string, string>();
         let itemCount = 0;
+        const BATCH_LIMIT = 490;
+
+        const commitBatchIfNeeded = async () => {
+            if (itemCount % BATCH_LIMIT === 0 && itemCount > 0) {
+                await batch.commit();
+                batch = writeBatch(db);
+            }
+        };
 
         const existingAdminsByEmail = new Map<string, string>();
         const adminQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Admin'));
@@ -152,15 +189,14 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                     idMap.set(tempId, docRef.id);
                 }
                 itemCount++;
+                await commitBatchIfNeeded();
             }
         }
-
-        // Commit independent collections first
-        await batch.commit();
+        await batch.commit(); // Commit remaining items from first stage
         batch = writeBatch(db);
+        itemCount = 0; // Reset counter for new batch series
 
-
-        // --- Second Batch: Dependent collections ---
+        // --- Second Stage: Dependent collections ---
         if (sampleData.familyLinks) {
             for (const link of sampleData.familyLinks) {
                 const { linkId: tempId, ...linkData } = link;
@@ -170,45 +206,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 if (newParentId && newChildId) {
                     const linkDocRef = doc(collection(db, 'familyLinks'));
                     batch.set(linkDocRef, { parentId: newParentId, childId: newChildId, userId });
-                    idMap.set(tempId, linkDocRef.id);
+                    if (tempId) idMap.set(tempId, linkDocRef.id);
                     itemCount++;
+                    await commitBatchIfNeeded();
                 }
             }
-        }
-
-        for (const item of sampleData.fields) {
-            const { fieldId: tempId, ...itemData } = item;
-            const newFieldData: { [key: string]: any } = { ...itemData, userId };
-            if (item.schoolId) {
-                const newSchoolId = idMap.get(item.schoolId);
-                if (newSchoolId) {
-                    newFieldData.schoolId = newSchoolId;
-                    newFieldData.schoolName = sampleData.schools.find(s => s.schoolId === item.schoolId)?.name;
-                }
-            }
-            if (!newFieldData.status) newFieldData.status = 'Available';
-            const docRef = doc(collection(db, 'fields'));
-            batch.set(docRef, newFieldData);
-            idMap.set(tempId, docRef.id);
-            itemCount++;
-        }
-        
-        for (const assignment of sampleData.equipmentAssignments) {
-            const { assignmentId: tempId, ...assignmentData } = assignment;
-            const newAssignmentData = {
-                ...assignmentData,
-                itemId: idMap.get(assignment.itemId),
-                personId: idMap.get(assignment.personId),
-                assignedDate: Timestamp.fromDate(new Date(assignment.assignedDate)),
-                userId
-            };
-            const assignmentRef = doc(collection(db, 'equipmentAssignments'));
-            batch.set(assignmentRef, newAssignmentData);
-            idMap.set(tempId, assignmentRef.id);
-            itemCount++;
-            
-            const itemRef = doc(db, 'equipment', idMap.get(assignment.itemId)!);
-            batch.update(itemRef, { status: 'Assigned', currentAssignmentId: assignmentRef.id, currentHolderId: newAssignmentData.personId, currentHolderName: sampleData.people.find(p => p.personId === assignment.personId)!.firstName + ' ' + sampleData.people.find(p => p.personId === assignment.personId)!.lastName });
         }
 
         for (const team of sampleData.teams) {
@@ -229,6 +231,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             batch.set(teamDocRef, newTeamData);
             idMap.set(tempTeamId, teamDocRef.id);
             itemCount++;
+            await commitBatchIfNeeded();
 
             for (const member of roster) {
                 const rosterMemberData = {
@@ -238,14 +241,16 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 const rosterDocRef = doc(collection(db, 'teams', teamDocRef.id, 'roster'));
                 batch.set(rosterDocRef, rosterMemberData);
                 itemCount++;
+                await commitBatchIfNeeded();
             }
         }
 
-        // Commit second batch
+        // Commit remaining items from second stage
         await batch.commit();
         batch = writeBatch(db);
+        itemCount = 0;
 
-        // --- Third Batch: Final dependent collections ---
+        // --- Third Stage: Final dependent collections ---
         for (const competition of sampleData.competitions) {
             const { competitionId: tempCompId, ...compData } = competition;
             const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
@@ -257,7 +262,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 divisionId: idMap.get(compData.divisionId),
                 seasonName: sampleData.seasons.find(s => s.seasonId === compData.seasonId)?.name,
                 divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
-                teamIds: compData.teamIds ? compData.teamIds.map(id => idMap.get(id)) : [],
+                teamIds: compData.teamIds ? compData.teamIds.map(id => idMap.get(id)).filter(Boolean) : [],
                 userId
             };
 
@@ -270,20 +275,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             batch.set(compDocRef, newCompData);
             idMap.set(tempCompId, compDocRef.id);
             itemCount++;
+            await commitBatchIfNeeded();
         }
 
-        for (const assignment of sampleData.fieldAssignments) {
-            const { assignmentId: tempId, ...assignmentData } = assignment;
-            const newFieldId = idMap.get(assignment.fieldId);
-            const newPersonId = idMap.get(assignment.personId);
-
-            if (newFieldId && newPersonId) {
-                const assignmentDocRef = doc(collection(db, 'fields', newFieldId, 'assignments'));
-                batch.set(assignmentDocRef, { personId: newPersonId });
-                itemCount++;
-            }
-        }
-        
         for (const match of sampleData.matches) {
             const { matchId: tempMatchId, competitionId: tempCompId, ...matchData } = match;
             const competition = sampleData.competitions.find(c => c.competitionId === tempCompId);
@@ -322,21 +316,24 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             batch.set(matchDocRef, newMatchData);
             idMap.set(tempMatchId, matchDocRef.id);
             itemCount++;
+            await commitBatchIfNeeded();
 
             if (scorecardData) {
                 const innings1Ref = doc(collection(db, matchDocRef.path, 'scorecards'), 'innings1');
                 batch.set(innings1Ref, scorecardData.innings1);
                 itemCount++;
+                await commitBatchIfNeeded();
 
                 const innings2Ref = doc(collection(db, matchDocRef.path, 'scorecards'), 'innings2');
                 batch.set(innings2Ref, scorecardData.innings2);
                 itemCount++;
+                await commitBatchIfNeeded();
             }
         }
-
-        await batch.commit();
+        
+        await batch.commit(); // Final commit
         revalidatePath('/', 'layout');
-        return { success: true, message: `${itemCount} sample items migrated successfully.` };
+        return { success: true, message: `Sample data migrated successfully.` };
 
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unexpected error occurred during migration.";
@@ -502,5 +499,3 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
         return { error: `Failed to export ${subsetName} data.` };
     }
 }
-
-    
