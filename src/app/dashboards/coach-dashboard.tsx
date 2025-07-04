@@ -12,10 +12,10 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight, Bus, Backpack } from 'lucide-react';
+import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight, Bus, Backpack, ClipboardCheck, AlertCircle, PlusCircle } from 'lucide-react';
 import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession, School, Person } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
-import { getCoachDashboardData } from '@/lib/actions/dashboard';
+import { getCoachDashboardData, getTeamManagerDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 import { getSchools } from '@/lib/actions/schools';
 import { getTeams } from '@/lib/actions/teams';
@@ -24,6 +24,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from '@/hooks/use-toast';
 import { StatItem } from '@/components/stat-item';
+
 
 const requestSchema = z.object({
   schoolId: z.string({ required_error: "Please select a school." }),
@@ -40,7 +41,7 @@ function RequestAssignmentForm({ schools, teams, person, role }: { schools: Scho
     
     const selectedSchoolId = form.watch('schoolId');
     const availableTeams = React.useMemo(() => {
-        if (!selectedSchoolId) return [];
+        if (!selectedSchoolId) return teams;
         return teams.filter(t => t.schoolId === selectedSchoolId);
     }, [selectedSchoolId, teams]);
     
@@ -72,7 +73,7 @@ function RequestAssignmentForm({ schools, teams, person, role }: { schools: Scho
         <Card>
             <CardHeader>
                 <CardTitle>Request Team Assignment</CardTitle>
-                <CardDescription>You are not currently assigned to a team. Select a school and team to request an assignment from the Sportsmaster.</CardDescription>
+                <CardDescription>You are not currently assigned to a team as a {role}. Select a school and team to request an assignment from the Sportsmaster.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -85,7 +86,7 @@ function RequestAssignmentForm({ schools, teams, person, role }: { schools: Scho
                         )}/>
                         <FormField control={form.control} name="teamId" render={({ field }) => (
                             <FormItem><FormLabel>Team</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSchoolId}>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!availableTeams.length}>
                                 <FormControl><SelectTrigger><SelectValue placeholder={!selectedSchoolId ? 'Select a school first' : 'Select a team'} /></SelectTrigger></FormControl>
                                 <SelectContent>{availableTeams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage />
                             </FormItem>
@@ -97,6 +98,115 @@ function RequestAssignmentForm({ schools, teams, person, role }: { schools: Scho
         </Card>
     )
 }
+
+function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ManagementLink({ href, title, description, icon: Icon }: { href: string; title:string; description: string; icon: React.ElementType; }) {
+    return (
+        <div className="p-4 transition-colors border rounded-lg hover:bg-muted/50 flex items-center gap-4">
+            <Icon className="w-8 h-8 text-muted-foreground shrink-0" />
+            <Link href={href} className="flex-1 group">
+                <h3 className="font-semibold group-hover:underline">{title}</h3>
+                <p className="text-sm text-muted-foreground">{description}</p>
+            </Link>
+             <Button asChild variant="ghost" size="icon" className="h-9 w-9">
+                <Link href={href} aria-label={`Navigate to ${title}`}>
+                   <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+            </Button>
+        </div>
+    );
+}
+
+interface TeamManagerDashboardData {
+    kpis: {
+        managedTeams: number;
+        upcomingFixtures: number;
+        pendingAvailability: number;
+        transportNeeded: number;
+    };
+    upcomingMatches: Match[];
+    teams: Team[];
+}
+
+function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
+    const { kpis, upcomingMatches, teams } = data;
+    const managementLinks = [
+        { href: `/teams/${teams[0]?.teamId}`, title: "Manage Roster", description: "View and update player assignments.", icon: Users },
+        { href: "/matches", title: "View All Fixtures", description: "See the full schedule for all teams.", icon: ClipboardList },
+        { href: "/equipment", title: "Equipment Hub", description: "Assign and track team equipment.", icon: Backpack },
+        { href: "/transport", title: "Transport Hub", description: "Arrange transport for upcoming matches.", icon: Bus },
+    ];
+    
+    return (
+        <div className="flex flex-col gap-8">
+            <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+                <h1 className="text-2xl font-bold">Team Manager Dashboard</h1>
+                <p className="text-sm opacity-90">Your command center for team logistics and operations.</p>
+            </header>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard title="Managed Teams" value={kpis.managedTeams} icon={Users} />
+                <StatCard title="Upcoming Fixtures" value={kpis.upcomingFixtures} icon={Calendar} />
+                <StatCard title="Pending Availability" value={kpis.pendingAvailability} icon={ClipboardCheck} />
+                <StatCard title="Transport Needed" value={kpis.transportNeeded} icon={AlertCircle} />
+            </div>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Management Hub</CardTitle>
+                    <CardDescription>Quick access to key logistical and management areas for your team(s).</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {managementLinks.map(link => <ManagementLink key={link.href} {...link} />)}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Upcoming Fixtures</CardTitle>
+                    <CardDescription>Your next 5 scheduled matches.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {upcomingMatches.length > 0 ? (
+                        <Table>
+                            <TableBody>
+                                {upcomingMatches.map(match => (
+                                    <TableRow key={match.matchId}>
+                                        <TableCell>
+                                            <p className="font-medium">{match.teamAName} vs {match.teamBName}</p>
+                                            <p className="text-xs text-muted-foreground">{format(match.dateTime, 'EEE, dd MMM p')} at {match.fieldName}</p>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button asChild size="sm" variant="outline">
+                                                <Link href={`/matches/${match.matchId}`}>View Match</Link>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <p className="text-center text-muted-foreground py-4">No upcoming matches for your teams.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
 
 interface CoachDashboardProps {
   data: {
@@ -272,42 +382,70 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
 
 export default function CoachDashboard() {
   const { person } = useAuth();
-  const [data, setData] = React.useState<CoachDashboardProps['data'] | null>(null);
+  const [data, setData] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const activeRole = person?.activeRole;
 
   React.useEffect(() => {
     if (person?.personId) {
       setLoading(true);
-      getCoachDashboardData(person.personId)
-        .then(async (fetchedData) => {
-            if (!fetchedData.team) {
+      
+      const fetchData = async () => {
+        if (activeRole === 'Team Manager') {
+            return getTeamManagerDashboardData(person.personId);
+        }
+        // Default to coach data for Coach, Asst Coach, Captain
+        return getCoachDashboardData(person.personId);
+      };
+
+      fetchData()
+        .then(async (fetchedData: any) => {
+            if (activeRole !== 'Team Manager' && !fetchedData.team) {
                 const [allSchools, allTeams] = await Promise.all([getSchools(), getTeams()]);
                 setData({ ...fetchedData, allSchools, allTeams });
-            } else {
+            } else if (activeRole === 'Team Manager' && fetchedData.teams.length === 0) {
+                 const [allSchools, allTeams] = await Promise.all([getSchools(), getTeams()]);
+                 setData({ ...fetchedData, allSchools, allTeams });
+            }
+            else {
                 setData(fetchedData);
             }
         })
         .catch(error => {
-            console.error("Failed to load coach dashboard data:", error);
+            console.error("Failed to load dashboard data:", error);
             setData(null);
         })
         .finally(() => {
             setLoading(false);
         });
     } else if (person === null) {
-        // If there's no person, we can stop loading.
         setLoading(false);
     }
-  }, [person]);
+  }, [person, activeRole]);
 
   if (loading) {
     return <DashboardSkeleton />;
   }
   
-  if (!data) {
-    // This handles the error case where data fetching failed or user is not logged in.
-    return <CoachDashboardInternal data={{ team: null, nextMatch: null, recentMatches: [], teamStats: null, leaderboards: { topRunScorers: [], topWicketTakers: [] }, upcomingSessions: [], allSchools: [], allTeams: [] }} />;
+  if (activeRole === 'Team Manager') {
+    if (!data || data.teams.length === 0) {
+      return (
+         <div className="flex flex-col gap-8">
+            <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+                <h1 className="text-2xl font-bold">{activeRole} Dashboard</h1>
+                <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
+            </header>
+            <RequestAssignmentForm schools={data?.allSchools || []} teams={data?.allTeams || []} person={person} role={activeRole} />
+        </div>
+      );
+    }
+    return <TeamManagerDashboardUI data={data as TeamManagerDashboardData} />;
   }
-
+  
+  // Default to Coach view
+  if (!data) {
+    return <div/>;
+  }
+  
   return <CoachDashboardInternal data={data} />;
 }

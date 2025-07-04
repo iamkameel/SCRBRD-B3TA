@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest, TrainingSession } from '@/lib/data';
@@ -7,7 +6,7 @@ import { getPlayers, getPerson, getPersonLinks } from './players';
 import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
 import { getPlayerStats } from './stats';
 import { getFieldsForGroundskeeper, getFields } from './fields';
-import { getMatchesByField, getMatches } from './matches';
+import { getMatchTransportAssignments, getMatches, getMatchLineup } from './matches';
 import { getCompetitions } from './competitions';
 import { getPendingAssignmentRequests } from './requests';
 import { getSessionsByTeam } from './sessions';
@@ -189,6 +188,65 @@ export async function getSportsmasterDashboardData() {
     };
 }
 
+export async function getTeamManagerDashboardData(personId: string) {
+    const assignments = await getPersonTeamAssignments(personId);
+    const managedTeamIds = assignments.filter(a => ['Team Manager'].includes(a.role)).map(a => a.teamId);
+
+    if (managedTeamIds.length === 0) {
+        return { 
+            kpis: { upcomingFixtures: 0, pendingAvailability: 0, transportNeeded: 0, managedTeams: 0 },
+            upcomingMatches: [],
+            teams: [],
+        };
+    }
+    
+    const teams = await Promise.all(managedTeamIds.map(id => getTeam(id)));
+    const validTeams = teams.filter((t): t is Team => t !== null);
+
+    const allTeamMatches = await Promise.all(managedTeamIds.map(id => getTeamMatches(id)));
+    const uniqueMatchIds = new Set<string>();
+    const allMatches = allTeamMatches.flat().filter(match => {
+        if (uniqueMatchIds.has(match.matchId)) return false;
+        uniqueMatchIds.add(match.matchId);
+        return true;
+    });
+
+    const now = new Date();
+    const upcomingMatches = allMatches.filter(m => m.status === 'scheduled' && m.dateTime >= now)
+                                     .sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
+
+    let pendingAvailability = 0;
+    let transportNeeded = 0;
+
+    for (const match of upcomingMatches) {
+        const lineupA = await getMatchLineup(match.matchId, match.teamAId);
+        const lineupB = await getMatchLineup(match.matchId, match.teamBId);
+        const lineup = [...lineupA, ...lineupB];
+        
+        const availabilityMap = match.availability || {};
+        const respondedIds = new Set(Object.keys(availabilityMap));
+        pendingAvailability += lineup.filter(playerId => !respondedIds.has(playerId)).length;
+
+        const transport = await getMatchTransportAssignments(match.matchId);
+        if (transport.length === 0) {
+            transportNeeded++;
+        }
+    }
+
+    const kpis = {
+        managedTeams: validTeams.length,
+        upcomingFixtures: upcomingMatches.length,
+        pendingAvailability,
+        transportNeeded,
+    };
+    
+    return {
+        kpis,
+        upcomingMatches: upcomingMatches.slice(0, 5),
+        teams: validTeams,
+    };
+}
+
 
 export async function getCoachDashboardData(personId: string) {
     const assignments = await getPersonTeamAssignments(personId);
@@ -282,3 +340,4 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
     
     return dashboardData;
 });
+
