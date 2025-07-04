@@ -243,7 +243,7 @@ export function getNavConfig(role: string) {
         case 'Assistant Coach':
         case 'Captain':
         case 'Team Manager':
-            return { topLevel: topLevelNavItems, groups: playerNavGroups };
+             return { topLevel: topLevelNavItems, groups: playerNavGroups };
         case 'Player':
              return { topLevel: topLevelNavItems, groups: playerNavGroups };
         case 'Umpire':

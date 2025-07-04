@@ -40,11 +40,11 @@ export default function DashboardPage() {
     case 'Sportsmaster':
       return <SportsmasterDashboard />;
     case 'Coach':
+    case 'Team Manager':
       return <CoachDashboard />;
     case 'Player':
     case 'Assistant Coach':
     case 'Captain':
-    case 'Team Manager':
        return <PlayerDashboard />;
     case 'Umpire':
     case 'Scorer':
