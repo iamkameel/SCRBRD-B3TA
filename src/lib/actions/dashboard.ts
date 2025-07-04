@@ -97,22 +97,67 @@ export async function getTeamLeaderboard(teamId: string): Promise<{ topRunScorer
 export async function getAdminDashboardData() {
     const [
         competitions,
+        schools,
         teams,
         allPeople,
         fields,
+        matches,
+        vehicles,
     ] = await Promise.all([
         getCompetitions(),
+        getSchools(),
         getTeams(),
         getPlayers(),
         getFields(),
+        getMatches(),
+        getVehicles(),
     ]);
+
+    const staffRoles = new Set(['Coach', 'Assistant Coach', 'Team Manager', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid', 'Umpire', 'Scorer', 'Grounds-Keeper', 'Driver', 'Admin', 'Sportsmaster', 'School Admin']);
+    const medicalRoles = new Set(['First Aid', 'Doctor', 'Physiotherapist']);
+    const officialRoles = new Set(['Umpire', 'Scorer']);
+    const groundStaffRoles = new Set(['Grounds-Keeper']);
+
+    let playerCount = 0;
+    let staffCount = 0;
+    let medicalCount = 0;
+    let officialCount = 0;
+    let groundStaffCount = 0;
+
+    allPeople.forEach(person => {
+        if (person.roles.includes('Player')) {
+            playerCount++;
+        }
+        if (person.roles.some(r => staffRoles.has(r))) {
+            staffCount++;
+        }
+        if (person.roles.some(r => medicalRoles.has(r))) {
+            medicalCount++;
+        }
+        if (person.roles.some(r => officialRoles.has(r))) {
+            officialCount++;
+        }
+        if (person.roles.some(r => groundStaffRoles.has(r))) {
+            groundStaffCount++;
+        }
+    });
+
+    const awardsCount = competitions.filter(c => c.status === 'Completed' && c.winnerTeamId).length;
 
     return {
         kpis: {
             competitions: competitions.length,
+            schools: schools.length,
             teams: teams.length,
-            players: allPeople.length,
-            fields: fields.length,
+            players: playerCount,
+            staff: staffCount,
+            medicalSupport: medicalCount,
+            fieldsVenues: fields.length,
+            officials: officialCount,
+            groundStaff: groundStaffCount,
+            fixtures: matches.length,
+            transport: vehicles.length,
+            awards: awardsCount,
         },
     };
 }

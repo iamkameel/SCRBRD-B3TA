@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle } from 'lucide-react';
+import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle, HeartPulse, Wrench, Medal } from 'lucide-react';
 import { getAdminDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,21 @@ import { Button } from '@/components/ui/button';
 interface AdminDashboardData {
     kpis: {
         competitions: number;
+        schools: number;
         teams: number;
         players: number;
-        fields: number;
+        staff: number;
+        medicalSupport: number;
+        fieldsVenues: number;
+        officials: number;
+        groundStaff: number;
+        fixtures: number;
+        transport: number;
+        awards: number;
     };
 }
 
-function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
+function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -27,7 +35,6 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{value}</div>
-                {description && <p className="text-xs text-muted-foreground">{description}</p>}
             </CardContent>
         </Card>
     );
@@ -90,6 +97,7 @@ export default function AdminDashboard() {
     { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus, addHref: "/transport" },
     { href: "/financials", title: "Financials & Sponsors", description: "Track income, expenses, and sponsors.", icon: Banknote, addHref: "/financials" },
     { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
+    { href: "/user-management", title: "User Management", description: "Invite and manage system users.", icon: UserCog },
   ];
 
   return (
@@ -108,11 +116,19 @@ export default function AdminDashboard() {
                 <CardTitle>Global Overview</CardTitle>
                 <CardDescription>High-level metrics across the entire system.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} description="active this season" />
-                <StatCard title="Teams" value={kpis.teams} icon={Users} description="across all divisions"/>
-                <StatCard title="Total People" value={kpis.players} icon={User} description="registered" />
-                <StatCard title="Fields & Venues" value={kpis.fields} icon={MapPin} description="available" />
+            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} />
+                <StatCard title="Schools" value={kpis.schools} icon={Building} />
+                <StatCard title="Teams" value={kpis.teams} icon={Users} />
+                <StatCard title="Players" value={kpis.players} icon={User} />
+                <StatCard title="Staff" value={kpis.staff} icon={UserCog} />
+                <StatCard title="Medical & Support" value={kpis.medicalSupport} icon={HeartPulse} />
+                <StatCard title="Fields & Venues" value={kpis.fieldsVenues} icon={MapPin} />
+                <StatCard title="Officials" value={kpis.officials} icon={Users} />
+                <StatCard title="Ground Staff" value={kpis.groundStaff} icon={Wrench} />
+                <StatCard title="Fixtures" value={kpis.fixtures} icon={ClipboardList} />
+                <StatCard title="Transport" value={kpis.transport} icon={Bus} />
+                <StatCard title="Awards" value={kpis.awards} icon={Medal} />
             </CardContent>
         </Card>
       
