@@ -1,5 +1,6 @@
 
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
+import type { PlayerStats } from './data';
 
 // Interfaces
 
@@ -156,6 +157,12 @@ export interface RosterMember {
   isCaptain: boolean;
   isViceCaptain: boolean;
 }
+
+export interface RosterMemberWithStats extends RosterMember {
+    stats: PlayerStats;
+    profileImageUrl?: string;
+}
+
 
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'postponed' | 'cancelled' | 'abandoned';
 export type AvailabilityStatus = 'attending' | 'unavailable' | 'tentative';

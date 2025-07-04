@@ -38,15 +38,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
-import { assignOfficialToMatchAction, saveMatchLineupAction, removeOfficialFromMatchAction, confirmLineupAction } from '@/lib/actions/matches';
-import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, autoSelectLineupAction, generateOppositionAnalysisAction, generateLiveMatchUpdateAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
+import { assignOfficialToMatchAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
+import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, generateOppositionAnalysisAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
-import type { Match, Person, Official, Innings, RosterMember, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput, AvailabilityStatus } from "@/lib/data";
+import type { Match, Person, Official, Innings, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput, RosterMemberWithStats } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
 import { useAuth } from "@/lib/auth-context";
+import { LineupManager } from "./lineup-manager";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -200,225 +200,6 @@ function AssignTransportDialog({ matchId, vehicles, drivers, transportAssignment
   );
 }
 
-const lineupSchema = z.object({
-  playerIds: z.array(z.string()).refine(value => value.length > 0, {
-    message: "You must select at least one player.",
-  }).refine(value => value.length <= 11, {
-    message: "You can select a maximum of 11 players."
-  }),
-});
-
-type LineupFormValues = z.infer<typeof lineupSchema>;
-
-interface LineupSelectionCardProps {
-  teamId: string;
-  teamName: string;
-  match: Match;
-  roster: RosterMember[];
-  lineup: string[];
-  isCaptain: boolean;
-  lineupConfirmed: boolean;
-}
-
-function LineupSelectionCard({ teamId, teamName, match, roster, lineup, isCaptain, lineupConfirmed }: LineupSelectionCardProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
-  const [isAutoSelecting, startAutoSelectTransition] = React.useTransition();
-
-  const form = useForm<LineupFormValues>({
-    resolver: zodResolver(lineupSchema),
-    defaultValues: {
-      playerIds: lineup || [],
-    },
-  });
-
-  function onSubmit(data: LineupFormValues) {
-    startTransition(async () => {
-      try {
-        await saveMatchLineupAction(match.matchId, teamId, data.playerIds);
-        toast({
-          title: "Lineup Saved",
-          description: `The lineup for ${teamName} has been updated.`,
-        });
-        router.refresh();
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Could not save lineup.",
-          variant: "destructive",
-        });
-      }
-    });
-  }
-  
-  function handleAutoSelect() {
-    startAutoSelectTransition(async () => {
-      try {
-        const { playerIds, justification } = await autoSelectLineupAction(match.matchId, teamId);
-        form.setValue('playerIds', playerIds, { shouldValidate: true, shouldDirty: true });
-        toast({ 
-          title: "AI Lineup Suggested", 
-          description: justification,
-          duration: 10000, 
-        });
-      } catch (error) {
-        toast({
-          title: "Error Auto-Selecting Team",
-          description: error instanceof Error ? error.message : "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
-    });
-  }
-  
-  const handleConfirmLineup = () => {
-    startTransition(async () => {
-        try {
-            await confirmLineupAction(match.matchId, teamId);
-            toast({ title: "Lineup Confirmed", description: "You have confirmed the lineup for this match." });
-        } catch (error) {
-            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not confirm lineup.", variant: "destructive" });
-        }
-    });
-  };
-
-  const selectedCount = form.watch('playerIds')?.length || 0;
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{teamName} - Select Lineup ({selectedCount}/11)</CardTitle>
-        <CardDescription>Select the 11 players for this match.</CardDescription>
-        <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2 text-sm">
-                {lineupConfirmed ? (
-                    <><CheckCircle className="h-5 w-5 text-green-500" /><span className="font-semibold text-green-600">Lineup Confirmed</span></>
-                ) : (
-                    <><HelpCircle className="h-5 w-5 text-yellow-500" /><span className="font-semibold text-yellow-600">Awaiting Captain's Confirmation</span></>
-                )}
-            </div>
-            {isCaptain && !lineupConfirmed && selectedCount === 11 && (
-                <Button size="sm" onClick={handleConfirmLineup} disabled={isPending || isAutoSelecting}>Confirm Lineup</Button>
-            )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {roster.length > 0 ? (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="playerIds"
-                render={() => (
-                  <FormItem className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {roster.map((member) => (
-                          <FormField
-                          key={member.personId}
-                          control={form.control}
-                          name="playerIds"
-                          render={({ field }) => (
-                              <FormItem key={member.personId} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                              <FormControl>
-                                  <Checkbox
-                                  checked={field.value?.includes(member.personId)}
-                                  onCheckedChange={(checked) => {
-                                      return checked
-                                      ? field.onChange([...field.value, member.personId])
-                                      : field.onChange(field.value?.filter((id) => id !== member.personId));
-                                  }}
-                                  disabled={isPending || isAutoSelecting}
-                                  />
-                              </FormControl>
-                              <FormLabel className="font-normal flex flex-col">
-                                {member.personName}
-                                <span className="text-xs text-muted-foreground">{member.role}</span>
-                              </FormLabel>
-                              </FormItem>
-                          )}
-                          />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex items-center gap-2">
-                  <Button type="submit" disabled={isPending || isAutoSelecting}>
-                      {isPending ? "Saving..." : `Save ${teamName} Lineup`}
-                  </Button>
-                  <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button type="button" variant="outline" size="icon" onClick={handleAutoSelect} disabled={isPending || isAutoSelecting}>
-                                <Wand2 className={`h-4 w-4 ${isAutoSelecting ? 'animate-spin' : ''}`} />
-                                <span className="sr-only">Auto-Select Lineup</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Auto-Select with AI</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-              </div>
-            </form>
-          </Form>
-        ) : (
-          <p className="text-center text-muted-foreground py-8">
-            No players on this team's roster. Add players on the <Link href={`/teams/${teamId}`} className="underline">team page</Link>.
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function AvailabilitySummaryTable({ teamName, roster, availabilityData }: { teamName: string; roster: RosterMember[]; availabilityData: Match['availability'] }) {
-    const getStatusBadge = (status: AvailabilityStatus | undefined) => {
-        if (!status) return <Badge variant="outline">No Response</Badge>;
-        switch (status) {
-            case 'attending': return <Badge variant="default" className="bg-green-600 hover:bg-green-600/90 text-white">Attending</Badge>;
-            case 'unavailable': return <Badge variant="destructive">Unavailable</Badge>;
-            case 'tentative': return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-500/90 text-black">Tentative</Badge>;
-            default: return <Badge variant="outline">No Response</Badge>;
-        }
-    };
-
-    return (
-        <div>
-            <h3 className="font-semibold mb-4">{teamName}</h3>
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Player</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Note</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {roster.length > 0 ? roster.map(member => {
-                            const availability = availabilityData?.[member.personId];
-                            return (
-                                <TableRow key={member.personId}>
-                                    <TableCell className="font-medium">{member.personName}</TableCell>
-                                    <TableCell>{getStatusBadge(availability?.status)}</TableCell>
-                                    <TableCell className="text-muted-foreground text-xs">{availability?.note || '-'}</TableCell>
-                                </TableRow>
-                            );
-                        }) : (
-                            <TableRow>
-                                <TableCell colSpan={3} className="h-24 text-center">No players on roster.</TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-        </div>
-    );
-}
-
 function ScorecardPlaceholder() {
   return (
     <div className="text-center text-muted-foreground py-8 px-4">
@@ -444,18 +225,22 @@ interface MatchDetailsClientProps {
   match: Match;
   initialOfficials: Official[];
   people: Person[];
-  teamARoster: RosterMember[];
-  teamBRoster: RosterMember[];
+  teamARosterWithStats: RosterMemberWithStats[];
+  teamBRosterWithStats: RosterMemberWithStats[];
   teamALineup: string[];
   teamBLineup: string[];
-  innings1?: Innings;
-  innings2?: Innings;
+  scorecard: { innings1: Innings, innings2: Innings } | null;
   transportAssignments: TransportAssignment[];
   vehicles: Vehicle[];
   drivers: Person[];
 }
 
-export default function MatchDetailsClient({ match, initialOfficials, people, teamARoster, teamBRoster, teamALineup, teamBLineup, innings1, innings2, transportAssignments, vehicles, drivers }: MatchDetailsClientProps) {
+export default function MatchDetailsClient({ 
+    match, initialOfficials, people, 
+    teamARosterWithStats, teamBRosterWithStats, 
+    teamALineup, teamBLineup, scorecard, 
+    transportAssignments, vehicles, drivers 
+}: MatchDetailsClientProps) {
   const { toast } = useToast();
   const { person } = useAuth();
   const [isClient, setIsClient] = React.useState(false);
@@ -483,26 +268,20 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     setIsClient(true);
   }, []);
   
-  const teamACaptain = teamARoster.find(m => m.isCaptain);
-  const isCaptainTeamA = !!(person && teamACaptain && person.personId === teamACaptain.personId);
-
-  const teamBCaptain = teamBRoster.find(m => m.isCaptain);
-  const isCaptainTeamB = !!(person && teamBCaptain && person.personId === teamBCaptain.personId);
-
   const playersInMatch = React.useMemo(() => {
     const allPlayers = new Map<string, { name: string; teamName: string }>();
-    teamARoster.forEach(p => {
+    teamARosterWithStats.forEach(p => {
         if (teamALineup.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamAName });
         }
     });
-    teamBRoster.forEach(p => {
+    teamBRosterWithStats.forEach(p => {
         if (teamBLineup.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamBName });
         }
     });
     return Array.from(allPlayers.entries()).map(([id, data]) => ({ id, ...data }));
-  }, [teamARoster, teamBRoster, teamALineup, teamBLineup, match.teamAName, match.teamBName]);
+  }, [teamARosterWithStats, teamBRosterWithStats, teamALineup, teamBLineup, match.teamAName, match.teamBName]);
 
   const handleGenerateForecast = () => {
     if (!forecastedPlayer) {
@@ -654,6 +433,9 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
     });
   };
 
+  const innings1 = scorecard?.innings1;
+  const innings2 = scorecard?.innings2;
+
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
   const canGenerateScorecard = teamALineup.length === 11 && teamBLineup.length === 11;
@@ -764,8 +546,8 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                     <CardContent>
                         {match.status === 'live' ? (
                             <LiveScoringInterface
-                                teamARoster={teamARoster}
-                                teamBRoster={teamBRoster}
+                                teamARoster={teamARosterWithStats}
+                                teamBRoster={teamBRosterWithStats}
                                 match={match}
                             />
                         ) : (
@@ -790,25 +572,37 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                 </Card>
             </TabsContent>
 
-            <TabsContent value="lineups" className="mt-4 space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Availability & RSVP</CardTitle>
-                        <CardDescription>Live availability status for all rostered players.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <AvailabilitySummaryTable teamName={match.teamAName} roster={teamARoster} availabilityData={match.availability} />
-                        {match.teamBId && <AvailabilitySummaryTable teamName={match.teamBName} roster={teamBRoster} availabilityData={match.availability} />}
-                    </CardContent>
-                </Card>
-
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <LineupSelectionCard teamId={match.teamAId} teamName={match.teamAName} match={match} roster={teamARoster} lineup={teamALineup} isCaptain={isCaptainTeamA} lineupConfirmed={!!match.lineupConfirmedByCaptainA} />
-                    {match.teamBId ?
-                        <LineupSelectionCard teamId={match.teamBId} teamName={match.teamBName} match={match} roster={teamBRoster} lineup={teamBLineup} isCaptain={isCaptainTeamB} lineupConfirmed={!!match.lineupConfirmedByCaptainB} />
-                        : <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
-                    }
-                </div>
+            <TabsContent value="lineups" className="mt-4">
+                 <Tabs defaultValue="team-a-lineup" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="team-a-lineup">{match.teamAName}</TabsTrigger>
+                        <TabsTrigger value="team-b-lineup" disabled={!match.teamBId}>{match.teamBName || 'TBD'}</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="team-a-lineup" className="mt-4">
+                        <LineupManager 
+                            key={`team-a-${match.matchId}`}
+                            teamId={match.teamAId}
+                            teamName={match.teamAName}
+                            match={match}
+                            rosterWithStats={teamARosterWithStats}
+                            initialLineupIds={teamALineup}
+                        />
+                    </TabsContent>
+                     <TabsContent value="team-b-lineup" className="mt-4">
+                        {match.teamBId ? (
+                            <LineupManager 
+                                key={`team-b-${match.matchId}`}
+                                teamId={match.teamBId}
+                                teamName={match.teamBName}
+                                match={match}
+                                rosterWithStats={teamBRosterWithStats}
+                                initialLineupIds={teamBLineup}
+                            />
+                        ) : (
+                            <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
+                        )}
+                    </TabsContent>
+                 </Tabs>
             </TabsContent>
 
             <TabsContent value="analysis" className="mt-4">
@@ -1063,7 +857,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Match Officials</CardTitle><CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription></div><AssignOfficialDialog matchId={match.matchId} people={people.filter(p => !initialOfficials.some(o => o.personId === p.personId) && (p.roles.includes('Umpire') || p.roles.includes('Scorer')))} /></CardHeader>
-                        <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{initialOfficials.length > 0 ? (initialOfficials.map(official => (<TableRow key={official.assignmentId}><TableCell className="font-medium">{official.personName}</TableCell><TableCell>{official.role}</TableCell><TableCell><Badge variant={official.confirmed ? 'secondary' : 'outline'} className={cn(official.confirmed ? 'bg-green-100 text-green-800' : '')}>{official.confirmed ? <Check className="mr-1" /> : <Clock className="mr-1" />} {official.confirmed ? "Confirmed" : "Pending"}</Badge></TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteOfficialDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No officials assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{initialOfficials.length > 0 ? (initialOfficials.map(official => (<TableRow key={official.assignmentId}><TableCell className="font-medium">{official.personName}</TableCell><TableCell>{official.role}</TableCell><TableCell><Badge variant={official.confirmed ? 'secondary' : 'outline'} className={cn(official.confirmed ? 'bg-green-100 text-green-800' : '')}>{official.confirmed ? <CheckCircle className="mr-1" /> : <HelpCircle className="mr-1" />} {official.confirmed ? "Confirmed" : "Pending"}</Badge></TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteOfficialDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No officials assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
                     </Card>
                 </div>
             </TabsContent>

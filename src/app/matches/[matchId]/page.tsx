@@ -1,11 +1,13 @@
 
 
 import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
-import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
-import { getTeamRoster } from '@/lib/actions/teams';
+import { getPlayers, getPerson } from '@/lib/actions/players';
+import { getTeamRoster, getTeams } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import MatchDetailsClient from './client';
 import { notFound } from 'next/navigation';
+import type { RosterMember, PlayerStats, RosterMemberWithStats } from '@/lib/data';
+import { getPlayerStats } from '@/lib/actions/stats';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const { matchId } = params;
@@ -14,8 +16,21 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
   if (!match) {
     notFound();
   }
+  
+  const getRosterWithStats = async (roster: RosterMember[]): Promise<RosterMemberWithStats[]> => {
+    return Promise.all(roster.map(async (member) => {
+        const [stats, personDetails] = await Promise.all([
+            getPlayerStats(member.personId),
+            getPerson(member.personId)
+        ]);
+        return { 
+            ...member, 
+            stats, 
+            profileImageUrl: personDetails?.profileImageUrl 
+        };
+    }));
+  };
 
-  // Fetch all standard data in parallel
   const [
     officials,
     people,
@@ -29,7 +44,7 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     drivers,
   ] = await Promise.all([
     getMatchOfficials(matchId),
-    getPlayers(), // To populate the assignment dialog
+    getPlayers(),
     getTeamRoster(match.teamAId),
     match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
     getMatchLineup(matchId, match.teamAId),
@@ -39,13 +54,18 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getVehicles(),
     getPeopleByRole('Driver'),
   ]);
+  
+  const [teamARosterWithStats, teamBRosterWithStats] = await Promise.all([
+    getRosterWithStats(teamARoster),
+    getRosterWithStats(teamBRoster)
+  ]);
 
   return <MatchDetailsClient 
     match={match} 
     initialOfficials={officials} 
     people={people} 
-    teamARoster={teamARoster}
-    teamBRoster={teamBRoster}
+    teamARosterWithStats={teamARosterWithStats}
+    teamBRosterWithStats={teamBRosterWithStats}
     teamALineup={teamALineup}
     teamBLineup={teamBLineup}
     scorecard={scorecard}
@@ -54,5 +74,3 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     drivers={drivers}
   />;
 }
-
-
