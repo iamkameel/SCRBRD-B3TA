@@ -9,6 +9,7 @@ import { getPerson } from './players';
 import { addPlayerToRosterAction } from './teams';
 import type { AssignmentRequest } from '../data';
 import { cache } from 'react';
+import { getUserId } from '../auth';
 
 const requestSchema = z.object({
   targetId: z.string(),
@@ -68,10 +69,13 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
     revalidatePath('/dashboard');
 }
 
-export const getPendingAssignmentRequests = cache(async (userId: string): Promise<AssignmentRequest[]> => {
+export const getPendingAssignmentRequests = cache(async (): Promise<AssignmentRequest[]> => {
+    const userId = await getUserId();
     if (!userId) return [];
 
     const requestsCollection = collection(db, 'assignmentRequests');
+    // A sportsmaster should see all pending requests, not just those assigned to them if we want to be more flexible.
+    // For now, it's assigned to a specific user.
     const q = query(requestsCollection, where("userId", "==", userId), where("status", "==", "pending"));
 
     const snapshot = await getDocs(q);
@@ -89,7 +93,8 @@ const reviewSchema = z.object({
   decision: z.enum(['approve', 'deny']),
 });
 
-export async function reviewAssignmentRequestAction(reviewerId: string, data: z.infer<typeof reviewSchema>) {
+export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewSchema>) {
+    const reviewerId = await getUserId();
     if (!reviewerId) throw new Error("User not authenticated.");
 
     const reviewer = await getPerson(reviewerId);
@@ -114,7 +119,7 @@ export async function reviewAssignmentRequestAction(reviewerId: string, data: z.
                 assignedSchools: arrayUnion(request.targetId)
             });
         } else { // Team
-            await addPlayerToRosterAction(reviewerId, request.targetId, {
+            await addPlayerToRosterAction(request.targetId, {
                 personId: request.requesterId,
                 role: request.role,
                 status: 'active',

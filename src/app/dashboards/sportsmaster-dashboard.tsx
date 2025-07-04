@@ -13,6 +13,7 @@ import { getSportsmasterDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 import { reviewAssignmentRequestAction } from '@/lib/actions/requests';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth-context';
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -45,16 +46,20 @@ export default function SportsmasterDashboard() {
   const [isPending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const [reviewingId, setReviewingId] = React.useState<string | null>(null);
+  const { person } = useAuth();
 
   React.useEffect(() => {
-    getSportsmasterDashboardData().then(fetchedData => {
-      setData(fetchedData);
-      setLoading(false);
-    }).catch(error => {
-      console.error("Failed to load sportsmaster dashboard data:", error);
-      setLoading(false);
-    });
-  }, [isPending]); // Re-fetch data when a review is processed
+    if (person?.personId) {
+        setLoading(true);
+        getSportsmasterDashboardData().then(fetchedData => {
+            setData(fetchedData);
+            setLoading(false);
+            }).catch(error => {
+            console.error("Failed to load sportsmaster dashboard data:", error);
+            setLoading(false);
+        });
+    }
+  }, [person, isPending]); // Re-fetch data when a review is processed or person changes
 
   const handleReview = (requestId: string, decision: 'approve' | 'deny') => {
     startTransition(async () => {

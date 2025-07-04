@@ -31,7 +31,7 @@ const requestSchema = z.object({
 });
 type RequestFormValues = z.infer<typeof requestSchema>;
 
-function RequestAssignmentForm({ schools, teams, person }: { schools: School[], teams: Team[], person: Person | null }) {
+function RequestAssignmentForm({ schools, teams, person, role }: { schools: School[], teams: Team[], person: Person | null, role: string }) {
     const { toast } = useToast();
     const [isPending, startTransition] = React.useTransition();
     const form = useForm<RequestFormValues>({
@@ -58,7 +58,7 @@ function RequestAssignmentForm({ schools, teams, person }: { schools: School[], 
                 await createAssignmentRequestAction({ 
                     targetId: data.teamId, 
                     targetType: 'Team', 
-                    role: 'Coach',
+                    role: role,
                     requesterId: person.personId,
                 });
                 toast({ title: "Request Sent", description: "Your assignment request has been sent to the Sportsmaster for approval."});
@@ -117,15 +117,16 @@ interface CoachDashboardProps {
 function CoachDashboardInternal({ data }: CoachDashboardProps) {
   const { person } = useAuth();
   const { team, nextMatch, recentMatches, teamStats, leaderboards, upcomingSessions } = data;
+  const activeRole = person?.activeRole || 'User';
 
   if (!team || !teamStats) {
     return (
       <div className="flex flex-col gap-8">
         <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold">Coach Dashboard</h1>
-            <p className="text-sm opacity-90">Welcome, {person?.activeRole || 'Coach'}!</p>
+            <h1 className="text-2xl font-bold">{activeRole} Dashboard</h1>
+            <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
         </header>
-        <RequestAssignmentForm schools={data.allSchools || []} teams={data.allTeams || []} person={person} />
+        <RequestAssignmentForm schools={data.allSchools || []} teams={data.allTeams || []} person={person} role={activeRole} />
       </div>
     );
   }
@@ -133,8 +134,9 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
   return (
     <div className="flex flex-col gap-8">
       <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold">{team.name}</h1>
-        <p className="text-sm opacity-90">Your command center for team performance and development.</p>
+        <h1 className="text-2xl font-bold">{activeRole} Dashboard</h1>
+        <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
+        <p className="text-sm opacity-90 mt-1">{team.schoolName} &bull; {team.name}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
