@@ -495,7 +495,7 @@ export interface PerformanceEntry {
   ballsFaced: number;
   wickets: number;
   oversBowled: number;
-  wagonWheel: { angle: number; runs: number }[];
+  wagonWheel: { angle: number; runs: number, distance: number }[];
   strikeRate: number;
   economyRate: number;
 }
@@ -549,4 +549,10 @@ export interface PlayerTrackerData {
   injuryRecords: InjuryRecord[];
   availability: Availability[];
   milestones: Milestone[];
+}
+
+export interface AwardsData {
+    trophyCabinet: Competition[];
+    topRunScorer: LeaderboardPlayer | null;
+    topWicketTaker: LeaderboardPlayer | null;
 }

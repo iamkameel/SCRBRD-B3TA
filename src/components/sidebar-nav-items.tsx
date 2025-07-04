@@ -60,6 +60,7 @@ const adminNavGroups = [
             { href: '/seasons', label: 'Seasons', icon: CalendarDays, adminOnly: true },
             { href: '/divisions', label: 'Divisions', icon: Medal, adminOnly: true },
             { href: '/rankings', label: 'Rankings', icon: Trophy },
+            { href: '/awards', label: 'Awards', icon: Medal },
         ]
     },
     {
@@ -122,6 +123,7 @@ const coachNavGroups = [
             { href: '/scouting', label: 'Scouting Assistant', icon: UserSearch },
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
             { href: '/rankings', label: 'Leaderboards', icon: Trophy },
+            { href: '/awards', label: 'Awards', icon: Medal },
             { href: '/people', label: 'Player Profiles', icon: User },
         ]
     },
@@ -149,6 +151,7 @@ const playerNavGroups = [
         icon: Trophy,
         items: [
             { href: '/rankings', label: 'Leaderboards', icon: Trophy },
+            { href: '/awards', label: 'Awards', icon: Medal },
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
         ]
     },
@@ -227,6 +230,7 @@ const spectatorNavGroups = [
             { href: '/fixtures', label: 'Fixtures', icon: ClipboardList },
             { href: '/matches', label: 'Results', icon: Trophy },
             { href: '/rankings', label: 'Rankings', icon: Trophy },
+            { href: '/awards', label: 'Awards', icon: Medal },
         ]
     },
     referenceGroup,
@@ -240,10 +244,10 @@ export function getNavConfig(role: string) {
         case 'Sportsmaster':
             return { topLevel: topLevelNavItems, groups: sportsmasterNavGroups };
         case 'Coach':
+        case 'Team Manager':
             return { topLevel: topLevelNavItems, groups: coachNavGroups };
         case 'Assistant Coach':
         case 'Captain':
-        case 'Team Manager':
              return { topLevel: topLevelNavItems, groups: playerNavGroups };
         case 'Player':
              return { topLevel: topLevelNavItems, groups: playerNavGroups };
