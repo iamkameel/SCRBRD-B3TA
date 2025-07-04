@@ -348,10 +348,19 @@ function LineupSelectionCard({ teamId, teamName, match, roster, lineup, isCaptai
                   <Button type="submit" disabled={isPending || isAutoSelecting}>
                       {isPending ? "Saving..." : `Save ${teamName} Lineup`}
                   </Button>
-                  <Button type="button" variant="outline" onClick={handleAutoSelect} disabled={isPending || isAutoSelecting}>
-                      <Wand2 className={`mr-2 h-4 w-4 ${isAutoSelecting ? 'animate-spin' : ''}`} />
-                      {isAutoSelecting ? 'Selecting...' : 'Auto-Select'}
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button type="button" variant="outline" size="icon" onClick={handleAutoSelect} disabled={isPending || isAutoSelecting}>
+                                <Wand2 className={`h-4 w-4 ${isAutoSelecting ? 'animate-spin' : ''}`} />
+                                <span className="sr-only">Auto-Select Lineup</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Auto-Select with AI</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
               </div>
             </form>
           </Form>
@@ -1054,7 +1063,7 @@ export default function MatchDetailsClient({ match, initialOfficials, people, te
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Match Officials</CardTitle><CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription></div><AssignOfficialDialog matchId={match.matchId} people={people.filter(p => !initialOfficials.some(o => o.personId === p.personId) && (p.roles.includes('Umpire') || p.roles.includes('Scorer')))} /></CardHeader>
-                        <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{initialOfficials.length > 0 ? (initialOfficials.map(official => (<TableRow key={official.assignmentId}><TableCell className="font-medium">{official.personName}</TableCell><TableCell>{official.role}</TableCell><TableCell><Badge variant={official.confirmed ? 'secondary' : 'outline'}>{official.confirmed ? 'Confirmed' : 'Pending'}</Badge></TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteOfficialDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No officials assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{initialOfficials.length > 0 ? (initialOfficials.map(official => (<TableRow key={official.assignmentId}><TableCell className="font-medium">{official.personName}</TableCell><TableCell>{official.role}</TableCell><TableCell><Badge variant={official.confirmed ? 'secondary' : 'outline'} className={cn(official.confirmed ? 'bg-green-100 text-green-800' : '')}>{official.confirmed ? <Check className="mr-1" /> : <Clock className="mr-1" />} {official.confirmed ? "Confirmed" : "Pending"}</Badge></TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedOfficial(official); setIsDeleteOfficialDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No officials assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
                     </Card>
                 </div>
             </TabsContent>

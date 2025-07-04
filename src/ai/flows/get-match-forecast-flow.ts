@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to generate a weather forecast for a cricket match.
@@ -14,9 +15,12 @@ import { format } from 'date-fns';
 
 const summarizeWeatherPrompt = ai.definePrompt({
     name: 'summarizeWeatherPrompt',
-    system: `You are a helpful cricket match assistant. 
+    prompt: `You are a helpful cricket match assistant. 
     Based on the provided JSON weather data, provide a concise, one-sentence summary of the forecast.
-    Also return the detailed weather data you received, unchanged.`,
+    Also return the detailed weather data you received, unchanged.
+    
+    Weather Data:
+    {{{json details}}}`,
     input: { schema: z.object({ details: WeatherDetailsSchema }) },
     output: { schema: GetMatchForecastOutputSchema },
 });
@@ -50,3 +54,4 @@ const getMatchForecastFlow = ai.defineFlow(
 export async function getMatchForecast(matchId: string): Promise<GetMatchForecastOutput> {
     return getMatchForecastFlow(matchId);
 }
+
