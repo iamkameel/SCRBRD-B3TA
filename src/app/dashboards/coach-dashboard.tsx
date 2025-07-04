@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight, Bus, Backpack, ClipboardCheck, AlertCircle, PlusCircle } from 'lucide-react';
-import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession, School, Person } from '@/lib/data';
+import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession, School, Person, AssignmentRequest } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { getCoachDashboardData, getTeamManagerDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
@@ -139,10 +139,11 @@ interface TeamManagerDashboardData {
     };
     upcomingMatches: Match[];
     teams: Team[];
+    pendingRequests: AssignmentRequest[];
 }
 
 function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
-    const { kpis, upcomingMatches, teams } = data;
+    const { kpis, upcomingMatches, teams, pendingRequests } = data;
     const managementLinks = [
         { href: `/teams/${teams[0]?.teamId}`, title: "Manage Roster", description: "View and update player assignments.", icon: Users },
         { href: "/matches", title: "View All Fixtures", description: "See the full schedule for all teams.", icon: ClipboardList },
@@ -164,6 +165,32 @@ function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
                 <StatCard title="Transport Needed" value={kpis.transportNeeded} icon={AlertCircle} />
             </div>
             
+            {pendingRequests && pendingRequests.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Your Pending Requests</CardTitle>
+                        <CardDescription>Status of your recent assignment requests.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableBody>
+                                {pendingRequests.map(req => (
+                                    <TableRow key={req.requestId}>
+                                        <TableCell>
+                                            <p className="font-semibold">Request to be {req.role}</p>
+                                            <p className="text-sm text-muted-foreground">for {req.targetName}</p>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant="outline">{req.status}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            )}
+
             <Card>
                 <CardHeader>
                     <CardTitle>Management Hub</CardTitle>
@@ -219,6 +246,7 @@ interface CoachDashboardProps {
       topWicketTakers: LeaderboardPlayer[];
     };
     upcomingSessions: TrainingSession[];
+    pendingRequests: AssignmentRequest[];
     allSchools?: School[];
     allTeams?: Team[];
   }
@@ -226,7 +254,7 @@ interface CoachDashboardProps {
 
 function CoachDashboardInternal({ data }: CoachDashboardProps) {
   const { person } = useAuth();
-  const { team, nextMatch, recentMatches, teamStats, leaderboards, upcomingSessions } = data;
+  const { team, nextMatch, recentMatches, teamStats, leaderboards, upcomingSessions, pendingRequests } = data;
   const activeRole = person?.activeRole || 'User';
 
   if (!team || !teamStats) {
@@ -237,6 +265,31 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
             <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
         </header>
         <RequestAssignmentForm schools={data.allSchools || []} teams={data.allTeams || []} person={person} role={activeRole} />
+        {pendingRequests && pendingRequests.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Your Pending Requests</CardTitle>
+                    <CardDescription>Status of your recent assignment requests.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableBody>
+                            {pendingRequests.map(req => (
+                                <TableRow key={req.requestId}>
+                                    <TableCell>
+                                        <p className="font-semibold">Request to be {req.role}</p>
+                                        <p className="text-sm text-muted-foreground">for {req.targetName}</p>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge variant="outline">{req.status}</Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
       </div>
     );
   }
@@ -248,6 +301,32 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
         <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
         <p className="text-sm opacity-90 mt-1">{team.schoolName} &bull; {team.name}</p>
       </header>
+      
+      {pendingRequests && pendingRequests.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Your Pending Requests</CardTitle>
+                    <CardDescription>Status of your recent assignment requests.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableBody>
+                            {pendingRequests.map(req => (
+                                <TableRow key={req.requestId}>
+                                    <TableCell>
+                                        <p className="font-semibold">Request to be {req.role}</p>
+                                        <p className="text-sm text-muted-foreground">for {req.targetName}</p>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge variant="outline">{req.status}</Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">

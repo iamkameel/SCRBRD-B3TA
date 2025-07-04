@@ -37,15 +37,7 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
         if (!teamSnap.exists()) throw new Error("Team not found.");
         targetName = teamSnap.data().name;
     }
-
-    const sportsmasterQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Sportsmaster'), limit(1));
-    const sportsmasterSnapshot = await getDocs(sportsmasterQuery);
-
-    if (sportsmasterSnapshot.empty) {
-        throw new Error("No Sportsmaster found in the system to handle the request. Please contact the administrator.");
-    }
-    const sportsmasterId = sportsmasterSnapshot.docs[0].id;
-
+    
     const requestsCollection = collection(db, 'assignmentRequests');
     const q = query(requestsCollection, where("requesterId", "==", requesterId), where("targetId", "==", targetId), where("status", "==", "pending"));
     const existingRequest = await getDocs(q);
@@ -63,7 +55,7 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
         role,
         status: 'pending',
         createdAt: Timestamp.now(),
-        userId: sportsmasterId, // Assign request to the found Sportsmaster
+        userId: requesterId, // The creator of the request owns the document
     });
 
     revalidatePath('/dashboard');
@@ -73,10 +65,19 @@ export const getPendingAssignmentRequests = cache(async (): Promise<AssignmentRe
     const userId = await getUserId();
     if (!userId) return [];
 
+    const currentUser = await getPerson(userId);
+    if (!currentUser) return [];
+
     const requestsCollection = collection(db, 'assignmentRequests');
-    // A sportsmaster should see all pending requests, not just those assigned to them if we want to be more flexible.
-    // For now, it's assigned to a specific user.
-    const q = query(requestsCollection, where("userId", "==", userId), where("status", "==", "pending"));
+    let q;
+
+    if (currentUser.roles.some(r => ['Admin', 'Sportsmaster'].includes(r))) {
+        // Admins/Sportsmasters see all pending requests
+        q = query(requestsCollection, where("status", "==", "pending"));
+    } else {
+        // Other users see their own pending requests
+        q = query(requestsCollection, where("requesterId", "==", userId), where("status", "==", "pending"));
+    }
 
     const snapshot = await getDocs(q);
     const requests = snapshot.docs.map(doc => ({
@@ -85,7 +86,7 @@ export const getPendingAssignmentRequests = cache(async (): Promise<AssignmentRe
         createdAt: (doc.data().createdAt as Timestamp).toDate(),
     } as AssignmentRequest));
     
-    return requests;
+    return requests.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
 });
 
 const reviewSchema = z.object({
@@ -98,7 +99,7 @@ export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewS
     if (!reviewerId) throw new Error("User not authenticated.");
 
     const reviewer = await getPerson(reviewerId);
-    if (!reviewer || !reviewer.roles.includes('Sportsmaster')) {
+    if (!reviewer || !reviewer.roles.some(r => ['Admin', 'Sportsmaster'].includes(r))) {
         throw new Error("You do not have permission to review requests.");
     }
     
