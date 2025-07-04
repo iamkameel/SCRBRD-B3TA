@@ -3,53 +3,46 @@
 import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { PlusCircle, UserCog, ShieldCheck, Database, BarChart2, Users, Shield, MapPin, Trophy, ClipboardList, Bus, Building, HeartPulse, HardHat, User } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
+import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User } from 'lucide-react';
 import { getAdminDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
-import { Button } from '@/components/ui/button';
 
 interface AdminDashboardData {
     kpis: {
-        officials: number;
         competitions: number;
-        schools: number;
         teams: number;
         players: number;
-        staff: number;
-        medicalSupport: number;
         fields: number;
-        groundStaff: number;
-        transportHub: number;
     };
 }
 
-function KpiCard({ title, value, description, href, icon: Icon }: { title: string, value: string | number, description: string, href: string, icon: React.ElementType }) {
+function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
-        <Card className="flex flex-col transition-all hover:shadow-md">
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-sm font-medium">
-                      <Link href={href} className="hover:underline">
-                          {title}
-                      </Link>
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">{description}</p>
-                </div>
-                <Button asChild variant="ghost" size="icon" className="h-6 w-6 -mt-2 -mr-2 text-muted-foreground hover:text-foreground">
-                    <Link href={href}>
-                        <PlusCircle className="h-5 w-5" />
-                        <span className="sr-only">Add or manage {title}</span>
-                    </Link>
-                </Button>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="flex-grow flex items-end">
-                <Link href={href} className="flex items-baseline gap-2 text-foreground">
-                    <p className="text-4xl font-bold">{value}</p>
-                    <Icon className="h-5 w-5 text-muted-foreground mb-1" />
-                </Link>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                {description && <p className="text-xs text-muted-foreground">{description}</p>}
             </CardContent>
         </Card>
+    );
+}
+
+function ManagementLink({ href, title, description, icon: Icon }: { href: string; title: string; description: string; icon: React.ElementType }) {
+    return (
+        <Link href={href} className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
+            <div className="flex items-center gap-4">
+                <Icon className="w-8 h-8 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                    <h3 className="font-semibold">{title}</h3>
+                    <p className="text-sm text-muted-foreground">{description}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
+            </div>
+        </Link>
     );
 }
 
@@ -59,7 +52,7 @@ export default function AdminDashboard() {
 
   React.useEffect(() => {
     getAdminDashboardData().then(fetchedData => {
-      setData(fetchedData);
+      setData(fetchedData as AdminDashboardData); // Cast to the simplified version
       setLoading(false);
     }).catch(error => {
       console.error("Failed to load admin dashboard data:", error);
@@ -73,17 +66,16 @@ export default function AdminDashboard() {
 
   const { kpis } = data;
 
-  const kpiCards = [
-    { title: "Officials", value: kpis.officials, description: "Umpires & Scorers", href: "/people", icon: ShieldCheck },
-    { title: "Competitions", value: kpis.competitions, description: "Leagues & Cups", href: "/competitions", icon: Trophy },
-    { title: "Schools", value: kpis.schools, description: "Registered Institutions", href: "/schools", icon: Building },
-    { title: "Teams", value: kpis.teams, description: "Across all divisions", href: "/teams", icon: Users },
-    { title: "Players", value: kpis.players, description: "Registered Athletes", href: "/people", icon: User },
-    { title: "Staff", value: kpis.staff, description: "Coaches & Admins", href: "/people", icon: UserCog },
-    { title: "Medical & Support", value: kpis.medicalSupport, description: "First Aid, Physios", href: "/people", icon: HeartPulse },
-    { title: "Fields & Venues", value: kpis.fields, description: "Available for booking", href: "/fields", icon: MapPin },
-    { title: "Ground Staff", value: kpis.groundStaff, description: "Assigned Keepers", href: "/people", icon: HardHat },
-    { title: "Transport Hub", value: kpis.transportHub, description: "Vehicles in Fleet", href: "/transport", icon: Bus },
+  const managementLinks = [
+    { href: "/people", title: "Personnel Management", description: "Manage all players, staff, and officials.", icon: UserCog },
+    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users },
+    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy },
+    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList },
+    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: Building },
+    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: MapPin },
+    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus },
+    { href: "/financials", title: "Financials & Sponsors", description: "Track income, expenses, and sponsors.", icon: Banknote },
+    { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
   ];
 
   return (
@@ -96,12 +88,31 @@ export default function AdminDashboard() {
                 </div>
             </div>
         </header>
-        
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {kpiCards.map(card => (
-              <KpiCard key={card.title} {...card} />
-            ))}
-        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Global Overview</CardTitle>
+                <CardDescription>High-level metrics across the entire system.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} description="active this season" />
+                <StatCard title="Teams" value={kpis.teams} icon={Users} description="across all divisions"/>
+                <StatCard title="Total People" value={kpis.players} icon={User} description="registered" />
+                <StatCard title="Fields & Venues" value={kpis.fields} icon={MapPin} description="available" />
+            </CardContent>
+        </Card>
+      
+        <Card>
+            <CardHeader>
+                <CardTitle>Management Hub</CardTitle>
+                <CardDescription>Quick access to key management areas where you can add and assign resources.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+               {managementLinks.map(link => (
+                   <ManagementLink key={link.href} {...link} />
+               ))}
+            </CardContent>
+        </Card>
     </div>
   );
 }
