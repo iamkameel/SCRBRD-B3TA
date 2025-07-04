@@ -264,7 +264,7 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
     revalidatePath(`/people/${linkedPersonId}`);
 }
 
-const personSchema = z.object({
+const personObjectSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   displayName: z.string().optional(),
@@ -291,7 +291,9 @@ const personSchema = z.object({
   }).optional(),
   biography: z.string().optional(),
   qualifications: z.array(z.string()).optional(),
-}).refine(data => {
+});
+
+const refinePersonSchema = (schema: z.AnyZodObject) => schema.refine(data => {
     if (data.roles && data.roles.length > 0 && !data.activeRole) {
         return false;
     }
@@ -303,6 +305,8 @@ const personSchema = z.object({
     message: "An active role must be selected from the assigned roles.",
     path: ["activeRole"],
 });
+
+const personSchema = refinePersonSchema(personObjectSchema);
 
 type PersonFormValues = z.infer<typeof personSchema>;
 
@@ -372,7 +376,9 @@ export async function addPlayerAction(data: z.infer<typeof personSchema>) {
   revalidatePath('/people'); revalidatePath('/teams'); revalidatePath('/new-match');
 }
 
-const updatePlayerSchema = personSchema.extend({ personId: z.string() });
+const updatePlayerSchema = refinePersonSchema(
+    personObjectSchema.extend({ personId: z.string() })
+);
 export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema>) {
   const validated = updatePlayerSchema.safeParse(data);
   if (!validated.success) throw new Error('Invalid person data.');
