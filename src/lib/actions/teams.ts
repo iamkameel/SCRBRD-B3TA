@@ -1,12 +1,11 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db, app } from '@/lib/firebase';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp, collectionGroup } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp, collectionGroup, documentId } from 'firebase/firestore';
 import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment, Person, Division } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { cache } from 'react';
@@ -21,37 +20,53 @@ export const getTeams = cache(async (): Promise<Team[]> => {
   if (!currentUser) return [];
 
   const teamsCollection = collection(db, 'teams');
-  let q;
-
+  
   const activeRole = currentUser.activeRole;
   
-  // Admin role sees all teams within their organization.
   if (activeRole === 'Admin') {
-     q = query(teamsCollection);
-  }
-  // Sportsmaster role sees only teams from their assigned schools.
-  else if (activeRole === 'Sportsmaster') {
+     const q = query(teamsCollection);
+     const teamSnapshot = await getDocs(q);
+     return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
+  } 
+  
+  if (activeRole === 'Sportsmaster') {
     if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
-      return []; // No schools assigned, so no teams to see.
+      return [];
     }
-    // Firestore 'in' query is limited to 30 items. This should be sufficient for assigned schools.
-    q = query(
-      teamsCollection, 
-      where("schoolId", "in", currentUser.assignedSchools)
-    );
-  }
-  // For other roles, they see all teams. This can be refined later if needed.
-  else {
-      q = query(teamsCollection);
-  }
-
-  try {
+    const q = query(teamsCollection, where("schoolId", "in", currentUser.assignedSchools));
     const teamSnapshot = await getDocs(q);
     return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
-  } catch (error) {
-    console.error("Error fetching teams:", error);
-    return [];
   }
+  
+  if (['Coach', 'Assistant Coach', 'Team Manager', 'Player', 'Captain', 'Vice-Captain'].includes(activeRole)) {
+      const assignments = await getPersonTeamAssignments(userId);
+      const teamIds = assignments.map(a => a.teamId);
+      
+      if (teamIds.length === 0) {
+        return [];
+      }
+      
+      const teamIdChunks: string[][] = [];
+      for (let i = 0; i < teamIds.length; i += 30) {
+        teamIdChunks.push(teamIds.slice(i, i + 30));
+      }
+      
+      const teams: Team[] = [];
+      for (const chunk of teamIdChunks) {
+          if (chunk.length === 0) continue;
+          const q = query(teamsCollection, where(documentId(), 'in', chunk));
+          const teamSnapshot = await getDocs(q);
+          teamSnapshot.forEach(doc => {
+              teams.push({ teamId: doc.id, ...doc.data() } as Team);
+          });
+      }
+      return teams;
+  }
+  
+  // Default for other roles (spectators, etc.) is to see all teams
+  const q = query(teamsCollection);
+  const teamSnapshot = await getDocs(q);
+  return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
 });
 
 export const getTeam = cache(async (teamId: string): Promise<Team | null> => {

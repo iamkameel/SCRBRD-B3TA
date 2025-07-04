@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -10,15 +9,37 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { School, Person, Team, Match } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
-import { getTeamRoster, getTeams, getTeamsBySchool } from './teams';
+import { getPerson } from './players';
+import { getPersonTeamAssignments, getTeams, getTeamsBySchool } from './teams';
 
-// This function now fetches data from Firestore for the current user
+
 export async function getSchools(): Promise<School[]> {
   const userId = await getUserId();
   if (!userId) return [];
+  
+  const currentUser = await getPerson(userId);
+  if (!currentUser) return [];
+
+  const schoolsCollection = collection(db, 'schools');
+  let q;
+
+  const activeRole = currentUser.activeRole;
+
+  if (activeRole === 'Admin') {
+    q = query(schoolsCollection);
+  } else if (activeRole === 'Sportsmaster' && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
+    q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
+  } else if (['Coach', 'Player', 'Team Manager'].includes(activeRole)) {
+    const teams = await getTeams(); // This will get the user's teams
+    const schoolIds = [...new Set(teams.map(t => t.schoolId))];
+    if (schoolIds.length === 0) return [];
+    q = query(schoolsCollection, where(documentId(), 'in', schoolIds));
+  } else {
+    // Default for spectators etc. is to see all schools
+    q = query(schoolsCollection);
+  }
+
   try {
-    const schoolsCollection = collection(db, 'schools');
-    const q = query(schoolsCollection, where("userId", "==", userId));
     const schoolSnapshot = await getDocs(q);
     const schoolsList = schoolSnapshot.docs.map(doc => ({
       schoolId: doc.id,
@@ -27,7 +48,6 @@ export async function getSchools(): Promise<School[]> {
     return schoolsList;
   } catch (error) {
     console.error("Error fetching schools:", error);
-    // Return empty array or handle error as needed
     return [];
   }
 }
