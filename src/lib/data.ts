@@ -484,3 +484,69 @@ export interface HighlightReelOutput {
         imageUrl: string;
     }[];
 }
+
+
+// From Player Tracker Spec
+export interface PerformanceEntry {
+  entryId: string;
+  date: Date;
+  matchId: string;
+  runs: number;
+  ballsFaced: number;
+  wickets: number;
+  oversBowled: number;
+  wagonWheel: { angle: number; runs: number }[];
+  strikeRate: number;
+  economyRate: number;
+}
+
+export interface SkillRating {
+  ratingId: string;
+  date: Date;
+  batting: number;
+  bowling: number;
+  fielding: number;
+  fitness: number;
+  coachNotes?: string;
+}
+
+export interface TrainingLog {
+  logId: string;
+  date: Date;
+  drillType: string;
+  durationMins: number;
+  coachNotes?: string;
+}
+
+export interface InjuryRecord {
+  recordId: string;
+  injuryType: string;
+  startDate: Date;
+  endDate?: Date;
+  severity: 'Minor' | 'Moderate' | 'Severe';
+  rehabNotes?: string;
+  status: 'Active' | 'Recovered';
+}
+
+export interface Availability {
+  availId: string;
+  startDate: Date;
+  endDate: Date;
+  reason: string; // e.g., 'Injury', 'Personal', 'School Exam'
+  status: 'Unavailable';
+}
+
+export interface Milestone {
+  milestoneId: string;
+  name: string; // e.g., '50th Match', '1000 Career Runs'
+  achievedDate: Date;
+}
+
+export interface PlayerTrackerData {
+  performanceEntries: PerformanceEntry[];
+  skillRatings: SkillRating[];
+  trainingLogs: TrainingLog[];
+  injuryRecords: InjuryRecord[];
+  availability: Availability[];
+  milestones: Milestone[];
+}

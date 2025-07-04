@@ -9,11 +9,12 @@ import { getPersonTeamAssignments, getTeams } from '@/lib/actions/teams';
 import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import { Button } from '@/components/ui/button';
 import { getUserId } from '@/lib/auth';
+import { getPlayerTrackerData } from '@/lib/actions/tracker';
 
 export default async function PersonDetailsPage({ params }: { params: { personId: string } }) {
   const { personId } = params;
   
-  const [person, { guardians, children }, allPeople, playerStats, teamAssignments, matchHistory, allTeams, userId] = await Promise.all([
+  const [person, { guardians, children }, allPeople, playerStats, teamAssignments, matchHistory, allTeams, userId, trackerData] = await Promise.all([
     getPerson(personId),
     getPersonLinks(personId),
     getPlayers(),
@@ -22,6 +23,7 @@ export default async function PersonDetailsPage({ params }: { params: { personId
     getPlayerMatchHistory(personId),
     getTeams(),
     getUserId(),
+    getPlayerTrackerData(personId),
   ]);
 
   if (!person) {
@@ -37,9 +39,8 @@ export default async function PersonDetailsPage({ params }: { params: { personId
   }
 
   const currentUser = userId ? await getPerson(userId) : null;
-  const canManage = (currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster')) ?? false;
+  const canManage = (currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster') || currentUser?.roles.includes('Coach')) ?? false;
 
-  // Filter out the current person and anyone already linked
   const existingLinkIds = new Set([
       person.personId,
       ...guardians.map(g => g.personId),
@@ -59,6 +60,7 @@ export default async function PersonDetailsPage({ params }: { params: { personId
         matchHistory={matchHistory}
         allTeams={availableTeams}
         canManage={canManage}
+        trackerData={trackerData}
     />
   );
 }

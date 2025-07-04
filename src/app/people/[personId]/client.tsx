@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance, Team } from "@/lib/data";
+import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance, Team, PlayerTrackerData } from "@/lib/data";
 import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from '@/lib/actions/players';
 import { addPlayerToRosterAction, updateRosterAssignmentAction, removeRosterAssignmentAction } from '@/lib/actions/teams';
 import { AddLinkDialog } from "./add-link-dialog";
@@ -39,6 +39,7 @@ import { PlayerDevelopmentCard } from "./player-development-card";
 import { useAuth } from "@/lib/auth-context";
 import { AssignTeamDialog, EditTeamAssignmentDialog } from "./team-assignment-dialogs";
 import { PlayerSkillsCard } from "./player-skills-card";
+import { PlayerTrackerTab } from "./player-tracker-tab";
 
 interface PersonDetailsClientProps {
     person: Person;
@@ -50,6 +51,7 @@ interface PersonDetailsClientProps {
     matchHistory: PlayerMatchPerformance[];
     allTeams: Team[];
     canManage: boolean;
+    trackerData: PlayerTrackerData;
 }
 
 const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | number, href?: string }) => {
@@ -66,7 +68,7 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
     );
 };
 
-export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, matchHistory, allTeams, canManage }: PersonDetailsClientProps) {
+export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, matchHistory, allTeams, canManage, trackerData }: PersonDetailsClientProps) {
   const { person: currentUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -167,8 +169,9 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
         </header>
 
          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="tracker" disabled={!isPlayer}>Tracker</TabsTrigger>
                 <TabsTrigger value="skills" disabled={!isPlayer}>Skills</TabsTrigger>
                 <TabsTrigger value="profile">Profile Details</TabsTrigger>
                 <TabsTrigger value="assignments">Assignments</TabsTrigger>
@@ -204,6 +207,10 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                       )}
                   </CardContent>
                 </Card>
+            </TabsContent>
+
+            <TabsContent value="tracker" className="mt-4">
+                <PlayerTrackerTab person={person} trackerData={trackerData} />
             </TabsContent>
             
              <TabsContent value="skills" className="mt-4">
