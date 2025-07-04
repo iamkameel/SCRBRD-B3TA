@@ -13,6 +13,7 @@ import { getPendingAssignmentRequests } from './requests';
 import { getSessionsByTeam } from './sessions';
 import { cache } from 'react';
 import { getSchools } from './schools';
+import { getVehicles } from './transport';
 
 
 export async function getLeaderboards(filters: { seasonId?: string, competitionId?: string, teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
@@ -97,21 +98,66 @@ export async function getAdminDashboardData() {
     const [
         competitions,
         teams,
-        players,
-        fields
+        allPeople,
+        fields,
+        schools,
+        vehicles
     ] = await Promise.all([
         getCompetitions(),
         getTeams(),
         getPlayers(),
-        getFields()
+        getFields(),
+        getSchools(),
+        getVehicles()
     ]);
+
+    const officialRoles = new Set(['Umpire', 'Scorer']);
+    const groundStaffRoles = new Set(['Grounds-Keeper']);
+    const medicalSupportRoles = new Set(['First Aid', 'Doctor', 'Physiotherapist', 'Trainer']);
+    const staffRoles = new Set(['Admin', 'Sportsmaster', 'School Admin', 'Coach', 'Team Manager', 'Assistant Coach', 'Captain']);
+
+    let playersCount = 0;
+    let officialsCount = 0;
+    let groundStaffCount = 0;
+    let medicalSupportCount = 0;
+    let staffCount = 0;
+
+    allPeople.forEach(person => {
+        const roles = new Set(person.roles);
+
+        if (roles.has('Player')) {
+            playersCount++;
+        }
+
+        let isOfficial = false;
+        officialRoles.forEach(role => { if (roles.has(role)) isOfficial = true; });
+        if (isOfficial) officialsCount++;
+        
+        let isGroundStaff = false;
+        groundStaffRoles.forEach(role => { if (roles.has(role)) isGroundStaff = true; });
+        if (isGroundStaff) groundStaffCount++;
+
+        let isMedical = false;
+        medicalSupportRoles.forEach(role => { if (roles.has(role)) isMedical = true; });
+        if (isMedical) medicalSupportCount++;
+
+        let isStaff = false;
+        staffRoles.forEach(role => { if (roles.has(role)) isStaff = true; });
+        if (isStaff) staffCount++;
+    });
 
     return {
         kpis: {
+            officials: officialsCount,
             competitions: competitions.length,
+            schools: schools.length,
             teams: teams.length,
-            players: players.length,
+            players: playersCount,
+            staff: staffCount,
+            medicalSupport: medicalSupportCount,
             fields: fields.length,
+            groundStaff: groundStaffCount,
+            transportHub: vehicles.length,
         },
     };
 }
