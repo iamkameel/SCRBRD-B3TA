@@ -1,4 +1,3 @@
-
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
