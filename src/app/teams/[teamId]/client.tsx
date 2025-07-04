@@ -412,42 +412,46 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
   return (
     <>
       <div className="flex flex-col gap-8">
-        <Link href="/teams" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back to Teams</Link>
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 border">
-                      <AvatarImage src={team.logoUrl} alt={team.name} />
-                      <AvatarFallback className="text-xl">{team.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h1 className="text-3xl font-bold tracking-tight text-foreground">{team.name}</h1>
-                      <p className="text-muted-foreground">
-                        {team.alias && <span className="font-semibold text-foreground">{team.alias} &bull; </span>}
-                        {team.divisionName} &bull; {team.schoolName} &bull; {team.seasonName}
-                      </p>
-                    </div>
-                </div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Played</CardTitle></CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{teamStats.matchesPlayed}</p></CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Won</CardTitle></CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{teamStats.matchesWon}</p></CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Lost</CardTitle></CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{teamStats.matchesLost}</p></CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">NRR</CardTitle></CardHeader>
-                    <CardContent><p className="text-2xl font-bold">{teamStats.netRunRate.toFixed(2)}</p></CardContent>
-                </Card>
-            </div>
-        </div>
+        <header>
+          <Link href="/teams" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />Back to Teams
+          </Link>
+          <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16 border">
+                        <AvatarImage src={team.logoUrl} alt={team.name} />
+                        <AvatarFallback className="text-xl">{team.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">{team.name}</h1>
+                        <p className="text-muted-foreground">
+                          {team.alias && <span className="font-semibold text-foreground">{team.alias} &bull; </span>}
+                          {team.divisionName} &bull; {team.schoolName} &bull; {team.seasonName}
+                        </p>
+                      </div>
+                  </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Played</CardTitle></CardHeader>
+                      <CardContent><p className="text-2xl font-bold">{teamStats.matchesPlayed}</p></CardContent>
+                  </Card>
+                   <Card>
+                      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Won</CardTitle></CardHeader>
+                      <CardContent><p className="text-2xl font-bold">{teamStats.matchesWon}</p></CardContent>
+                  </Card>
+                   <Card>
+                      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Lost</CardTitle></CardHeader>
+                      <CardContent><p className="text-2xl font-bold">{teamStats.matchesLost}</p></CardContent>
+                  </Card>
+                   <Card>
+                      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">NRR</CardTitle></CardHeader>
+                      <CardContent><p className="text-2xl font-bold">{teamStats.netRunRate.toFixed(2)}</p></CardContent>
+                  </Card>
+              </div>
+          </div>
+        </header>
         
         <Tabs defaultValue="roster">
             <TabsList className="grid w-full grid-cols-2">
@@ -592,7 +596,6 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
       />}
       {canManage && <AddStaffDialog 
         teamId={team.teamId}
-        teamSchoolId={team.schoolId} 
         people={people} 
         assignableRoles={STAFF_ROLES} 
         open={isAddStaffDialogOpen} 
@@ -630,3 +633,5 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
     </>
   )
 }
+
+    
