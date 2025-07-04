@@ -1,12 +1,13 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, getDoc, getDocs, query, where, Timestamp, updateDoc, arrayUnion, limit } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, getDocs, query, where, Timestamp, updateDoc, arrayUnion } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getPerson } from './players';
-import { addPlayerToRosterAction } from './teams';
+import { getTeamRoster, addPlayerToRosterAction } from './teams';
 import type { AssignmentRequest } from '../data';
 import { cache } from 'react';
 import { getUserId } from '../auth';
@@ -25,6 +26,18 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
     const { requesterId, targetId, targetType, role } = validatedFields.data;
     const requester = await getPerson(requesterId);
     if (!requester) throw new Error("Could not identify requester.");
+
+    // Check if the person is already assigned
+    if (targetType === 'Team') {
+        const roster = await getTeamRoster(targetId);
+        if (roster.some(member => member.personId === requesterId)) {
+            throw new Error("This person is already on the team's roster.");
+        }
+    } else if (targetType === 'School') {
+        if (requester.assignedSchools?.includes(targetId)) {
+            throw new Error("This person is already assigned to this school.");
+        }
+    }
 
     let targetName = '';
     
@@ -116,17 +129,27 @@ export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewS
     if (decision === 'approve') {
         if (request.targetType === 'School') {
             const personRef = doc(db, 'people', request.requesterId);
+            // arrayUnion is idempotent, it won't add duplicates. This is safe.
             await updateDoc(personRef, {
                 assignedSchools: arrayUnion(request.targetId)
             });
         } else { // Team
-            await addPlayerToRosterAction(request.targetId, {
-                personId: request.requesterId,
-                role: request.role,
-                status: 'active',
-                isCaptain: false,
-                isViceCaptain: false,
-            });
+            const teamRoster = await getTeamRoster(request.targetId);
+            const isAlreadyAssigned = teamRoster.some(member => member.personId === request.requesterId);
+            
+            if (isAlreadyAssigned) {
+                // This will prevent the error from being thrown to the UI,
+                // and simply mark the request as handled.
+                console.warn(`Attempted to approve an assignment for a user (${request.requesterId}) who is already on the roster for team (${request.targetId}). Request will be marked as approved, but no new roster entry was created.`);
+            } else {
+                await addPlayerToRosterAction(request.targetId, {
+                    personId: request.requesterId,
+                    role: request.role,
+                    status: 'active',
+                    isCaptain: false,
+                    isViceCaptain: false,
+                });
+            }
         }
     }
 
@@ -139,3 +162,4 @@ export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewS
 
     revalidatePath('/dashboard');
 }
+
