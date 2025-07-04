@@ -24,6 +24,7 @@ const referenceGroup = {
     title: "Reference",
     icon: BookOpen,
     items: [
+        { href: '/roles', label: 'User Roles', icon: Users },
         { href: '/rulebook', label: 'Rule Book', icon: ScrollText },
         { href: '/help', label: 'Help & Onboarding', icon: HelpCircle },
     ]
