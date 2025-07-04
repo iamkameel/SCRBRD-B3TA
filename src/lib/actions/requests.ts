@@ -2,10 +2,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, getDoc, getDocs, query, where, Timestamp, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, getDocs, query, where, Timestamp, updateDoc, arrayUnion, limit } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { getUserId } from '../auth';
 import { getPerson } from './players';
 import { addPlayerToRosterAction } from './teams';
 import type { AssignmentRequest } from '../data';
@@ -15,38 +14,39 @@ const requestSchema = z.object({
   targetId: z.string(),
   targetType: z.enum(['School', 'Team']),
   role: z.string(),
+  requesterId: z.string(),
 });
 
 export async function createAssignmentRequestAction(data: z.infer<typeof requestSchema>) {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated.");
-
     const validatedFields = requestSchema.safeParse(data);
     if (!validatedFields.success) throw new Error("Invalid request data.");
     
-    const requester = await getPerson(userId);
+    const { requesterId, targetId, targetType, role } = validatedFields.data;
+    const requester = await getPerson(requesterId);
     if (!requester) throw new Error("Could not identify requester.");
 
-    const { targetId, targetType, role } = validatedFields.data;
-
     let targetName = '';
-    let ownerUserId: string | null = null;
+    
     if (targetType === 'School') {
         const schoolSnap = await getDoc(doc(db, 'schools', targetId));
         if (!schoolSnap.exists()) throw new Error("School not found.");
         targetName = schoolSnap.data().name;
-        ownerUserId = schoolSnap.data().userId;
     } else {
         const teamSnap = await getDoc(doc(db, 'teams', targetId));
         if (!teamSnap.exists()) throw new Error("Team not found.");
         targetName = teamSnap.data().name;
-        ownerUserId = teamSnap.data().userId;
     }
 
-    if (!ownerUserId) throw new Error("Could not determine the owner of the target entity.");
+    const sportsmasterQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Sportsmaster'), limit(1));
+    const sportsmasterSnapshot = await getDocs(sportsmasterQuery);
+
+    if (sportsmasterSnapshot.empty) {
+        throw new Error("No Sportsmaster found in the system to handle the request. Please contact the administrator.");
+    }
+    const sportsmasterId = sportsmasterSnapshot.docs[0].id;
 
     const requestsCollection = collection(db, 'assignmentRequests');
-    const q = query(requestsCollection, where("requesterId", "==", userId), where("targetId", "==", targetId), where("status", "==", "pending"));
+    const q = query(requestsCollection, where("requesterId", "==", requesterId), where("targetId", "==", targetId), where("status", "==", "pending"));
     const existingRequest = await getDocs(q);
 
     if (!existingRequest.empty) {
@@ -54,7 +54,7 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
     }
     
     await addDoc(requestsCollection, {
-        requesterId: userId,
+        requesterId: requesterId,
         requesterName: `${requester.firstName} ${requester.lastName}`,
         targetId,
         targetName,
@@ -62,14 +62,13 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
         role,
         status: 'pending',
         createdAt: Timestamp.now(),
-        userId: ownerUserId,
+        userId: sportsmasterId, // Assign request to the found Sportsmaster
     });
 
     revalidatePath('/dashboard');
 }
 
-export const getPendingAssignmentRequests = cache(async (): Promise<AssignmentRequest[]> => {
-    const userId = await getUserId();
+export const getPendingAssignmentRequests = cache(async (userId: string): Promise<AssignmentRequest[]> => {
     if (!userId) return [];
 
     const requestsCollection = collection(db, 'assignmentRequests');
@@ -90,8 +89,7 @@ const reviewSchema = z.object({
   decision: z.enum(['approve', 'deny']),
 });
 
-export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewSchema>) {
-    const reviewerId = await getUserId();
+export async function reviewAssignmentRequestAction(reviewerId: string, data: z.infer<typeof reviewSchema>) {
     if (!reviewerId) throw new Error("User not authenticated.");
 
     const reviewer = await getPerson(reviewerId);
@@ -113,10 +111,10 @@ export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewS
         if (request.targetType === 'School') {
             const personRef = doc(db, 'people', request.requesterId);
             await updateDoc(personRef, {
-                assignedSchools: [request.targetId]
+                assignedSchools: arrayUnion(request.targetId)
             });
         } else { // Team
-            await addPlayerToRosterAction(request.targetId, {
+            await addPlayerToRosterAction(reviewerId, request.targetId, {
                 personId: request.requesterId,
                 role: request.role,
                 status: 'active',

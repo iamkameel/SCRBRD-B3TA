@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, Users, BarChart2, ClipboardList, Target, Medal, ArrowRight } from 'lucide-react';
-import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession, School } from '@/lib/data';
+import type { Team, Match, TeamStats, LeaderboardPlayer, TrainingSession, School, Person } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { getCoachDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
@@ -31,7 +31,7 @@ const requestSchema = z.object({
 });
 type RequestFormValues = z.infer<typeof requestSchema>;
 
-function RequestAssignmentForm({ schools, teams }: { schools: School[], teams: Team[] }) {
+function RequestAssignmentForm({ schools, teams, person }: { schools: School[], teams: Team[], person: Person | null }) {
     const { toast } = useToast();
     const [isPending, startTransition] = React.useTransition();
     const form = useForm<RequestFormValues>({
@@ -50,8 +50,17 @@ function RequestAssignmentForm({ schools, teams }: { schools: School[], teams: T
 
     function onSubmit(data: RequestFormValues) {
         startTransition(async () => {
+            if (!person?.personId) {
+                toast({ title: "Error", description: "Could not identify current user. Please log in again.", variant: "destructive" });
+                return;
+            }
             try {
-                await createAssignmentRequestAction({ targetId: data.teamId, targetType: 'Team', role: 'Coach' });
+                await createAssignmentRequestAction({ 
+                    targetId: data.teamId, 
+                    targetType: 'Team', 
+                    role: 'Coach',
+                    requesterId: person.personId,
+                });
                 toast({ title: "Request Sent", description: "Your assignment request has been sent to the Sportsmaster for approval."});
             } catch (error) {
                 toast({ title: "Error", description: error instanceof Error ? error.message : "Could not send request.", variant: "destructive" });
@@ -116,7 +125,7 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
             <h1 className="text-2xl font-bold">Coach Dashboard</h1>
             <p className="text-sm opacity-90">Welcome, {person?.activeRole || 'Coach'}!</p>
         </header>
-        <RequestAssignmentForm schools={data.allSchools || []} teams={data.allTeams || []} />
+        <RequestAssignmentForm schools={data.allSchools || []} teams={data.allTeams || []} person={person} />
       </div>
     );
   }
@@ -282,8 +291,8 @@ export default function CoachDashboard() {
         .finally(() => {
             setLoading(false);
         });
-    } else {
-        // If there's no person object, we're not loading anything.
+    } else if (person === null) {
+        // If there's no person, we can stop loading.
         setLoading(false);
     }
   }, [person]);
@@ -293,7 +302,7 @@ export default function CoachDashboard() {
   }
   
   if (!data) {
-    // This handles the error case where data fetching failed or the user is not a coach
+    // This handles the error case where data fetching failed or user is not logged in.
     return <CoachDashboardInternal data={{ team: null, nextMatch: null, recentMatches: [], teamStats: null, leaderboards: { topRunScorers: [], topWicketTakers: [] }, upcomingSessions: [], allSchools: [], allTeams: [] }} />;
   }
 
