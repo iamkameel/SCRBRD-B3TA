@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -30,10 +31,16 @@ export async function getSchools(): Promise<School[]> {
   } else if (activeRole === 'Sportsmaster' && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
     q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
   } else if (['Coach', 'Player', 'Team Manager'].includes(activeRole)) {
-    const teams = await getTeams(); // This will get the user's teams
+    const teams = await getTeams(); // This gets the user's teams
     const schoolIds = [...new Set(teams.map(t => t.schoolId))];
-    if (schoolIds.length === 0) return [];
-    q = query(schoolsCollection, where(documentId(), 'in', schoolIds));
+    
+    if (schoolIds.length > 0) { // If they are on teams, show those schools
+        q = query(schoolsCollection, where(documentId(), 'in', schoolIds));
+    } else if (currentUser.assignedSchools && currentUser.assignedSchools.length > 0) { // If no teams, but they are a school admin/staff, show those schools
+        q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
+    } else { // If no assignments at all, show all schools so they can make a request
+        q = query(schoolsCollection);
+    }
   } else {
     // Default for spectators etc. is to see all schools
     q = query(schoolsCollection);
