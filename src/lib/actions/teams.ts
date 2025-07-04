@@ -41,30 +41,33 @@ export const getTeams = cache(async (): Promise<Team[]> => {
   
   if (['Coach', 'Assistant Coach', 'Team Manager', 'Player', 'Captain', 'Vice-Captain'].includes(activeRole)) {
       const assignments = await getPersonTeamAssignments(userId);
-      const teamIds = assignments.map(a => a.teamId);
       
-      if (teamIds.length === 0) {
-        return [];
+      // If the user has specific team assignments, only return those teams.
+      if (assignments.length > 0) {
+        const teamIds = assignments.map(a => a.teamId);
+        
+        const teamIdChunks: string[][] = [];
+        for (let i = 0; i < teamIds.length; i += 30) {
+          teamIdChunks.push(teamIds.slice(i, i + 30));
+        }
+        
+        const teams: Team[] = [];
+        for (const chunk of teamIdChunks) {
+            if (chunk.length === 0) continue;
+            const q = query(teamsCollection, where(documentId(), 'in', chunk));
+            const teamSnapshot = await getDocs(q);
+            teamSnapshot.forEach(doc => {
+                teams.push({ teamId: doc.id, ...doc.data() } as Team);
+            });
+        }
+        return teams;
       }
-      
-      const teamIdChunks: string[][] = [];
-      for (let i = 0; i < teamIds.length; i += 30) {
-        teamIdChunks.push(teamIds.slice(i, i + 30));
-      }
-      
-      const teams: Team[] = [];
-      for (const chunk of teamIdChunks) {
-          if (chunk.length === 0) continue;
-          const q = query(teamsCollection, where(documentId(), 'in', chunk));
-          const teamSnapshot = await getDocs(q);
-          teamSnapshot.forEach(doc => {
-              teams.push({ teamId: doc.id, ...doc.data() } as Team);
-          });
-      }
-      return teams;
+      // If the user is a staff member (like Coach/Manager) but has no assignments,
+      // they need to see all teams to request an assignment. We let them "fall through"
+      // to the default logic below.
   }
   
-  // Default for other roles (spectators, etc.) is to see all teams
+  // Default for other roles (spectators, etc.) and unassigned staff is to see all teams
   const q = query(teamsCollection);
   const teamSnapshot = await getDocs(q);
   return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
@@ -227,9 +230,11 @@ export async function bulkAddPlayersToRosterAction(teamId: string, data: z.infer
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
-    const team = await getTeam(teamId);
-    if (!team) throw new Error("Team not found or permission denied.");
-
+    const hasPermission = await isTeamManagerOrAdmin(teamId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to add players to this team.");
+    }
+    
     const validatedFields = bulkAddPlayersSchema.safeParse(data);
     if (!validatedFields.success) {
         throw new Error("Invalid player data provided for bulk assignment.");
@@ -738,3 +743,5 @@ export async function isTeamManagerOrAdmin(teamId: string, userId: string): Prom
 
     return isManagerOrCoach;
 }
+
+    
