@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, Settings, LogOut, ChevronDown, User, Bell, Loader2 } from 'lucide-react';
+import { Menu, Settings, LogOut, ChevronDown, User, Bell, Calendar, Loader2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -268,6 +268,12 @@ export function Header() {
 
             <div className="flex-1 w-full" />
             
+            <Button asChild variant="ghost" size="icon" className="rounded-full hover:bg-white/20">
+                <Link href="/fixtures">
+                    <Calendar className="h-5 w-5" />
+                    <span className="sr-only">Fixtures</span>
+                </Link>
+            </Button>
             <NotificationBell />
 
             {person && <RoleSwitcher />}
