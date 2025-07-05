@@ -1,3 +1,4 @@
+
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -203,6 +204,7 @@ export interface Match {
   teamBLogoUrl?: string;
   competitionId?: string;
   competitionName?: string;
+  competitionType?: string;
   seasonId?: string;
   seasonName?: string;
   divisionId?: string;

@@ -14,12 +14,20 @@ async function getAllMatches(): Promise<Match[]> {
     const matchesCollection = collection(db, 'matches');
     const q = query(matchesCollection);
     
-    const teamsSnapshot = await getDocs(collection(db, 'teams'));
-    const matchSnapshot = await getDocs(q);
+    const [teamsSnapshot, matchSnapshot, competitionsSnapshot] = await Promise.all([
+        getDocs(collection(db, 'teams')),
+        getDocs(q),
+        getDocs(collection(db, 'competitions'))
+    ]);
     
     const teamInfoMap = new Map<string, any>();
     teamsSnapshot.forEach(team => {
       teamInfoMap.set(team.id, team.data());
+    });
+    
+    const competitionTypeMap = new Map<string, string>();
+    competitionsSnapshot.forEach(doc => {
+      competitionTypeMap.set(doc.id, doc.data().type);
     });
 
     const matchesList = matchSnapshot.docs.map(doc => {
@@ -34,6 +42,7 @@ async function getAllMatches(): Promise<Match[]> {
         teamBColor: teamB?.teamColors?.primary,
         teamALogoUrl: teamA?.logoUrl,
         teamBLogoUrl: teamB?.logoUrl,
+        competitionType: data.competitionId ? competitionTypeMap.get(data.competitionId) : 'Friendlies',
       } as Match;
     });
     return matchesList.sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());

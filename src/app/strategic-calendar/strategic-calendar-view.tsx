@@ -2,8 +2,8 @@
 'use client';
 
 import * as React from 'react';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
-import { DayPicker, type DayProps } from 'react-day-picker';
+import { format, isSameDay } from 'date-fns';
+import { DayPicker, type DayContentProps } from 'react-day-picker';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Match } from '@/lib/data';
@@ -25,30 +25,27 @@ interface StrategicCalendarViewProps {
     onMonthChange: (date: Date) => void;
 }
 
-function CustomDay(props: DayProps & { matchesOnDay: Match[] }) {
-    const { date, displayMonth } = props;
-    const matchesOnDay = props.matchesOnDay.filter(m => isSameDay(m.dateTime, date));
-    
-    // Only render dots if it's the current display month
-    const isCurrentMonth = date.getMonth() === displayMonth.getMonth();
+function CustomDayContent(props: DayContentProps) {
+    const { date, activeModifiers } = props;
+    const matchesOnDay: Match[] = (date as any).__matches || [];
 
     return (
-        <div className="relative h-full w-full">
-            <DayPicker.Day {...props} />
-            {isCurrentMonth && matchesOnDay.length > 0 && (
-                 <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center justify-center gap-1">
+        <>
+            {format(date, "d")}
+            {activeModifiers.hasMatch && matchesOnDay.length > 0 && (
+                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center justify-center gap-1">
                     {matchesOnDay.slice(0, 3).map(match => (
                         <div
                             key={match.matchId}
                             className={cn(
                                 "h-1.5 w-1.5 rounded-full",
-                                competitionTypeColors[match.competitionName || 'Friendlies'] || 'bg-gray-400'
+                                competitionTypeColors[match.competitionType || 'Friendlies'] || 'bg-gray-400'
                             )}
                         />
                     ))}
-                 </div>
+                </div>
             )}
-        </div>
+        </>
     );
 }
 
@@ -82,18 +79,27 @@ function CustomCaption(props: { displayMonth: Date, onMonthChange: (date: Date) 
     );
 }
 
-
 export function StrategicCalendarView({ matches, selectedDate, onDateSelect, displayMonth, onMonthChange }: StrategicCalendarViewProps) {
-    const matchesByDay = React.useMemo(() => {
-        const map = new Map<string, Match[]>();
-        matches.forEach(match => {
+    const modifiers = React.useMemo(() => {
+        const matchDays: Date[] = [];
+        const matchesByDay: { [key: string]: Match[] } = {};
+
+        for (const match of matches) {
             const dayKey = format(match.dateTime, 'yyyy-MM-dd');
-            if (!map.has(dayKey)) {
-                map.set(dayKey, []);
+            if (!matchesByDay[dayKey]) {
+                matchesByDay[dayKey] = [];
+                // Create a new date object for the modifier, so we can attach data to it.
+                const newDate = new Date(match.dateTime);
+                (newDate as any).__matches = [];
+                matchDays.push(newDate);
             }
-            map.get(dayKey)!.push(match);
-        });
-        return map;
+             const existingDate = matchDays.find(d => isSameDay(d, match.dateTime));
+            if(existingDate) {
+                (existingDate as any).__matches.push(match);
+            }
+        }
+        
+        return { hasMatch: matchDays };
     }, [matches]);
 
     return (
@@ -127,14 +133,12 @@ export function StrategicCalendarView({ matches, selectedDate, onDateSelect, dis
                 day_selected: 'bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary',
                 day_disabled: 'text-muted-foreground opacity-30',
             }}
+            modifiers={modifiers}
+            modifiersClassNames={{
+                hasMatch: 'has-match-modifier', // This class itself doesn't do much, but it activates the modifier
+            }}
             components={{
-                Day: (props) => (
-                    <CustomDay 
-                        {...props} 
-                        matchesOnDay={matchesByDay.get(format(props.date, 'yyyy-MM-dd')) || []} 
-                        displayMonth={displayMonth} 
-                    />
-                ),
+                DayContent: CustomDayContent,
                 Caption: () => (
                     <CustomCaption displayMonth={displayMonth} onMonthChange={onMonthChange} />
                 ),
