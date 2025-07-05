@@ -22,7 +22,7 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 ### Category 3: Governance & Administration
 
--   [ ] **7. Digital Rule Book**: Implement a "Rule Book" page that provides a simple, searchable reference for the key laws of cricket, making it easy for officials, coaches, and players to clarify rules.
+-   [x] **7. Digital Rule Book**: Implement a "Rule Book" page that provides a simple, searchable reference for the key laws of cricket, making it easy for officials, coaches, and players to clarify rules.
 
 -   [ ] **8. User Role Directory**: Create a "User Roles" page that a clearly defines the responsibilities and permissions for each role in the system (Admin, Coach, Player, etc.), improving clarity and administration.
 
