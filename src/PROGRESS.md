@@ -1,3 +1,4 @@
+
 # Project Progress: The New Horizon
 
 This document tracks our progress against the new "Next Steps" roadmap.
@@ -29,5 +30,5 @@ This document tracks our progress against the new "Next Steps" roadmap.
 ### Category 4: UI/UX & Platform Refinements
 
 -   [x] **8. Enhanced Theming & Branding**: Completed.
--   [ ] **9. User Onboarding & Help System**: Not Started.
+-   [x] **9. User Onboarding & Help System**: Completed.
 -   [x] **10. Performance & Scalability Audit**: Completed.
