@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -42,7 +41,7 @@ export async function getSchools(): Promise<School[]> {
         q = query(schoolsCollection);
     }
   } else {
-    // Default for spectators etc. is to see all schools
+    // Default for other roles (spectators, etc.) is to see all schools
     q = query(schoolsCollection);
   }
 

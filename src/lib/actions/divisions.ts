@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -144,5 +143,3 @@ export async function deleteDivisionAction(divisionId: string) {
   revalidatePath('/divisions');
   revalidatePath('/teams');
 }
-
-    
