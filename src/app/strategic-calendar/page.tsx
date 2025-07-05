@@ -2,24 +2,23 @@
 import StrategicCalendarClient from './client';
 import { getPerson } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { collection, getDocs, query, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Match, Competition, Division, Team } from '@/lib/data';
+import type { Match, Competition, Division, Team, Field } from '@/lib/data';
+import { getFields } from '@/lib/actions/fields';
 
 async function getAllMatches(): Promise<Match[]> {
   try {
     const matchesCollection = collection(db, 'matches');
     const q = query(matchesCollection);
     
-    const [teams, matchSnapshot] = await Promise.all([
-      getDocs(collection(db, 'teams')),
-      getDocs(q),
-    ]);
+    const teamsSnapshot = await getDocs(collection(db, 'teams'));
+    const matchSnapshot = await getDocs(q);
     
     const teamInfoMap = new Map<string, any>();
-    teams.forEach(team => {
+    teamsSnapshot.forEach(team => {
       teamInfoMap.set(team.id, team.data());
     });
 
@@ -83,11 +82,12 @@ export default async function StrategicCalendarPage() {
         );
     }
     
-    const [matches, competitions, divisions] = await Promise.all([
+    const [matches, competitions, divisions, fields] = await Promise.all([
         getAllMatches(),
         getAllCompetitions(),
         getAllDivisions(),
+        getFields()
     ]);
 
-    return <StrategicCalendarClient matches={matches} competitions={competitions} divisions={divisions} />;
+    return <StrategicCalendarClient matches={matches} competitions={competitions} divisions={divisions} fields={fields} />;
 }
