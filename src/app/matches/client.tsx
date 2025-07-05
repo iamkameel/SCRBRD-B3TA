@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format, isSameDay } from "date-fns";
-import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search, List, LayoutGrid, CalendarDays, PlusCircle, ChevronDown, Trophy } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -43,7 +43,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EditMatchDialog } from "./edit-match-dialog";
 import { StrategicCalendarView, competitionTypeColors } from '../strategic-calendar/strategic-calendar-view';
 import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { AlignLeft } from "lucide-react";
 
 const MATCH_STATUSES: MatchStatus[] = ['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned'];
 
@@ -191,7 +192,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="icon" className="relative">
-                      <Search className="h-4 w-4" />
+                      <SlidersHorizontal className="h-4 w-4" />
                       <span className="sr-only">Filter Matches</span>
                       {filtersApplied && (
                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -257,11 +258,28 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                     </div>
                   </PopoverContent>
                 </Popover>
-                 <div className="flex items-center rounded-md bg-muted p-1">
-                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
-                    <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
-                    <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('calendar')} className="gap-1"><CalendarDays className="h-4 w-4" /> Calendar</Button>
-                </div>
+                 <TooltipProvider>
+                    <div className="flex items-center rounded-md bg-muted p-1">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('list')} className="h-8 w-8"><List /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>List View</p></TooltipContent>
+                        </Tooltip>
+                         <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('card')} className="h-8 w-8"><LayoutGrid /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Card View</p></TooltipContent>
+                        </Tooltip>
+                         <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('calendar')} className="h-8 w-8"><CalendarDays /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Calendar View</p></TooltipContent>
+                        </Tooltip>
+                    </div>
+                </TooltipProvider>
               </div>
             </div>
           </CardHeader>

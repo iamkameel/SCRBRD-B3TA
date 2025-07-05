@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +31,9 @@ import type { School } from "@/lib/data";
 import { deleteSchoolAction } from '@/lib/actions/schools';
 import { SchoolDialog } from "./school-dialog";
 import { SchoolCard } from "./school-card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 
 type SortableColumn = 'name' | 'abbreviation';
 
@@ -139,14 +143,42 @@ export default function SchoolsClient({ schools, canManage }: { schools: School[
                   <CardDescription>A list of all schools in the system.</CardDescription>
                 </div>
                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search schools..." className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                    </div>
-                    <div className="flex items-center rounded-md bg-muted p-1">
-                        <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
-                        <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
-                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="icon" className="relative">
+                                <SlidersHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Filter Schools</span>
+                                {searchQuery && (
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                    </span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <div className="grid gap-4">
+                                <div className="space-y-2"><h4 className="font-medium leading-none">Filter Schools</h4><p className="text-sm text-muted-foreground">Find schools by name or abbreviation.</p></div>
+                                <div className="grid gap-4">
+                                    <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="search-input">Search</Label>
+                                    <Input id="search-input" placeholder="Name or abbreviation..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="col-span-2 h-8"/></div>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                    <TooltipProvider>
+                        <div className="flex items-center rounded-md bg-muted p-1">
+                            <Tooltip>
+                                <TooltipTrigger asChild><Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('list')} className="h-8 w-8"><List /></Button></TooltipTrigger>
+                                <TooltipContent><p>List View</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild><Button variant={view === 'card' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('card')} className="h-8 w-8"><LayoutGrid /></Button></TooltipTrigger>
+                                <TooltipContent><p>Card View</p></TooltipContent>
+                            </Tooltip>
+                        </div>
+                    </TooltipProvider>
                 </div>
               </div>
           </CardHeader>

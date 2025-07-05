@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import * as React from 'react';
 import { format, isSameDay, startOfWeek, endOfWeek, endOfMonth, addMonths } from 'date-fns';
 import Link from 'next/link';
-import { ChevronDown, Calendar as CalendarIcon, List, Trophy, MapPin, AlignLeft } from 'lucide-react';
+import { ChevronDown, Calendar as CalendarIcon, List, Trophy, MapPin, AlignLeft, SlidersHorizontal } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { StrategicCalendarView, competitionTypeColors } from './strategic-calendar-view';
 import { AgendaView } from './agenda-view';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
 
 interface StrategicCalendarClientProps {
     matches: Match[];
@@ -56,6 +60,8 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
     const [venueFilters, setVenueFilters] = React.useState<string[]>([]);
     const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
     const [agendaPeriod, setAgendaPeriod] = React.useState<'week' | 'month' | 'quarter'>('month');
+    
+    const filtersApplied = competitionFilters.length > 0 || divisionFilters.length > 0 || venueFilters.length > 0;
 
     const filteredMatches = React.useMemo(() => {
         return matches
@@ -107,45 +113,69 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
             </header>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg bg-card">
-                <div className="flex flex-wrap items-center gap-2">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full sm:w-auto">Filter by Competition...<ChevronDown className="ml-2 h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuLabel>Competitions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                             {competitions.map(comp => (<DropdownMenuCheckboxItem key={comp.competitionId} checked={competitionFilters.includes(comp.competitionId)} onCheckedChange={checked => setCompetitionFilters(prev => checked ? [...prev, comp.competitionId] : prev.filter(id => id !== comp.competitionId))}>{comp.name}</DropdownMenuCheckboxItem>))}
-                            {competitionFilters.length > 0 && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setCompetitionFilters([])}>Clear</DropdownMenuItem></>}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full sm:w-auto">Filter by Division...<ChevronDown className="ml-2 h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                             <DropdownMenuLabel>Divisions</DropdownMenuLabel>
-                             <DropdownMenuSeparator />
-                             {divisions.map(div => (<DropdownMenuCheckboxItem key={div.divisionId} checked={divisionFilters.includes(div.divisionId)} onCheckedChange={checked => setDivisionFilters(prev => checked ? [...prev, div.divisionId] : prev.filter(id => id !== div.divisionId))}>{div.name}</DropdownMenuCheckboxItem>))}
-                             {divisionFilters.length > 0 && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setDivisionFilters([])}>Clear</DropdownMenuItem></>}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full sm:w-auto">Filter by Venue...<ChevronDown className="ml-2 h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuLabel>Venues</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                             {fields.map(field => (<DropdownMenuCheckboxItem key={field.fieldId} checked={venueFilters.includes(field.fieldId)} onCheckedChange={checked => setVenueFilters(prev => checked ? [...prev, field.fieldId] : prev.filter(id => id !== field.fieldId))}>{field.name}</DropdownMenuCheckboxItem>))}
-                             {venueFilters.length > 0 && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setVenueFilters([])}>Clear</DropdownMenuItem></>}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                <div className="flex items-center gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                             <Button variant="outline" size="icon" className="relative">
+                                <SlidersHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Filter Fixtures</span>
+                                {filtersApplied && (
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                    </span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <div className="grid gap-4">
+                                <div className="space-y-2"><h4 className="font-medium leading-none">Filter Calendar</h4><p className="text-sm text-muted-foreground">Select one or more filters to apply.</p></div>
+                                <div className="grid gap-4">
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label>Competition</Label>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{competitionFilters.length === 0 ? "Select..." : `${competitionFilters.length} selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent><DropdownMenuLabel>Competitions</DropdownMenuLabel><DropdownMenuSeparator />{competitions.map(comp => (<DropdownMenuCheckboxItem key={comp.competitionId} checked={competitionFilters.includes(comp.competitionId)} onCheckedChange={checked => setCompetitionFilters(prev => checked ? [...prev, comp.competitionId] : prev.filter(id => id !== comp.competitionId))}>{comp.name}</DropdownMenuCheckboxItem>))}{competitionFilters.length > 0 && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setCompetitionFilters([])}>Clear</DropdownMenuItem></>}</DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label>Division</Label>
+                                         <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{divisionFilters.length === 0 ? "Select..." : `${divisionFilters.length} selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent><DropdownMenuLabel>Divisions</DropdownMenuLabel><DropdownMenuSeparator />{divisions.map(div => (<DropdownMenuCheckboxItem key={div.divisionId} checked={divisionFilters.includes(div.divisionId)} onCheckedChange={checked => setDivisionFilters(prev => checked ? [...prev, div.divisionId] : prev.filter(id => id !== div.divisionId))}>{div.name}</DropdownMenuCheckboxItem>))}{divisionFilters.length > 0 && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setDivisionFilters([])}>Clear</DropdownMenuItem></>}</DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <div className="grid grid-cols-3 items-center gap-4"><Label>Venue</Label>
+                                         <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{venueFilters.length === 0 ? "Select..." : `${venueFilters.length} selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent><DropdownMenuLabel>Venues</DropdownMenuLabel><DropdownMenuSeparator />{fields.map(field => (<DropdownMenuCheckboxItem key={field.fieldId} checked={venueFilters.includes(field.fieldId)} onCheckedChange={checked => setVenueFilters(prev => checked ? [...prev, field.fieldId] : prev.filter(id => id !== field.fieldId))}>{field.name}</DropdownMenuCheckboxItem>))}{venueFilters.length > 0 && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setVenueFilters([])}>Clear</DropdownMenuItem></>}</DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                    {view === 'agenda' && (
+                        <div className="flex items-center gap-2">
+                            <Button onClick={() => setAgendaPeriod('week')} variant={agendaPeriod === 'week' ? 'secondary' : 'outline'} size="sm">Week</Button>
+                            <Button onClick={() => setAgendaPeriod('month')} variant={agendaPeriod === 'month' ? 'secondary' : 'outline'} size="sm">Month</Button>
+                            <Button onClick={() => setAgendaPeriod('quarter')} variant={agendaPeriod === 'quarter' ? 'secondary' : 'outline'} size="sm">Quarter</Button>
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center rounded-md bg-muted p-1">
-                    <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('calendar')} className="gap-1"><CalendarIcon className="h-4 w-4" /> Calendar</Button>
-                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
-                    <Button variant={view === 'agenda' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('agenda')} className="gap-1"><AlignLeft className="h-4 w-4" /> Agenda</Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('calendar')} className="h-8 w-8"><CalendarIcon /></Button></TooltipTrigger>
+                            <TooltipContent><p>Calendar View</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('list')} className="h-8 w-8"><List /></Button></TooltipTrigger>
+                            <TooltipContent><p>List View</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant={view === 'agenda' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('agenda')} className="h-8 w-8"><AlignLeft /></Button></TooltipTrigger>
+                            <TooltipContent><p>Agenda View</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </div>
 
@@ -171,7 +201,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                             </CardHeader>
                             <CardContent className="min-h-[200px]">
                                 {selectedDate && matchesOnSelectedDate.length > 0 ? (
-                                    <ScrollArea className="h-64 pr-3">
+                                    <ScrollArea className="h-96 pr-3">
                                         <div className="space-y-4">
                                             {matchesOnSelectedDate.map(match => <MatchListItem key={match.matchId} match={match} />)}
                                         </div>
@@ -200,18 +230,9 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                 </div>
             )}
              {view === 'agenda' && (
-                <div>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Button onClick={() => setAgendaPeriod('week')} variant={agendaPeriod === 'week' ? 'secondary' : 'outline'}>This Week</Button>
-                        <Button onClick={() => setAgendaPeriod('month')} variant={agendaPeriod === 'month' ? 'secondary' : 'outline'}>This Month</Button>
-                        <Button onClick={() => setAgendaPeriod('quarter')} variant={agendaPeriod === 'quarter' ? 'secondary' : 'outline'}>Next 3 Months</Button>
-                    </div>
-                    <AgendaView matches={agendaMatches} />
-                </div>
+                <AgendaView matches={agendaMatches} />
              )}
 
         </div>
     )
 }
-
-    

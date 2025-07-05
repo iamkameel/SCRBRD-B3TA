@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Search, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown, Building, Users } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, SlidersHorizontal, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown, Building, Users } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -413,8 +413,8 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="icon" className="relative">
-                      <Search className="h-4 w-4" />
-                      <span className="sr-only">Search</span>
+                      <SlidersHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Filter People</span>
                       {filtersApplied && (
                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
@@ -561,10 +561,18 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
                     </div>
                   </PopoverContent>
                 </Popover>
-                <div className="flex items-center rounded-md bg-muted p-1">
-                    <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
-                    <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
-                </div>
+                <TooltipProvider>
+                    <div className="flex items-center rounded-md bg-muted p-1">
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('list')} className="h-8 w-8"><List /></Button></TooltipTrigger>
+                            <TooltipContent><p>List View</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant={view === 'card' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('card')} className="h-8 w-8"><LayoutGrid /></Button></TooltipTrigger>
+                            <TooltipContent><p>Card View</p></TooltipContent>
+                        </Tooltip>
+                    </div>
+                </TooltipProvider>
               </div>
             </div>
           </CardHeader>

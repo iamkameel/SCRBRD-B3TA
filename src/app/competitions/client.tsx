@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from 'next/link';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Trophy, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, SlidersHorizontal, Trophy } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,7 @@ import type { Competition, Season, Division, Team } from "@/lib/data";
 import { deleteCompetitionAction } from '@/lib/actions/competitions';
 import { CompetitionCard } from "./competition-card";
 import { CompetitionDialog } from './competition-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const COMPETITION_TYPES = ['League', 'Cup', 'Tournament', 'Festival', 'Friendlies'] as const;
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
@@ -165,7 +166,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" size="icon" className="relative">
-                                    <Search className="h-4 w-4" />
+                                    <SlidersHorizontal className="h-4 w-4" />
                                     <span className="sr-only">Filter Competitions</span>
                                     {filtersApplied && (
                                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -244,10 +245,22 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 </div>
                             </PopoverContent>
                         </Popover>
-                        <div className="flex items-center rounded-md bg-muted p-1">
-                            <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4" /> List</Button>
-                            <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4" /> Card</Button>
-                        </div>
+                        <TooltipProvider>
+                            <div className="flex items-center rounded-md bg-muted p-1">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('list')} className="h-8 w-8"><List /></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>List View</p></TooltipContent>
+                                </Tooltip>
+                                 <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('card')} className="h-8 w-8"><LayoutGrid /></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Card View</p></TooltipContent>
+                                </Tooltip>
+                            </div>
+                        </TooltipProvider>
                     </div>
                 </div>
             </CardHeader>
@@ -344,5 +357,3 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
     </>
   );
 }
-
-    
