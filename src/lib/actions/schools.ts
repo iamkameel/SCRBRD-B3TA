@@ -60,12 +60,10 @@ export async function getSchools(): Promise<School[]> {
 }
 
 export const getSchool = cache(async (schoolId: string): Promise<School | null> => {
-  const userId = await getUserId();
-  if (!userId) return null;
   try {
     const schoolDocRef = doc(db, 'schools', schoolId);
     const schoolSnap = await getDoc(schoolDocRef);
-    if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) {
+    if (!schoolSnap.exists()) {
       return null;
     }
     return {
@@ -166,7 +164,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
     const schoolDocRef = doc(db, 'schools', schoolId);
 
     const schoolSnap = await getDoc(schoolDocRef);
-    if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) {
+    if (!schoolSnap.exists()) {
         throw new Error("School not found or you do not have permission to edit it.");
     }
     
@@ -206,7 +204,7 @@ export async function deleteSchoolAction(schoolId: string) {
   const schoolDocRef = doc(db, 'schools', schoolId);
 
   const schoolSnap = await getDoc(schoolDocRef);
-  if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) {
+  if (!schoolSnap.exists()) {
     throw new Error("School not found or you do not have permission to delete it.");
   }
   

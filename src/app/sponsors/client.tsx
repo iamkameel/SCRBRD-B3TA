@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -121,9 +120,7 @@ export default function SponsorsClient({ sponsors, isAdmin }: { sponsors: Sponso
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow>
-                    <TableCell colSpan={isAdmin ? 4 : 3} className="h-24 text-center">No sponsors found. Get started by adding a sponsor.</TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={isAdmin ? 4 : 3} className="h-24 text-center">No sponsors found. Get started by adding a sponsor.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
