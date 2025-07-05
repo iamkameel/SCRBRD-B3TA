@@ -16,7 +16,7 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 -   [x] **4. Player Skills Management**: Create a new "Skills" tab on the Player Profile page where authorized coaches and admins can rate a player's core abilities (e.g., power, timing, accuracy, catching) on a numeric scale. This provides a structured way to track development over time.
 
--   [ ] **5. Public-Facing Home Page**: Design and build a professional landing page at the `/home` route to showcase the app's features to prospective users and serve as the application's public "front door".
+-   [x] **5. Public-Facing Home Page**: Design and build a professional landing page at the `/home` route to showcase the app's features to prospective users and serve as the application's public "front door".
 
 -   [ ] **6. Awards Hub**: Create a new "Awards" page that aggregates all completed competition winners into a "Trophy Cabinet" and showcases the overall top run-scorers and wicket-takers for the season.
 

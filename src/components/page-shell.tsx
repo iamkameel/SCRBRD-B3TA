@@ -6,26 +6,26 @@ import { useAuth } from '@/lib/auth-context';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
 
-const PUBLIC_ROUTES = ['/home', '/login', '/signup'];
+const SHELL_DISABLED_ROUTES = ['/home', '/login', '/signup'];
 
 export default function PageShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isShellDisabledRoute = SHELL_DISABLED_ROUTES.includes(pathname);
 
   React.useEffect(() => {
-    if (!loading && !user && !isPublicRoute) {
+    if (!loading && !user && !isShellDisabledRoute) {
       router.push('/login');
     }
-  }, [user, loading, isPublicRoute, router]);
+  }, [user, loading, isShellDisabledRoute, router, pathname]);
 
-  if (loading) {
-    return null; // The loading skeleton is already handled by AuthProvider
+  if (loading && !isShellDisabledRoute) {
+    return null; // The loading skeleton is already handled by AuthProvider for shell routes
   }
-
-  if (!user && isPublicRoute) {
+  
+  if (isShellDisabledRoute) {
     return <>{children}</>;
   }
   
