@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -743,5 +742,3 @@ export async function isTeamManagerOrAdmin(teamId: string, userId: string): Prom
 
     return isManagerOrCoach;
 }
-
-    
