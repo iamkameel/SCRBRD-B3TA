@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -47,6 +47,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { LiveScoringInterface } from "./live-scoring-interface";
 import { useAuth } from "@/lib/auth-context";
 import { LineupManager } from "./lineup-manager";
+import { ManhattanChart, WormChart, WagonWheelSummary } from "./match-charts";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -476,8 +477,9 @@ export default function MatchDetailsClient({
         </header>
 
         <Tabs defaultValue="scorecard" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
+                <TabsTrigger value="visuals" disabled={match.status !== 'completed'}><BarChartHorizontal className="mr-2 h-4 w-4"/>Visuals</TabsTrigger>
                 <TabsTrigger value="lineups" disabled={match.status === 'completed'}><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
                 <TabsTrigger value="highlights"><Film className="mr-2 h-4 w-4"/>Highlights</TabsTrigger>
@@ -570,6 +572,14 @@ export default function MatchDetailsClient({
                         )}
                     </CardContent>
                 </Card>
+            </TabsContent>
+            
+            <TabsContent value="visuals" className="mt-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <ManhattanChart />
+                    <WormChart />
+                    <WagonWheelSummary />
+                </div>
             </TabsContent>
 
             <TabsContent value="lineups" className="mt-4">

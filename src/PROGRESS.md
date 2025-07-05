@@ -6,7 +6,7 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 ### Category 1: Next-Generation Analytics & Visualization
 
--   [ ] **1. Advanced Match Visualizations**: On the match details page for completed games, implement dynamic, interactive charts. This will include a **Manhattan chart** (runs per over), a **Worm chart** (cumulative score comparison), and a **Wagon Wheel summary** to provide a richer visual narrative of a match's progression.
+-   [x] **1. Advanced Match Visualizations**: On the match details page for completed games, implement dynamic, interactive charts. This will include a **Manhattan chart** (runs per over), a **Worm chart** (cumulative score comparison), and a **Wagon Wheel summary** to provide a richer visual narrative of a match's progression.
 
 -   [ ] **2. Player Performance Tracker**: Create a new "Tracker" tab on the player profile page. This will serve as a central hub for visualizing a player's long-term development, including charts for performance over time, and a detailed log of training sessions, injuries, and milestones.
 
@@ -24,6 +24,6 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 -   [ ] **7. Digital Rule Book**: Implement a "Rule Book" page that provides a simple, searchable reference for the key laws of cricket, making it easy for officials, coaches, and players to clarify rules.
 
--   [ ] **8. User Role Directory**: Create a "User Roles" page that clearly defines the responsibilities and permissions for each role in the system (Admin, Coach, Player, etc.), improving clarity and administration.
+-   [ ] **8. User Role Directory**: Create a "User Roles" page that a clearly defines the responsibilities and permissions for each role in the system (Admin, Coach, Player, etc.), improving clarity and administration.
 
 -   [ ] **9. Strategic Calendar**: Develop a high-level "Strategic Calendar" for Admins and Sportsmasters. This multi-month, filterable view should display all fixtures across all leagues and divisions, helping to identify scheduling conflicts and plan resources effectively.

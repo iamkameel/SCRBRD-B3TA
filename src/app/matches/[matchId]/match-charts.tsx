@@ -1,8 +1,7 @@
-
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart, Pie, PieChart } from 'recharts';
 
 import {
   ChartConfig,
@@ -106,10 +105,10 @@ export function WagonWheelSummary() {
             <CardHeader><CardTitle>Wagon Wheel Summary</CardTitle><CardDescription>Runs by scoring area</CardDescription></CardHeader>
             <CardContent>
                 <ChartContainer config={wagonWheelConfig} className="mx-auto aspect-square max-h-[250px]">
-                    <Recharts.PieChart>
+                    <PieChart>
                         <ChartTooltip content={<ChartTooltipContent nameKey="runs" hideLabel />} />
-                        <Recharts.Pie data={chartData} dataKey="runs" nameKey="side" />
-                    </Recharts.PieChart>
+                        <Pie data={chartData} dataKey="runs" nameKey="side" />
+                    </PieChart>
                 </ChartContainer>
             </CardContent>
         </Card>
