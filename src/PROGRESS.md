@@ -26,4 +26,4 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 -   [x] **8. User Role Directory**: Create a "User Roles" page that clearly defines the responsibilities and permissions for each role in the system (Admin, Coach, Player, etc.), improving clarity and administration.
 
--   [ ] **9. Strategic Calendar**: Develop a high-level "Strategic Calendar" for Admins and Sportsmasters. This multi-month, filterable view should display all fixtures across all leagues and divisions, helping to identify scheduling conflicts and plan resources effectively.
+-   [x] **9. Strategic Calendar**: Develop a high-level "Strategic Calendar" for Admins and Sportsmasters. This multi-month, filterable view should display all fixtures across all leagues and divisions, helping to identify scheduling conflicts and plan resources effectively.

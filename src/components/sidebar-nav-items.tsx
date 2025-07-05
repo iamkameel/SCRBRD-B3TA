@@ -37,7 +37,7 @@ const adminNavGroups = [
         items: [
             { href: '/fixtures', label: 'Fixtures', icon: ClipboardList },
             { href: '/matches', label: 'Results', icon: Trophy },
-            { href: '/strategic-calendar', label: 'Strategic Calendar', icon: CalendarRange },
+            { href: '/strategic-calendar', label: 'Strategic Calendar', icon: CalendarRange, adminOnly: true },
             { href: '/scouting', label: 'Scouting Assistant', icon: UserSearch },
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
             { href: '/analysis', label: 'Head-to-Head', icon: GitCompareArrows },
@@ -103,7 +103,12 @@ const adminNavGroups = [
     referenceGroup
 ];
 
-const sportsmasterNavGroups = adminNavGroups.filter(g => !g.adminOnly);
+const sportsmasterNavGroups = adminNavGroups.filter(g => !g.adminOnly).map(group => {
+    return {
+        ...group,
+        items: group.items.filter(item => !item.adminOnly)
+    }
+});
 
 const coachNavGroups = [
     {
