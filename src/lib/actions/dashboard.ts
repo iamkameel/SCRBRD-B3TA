@@ -195,15 +195,11 @@ export async function getTeamManagerDashboardData(personId: string) {
     const assignments = await getPersonTeamAssignments(personId);
     const managedTeamIds = assignments.filter(a => ['Team Manager'].includes(a.role)).map(a => a.teamId);
 
-    const [allSchools, allTeamsData] = await Promise.all([getSchools(), getTeams()]);
-
     if (managedTeamIds.length === 0) {
         return { 
             kpis: { upcomingFixtures: 0, pendingAvailability: 0, transportNeeded: 0, managedTeams: 0 },
             upcomingMatches: [],
             teams: [],
-            allSchools,
-            allTeams: allTeamsData,
             pendingRequests: [],
         };
     }
