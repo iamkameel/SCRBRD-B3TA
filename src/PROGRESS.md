@@ -24,6 +24,6 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 -   [x] **7. Digital Rule Book**: Implement a "Rule Book" page that provides a simple, searchable reference for the key laws of cricket, making it easy for officials, coaches, and players to clarify rules.
 
--   [ ] **8. User Role Directory**: Create a "User Roles" page that a clearly defines the responsibilities and permissions for each role in the system (Admin, Coach, Player, etc.), improving clarity and administration.
+-   [x] **8. User Role Directory**: Create a "User Roles" page that clearly defines the responsibilities and permissions for each role in the system (Admin, Coach, Player, etc.), improving clarity and administration.
 
 -   [ ] **9. Strategic Calendar**: Develop a high-level "Strategic Calendar" for Admins and Sportsmasters. This multi-month, filterable view should display all fixtures across all leagues and divisions, helping to identify scheduling conflicts and plan resources effectively.
