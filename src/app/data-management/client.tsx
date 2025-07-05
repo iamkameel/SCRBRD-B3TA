@@ -25,7 +25,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName, exportDataAction } from "@/lib/actions/data-management";
+import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName } from "@/lib/actions/data-management";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SUBSETS: { name: SubsetName }[] = [
@@ -52,7 +52,6 @@ export default function DataManagementClient() {
   const [isDeleting, startDeletionTransition] = React.useTransition();
   const [actionToConfirm, setActionToConfirm] = React.useState<'migrateAll' | 'deleteAll' | SubsetName | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [exportingSubset, setExportingSubset] = React.useState<SubsetName | null>(null);
   
   const { toast } = useToast();
 
@@ -108,34 +107,7 @@ export default function DataManagementClient() {
     });
   }
 
-  const handleExport = (subset: SubsetName) => {
-    setExportingSubset(subset);
-    startMigrationTransition(async () => { // Using same transition for loading state
-      try {
-        const result = await exportDataAction(subset);
-        if (result.error) {
-          toast({ title: "Export Failed", description: result.error, variant: "destructive" });
-        } else {
-          const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement("a");
-          const url = URL.createObjectURL(blob);
-          link.setAttribute("href", url);
-          link.setAttribute("download", `${subset.toLowerCase().replace(/\s/g, '_')}_export.csv`);
-          link.style.visibility = 'hidden';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          toast({ title: "Export Successful", description: `${subset} data has been exported.` });
-        }
-      } catch (error) {
-        toast({ title: "Export Error", description: "An unexpected error occurred.", variant: "destructive" });
-      } finally {
-        setExportingSubset(null);
-      }
-    });
-  };
-
-  const isProcessing = isMigrating || isDeleting || !!exportingSubset;
+  const isProcessing = isMigrating || isDeleting;
 
   return (
     <>
@@ -145,7 +117,7 @@ export default function DataManagementClient() {
             Data Management
           </h1>
           <p className="text-muted-foreground">
-            Manage your application data using sample sets or by exporting your own data.
+            Manage your application data using sample sets.
           </p>
         </header>
         
@@ -199,7 +171,7 @@ export default function DataManagementClient() {
                     <CardHeader>
                     <CardTitle>Individual Data Subsets</CardTitle>
                     <CardDescription>
-                        Migrate sample data, delete all records, or export data for a specific type.
+                        Migrate sample data for a specific type of data, or delete all records for that type. Actions on dependent data types are disabled.
                     </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -217,15 +189,6 @@ export default function DataManagementClient() {
                             <TableRow key={name}>
                               <TableCell className="font-medium">{name}</TableCell>
                               <TableCell className="flex justify-end gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => handleExport(name)}
-                                        disabled={isProcessing}
-                                    >
-                                        {exportingSubset === name ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                                        Export
-                                    </Button>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
