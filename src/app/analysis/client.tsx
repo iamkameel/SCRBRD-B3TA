@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -17,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from '@/lib/utils';
 import { StatsQueryCard } from './stats-query-card';
-import { DreamTeamCard } from '../dream-team-card';
 
 // --- Schemas ---
 const playerComparisonSchema = z.object({
@@ -254,12 +252,11 @@ export default function AnalysisClient({ players, teams }: { players: Person[], 
         <div className="flex flex-col gap-8">
             <header>
                 <h1 className="text-3xl font-bold tracking-tight text-foreground">Analysis Hub</h1>
-                <p className="text-muted-foreground">Ask the AI a question, compare stats, or generate a dream team.</p>
+                <p className="text-muted-foreground">Ask the AI a question or compare stats head-to-head.</p>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <StatsQueryCard />
-                <DreamTeamCard />
             </div>
 
             <Tabs defaultValue="player-vs-player" className="w-full">

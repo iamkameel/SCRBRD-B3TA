@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -45,7 +44,7 @@ export function StatsQueryCard() {
   };
 
   return (
-    <Card className="col-span-1 lg:col-span-2">
+    <Card>
       <CardHeader>
         <CardTitle>Natural Language Stats Query</CardTitle>
         <CardDescription>
