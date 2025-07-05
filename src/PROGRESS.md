@@ -8,13 +8,13 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 -   [x] **1. Advanced Match Visualizations**: On the match details page for completed games, implement dynamic, interactive charts. This will include a **Manhattan chart** (runs per over), a **Worm chart** (cumulative score comparison), and a **Wagon Wheel summary** to provide a richer visual narrative of a match's progression.
 
--   [ ] **2. Player Performance Tracker**: Create a new "Tracker" tab on the player profile page. This will serve as a central hub for visualizing a player's long-term development, including charts for performance over time, and a detailed log of training sessions, injuries, and milestones.
+-   [x] **2. Player Performance Tracker**: Create a new "Tracker" tab on the player profile page. This will serve as a central hub for visualizing a player's long-term development, including charts for performance over time, and a detailed log of training sessions, injuries, and milestones.
 
--   [ ] **3. Player Skills Radar**: As part of the new Player Tracker tab, add a radar chart to visually represent a player's coach-rated skills (Batting, Bowling, Fielding, Fitness). This provides an at-a-glance summary of their abilities.
+-   [x] **3. Player Skills Radar**: As part of the new Player Tracker tab, add a radar chart to visually represent a player's coach-rated skills (Batting, Bowling, Fielding, Fitness). This provides an at-a-glance summary of their abilities.
 
 ### Category 2: Enhanced User Engagement & Profile Management
 
--   [ ] **4. Player Skills Management**: Create a new "Skills" tab on the Player Profile page where authorized coaches and admins can rate a player's core abilities (e.g., power, timing, accuracy, catching) on a numeric scale. This provides a structured way to track development over time.
+-   [x] **4. Player Skills Management**: Create a new "Skills" tab on the Player Profile page where authorized coaches and admins can rate a player's core abilities (e.g., power, timing, accuracy, catching) on a numeric scale. This provides a structured way to track development over time.
 
 -   [ ] **5. Public-Facing Home Page**: Design and build a professional landing page at the `/home` route to showcase the app's features to prospective users and serve as the application's public "front door".
 
