@@ -1,3 +1,1 @@
-// This page is deprecated. Please use /people.
-// Re-exporting for backwards compatibility during transition.
-export { default } from '../people/page';
+// This page is deprecated and has been consolidated into /people.
