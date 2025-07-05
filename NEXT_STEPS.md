@@ -1,33 +1,29 @@
-# Next Steps: A New Horizon for SCRBRD
+# Next Steps: SCRBRD - The Next Innings
 
-This document outlines the next phase of development, building upon the incredibly strong, feature-rich foundation we have already established. The previous roadmap is complete. This new plan focuses on adding new, high-value modules and deepening the platform's strategic capabilities.
+This document outlines the next phase of development, focusing on advanced analytics, deeper user engagement, and enhanced administrative tools.
 
 ---
 
-### Category 1: Advanced Coaching & Training Tools
+### Category 1: Next-Generation Analytics & Visualization
 
-1.  **Training Session Planner**: Create a dedicated "Planner" page where coaches can design detailed training sessions for their teams. This should include creating a schedule, setting a title and focus areas, and adding specific drills.
+1.  **Advanced Match Visualizations**: On the match details page for completed games, implement dynamic, interactive charts. This will include a **Manhattan chart** (runs per over), a **Worm chart** (cumulative score comparison), and a **Wagon Wheel summary** to provide a richer visual narrative of a match's progression.
 
-2.  **Drill Library**: Develop a "Drills" page that acts as a central library for all training exercises. Coaches should be able to create, view, and categorize drills (e.g., Batting, Bowling, Fielding). Drills from this library will be used to build the session plans.
+2.  **Player Performance Tracker**: Create a new "Tracker" tab on the player profile page. This will serve as a central hub for visualizing a player's long-term development, including charts for performance over time, and a detailed log of training sessions, injuries, and milestones.
 
-### Category 2: Logistics & Resource Management
+3.  **Player Skills Radar**: As part of the new Player Tracker tab, add a radar chart to visually represent a player's coach-rated skills (Batting, Bowling, Fielding, Fitness). This provides an at-a-glance summary of their abilities.
 
-3.  **Equipment Management Module**: Build an "Equipment" page to track physical assets. This should allow admins to manage an inventory of items like bats, pads, and helmets, and assign them to specific players, tracking who has what.
+### Category 2: Enhanced User Engagement & Profile Management
 
-4.  **Player Availability & RSVP**: Implement a system for players to indicate their availability for upcoming matches. This RSVP data should be visible to coaches and team managers on the match details page to aid in lineup selection.
+4.  **Player Skills Management**: Create a new "Skills" tab on the Player Profile page where authorized coaches and admins can rate a player's core abilities (e.g., power, timing, accuracy, catching) on a numeric scale. This provides a structured way to track development over time.
 
-5.  **Lineup Confirmation Workflow**: Create a mechanism for a designated Team Captain to officially "confirm" the selected 11-player lineup for a match, providing a clear sign-off before game day.
+5.  **Public-Facing Home Page**: Design and build a professional landing page at the `/home` route to showcase the app's features to prospective users and serve as the application's public "front door".
 
-### Category 3: Financial & Commercial Management
+6.  **Awards Hub**: Create a new "Awards" page that aggregates all completed competition winners into a "Trophy Cabinet" and showcases the overall top run-scorers and wicket-takers for the season.
 
-6.  **Financials Module**: Create a "Financials" page to act as a simple accounting ledger. Users should be able to add income and expense transactions, categorize them, and see a running balance.
+### Category 3: Governance & Administration
 
-7.  **Sponsorship Module**: Develop a "Sponsors" page where the organization's sponsors can be added and managed, including their name, logo, and website. This lays the groundwork for linking sponsors to competitions or teams in the future.
+7.  **Digital Rule Book**: Implement a "Rule Book" page that provides a simple, searchable reference for the key laws of cricket, making it easy for officials, coaches, and players to clarify rules.
 
-### Category 4: UI/UX & Platform Refinements
+8.  **User Role Directory**: Create a "User Roles" page that clearly defines the responsibilities and permissions for each role in the system (Admin, Coach, Player, etc.), improving clarity and administration.
 
-8.  **Enhanced Theming & Branding**: Allow for more granular control over the application's theme. A future step could be allowing schools to apply their own brand colors.
-
-9.  **User Onboarding & Help System**: Implement a guided tour or a "Getting Started" wizard for new users to help them understand the key features and workflows of the application.
-
-10. **Performance & Scalability Audit**: Conduct a review of Firestore queries and data structures, particularly in dashboard-heavy areas, to ensure the application remains fast and responsive as more data is added. Proactively deploy any necessary new indexes.
+9.  **Strategic Calendar**: Develop a high-level "Strategic Calendar" for Admins and Sportsmasters. This multi-month, filterable view should display all fixtures across all leagues and divisions, helping to identify scheduling conflicts and plan resources effectively.
