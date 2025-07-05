@@ -20,11 +20,27 @@ export async function getCompetitions(): Promise<Competition[]> {
   try {
     const competitionsCollection = collection(db, 'competitions');
     const q = query(competitionsCollection, where("userId", "==", userId));
-    const competitionSnapshot = await getDocs(q);
-    const competitionsList = competitionSnapshot.docs.map(doc => ({
-      competitionId: doc.id,
-      ...doc.data(),
-    } as Competition));
+    const [competitionSnapshot, teamsSnapshot] = await Promise.all([
+        getDocs(q),
+        getTeams()
+    ]);
+
+    const teamLogoMap = new Map<string, string>();
+    teamsSnapshot.forEach(team => {
+        if (team.logoUrl) {
+            teamLogoMap.set(team.teamId, team.logoUrl);
+        }
+    });
+
+    const competitionsList = competitionSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            competitionId: doc.id,
+            ...data,
+            winnerTeamLogoUrl: data.winnerTeamId ? teamLogoMap.get(data.winnerTeamId) : undefined,
+        } as Competition
+    });
+
     return competitionsList;
   } catch (error) {
     console.error("Error fetching competitions:", error);
@@ -324,5 +340,3 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
     return [];
   }
 }
-
-    

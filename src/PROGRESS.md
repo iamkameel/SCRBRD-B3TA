@@ -18,7 +18,7 @@ This document tracks our progress against the new "Next Innings" roadmap.
 
 -   [x] **5. Public-Facing Home Page**: Design and build a professional landing page at the `/home` route to showcase the app's features to prospective users and serve as the application's public "front door".
 
--   [ ] **6. Awards Hub**: Create a new "Awards" page that aggregates all completed competition winners into a "Trophy Cabinet" and showcases the overall top run-scorers and wicket-takers for the season.
+-   [x] **6. Awards Hub**: Create a new "Awards" page that aggregates all completed competition winners into a "Trophy Cabinet" and showcases the overall top run-scorers and wicket-takers for the season.
 
 ### Category 3: Governance & Administration
 

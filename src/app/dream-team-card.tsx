@@ -33,7 +33,7 @@ export function DreamTeamCard() {
     };
 
     return (
-        <Card className="col-span-1 lg:col-span-2">
+        <Card>
             <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div>

@@ -379,6 +379,7 @@ export interface Competition {
   winnerTeamId?: string;
   winnerTeamName?: string;
   teamIds?: string[];
+  winnerTeamLogoUrl?: string;
 }
 
 export interface PlayerMatchPerformance {
