@@ -5,9 +5,17 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
-import type { Transaction } from '@/lib/data';
+import type { Transaction, Person } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { getPerson } from './players';
+
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage financials.");
+    }
+}
 
 export async function getTransactions(): Promise<Transaction[]> {
   const userId = await getUserId();
@@ -44,6 +52,7 @@ type TransactionFormValues = z.infer<typeof transactionSchema>;
 export async function addTransactionAction(data: TransactionFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = transactionSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -71,6 +80,7 @@ const updateTransactionSchema = transactionSchema.extend({
 export async function updateTransactionAction(data: z.infer<typeof updateTransactionSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateTransactionSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -101,6 +111,7 @@ export async function updateTransactionAction(data: z.infer<typeof updateTransac
 export async function deleteTransactionAction(transactionId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   if (!transactionId) throw new Error("Transaction ID is required.");
   
   const transactionDocRef = doc(db, 'financials', transactionId);

@@ -8,6 +8,14 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, Timesta
 import type { Season } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { getPerson } from './players';
+
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage seasons.");
+    }
+}
 
 export async function getSeasons(): Promise<Season[]> {
   const userId = await getUserId();
@@ -73,6 +81,7 @@ type SeasonFormValues = z.infer<typeof seasonSchema>;
 export async function addSeasonAction(data: SeasonFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = seasonSchema.safeParse(data);
   if (!validatedFields.success) throw new Error('Invalid season data.');
   const { name, startDate, endDate, active } = validatedFields.data;
@@ -94,6 +103,7 @@ const updateSeasonSchema = baseSeasonSchema.extend({ seasonId: z.string() }).ref
 export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateSeasonSchema.safeParse(data);
     if (!validatedFields.success) throw new Error('Invalid season data.');
     
@@ -114,6 +124,7 @@ export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema
 export async function deleteSeasonAction(seasonId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   if (!seasonId) throw new Error("Season ID is required.");
   
   const seasonDocRef = doc(db, 'seasons', seasonId);

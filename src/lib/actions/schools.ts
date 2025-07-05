@@ -12,6 +12,12 @@ import { getUserId } from '@/lib/auth';
 import { getPerson } from './players';
 import { getPersonTeamAssignments, getTeams, getTeamsBySchool } from './teams';
 
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage schools.");
+    }
+}
 
 export async function getSchools(): Promise<School[]> {
   const userId = await getUserId();
@@ -106,6 +112,7 @@ type SchoolFormValues = z.infer<typeof schoolSchema>;
 export async function addSchoolAction(data: SchoolFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
 
   const validatedFields = schoolSchema.safeParse(data);
 
@@ -153,6 +160,7 @@ const updateSchoolSchema = schoolSchema.extend({
 export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateSchoolSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -195,6 +203,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
 export async function deleteSchoolAction(schoolId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   
   if (!schoolId) {
     throw new Error("School ID is required.");

@@ -5,9 +5,17 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { Sponsor } from '@/lib/data';
+import type { Sponsor, Person } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { getPerson } from './players';
+
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage sponsors.");
+    }
+}
 
 export async function getSponsors(): Promise<Sponsor[]> {
   const userId = await getUserId();
@@ -36,6 +44,7 @@ const sponsorSchema = z.object({
 export async function addSponsorAction(data: z.infer<typeof sponsorSchema>) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = sponsorSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -62,6 +71,7 @@ const updateSponsorSchema = sponsorSchema.extend({
 export async function updateSponsorAction(data: z.infer<typeof updateSponsorSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateSponsorSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -89,6 +99,7 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
 export async function deleteSponsorAction(sponsorId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   
   if (!sponsorId) {
     throw new Error("Sponsor ID is required.");

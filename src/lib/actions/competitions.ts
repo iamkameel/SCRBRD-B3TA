@@ -8,10 +8,18 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person, Match } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
-import { getTeam, getTeamStats, getTeams } from './teams';
+import { getTeam, getTeams } from './teams';
 import { getPlayerStats } from './stats';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { getPerson } from './players';
+
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage competitions.");
+    }
+}
 
 export async function getCompetitions(): Promise<Competition[]> {
   const userId = await getUserId();
@@ -82,6 +90,7 @@ type CompetitionFormValues = z.infer<typeof competitionSchema>;
 export async function addCompetitionAction(data: CompetitionFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = competitionSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -128,6 +137,7 @@ const updateCompetitionSchema = competitionSchema.extend({
 export async function updateCompetitionAction(data: z.infer<typeof updateCompetitionSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateCompetitionSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -183,6 +193,7 @@ export async function updateCompetitionAction(data: z.infer<typeof updateCompeti
 export async function deleteCompetitionAction(competitionId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   if (!competitionId) throw new Error("Competition ID is required.");
   
   const competitionDocRef = doc(db, 'competitions', competitionId);

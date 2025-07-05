@@ -12,6 +12,13 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { isTeamManagerOrAdmin } from './teams';
 
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage the transport fleet.");
+    }
+}
+
 export async function getVehicles(): Promise<Vehicle[]> {
   const userId = await getUserId();
   if (!userId) return [];
@@ -42,6 +49,7 @@ type VehicleFormValues = z.infer<typeof vehicleSchema>;
 export async function addVehicleAction(data: VehicleFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = vehicleSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -73,6 +81,7 @@ const updateVehicleSchema = vehicleSchema.extend({
 export async function updateVehicleAction(data: z.infer<typeof updateVehicleSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateVehicleSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -100,6 +109,7 @@ export async function updateVehicleAction(data: z.infer<typeof updateVehicleSche
 export async function deleteVehicleAction(vehicleId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   
   if (!vehicleId) {
     throw new Error("Vehicle ID is required.");

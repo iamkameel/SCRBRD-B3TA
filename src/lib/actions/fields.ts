@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -10,6 +9,13 @@ import type { Field, FieldAssignment, Person } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { getPerson } from './players';
+
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage fields.");
+    }
+}
 
 export async function getFields(): Promise<Field[]> {
   const userId = await getUserId();
@@ -181,6 +187,7 @@ async function syncAssignments(batch: FirebaseFirestore.WriteBatch, fieldId: str
 export async function addFieldAction(data: FieldFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = fieldActionSchema.safeParse(data);
 
   if (!validatedFields.success) throw new Error('Invalid field data.');
@@ -225,6 +232,7 @@ const updateFieldSchema = fieldActionSchema.extend({
 export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateFieldSchema.safeParse(data);
 
     if (!validatedFields.success) throw new Error('Invalid field data.');
@@ -269,6 +277,7 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
 export async function deleteFieldAction(fieldId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   
   if (!fieldId) throw new Error("Field ID is required.");
   

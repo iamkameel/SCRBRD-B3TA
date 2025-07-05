@@ -8,6 +8,14 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Division } from '@/lib/data';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { getPerson } from './players';
+
+const checkManagementPermission = async (userId: string) => {
+    const user = await getPerson(userId);
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+        throw new Error("You do not have permission to manage divisions.");
+    }
+}
 
 // This function now fetches data from Firestore for the current user
 export async function getDivisions(): Promise<Division[]> {
@@ -57,6 +65,7 @@ type DivisionFormValues = z.infer<typeof divisionSchema>;
 export async function addDivisionAction(data: DivisionFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = divisionSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -90,6 +99,7 @@ const updateDivisionSchema = z.object({
 export async function updateDivisionAction(data: z.infer<typeof updateDivisionSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateDivisionSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -119,6 +129,7 @@ export async function updateDivisionAction(data: z.infer<typeof updateDivisionSc
 export async function deleteDivisionAction(divisionId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   
   if (!divisionId) {
     throw new Error("Division ID is required.");
