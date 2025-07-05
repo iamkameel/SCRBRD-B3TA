@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { MoreHorizontal, Trash2, Edit, CalendarIcon, Search, List, LayoutGrid, CalendarDays, PlusCircle, ChevronDown, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -39,11 +39,35 @@ import { useToast } from "@/hooks/use-toast";
 import type { Match, Team, Competition, Field, MatchStatus } from "@/lib/data";
 import { deleteMatchAction } from '@/lib/actions/matches';
 import { MatchCard } from "./match-card";
-import { MatchCalendar } from "./match-calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EditMatchDialog } from "./edit-match-dialog";
+import { StrategicCalendarView, competitionTypeColors } from '../strategic-calendar/strategic-calendar-view';
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 const MATCH_STATUSES: MatchStatus[] = ['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned'];
+
+function MatchListItem({ match }: { match: Match }) {
+  return (
+    <Link href={`/matches/${match.matchId}`} className="block p-2 -mx-2 rounded-md hover:bg-muted">
+      <div className="flex items-center gap-3">
+        <div className={cn("w-1 h-8 rounded-full", competitionTypeColors[match.competitionType || 'Friendlies'] || 'bg-gray-400')}></div>
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5 text-xs">
+            <Avatar className="h-4 w-4"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName?.[0]}</AvatarFallback></Avatar>
+            <span className="font-semibold">{match.teamAName}</span>
+            <span className="text-muted-foreground">vs</span>
+            <Avatar className="h-4 w-4"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
+            <span className="font-semibold">{match.teamBName}</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {format(match.dateTime, 'p')} @ {match.fieldName}
+          </p>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function MatchesClient({ matches, teams, fields, competitions, isAdmin }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], isAdmin: boolean }) {
   const { toast } = useToast();
@@ -63,6 +87,10 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   const [statusFilter, setStatusFilter] = React.useState<string[]>(['completed']); // Default filter
   const [competitionFilter, setCompetitionFilter] = React.useState<string[]>([]);
   const [teamFilter, setTeamFilter] = React.useState<string[]>([]);
+  
+  // State for calendar view
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+  const [displayMonth, setDisplayMonth] = React.useState<Date>(new Date());
 
   React.useEffect(() => {
     setIsClient(true);
@@ -102,6 +130,11 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
         return matchesSearch && matchesStatus && matchesCompetition && matchesTeam;
     });
   }, [matches, searchQuery, statusFilter, competitionFilter, teamFilter]);
+  
+  const matchesOnSelectedDate = React.useMemo(() => {
+    if (!selectedDate) return [];
+    return filteredMatches.filter((match) => isSameDay(match.dateTime, selectedDate));
+  }, [selectedDate, filteredMatches]);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -313,7 +346,41 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                 </div>
             )}
             {view === 'calendar' && (
-                <MatchCalendar matches={filteredMatches} />
+                <div className="grid lg:grid-cols-12 gap-8">
+                    <div className="lg:col-span-8">
+                        <StrategicCalendarView 
+                            matches={filteredMatches} 
+                            selectedDate={selectedDate} 
+                            onDateSelect={setSelectedDate} 
+                            displayMonth={displayMonth}
+                            onMonthChange={setDisplayMonth}
+                        />
+                    </div>
+                     <div className="lg:col-span-4 space-y-8">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle>Match Details</CardTitle>
+                                    {selectedDate && <Button variant="link" size="sm" onClick={() => setSelectedDate(undefined)}>Clear selection</Button>}
+                                </div>
+                                <CardDescription>{selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="min-h-[200px]">
+                                {selectedDate && matchesOnSelectedDate.length > 0 ? (
+                                    <ScrollArea className="h-96 pr-3">
+                                        <div className="space-y-4">
+                                            {matchesOnSelectedDate.map(match => <MatchListItem key={match.matchId} match={match} />)}
+                                        </div>
+                                    </ScrollArea>
+                                ) : (
+                                    <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+                                        <p>{selectedDate ? 'No fixtures on this date.' : 'Click on a date to view fixtures.'}</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
             )}
 
             {view !== 'calendar' && totalPages > 1 && (

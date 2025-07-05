@@ -6,6 +6,7 @@ import { format, isSameDay } from 'date-fns';
 import { DayPicker, type DayContentProps } from 'react-day-picker';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Match } from '@/lib/data';
 import { cn } from '@/lib/utils';
 
@@ -49,30 +50,54 @@ function CustomDayContent(props: DayContentProps) {
     );
 }
 
-function CustomCaption(props: { displayMonth: Date, onMonthChange: (date: Date) => void }) {
-    const { displayMonth, onMonthChange } = props;
-    
-    const handlePreviousClick = () => {
+function CustomCaption({ displayMonth, onMonthChange }: { displayMonth: Date, onMonthChange: (date: Date) => void }) {
+    const handleMonthChange = (value: string) => {
         const newMonth = new Date(displayMonth);
-        newMonth.setMonth(newMonth.getMonth() - 1);
+        newMonth.setMonth(parseInt(value, 10));
         onMonthChange(newMonth);
     };
 
-    const handleNextClick = () => {
-        const newMonth = new Date(displayMonth);
-        newMonth.setMonth(newMonth.getMonth() + 1);
-        onMonthChange(newMonth);
+    const handleYearChange = (value: string) => {
+        const newYear = new Date(displayMonth);
+        newYear.setFullYear(parseInt(value, 10));
+        onMonthChange(newYear);
     };
+
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+    const months = Array.from({ length: 12 }, (_, i) => ({
+        value: i.toString(),
+        label: format(new Date(0, i), 'MMMM')
+    }));
 
     return (
         <div className="flex justify-between items-center p-2">
-            <Button variant="ghost" size="icon" onClick={handlePreviousClick}>
+            <Button variant="ghost" size="icon" onClick={() => onMonthChange(new Date(new Date(displayMonth).setMonth(displayMonth.getMonth() - 1)))}>
                 <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="text-lg font-semibold">
-                {format(displayMonth, 'MMMM yyyy')}
+            <div className="flex gap-2">
+                <Select value={displayMonth.getMonth().toString()} onValueChange={handleMonthChange}>
+                    <SelectTrigger className="w-[120px] focus:ring-0">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {months.map((month) => (
+                            <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                 <Select value={displayMonth.getFullYear().toString()} onValueChange={handleYearChange}>
+                    <SelectTrigger className="w-[90px] focus:ring-0">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {years.map(year => (
+                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleNextClick}>
+            <Button variant="ghost" size="icon" onClick={() => onMonthChange(new Date(new Date(displayMonth).setMonth(displayMonth.getMonth() + 1)))}>
                 <ChevronRight className="h-4 w-4" />
             </Button>
         </div>
@@ -82,21 +107,21 @@ function CustomCaption(props: { displayMonth: Date, onMonthChange: (date: Date) 
 export function StrategicCalendarView({ matches, selectedDate, onDateSelect, displayMonth, onMonthChange }: StrategicCalendarViewProps) {
     const modifiers = React.useMemo(() => {
         const matchDays: Date[] = [];
-        const matchesByDay: { [key: string]: Match[] } = {};
+        
+        const dateMap = new Map<string, { date: Date; matches: Match[] }>();
 
         for (const match of matches) {
             const dayKey = format(match.dateTime, 'yyyy-MM-dd');
-            if (!matchesByDay[dayKey]) {
-                matchesByDay[dayKey] = [];
-                // Create a new date object for the modifier, so we can attach data to it.
+            if (!dateMap.has(dayKey)) {
                 const newDate = new Date(match.dateTime);
-                (newDate as any).__matches = [];
-                matchDays.push(newDate);
+                dateMap.set(dayKey, { date: newDate, matches: [] });
             }
-             const existingDate = matchDays.find(d => isSameDay(d, match.dateTime));
-            if(existingDate) {
-                (existingDate as any).__matches.push(match);
-            }
+            dateMap.get(dayKey)!.matches.push(match);
+        }
+
+        for (const { date, matches } of dateMap.values()) {
+            (date as any).__matches = matches;
+            matchDays.push(date);
         }
         
         return { hasMatch: matchDays };
