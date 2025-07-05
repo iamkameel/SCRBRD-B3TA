@@ -328,8 +328,8 @@ export async function runUmpireReviewAction(input: UmpireReviewInput): Promise<U
     throw new Error("User not authenticated.");
   }
   
-  if (!input.photoDataUri) {
-    throw new Error("An image is required for the review.");
+  if (!input.mediaDataUri) {
+    throw new Error("An image or video is required for the review.");
   }
 
   try {

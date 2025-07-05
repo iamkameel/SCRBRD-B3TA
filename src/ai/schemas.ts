@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Shared Zod schemas for AI flows.
  * This file does not contain 'use server' and can be imported safely on the client and server.
@@ -188,15 +189,20 @@ export type OppositionAnalysisInput = z.infer<typeof OppositionAnalysisInputSche
 
 // From umpire-review-flow.ts
 export const UmpireReviewInputSchema = z.object({
-  photoDataUri: z.string().describe("A photo of a cricket delivery, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  mediaDataUri: z.string().describe("A video or photo of a cricket delivery, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  onFieldDecision: z.enum(['Out', 'Not Out']),
+  bowlingAngle: z.enum(['Over the Wicket', 'Round the Wicket']),
+  bowlerHand: z.enum(['Left-arm', 'Right-arm']),
+  batterHand: z.enum(['Left-hand', 'Right-hand']),
 });
 export type UmpireReviewInput = z.infer<typeof UmpireReviewInputSchema>;
 
 export const UmpireDecisionSchema = z.object({
-  decision: z.enum(['Out', 'Not Out', "Umpire's Call"]).describe("The final decision based on the analysis."),
-  pitching: z.enum(['In-Line', 'Outside Leg', 'Outside Off']).describe("Where the ball pitched in relation to the wickets."),
-  impact: z.enum(['In-Line', 'Outside Leg', 'Outside Off', 'Too High']).describe("Where the ball impacted the batsman's pads."),
-  wickets: z.enum(['Hitting', 'Missing', "Umpire's Call"]).describe("Whether the ball's trajectory was going on to hit the wickets."),
+  finalDecision: z.enum(['Out', 'Not Out']),
+  drsOutcome: z.string().describe("A concise summary like 'Original decision stands' or 'Decision Overturned'."),
+  pitching: z.enum(['In-Line', 'Outside Leg', 'Outside Off']),
+  impact: z.enum(['In-Line', 'Outside Leg', 'Outside Off', 'Too High']),
+  wickets: z.enum(['Hitting', 'Missing', "Umpire's Call"]),
   justification: z.string().describe("A brief, step-by-step justification for the final decision, explaining each component (pitching, impact, wickets)."),
 });
 export type UmpireDecisionOutput = z.infer<typeof UmpireDecisionSchema>;

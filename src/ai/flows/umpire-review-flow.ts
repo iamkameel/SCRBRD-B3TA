@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to simulate an umpire's decision review.
@@ -12,20 +13,38 @@ const prompt = ai.definePrompt({
     name: 'umpireReviewPrompt',
     input: { schema: UmpireReviewInputSchema },
     output: { schema: UmpireDecisionSchema },
-    prompt: `You are an expert third umpire operating a high-tech ball-tracking system for a cricket match. Your task is to review a Leg Before Wicket (LBW) appeal based on a single image provided.
+    prompt: `You are an expert third umpire operating a high-tech ball-tracking and review system (DRS) for a cricket match. Your task is to review a Leg Before Wicket (LBW) appeal based on a short video or image provided, along with the match context.
 
-From this single image, you must infer the most probable trajectory of the ball just before, during, and after the moment captured. Analyze the image to determine the three key components of an LBW decision:
+The on-field umpire's original decision was: **{{{onFieldDecision}}}**
 
-1.  **Pitching**: Where did the ball pitch? 'In-Line' with the wickets, 'Outside Leg', or 'Outside Off'?
-2.  **Impact**: Where did the ball make contact with the batsman? 'In-Line', 'Outside Leg', 'Outside Off', or was the impact 'Too High'?
-3.  **Wickets**: Was the ball's trajectory going on to hit the wickets? Your options are 'Hitting', 'Missing', or if it is too close to call from the image, select "Umpire's Call".
+Context of the delivery:
+- Bowler: **{{{bowlerHand}}}**
+- Bowling Angle: **{{{bowlingAngle}}}**
+- Batter: **{{{batterHand}}}**
 
-Based on your analysis of these three components, make a final **Decision** ('Out', 'Not Out', or "Umpire's Call").
+Analyze the provided media to determine the three key components of an LBW decision. If the decision is marginal (within the margin of error for ball tracking), you must select "Umpire's Call".
+
+1.  **Pitching**: Where did the ball pitch?
+    - 'In-Line': Pitched within the line of the wickets.
+    - 'Outside Off': Pitched outside the off stump.
+    - 'Outside Leg': Pitched outside the leg stump. (This would result in a 'Not Out' decision).
+
+2.  **Impact**: Where did the ball make contact with the batsman?
+    - 'In-Line': Impact was in line with the wickets.
+    - 'Outside Off': Impact was outside the line of off stump.
+    - 'Too High': Impact was above the bails.
+
+3.  **Wickets**: Was the ball's trajectory going on to hit the wickets?
+    - 'Hitting': The ball was clearly going to hit the stumps.
+    - 'Missing': The ball was clearly going to miss the stumps.
+    - "Umpire's Call": The ball was projected to be clipping the edge of the stumps.
+
+Based on your analysis of these three components and the original on-field decision, determine the **Final Decision** ('Out' or 'Not Out') and the **DRS Outcome** (e.g., "Original decision stands", "Decision Overturned").
 
 Finally, provide a step-by-step **Justification** for your decision, explaining your reasoning for each of the three components.
 
-Image of the appeal:
-{{media url=photoDataUri}}
+Media of the appeal:
+{{media url=mediaDataUri}}
 `,
 });
 
