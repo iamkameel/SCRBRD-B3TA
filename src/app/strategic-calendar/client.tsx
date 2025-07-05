@@ -9,12 +9,12 @@ import { ChevronDown, Calendar as CalendarIcon, List, Trophy, MapPin } from 'luc
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Calendar } from '@/components/ui/calendar';
 import type { Match, Competition, Division, Field } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { StrategicCalendarView, competitionTypeColors } from './strategic-calendar-view';
 
 interface StrategicCalendarClientProps {
     matches: Match[];
@@ -22,14 +22,6 @@ interface StrategicCalendarClientProps {
     divisions: Division[];
     fields: Field[];
 }
-
-const competitionTypeColors: { [key: string]: string } = {
-    'Cup': 'bg-green-500',
-    'League': 'bg-blue-500',
-    'Tournament': 'bg-purple-500',
-    'Friendlies': 'bg-red-500',
-    'Festival': 'bg-orange-500',
-};
 
 const competitionTypeMap: { [key: string]: string } = {
     'Cup': 'Coastal Cup',
@@ -42,26 +34,28 @@ function MatchListItem({ match }: { match: Match }) {
   return (
     <Link href={`/matches/${match.matchId}`} className="block p-2 -mx-2 rounded-md hover:bg-muted">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 shrink-0">
-          <Avatar className="h-5 w-5"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName?.[0]}</AvatarFallback></Avatar>
-          <span className="font-semibold text-xs">{match.teamAName}</span>
-        </div>
-        <span className="text-xs text-muted-foreground">vs</span>
-        <div className="flex items-center gap-1 shrink-0">
-          <Avatar className="h-5 w-5"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
-          <span className="font-semibold text-xs">{match.teamBName}</span>
+        <div className={cn("w-1 h-8 rounded-full", competitionTypeColors[match.competitionName || 'Friendlies'] || 'bg-gray-400')}></div>
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5 text-xs">
+            <Avatar className="h-4 w-4"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName?.[0]}</AvatarFallback></Avatar>
+            <span className="font-semibold">{match.teamAName}</span>
+            <span className="text-muted-foreground">vs</span>
+            <Avatar className="h-4 w-4"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
+            <span className="font-semibold">{match.teamBName}</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {format(match.dateTime, 'p')} @ {match.fieldName}
+          </p>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground mt-1 pl-1">
-        {format(match.dateTime, 'p')} @ {match.fieldName}
-      </p>
     </Link>
   );
 }
 
 export default function StrategicCalendarClient({ matches, competitions, divisions, fields }: StrategicCalendarClientProps) {
-    const [view, setView] = React.useState<'calendar' | 'list' | 'agenda'>('list');
-    const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+    const [view, setView] = React.useState<'calendar' | 'list' | 'agenda'>('calendar');
+    const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
+    const [displayMonth, setDisplayMonth] = React.useState<Date>(new Date());
     
     const [competitionFilters, setCompetitionFilters] = React.useState<string[]>([]);
     const [divisionFilters, setDivisionFilters] = React.useState<string[]>([]);
@@ -90,10 +84,6 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
         return filteredMatches.filter(match => isSameDay(match.dateTime, selectedDate));
     }, [selectedDate, filteredMatches]);
 
-    const matchDays = React.useMemo(() => {
-        return filteredMatches.map(m => m.dateTime);
-    }, [filteredMatches]);
-    
     return (
         <div className="flex flex-col gap-8">
             <header>
@@ -101,7 +91,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                 <p className="text-muted-foreground">A high-level overview of all fixtures. Use the filters to narrow your view.</p>
             </header>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg bg-card">
                 <div className="flex flex-wrap items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -146,60 +136,26 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
 
             <div className="grid lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-8">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>All Fixtures</CardTitle>
-                                <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
-                                    <span className="flex items-center gap-1.5"><CalendarIcon className="h-4 w-4"/> {filteredMatches.length} fixtures</span>
-                                    <span className="flex items-center gap-1.5"><Trophy className="h-4 w-4"/> {competitionsWithFixtures.length} competitions</span>
-                                </div>
-                            </div>
-                            {view === 'list' && (
-                                <div className="w-48">
-                                    <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as 'asc' | 'desc')}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="asc">Sort by Date (Earliest First)</SelectItem>
-                                            <SelectItem value="desc">Sort by Date (Latest First)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        </CardHeader>
-                        <CardContent>
-                            {view === 'calendar' && (
-                                <Calendar
-                                    mode="single"
-                                    selected={selectedDate}
-                                    onSelect={setSelectedDate}
-                                    modifiers={{ hasMatch: matchDays }}
-                                    modifiersClassNames={{ hasMatch: 'bg-primary/20 rounded-md text-primary-foreground' }}
-                                    className="w-full flex justify-center"
-                                />
-                            )}
-                            {view === 'list' && (
-                                <div className="space-y-4">
-                                {filteredMatches.length > 0 ? filteredMatches.map(match => <MatchListItem key={match.matchId} match={match} />) : <p className="text-center text-muted-foreground py-10">No fixtures match your filters.</p>}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                     <StrategicCalendarView 
+                        matches={filteredMatches} 
+                        selectedDate={selectedDate} 
+                        onDateSelect={setSelectedDate} 
+                        displayMonth={displayMonth}
+                        onMonthChange={setDisplayMonth}
+                    />
                 </div>
                 <div className="lg:col-span-4 space-y-8">
                      <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <CardTitle>Match Details</CardTitle>
-                                {selectedDate && <Button variant="link" size="sm" onClick={() => setSelectedDate(undefined)}>Select a date</Button>}
+                                {selectedDate && <Button variant="link" size="sm" onClick={() => setSelectedDate(undefined)}>Clear selection</Button>}
                             </div>
                             <CardDescription>{selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}</CardDescription>
                         </CardHeader>
                         <CardContent className="min-h-[200px]">
                             {selectedDate && matchesOnSelectedDate.length > 0 ? (
-                                <ScrollArea className="h-64">
+                                <ScrollArea className="h-64 pr-3">
                                     <div className="space-y-4">
                                         {matchesOnSelectedDate.map(match => <MatchListItem key={match.matchId} match={match} />)}
                                     </div>
@@ -219,7 +175,7 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                             {Object.entries(competitionTypeMap).map(([type, name]) => (
                                 <div key={type} className="flex items-center gap-2 text-sm">
                                     <div className={cn("w-3 h-3 rounded-full", competitionTypeColors[type] || 'bg-gray-400')}></div>
-                                    <span>{name}</span>
+                                    <span className="text-muted-foreground">{name}</span>
                                 </div>
                             ))}
                         </CardContent>
