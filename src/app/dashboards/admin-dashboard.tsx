@@ -37,6 +37,29 @@ const PersonDialog = dynamic(() => import('@/app/people/person-dialog').then(mod
   ssr: false,
 });
 
+const GradientBase = ({ children }: { children: React.ReactNode }) => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#icon-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+        <defs>
+            <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{stopColor: '#21c45e'}} />
+                <stop offset="100%" style={{stopColor: '#94dca4'}} />
+            </linearGradient>
+        </defs>
+        {children}
+    </svg>
+);
+
+const GradientUserIcon = () => ( <GradientBase><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></GradientBase> );
+const GradientUserCogIcon = () => ( <GradientBase><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><circle cx="19" cy="11" r="2" /><path d="M19 8v1" /><path d="M19 13v1" /><path d="m21.6 9.5-.87.5" /><path d="m17.27 12-.87.5" /><path d="m21.6 12.5-.87-.5" /><path d="m17.27 10-.87-.5" /></GradientBase> );
+const GradientUsersIcon = () => ( <GradientBase><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></GradientBase> );
+const GradientTrophy = () => ( <GradientBase><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.87 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.13 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></GradientBase> );
+const GradientClipboardList = () => ( <GradientBase><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></GradientBase> );
+const GradientBuilding = () => ( <GradientBase><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></GradientBase> );
+const GradientMapPin = () => ( <GradientBase><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></GradientBase> );
+const GradientBus = () => ( <GradientBase><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H6c-1.1 0-2.1.8-2.3 1.9l-1.4 5c-.1.4-.2.8-.2-1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8H6"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></GradientBase> );
+const GradientBanknote = () => ( <GradientBase><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></GradientBase> );
+const GradientHandshake = () => ( <GradientBase><path d="M11 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v2.5a2.5 2.5 0 0 1-2.5 2.5z"/><path d="M12.5 16.5a2.5 2.5 0 0 0 2.5 2.5h1a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-1a2 2 0 0 0-2 2"/><path d="m3 16 3-3"/><path d="m21 8-3 3"/></GradientBase> );
+const GradientDatabase = () => ( <GradientBase><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></GradientBase> );
 
 interface AdminDashboardData {
     kpis: {
@@ -67,54 +90,6 @@ interface DialogData {
     allPeople: Person[];
 }
 
-const GradientUserIcon = () => (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-        <defs>
-            <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style={{stopColor: '#21c45e'}} />
-                <stop offset="100%" style={{stopColor: '#94dca4'}} />
-            </linearGradient>
-        </defs>
-        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" stroke="url(#icon-grad)" />
-        <circle cx="12" cy="7" r="4" stroke="url(#icon-grad)" />
-    </svg>
-);
-
-const GradientUserCogIcon = () => (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-         <defs>
-            <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style={{stopColor: '#21c45e'}} />
-                <stop offset="100%" style={{stopColor: '#94dca4'}} />
-            </linearGradient>
-        </defs>
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="url(#icon-grad)" />
-        <circle cx="9" cy="7" r="4" stroke="url(#icon-grad)" />
-        <circle cx="19" cy="11" r="2" stroke="url(#icon-grad)" />
-        <path d="M19 8v1" stroke="url(#icon-grad)" />
-        <path d="M19 13v1" stroke="url(#icon-grad)" />
-        <path d="m21.6 9.5-.87.5" stroke="url(#icon-grad)" />
-        <path d="m17.27 12-.87.5" stroke="url(#icon-grad)" />
-        <path d="m21.6 12.5-.87-.5" stroke="url(#icon-grad)" />
-        <path d="m17.27 10-.87-.5" stroke="url(#icon-grad)" />
-    </svg>
-);
-
-const GradientUsersIcon = () => (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-         <defs>
-            <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style={{stopColor: '#21c45e'}} />
-                <stop offset="100%" style={{stopColor: '#94dca4'}} />
-            </linearGradient>
-        </defs>
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="url(#icon-grad)" />
-        <circle cx="9" cy="7" r="4" stroke="url(#icon-grad)" />
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="url(#icon-grad)" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="url(#icon-grad)" />
-    </svg>
-);
-
 function StatCard({ title, value, icon: Icon, description, href }: { title: string; value: string | number; icon: React.ElementType; description?: string, href: string }) {
     return (
         <Link href={href} className="block group">
@@ -132,10 +107,9 @@ function StatCard({ title, value, icon: Icon, description, href }: { title: stri
     );
 }
 
-function ManagementLink({ href, title, description, icon: Icon, onAddClick, variant = 'default' }: { href: string; title:string; description: string; icon: React.ElementType; onAddClick?: () => void; variant?: 'default' | 'themed' }) {
-    const isThemed = variant === 'themed';
+function ManagementLink({ href, title, description, icon: Icon, onAddClick }: { href: string; title:string; description: string; icon: React.ElementType; onAddClick?: () => void; }) {
     return (
-        <div className={cn("p-4 transition-colors border rounded-lg flex items-center gap-4", isThemed ? "hover:bg-[#94dca4]/20" : "hover:bg-muted/50")}>
+        <div className="p-4 transition-colors border rounded-lg flex items-center gap-4 hover:bg-[#94dca4]/20 dark:hover:bg-[#94dca4]/10">
             <Icon />
             <Link href={href} className="flex-1 group">
                 <h3 className="font-semibold group-hover:underline">{title}</h3>
@@ -143,7 +117,7 @@ function ManagementLink({ href, title, description, icon: Icon, onAddClick, vari
             </Link>
             <div className="flex items-center shrink-0">
                 {onAddClick ? (
-                    <Button onClick={onAddClick} size="icon" className={cn("h-9 w-9", isThemed ? "bg-[#26a66c] text-white hover:bg-[#8bcaac]" : "")} variant={isThemed ? undefined : "outline"}>
+                    <Button onClick={onAddClick} size="icon" className="h-9 w-9 bg-[#26a66c] text-white hover:bg-[#8bcaac]">
                         <PlusCircle className="h-4 w-4" />
                         <span className="sr-only">Add new for {title}</span>
                     </Button>
@@ -232,19 +206,19 @@ export default function AdminDashboard() {
   const { kpis, pendingRequests } = data;
 
   const managementLinks = [
-    { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: GradientUserIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })), variant: 'themed' },
-    { href: "/people", title: "Staff Management", description: "Manage coaches, medical staff, and grounds-keepers.", icon: GradientUserCogIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })), variant: 'themed' },
-    { href: "/people", title: "Official Management", description: "Manage umpires, scorers, and other match officials.", icon: GradientUsersIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })), variant: 'themed' },
-    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: () => <Users className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, team: true})) },
-    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: () => <Trophy className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
-    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: () => <ClipboardList className="w-8 h-8 text-muted-foreground shrink-0" /> },
-    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: () => <Building className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, school: true})) },
-    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: () => <MapPin className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, field: true})) },
-    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: () => <Bus className="w-8 h-8 text-muted-foreground shrink-0" /> },
-    { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: () => <Banknote className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
-    { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: () => <Handshake className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
-    { href: "/user-management", title: "User Management", description: "Invite new users or manage existing user roles.", icon: () => <UserCog className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({ ...s, userRole: true })) },
-    { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: () => <Database className="w-8 h-8 text-muted-foreground shrink-0" /> },
+    { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: GradientUserIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
+    { href: "/people", title: "Staff Management", description: "Manage coaches, medical staff, and grounds-keepers.", icon: GradientUserCogIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
+    { href: "/people", title: "Official Management", description: "Manage umpires, scorers, and other match officials.", icon: GradientUsersIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
+    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: GradientUsersIcon, onAddClick: () => setDialogState(s => ({...s, team: true})) },
+    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: GradientTrophy, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
+    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: GradientClipboardList },
+    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: GradientBuilding, onAddClick: () => setDialogState(s => ({...s, school: true})) },
+    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: GradientMapPin, onAddClick: () => setDialogState(s => ({...s, field: true})) },
+    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: GradientBus },
+    { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: GradientBanknote, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
+    { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: GradientHandshake, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
+    { href: "/user-management", title: "User Management", description: "Invite new users or manage existing user roles.", icon: GradientUserCogIcon, onAddClick: () => setDialogState(s => ({ ...s, userRole: true })) },
+    { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: GradientDatabase },
   ];
 
   return (
