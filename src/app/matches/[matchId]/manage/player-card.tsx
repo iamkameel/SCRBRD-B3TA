@@ -11,23 +11,37 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { StatItem } from '@/components/stat-item';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+
+export const getPrimaryRole = (player: RosterMemberWithStats) => {
+    const { stats, roles } = player;
+    const playerRoles = new Set(roles);
+
+    // Wicket-Keeper is a specialized role, so check for it first.
+    if (playerRoles.has('Wicket-Keeper')) {
+        return { label: 'Wicket-Keeper', icon: ShieldHalf, key: 'WK' };
+    }
+
+    const battingScore = (stats.battingAverage > 20 ? 1 : 0) + (stats.totalRuns > 300 ? 1 : 0) + (stats.fifties > 1 ? 1 : 0);
+    const bowlingScore = (stats.wicketsTaken > 10 ? 1 : 0) + (stats.economyRate > 0 && stats.economyRate < 8.5 ? 1 : 0);
+
+    if (battingScore >= 2 && bowlingScore >= 2) return { label: 'All-Rounder', icon: Swords, key: 'AR' };
+    if (battingScore >= 2) return { label: 'Batsman', icon: User, key: 'BAT' };
+    if (bowlingScore >= 2) return { label: 'Bowler', icon: ShieldHalf, key: 'BOWL' };
+    
+    return { label: 'Player', icon: User, key: 'BAT' };
+};
+
 
 interface PlayerCardProps {
     player: RosterMemberWithStats;
     index?: number;
     isDragging?: boolean;
     availability?: { status: AvailabilityStatus; note?: string };
+    onAction?: () => void;
+    actionIcon?: React.ElementType;
+    dragHandleProps?: any;
 }
-
-const getPrimaryRole = (stats: PlayerStats) => {
-    const battingScore = (stats.battingAverage > 20 ? 1 : 0) + (stats.strikeRate > 120 ? 1 : 0) + (stats.fifties > 2 ? 1 : 0);
-    const bowlingScore = (stats.wicketsTaken > 10 ? 1 : 0) + (stats.economyRate > 0 && stats.economyRate < 8 ? 1 : 0);
-
-    if (battingScore > 1 && bowlingScore > 1) return { label: 'All-rounder', icon: Swords };
-    if (battingScore > 1) return { label: 'Batsman', icon: Swords };
-    if (bowlingScore > 1) return { label: 'Bowler', icon: ShieldHalf };
-    return { label: 'Player', icon: User };
-};
 
 const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note?: string }) => {
     const statusConfig = {
@@ -53,13 +67,16 @@ const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note
 };
 
 export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
-    ({ player, index, isDragging, availability }, ref) => {
-    const { label: roleLabel, icon: RoleIcon } = getPrimaryRole(player.stats);
+    ({ player, index, isDragging, availability, onAction, actionIcon: ActionIcon, dragHandleProps }, ref) => {
+    const { label: roleLabel, icon: RoleIcon } = getPrimaryRole(player);
     
     return (
         <div ref={ref} className={cn("flex items-center bg-card p-2 border rounded-lg shadow-sm w-full", isDragging && "opacity-50 shadow-2xl")}>
-            <div className="flex items-center gap-3 flex-1">
-                {index && <span className="font-bold text-lg w-5 text-center text-muted-foreground">{index}</span>}
+             <div {...dragHandleProps} className="cursor-grab p-1 active:cursor-grabbing touch-none">
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+            </div>
+            {index && <span className="font-bold text-lg w-5 text-center text-muted-foreground">{index}</span>}
+             <div className="flex items-center gap-3 flex-1 ml-2">
                 <Avatar className="h-10 w-10">
                     <AvatarImage src={player.profileImageUrl} />
                     <AvatarFallback>{player.personName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
@@ -81,14 +98,18 @@ export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
             </div>
             <AvailabilityBadge status={availability?.status} note={availability?.note} />
             <div className="pl-2">
-                <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing touch-none" />
+               {ActionIcon && onAction && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onAction(); }}>
+                        <ActionIcon className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
         </div>
     );
 });
 PlayerCard.displayName = "PlayerCard";
 
-export const SortablePlayerCard = ({ player, index, availability }: { player: RosterMemberWithStats; index?: number; availability?: { status: AvailabilityStatus; note?: string }; }) => {
+export const SortablePlayerCard = ({ player, index, availability, onAction, actionIcon }: { player: RosterMemberWithStats; index?: number; availability?: { status: AvailabilityStatus; note?: string }; onAction: () => void; actionIcon: React.ElementType; }) => {
     const {
         attributes,
         listeners,
@@ -103,8 +124,15 @@ export const SortablePlayerCard = ({ player, index, availability }: { player: Ro
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <PlayerCard player={player} index={index} availability={availability} />
-        </div>
+        <PlayerCard 
+            ref={setNodeRef}
+            style={style}
+            player={player} 
+            index={index} 
+            availability={availability} 
+            onAction={onAction}
+            actionIcon={actionIcon}
+            dragHandleProps={{...attributes, ...listeners}}
+        />
     );
 };

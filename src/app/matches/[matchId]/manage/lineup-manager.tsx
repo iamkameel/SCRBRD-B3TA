@@ -17,20 +17,19 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { GripVertical, Save, Wand2, Loader2, User, Swords, ShieldHalf, UserCheck, Users, ShieldCheck } from 'lucide-react';
+import { GripVertical, Save, Wand2, Loader2, User, Swords, ShieldHalf, ShieldCheck, UserCheck, Search, Plus, X } from 'lucide-react';
 
-import type { Match, RosterMemberWithStats, AvailabilityStatus } from '@/lib/data';
+import type { Match, RosterMemberWithStats, PlayerStats } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { saveMatchLineupAction, confirmLineupAction } from '@/lib/actions/matches';
 import { autoSelectLineupAction } from '@/lib/actions/analysis';
 import { useAuth } from '@/lib/auth-context';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { PlayerCard, SortablePlayerCard } from './player-card';
+import { SortablePlayerCard, getPrimaryRole } from './player-card';
 
 interface LineupManagerProps {
   teamId: string;
@@ -39,6 +38,8 @@ interface LineupManagerProps {
   rosterWithStats: RosterMemberWithStats[];
   initialLineupIds: string[];
 }
+
+const ROLE_FILTERS = ['All', 'BAT', 'BOWL', 'AR', 'WK'];
 
 export function LineupManager({
   teamId,
@@ -58,6 +59,9 @@ export function LineupManager({
 
   const [squadPlayers, setSquadPlayers] = React.useState<RosterMemberWithStats[]>([]);
   const [lineupPlayers, setLineupPlayers] = React.useState<RosterMemberWithStats[]>([]);
+
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [roleFilter, setRoleFilter] = React.useState('All');
   
   React.useEffect(() => {
     const lineupSet = new Set(initialLineupIds);
@@ -66,6 +70,26 @@ export function LineupManager({
     setLineupPlayers(initialLineup);
     setSquadPlayers(initialSquad);
   }, [initialLineupIds, rosterWithStats]);
+
+  const addPlayerToLineup = (playerId: string) => {
+    if (lineupPlayers.length >= 11) {
+        toast({ title: 'Lineup Full', description: 'You can only select 11 players.', variant: 'destructive' });
+        return;
+    }
+    const playerToAdd = squadPlayers.find(p => p.personId === playerId);
+    if (playerToAdd) {
+        setSquadPlayers(squad => squad.filter(p => p.personId !== playerId));
+        setLineupPlayers(lineup => [...lineup, playerToAdd]);
+    }
+  };
+
+  const removePlayerFromLineup = (playerId: string) => {
+      const playerToRemove = lineupPlayers.find(p => p.personId === playerId);
+      if (playerToRemove) {
+          setLineupPlayers(lineup => lineup.filter(p => p.personId !== playerId));
+          setSquadPlayers(squad => [...squad, playerToRemove].sort((a,b) => a.personName.localeCompare(b.personName)));
+      }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -89,7 +113,6 @@ export function LineupManager({
     const overContainer = over.data.current?.sortable.containerId;
 
     if (activeContainer === overContainer) {
-      // Reordering within the same list
       if (overContainer === 'lineup') {
         setLineupPlayers((players) => {
           const oldIndex = players.findIndex((p) => p.personId === active.id);
@@ -98,18 +121,14 @@ export function LineupManager({
         });
       }
     } else {
-      // Moving between lists
-      if (activeContainer === 'squad' && overContainer === 'lineup') {
-        if (lineupPlayers.length >= 11) {
-            toast({ title: 'Lineup Full', description: 'You can only select 11 players.', variant: 'destructive' });
-            return;
+        const playerToMove = rosterWithStats.find(p => p.personId === active.id);
+        if (!playerToMove) return;
+
+        if (activeContainer === 'squad' && overContainer === 'lineup') {
+            addPlayerToLineup(active.id as string);
+        } else if (activeContainer === 'lineup' && overContainer === 'squad') {
+            removePlayerFromLineup(active.id as string);
         }
-        setSquadPlayers(squad => squad.filter(p => p.personId !== active.id));
-        setLineupPlayers(lineup => [...lineup, squadPlayers.find(p => p.personId === active.id)!]);
-      } else if (activeContainer === 'lineup' && overContainer === 'squad') {
-        setLineupPlayers(lineup => lineup.filter(p => p.personId !== active.id));
-        setSquadPlayers(squad => [...squad, lineupPlayers.find(p => p.personId === active.id)!]);
-      }
     }
   };
 
@@ -153,6 +172,20 @@ export function LineupManager({
   };
 
   const activePlayer = rosterWithStats.find(p => p.personId === activeId);
+  
+  const filteredSquadPlayers = squadPlayers.filter(player => {
+    const searchMatch = `${player.personName}`.toLowerCase().includes(searchQuery.toLowerCase());
+    const role = getPrimaryRole(player);
+    const roleMatch = roleFilter === 'All' || role.key === roleFilter;
+    return searchMatch && roleMatch;
+  });
+
+  const lineupComposition = lineupPlayers.reduce((acc, player) => {
+      const role = getPrimaryRole(player).key;
+      acc[role] = (acc[role] || 0) + 1;
+      return acc;
+  }, {} as Record<string, number>);
+
 
   if (lineupConfirmed) {
       return (
@@ -169,17 +202,34 @@ export function LineupManager({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Users /> Squad ({squadPlayers.length})</CardTitle>
-                    <CardDescription>Drag players from here to the lineup.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Users /> Squad ({filteredSquadPlayers.length})</CardTitle>
+                    <CardDescription>Add players from the squad to your starting XI.</CardDescription>
+                    <div className="flex gap-2 pt-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Search squad..." className="pl-8" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                        </div>
+                        <div className="flex items-center p-1 rounded-md bg-muted">
+                            {ROLE_FILTERS.map(role => (
+                                <Button key={role} variant={roleFilter === role ? 'secondary' : 'ghost'} size="sm" onClick={() => setRoleFilter(role)}>{role}</Button>
+                            ))}
+                        </div>
+                    </div>
                 </CardHeader>
-                <SortableContext items={squadPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={filteredSquadPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
                     <CardContent id="squad" className="min-h-[300px]">
                         <ScrollArea className="h-[600px] pr-4">
                             <div className="space-y-2">
-                                {squadPlayers.map(player => (
-                                    <SortablePlayerCard key={player.personId} player={player} availability={match.availability?.[player.personId]} />
+                                {filteredSquadPlayers.map(player => (
+                                    <SortablePlayerCard 
+                                      key={player.personId} 
+                                      player={player} 
+                                      availability={match.availability?.[player.personId]}
+                                      onAction={() => addPlayerToLineup(player.personId)}
+                                      actionIcon={Plus}
+                                    />
                                 ))}
-                                {squadPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">No players left in squad.</p>}
+                                {filteredSquadPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">No players found matching filters.</p>}
                             </div>
                         </ScrollArea>
                     </CardContent>
@@ -188,7 +238,15 @@ export function LineupManager({
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ShieldHalf /> Selected XI ({lineupPlayers.length}/11)</CardTitle>
+                     <div className="flex justify-between items-center">
+                        <CardTitle className="flex items-center gap-2"><ShieldHalf /> Selected XI ({lineupPlayers.length}/11)</CardTitle>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {lineupComposition.BAT && <span>{lineupComposition.BAT} BAT</span>}
+                            {lineupComposition.BOWL && <span>{lineupComposition.BOWL} BOWL</span>}
+                            {lineupComposition.AR && <span>{lineupComposition.AR} AR</span>}
+                            {lineupComposition.WK && <span>{lineupComposition.WK} WK</span>}
+                        </div>
+                    </div>
                     <CardDescription>Drag to reorder the batting lineup.</CardDescription>
                 </CardHeader>
                 <SortableContext items={lineupPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
@@ -196,11 +254,18 @@ export function LineupManager({
                         <ScrollArea className="h-[600px] pr-4">
                              <div className="space-y-2">
                                 {lineupPlayers.map((player, index) => (
-                                    <SortablePlayerCard key={player.personId} player={player} index={index + 1} availability={match.availability?.[player.personId]} />
+                                    <SortablePlayerCard 
+                                      key={player.personId} 
+                                      player={player} 
+                                      index={index + 1} 
+                                      availability={match.availability?.[player.personId]}
+                                      onAction={() => removePlayerFromLineup(player.personId)}
+                                      actionIcon={X}
+                                    />
                                 ))}
                                 {lineupPlayers.length < 11 && (
                                     <div className="h-24 border-2 border-dashed rounded-md flex items-center justify-center text-muted-foreground">
-                                        <p>Drag players here</p>
+                                        <p>Drag or add players here</p>
                                     </div>
                                 )}
                              </div>
