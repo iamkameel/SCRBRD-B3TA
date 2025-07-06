@@ -27,8 +27,9 @@ import { getDivisions } from '@/lib/actions/divisions';
 import { getSeasons } from '@/lib/actions/seasons';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { getFields } from '@/lib/actions/fields';
-import { getPeopleByRole } from '@/lib/actions/players';
+import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
 import type { Team, School, Division, Season, Person, Field, Competition } from '@/lib/data';
+import { UserRoleDialog } from '@/app/user-management/user-role-dialog';
 
 const PersonDialog = dynamic(() => import('@/app/people/person-dialog').then(mod => mod.PersonDialog), {
   ssr: false,
@@ -61,6 +62,7 @@ interface DialogData {
     competitions: Competition[];
     fields: Field[];
     groundskeeper: Person[];
+    allPeople: Person[];
 }
 
 function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
@@ -120,6 +122,7 @@ export default function AdminDashboard() {
       financial: false,
       sponsor: false,
       person: false,
+      userRole: false,
   });
 
   const handleReview = (requestId: string, decision: 'approve' | 'deny') => {
@@ -150,13 +153,14 @@ export default function AdminDashboard() {
             const competitionsPromise = getCompetitions();
             const fieldsPromise = getFields();
             const groundskeeperPromise = getPeopleByRole('Grounds-Keeper');
+            const allPeoplePromise = getPlayers();
 
-            const [dashboard, teams, schools, divisions, seasons, competitions, fields, groundskeeper] = await Promise.all([
-                dashboardDataPromise, teamsPromise, schoolsPromise, divisionsPromise, seasonsPromise, competitionsPromise, fieldsPromise, groundskeeperPromise
+            const [dashboard, teams, schools, divisions, seasons, competitions, fields, groundskeeper, allPeople] = await Promise.all([
+                dashboardDataPromise, teamsPromise, schoolsPromise, divisionsPromise, seasonsPromise, competitionsPromise, fieldsPromise, groundskeeperPromise, allPeoplePromise
             ]);
 
             setData(dashboard as AdminDashboardData);
-            setDialogData({ teams, schools, divisions, seasons, competitions, fields, groundskeeper });
+            setDialogData({ teams, schools, divisions, seasons, competitions, fields, groundskeeper, allPeople });
 
         } catch (error) {
             console.error("Failed to load admin dashboard data:", error);
@@ -185,7 +189,7 @@ export default function AdminDashboard() {
     { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus },
     { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: Banknote, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
     { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: Handshake, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
-    { href: "/user-management", title: "User Management", description: "Invite and manage system users.", icon: UserCog, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
+    { href: "/user-management", title: "User Management", description: "Invite new users or manage existing user roles.", icon: UserCog, onAddClick: () => setDialogState(s => ({ ...s, userRole: true })) },
     { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
   ];
 
@@ -290,6 +294,14 @@ export default function AdminDashboard() {
                     open={dialogState.person}
                     onOpenChange={(open) => setDialogState(s => ({ ...s, person: open }))}
                     schools={dialogData.schools}
+                />
+            )}
+            {dialogState.userRole && (
+                <UserRoleDialog
+                    users={dialogData.allPeople}
+                    currentUser={person}
+                    open={dialogState.userRole}
+                    onOpenChange={(open) => setDialogState(s => ({ ...s, userRole: open }))}
                 />
             )}
         </>
