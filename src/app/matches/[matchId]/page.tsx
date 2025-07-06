@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import MatchDetailsClient from './client';
 import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
-import { getPlayers, getPerson } from '@/lib/actions/players';
+import { getPlayers, getPerson, getPeopleByRole } from '@/lib/actions/players';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import { Button } from '@/components/ui/button';
@@ -63,7 +63,7 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getVehicles(),
     getPeopleByRole('Driver'),
     isTeamManagerOrAdmin(match.teamAId, userId),
-    match.teamBId ? isTeamManagerOrAdmin(match.teamBId, userId) : Promise.resolve(false),
+    match.teamBId ? isTeamManagerOrAdmin(match.teamBId, userId) : Promise.resolve(false)
   ]);
   
   const [teamARosterWithStats, teamBRosterWithStats] = await Promise.all([
