@@ -229,8 +229,8 @@ export interface Match {
   previousLiveScore?: LiveScore;
   userId?: string;
   availability?: { [personId: string]: { status: AvailabilityStatus; note?: string; } };
-  lineupConfirmedByCaptainA?: boolean;
-  lineupConfirmedByCaptainB?: boolean;
+  lineupConfirmedByCaptainA: boolean;
+  lineupConfirmedByCaptainB: boolean;
 }
 
 export interface Official {

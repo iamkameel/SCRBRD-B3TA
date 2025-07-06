@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -46,7 +46,6 @@ import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
 import { useAuth } from "@/lib/auth-context";
-import { LineupManager } from "./lineup-manager";
 import { ManhattanChart, WormChart, WagonWheelSummary } from "./match-charts";
 
 const officialAssignmentSchema = z.object({
@@ -234,13 +233,15 @@ interface MatchDetailsClientProps {
   transportAssignments: TransportAssignment[];
   vehicles: Vehicle[];
   drivers: Person[];
+  canManage: boolean;
 }
 
 export default function MatchDetailsClient({ 
     match, initialOfficials, people, 
     teamARosterWithStats, teamBRosterWithStats, 
     teamALineup, teamBLineup, scorecard, 
-    transportAssignments, vehicles, drivers 
+    transportAssignments, vehicles, drivers,
+    canManage
 }: MatchDetailsClientProps) {
   const { toast } = useToast();
   const { person } = useAuth();
@@ -480,7 +481,7 @@ export default function MatchDetailsClient({
             <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
                 <TabsTrigger value="visuals" disabled={match.status !== 'completed'}><BarChartHorizontal className="mr-2 h-4 w-4"/>Visuals</TabsTrigger>
-                <TabsTrigger value="lineups" disabled={match.status === 'completed'}><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
+                <TabsTrigger value="lineups"><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
                 <TabsTrigger value="highlights"><Film className="mr-2 h-4 w-4"/>Highlights</TabsTrigger>
                 <TabsTrigger value="logistics"><Bus className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
@@ -583,36 +584,66 @@ export default function MatchDetailsClient({
             </TabsContent>
 
             <TabsContent value="lineups" className="mt-4">
-                 <Tabs defaultValue="team-a-lineup" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="team-a-lineup">{match.teamAName}</TabsTrigger>
-                        <TabsTrigger value="team-b-lineup" disabled={!match.teamBId}>{match.teamBName || 'TBD'}</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="team-a-lineup" className="mt-4">
-                        <LineupManager 
-                            key={`team-a-${match.matchId}`}
-                            teamId={match.teamAId}
-                            teamName={match.teamAName}
-                            match={match}
-                            rosterWithStats={teamARosterWithStats}
-                            initialLineupIds={teamALineup}
-                        />
-                    </TabsContent>
-                     <TabsContent value="team-b-lineup" className="mt-4">
-                        {match.teamBId ? (
-                            <LineupManager 
-                                key={`team-b-${match.matchId}`}
-                                teamId={match.teamBId}
-                                teamName={match.teamBName}
-                                match={match}
-                                rosterWithStats={teamBRosterWithStats}
-                                initialLineupIds={teamBLineup}
-                            />
-                        ) : (
-                            <Card><CardHeader><CardTitle>{match.teamBName || 'TBD'}</CardTitle></CardHeader><CardContent><p className="text-muted-foreground text-center">The opposing team will be determined later.</p></CardContent></Card>
-                        )}
-                    </TabsContent>
-                 </Tabs>
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Playing XI</CardTitle>
+                                <CardDescription>The final playing XI for each team.</CardDescription>
+                            </div>
+                            {canManage && match.status === 'scheduled' && (
+                                <Button asChild>
+                                    <Link href={`/matches/${match.matchId}/manage`}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Manage Lineups
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-semibold">{match.teamAName}</h3>
+                                {match.lineupConfirmedByCaptainA ? (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800">Confirmed</Badge>
+                                ) : (
+                                    <Badge variant="outline">Pending</Badge>
+                                )}
+                            </div>
+                            {teamALineup.length > 0 ? (
+                                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                                    {teamALineup.map(playerId => {
+                                        const player = teamARosterWithStats.find(p => p.personId === playerId);
+                                        return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
+                                    })}
+                                </ol>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
+                            )}
+                        </div>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-semibold">{match.teamBName}</h3>
+                                {match.lineupConfirmedByCaptainB ? (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800">Confirmed</Badge>
+                                ) : (
+                                    <Badge variant="outline">Pending</Badge>
+                                )}
+                            </div>
+                             {teamBLineup.length > 0 ? (
+                                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                                    {teamBLineup.map(playerId => {
+                                        const player = teamBRosterWithStats.find(p => p.personId === playerId);
+                                        return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
+                                    })}
+                                </ol>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </TabsContent>
 
             <TabsContent value="analysis" className="mt-4">

@@ -58,7 +58,7 @@ export const getMatch = cache(async (matchId: string): Promise<Match | null> => 
     const matchDocRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchDocRef);
 
-    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+    if (!matchSnap.exists()) { // No need to check userId here, allow any authenticated user to view
       return null;
     }
 
@@ -305,8 +305,6 @@ export async function updateMatchAction(matchId: string, data: z.infer<typeof up
 
 
 export const getMatchOfficials = cache(async (matchId: string): Promise<Official[]> => {
-  const userId = await getUserId();
-  if (!userId) return [];
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -318,8 +316,6 @@ export const getMatchOfficials = cache(async (matchId: string): Promise<Official
       const officialData = officialDoc.data();
       const personSnap = await getDoc(doc(db, 'people', officialData.personId));
 
-      // Note: Officials might be from a different 'organization' or user group in a real app.
-      // Here, we assume they are part of the same user base.
       if (!personSnap.exists()) {
         return null;
       }
@@ -377,7 +373,7 @@ export async function assignOfficialToMatchAction(matchId: string, data: Assignm
     if (!existingAssignment.empty) {
       throw new Error("This person is already assigned to the match.");
     }
-    await addDoc(officialsCol, { personId, role, confirmed: false, userId });
+    await addDoc(officialsCol, { personId, role, confirmed: false, userId: match.userId });
   } catch (error) {
     console.error("Error assigning official to match: ", error);
     if (error instanceof Error) { throw error; }

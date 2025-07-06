@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import MatchDetailsClient from './client';
 import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
 import { getPlayers, getPerson, getPeopleByRole } from '@/lib/actions/players';
-import { getTeamRoster, getTeams } from '@/lib/actions/teams';
+import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import { Button } from '@/components/ui/button';
 import type { RosterMember, PlayerStats, RosterMemberWithStats } from '@/lib/data';
@@ -13,7 +13,11 @@ import { getPlayerStats } from '@/lib/actions/stats';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const { matchId } = params;
-  const match = await getMatch(matchId);
+  
+  const [match, userId] = await Promise.all([
+    getMatch(matchId),
+    getUserId(),
+  ]);
   
   if (!match) {
     notFound();
@@ -44,6 +48,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     transportAssignments,
     vehicles,
     drivers,
+    isManagerForA,
+    isManagerForB
   ] = await Promise.all([
     getMatchOfficials(matchId),
     getPlayers(),
@@ -55,12 +61,16 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getMatchTransportAssignments(matchId),
     getVehicles(),
     getPeopleByRole('Driver'),
+    isTeamManagerOrAdmin(match.teamAId, userId),
+    match.teamBId ? isTeamManagerOrAdmin(match.teamBId, userId) : Promise.resolve(false),
   ]);
   
   const [teamARosterWithStats, teamBRosterWithStats] = await Promise.all([
     getRosterWithStats(teamARoster),
     getRosterWithStats(teamBRoster)
   ]);
+  
+  const canManage = isManagerForA || isManagerForB;
 
   return <MatchDetailsClient 
     match={match} 
@@ -74,5 +84,6 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     transportAssignments={transportAssignments}
     vehicles={vehicles}
     drivers={drivers}
+    canManage={canManage}
   />;
 }
