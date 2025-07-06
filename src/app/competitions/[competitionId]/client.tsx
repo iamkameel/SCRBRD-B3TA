@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from 'next/link';
 import { format } from "date-fns";
-import { ArrowLeft, Users, ClipboardList, Trophy, GitMerge } from "lucide-react";
+import { ArrowLeft, Users, ClipboardList, Trophy, GitMerge, Wand2, Loader2 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,20 @@ import type { Competition, Match, StandingTeam, LeaderboardPlayer } from "@/lib/
 import { TopRunScorersChart, TopWicketTakersChart } from './competition-charts';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { autoScheduleFixturesAction } from "@/lib/actions/competitions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CompetitionDetailsClientProps {
     competition: Competition;
@@ -150,8 +164,10 @@ function TournamentBracket({ rounds }: { rounds: { round: number; matches: Match
 }
 
 export default function CompetitionDetailsClient({ competition, standings, matches, leaderboards }: CompetitionDetailsClientProps) {
+    const { toast } = useToast();
     const [isClient, setIsClient] = React.useState(false);
     React.useEffect(() => { setIsClient(true); }, []);
+    const [isScheduling, startSchedulingTransition] = React.useTransition();
     
     const { topRunScorers, topWicketTakers } = leaderboards;
     const isLeague = competition.type === 'League';
@@ -171,20 +187,57 @@ export default function CompetitionDetailsClient({ competition, standings, match
         })).sort((a, b) => a.round - b.round);
     }, [matches]);
 
+    const handleAutoSchedule = () => {
+        startSchedulingTransition(async () => {
+            try {
+                await autoScheduleFixturesAction(competition.competitionId);
+                toast({ title: "Fixtures Scheduled", description: "The match schedule has been generated and saved." });
+            } catch (error) {
+                toast({ title: "Error Scheduling", description: error instanceof Error ? error.message : "Could not schedule fixtures.", variant: "destructive" });
+            }
+        });
+    }
+
     return (
         <div className="flex flex-col gap-8">
             <header>
                 <Link href="/competitions" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />Back to Competitions
                 </Link>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">{competition.name}</h1>
                         <p className="text-muted-foreground mt-1">
                             {competition.divisionName} &bull; {competition.seasonName}
                         </p>
                     </div>
-                     <Badge variant={competition.status === 'Completed' ? 'secondary' : 'default'} className="capitalize h-fit">{competition.status}</Badge>
+                    <div className="flex flex-col items-start sm:items-end gap-2">
+                         <Badge variant={competition.status === 'Completed' ? 'secondary' : 'default'} className="capitalize h-fit">{competition.status}</Badge>
+                         {competition.type === 'League' && competition.status !== 'Completed' && matches.length === 0 && (
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button disabled={isScheduling}>
+                                        {isScheduling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                        Auto-Schedule Fixtures
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm Auto-Scheduling</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will generate a full round-robin schedule for all teams in this league. This action cannot be undone. Are you sure you want to proceed?
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleAutoSchedule} disabled={isScheduling}>
+                                            {isScheduling ? "Scheduling..." : "Proceed"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                         )}
+                    </div>
                 </div>
                 {competition.winnerTeamName && (
                     <div className="flex items-center gap-2 mt-2 text-accent">

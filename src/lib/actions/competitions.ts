@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp, writeBatch } from 'firebase/firestore';
 import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person, Match } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
@@ -13,6 +13,7 @@ import { getPlayerStats } from './stats';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { getPerson } from './players';
+import { getFields } from './fields';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);
@@ -349,4 +350,108 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
     console.error(`Error fetching matches for competition ${competitionId}:`, error);
     return [];
   }
+}
+
+export async function autoScheduleFixturesAction(competitionId: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+    await checkManagementPermission(userId);
+
+    const competition = await getCompetition(competitionId);
+    if (!competition) throw new Error("Competition not found.");
+    if (competition.type !== 'League') throw new Error("Auto-scheduling is currently only supported for 'League' competitions.");
+
+    const existingMatches = await getMatchesByCompetition(competitionId);
+    if (existingMatches.length > 0) {
+        throw new Error("This competition already has scheduled matches. Please delete them before auto-scheduling.");
+    }
+
+    const teamIds = competition.teamIds;
+    if (!teamIds || teamIds.length < 2) {
+        throw new Error("Competition must have at least two teams assigned to schedule fixtures.");
+    }
+
+    const [season, fields, teams] = await Promise.all([
+        getSeason(competition.seasonId),
+        getFields(),
+        Promise.all(teamIds.map(id => getTeam(id)))
+    ]);
+
+    if (!season) throw new Error("Season not found for this competition.");
+    if (fields.length === 0) throw new Error("No available fields to schedule matches on.");
+    
+    const validTeams = teams.filter((t): t is Team => t !== null);
+    if (validTeams.length !== teamIds.length) {
+        throw new Error("One or more teams assigned to the competition could not be found.");
+    }
+    
+    let localTeams = [...validTeams];
+
+    if (localTeams.length % 2 !== 0) {
+        localTeams.push({ teamId: "BYE", name: "BYE" } as Team);
+    }
+    
+    const numTeams = localTeams.length;
+    const numRounds = numTeams - 1;
+    const matchesPerRound = numTeams / 2;
+    const fixturesToCreate = [];
+    
+    let matchDate = new Date(season.startDate);
+    while (matchDate.getDay() !== 6) { // Find the next Saturday
+        matchDate.setDate(matchDate.getDate() + 1);
+    }
+
+    for (let round = 0; round < numRounds; round++) {
+        for (let i = 0; i < matchesPerRound; i++) {
+            const teamA = localTeams[i];
+            const teamB = localTeams[numTeams - 1 - i];
+
+            if (teamA.teamId === "BYE" || teamB.teamId === "BYE") continue;
+
+            const field = fields[i % fields.length];
+            const fixtureDateTime = new Date(matchDate);
+            fixtureDateTime.setHours(10, 0, 0, 0);
+            
+            fixturesToCreate.push({
+                teamAId: teamA.teamId, teamAName: teamA.name,
+                teamBId: teamB.teamId, teamBName: teamB.name,
+                competitionId, competitionName: competition.name,
+                seasonId: competition.seasonId, seasonName: competition.seasonName,
+                divisionId: competition.divisionId, divisionName: competition.divisionName,
+                fieldId: field.fieldId, fieldName: field.name,
+                dateTime: Timestamp.fromDate(fixtureDateTime),
+                status: 'scheduled',
+                userId,
+                lineupConfirmedByCaptainA: false, lineupConfirmedByCaptainB: false,
+            });
+        }
+        
+        const lastTeam = localTeams.pop();
+        if(lastTeam) {
+            localTeams.splice(1, 0, lastTeam);
+        }
+        
+        matchDate.setDate(matchDate.getDate() + 7);
+        if (matchDate > season.endDate) {
+            throw new Error("Not enough time in the season to schedule all matches. Please extend the season end date.");
+        }
+    }
+
+    const batch = writeBatch(db);
+    const matchesCollection = collection(db, 'matches');
+    fixturesToCreate.forEach(fixture => {
+        const matchRef = doc(matchesCollection);
+        batch.set(matchRef, fixture);
+    });
+
+    try {
+        await batch.commit();
+    } catch (error) {
+        console.error("Error batch writing fixtures:", error);
+        throw new Error("Failed to save the generated fixtures.");
+    }
+    
+    revalidatePath(`/competitions/${competitionId}`);
+    revalidatePath('/matches');
+    revalidatePath('/strategic-calendar');
 }

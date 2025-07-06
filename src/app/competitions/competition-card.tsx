@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from 'next/link';
-import { MoreHorizontal, Trash2, Edit, Trophy } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Trophy, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import type { Competition } from "@/lib/data";
@@ -20,10 +21,11 @@ interface CompetitionCardProps {
     competition: Competition;
     onEdit: () => void;
     onDelete: () => void;
+    onAutoSchedule: () => void;
     isAdmin: boolean;
 }
 
-export function CompetitionCard({ competition, onEdit, onDelete, isAdmin }: CompetitionCardProps) {
+export function CompetitionCard({ competition, onEdit, onDelete, onAutoSchedule, isAdmin }: CompetitionCardProps) {
     return (
         <Card>
             <CardHeader>
@@ -41,6 +43,8 @@ export function CompetitionCard({ competition, onEdit, onDelete, isAdmin }: Comp
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 -mr-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                {competition.type === 'League' && <DropdownMenuItem onSelect={onAutoSchedule}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>}
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

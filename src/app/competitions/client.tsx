@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -6,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from 'next/link';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, SlidersHorizontal, Trophy } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, SlidersHorizontal, Trophy, Wand2, Loader2 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Competition, Season, Division, Team } from "@/lib/data";
-import { deleteCompetitionAction } from '@/lib/actions/competitions';
+import { deleteCompetitionAction, autoScheduleFixturesAction } from '@/lib/actions/competitions';
 import { CompetitionCard } from "./competition-card";
 import { CompetitionDialog } from './competition-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -52,6 +53,9 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isCompetitionDialogOpen, setIsCompetitionDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [schedulingId, setSchedulingId] = React.useState<string | null>(null);
+  const [competitionToSchedule, setCompetitionToSchedule] = React.useState<Competition | null>(null);
+
 
   // View and Pagination state
   const [view, setView] = React.useState<'list' | 'card'>('list');
@@ -121,6 +125,21 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
     if (sortConfig.key !== column) return null;
     if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
     return <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  const handleAutoSchedule = (competitionId: string) => {
+    startTransition(async () => {
+        setSchedulingId(competitionId);
+        try {
+            await autoScheduleFixturesAction(competitionId);
+            toast({ title: "Fixtures Scheduled", description: "The match schedule has been generated and saved." });
+        } catch (error) {
+            toast({ title: "Error Scheduling", description: error instanceof Error ? error.message : "Could not schedule fixtures.", variant: "destructive" });
+        } finally {
+            setSchedulingId(null);
+            setCompetitionToSchedule(null);
+        }
+    });
   };
 
   const handleDelete = () => {
@@ -301,6 +320,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                {comp.type === 'League' && <DropdownMenuItem onSelect={() => setCompetitionToSchedule(comp)} disabled={isPending}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>}
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -324,6 +344,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 competition={comp} 
                                 onEdit={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}
                                 onDelete={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }}
+                                onAutoSchedule={() => setCompetitionToSchedule(comp)}
                                 isAdmin={isAdmin}
                             />
                         ))
@@ -345,6 +366,18 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
       
       {isAdmin && <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />}
       
+      <AlertDialog open={!!competitionToSchedule} onOpenChange={() => setCompetitionToSchedule(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Confirm Auto-Scheduling</AlertDialogTitle><AlertDialogDescription>This will generate a full round-robin schedule for '{competitionToSchedule?.name}'. This action cannot be undone. Are you sure you want to proceed?</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending && schedulingId === competitionToSchedule?.competitionId}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleAutoSchedule(competitionToSchedule!.competitionId)} disabled={isPending && schedulingId === competitionToSchedule?.competitionId}>
+                {isPending && schedulingId === competitionToSchedule?.competitionId ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Scheduling...</> : "Proceed"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete <strong>{selectedCompetition?.name}</strong>. Any matches associated with this competition will need to be updated manually.</AlertDialogDescription></AlertDialogHeader>
