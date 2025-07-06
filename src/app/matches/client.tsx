@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format, isSameDay } from "date-fns";
-import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy, AlignLeft } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy, AlignLeft, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -88,7 +88,6 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   const [competitionFilter, setCompetitionFilter] = React.useState<string[]>([]);
   const [teamFilter, setTeamFilter] = React.useState<string[]>([]);
   
-  // State for calendar view
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
   const [displayMonth, setDisplayMonth] = React.useState<Date>(new Date());
 
@@ -118,6 +117,41 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
       }
     });
   };
+
+  const availableTeamsForFilter = React.useMemo(() => {
+    if (competitionFilter.length === 0) {
+        return teams;
+    }
+
+    const teamIdSet = new Set<string>();
+
+    competitionFilter.forEach(compId => {
+        if (compId === 'friendly') {
+            matches.forEach(match => {
+                if (!match.competitionId) { // This is a friendly
+                    teamIdSet.add(match.teamAId);
+                    if (match.teamBId) teamIdSet.add(match.teamBId);
+                }
+            });
+        } else {
+            const competition = competitions.find(c => c.competitionId === compId);
+            competition?.teamIds?.forEach(id => teamIdSet.add(id));
+        }
+    });
+
+    return teams.filter(team => teamIdSet.has(team.teamId));
+  }, [competitionFilter, competitions, teams, matches]);
+
+  React.useEffect(() => {
+    if (teamFilter.length > 0) {
+        const availableIds = new Set(availableTeamsForFilter.map(t => t.teamId));
+        const newTeamFilterState = teamFilter.filter(id => availableIds.has(id));
+        
+        if (newTeamFilterState.length !== teamFilter.length) {
+            setTeamFilter(newTeamFilterState);
+        }
+    }
+  }, [availableTeamsForFilter, teamFilter]);
   
   const filteredMatches = React.useMemo(() => {
     return matches.filter(match => {
@@ -229,7 +263,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                       </div>
                       <div className="grid gap-4">
                         <div className="grid grid-cols-3 items-center gap-4">
-                          <Label htmlFor="search-input">Team Name</Label>
+                          <Label htmlFor="search-input">Search by Name</Label>
                           <Input
                             id="search-input"
                             placeholder="Team name..."
@@ -240,7 +274,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                         </div>
                         
                         <div className="grid grid-cols-3 items-center gap-4">
-                            <Label>Competition</Label>
+                            <Label>Filter by Competition</Label>
                             <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{competitionFilter.length === 0 && "Select competitions..."}{competitionFilter.length === 1 && (competitions.find(c => c.competitionId === competitionFilter[0])?.name || "Friendly")}{competitionFilter.length > 1 && `${competitionFilter.length} comps selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Competition</DropdownMenuLabel><DropdownMenuSeparator />
                                     <DropdownMenuCheckboxItem checked={competitionFilter.includes("friendly")} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...competitionFilter, "friendly"] : competitionFilter.filter(id => id !== "friendly"); setCompetitionFilter(newFilters); }}>Friendly</DropdownMenuCheckboxItem><DropdownMenuSeparator />
@@ -251,10 +285,10 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                         </div>
 
                          <div className="grid grid-cols-3 items-center gap-4">
-                            <Label>Team</Label>
+                            <Label>Filter by Team(s)</Label>
                             <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{teamFilter.length === 0 && "Select teams..."}{teamFilter.length === 1 && teams.find(t => t.teamId === teamFilter[0])?.name}{teamFilter.length > 1 && `${teamFilter.length} teams selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Team</DropdownMenuLabel><DropdownMenuSeparator />
-                                    {teams.map(team => (<DropdownMenuCheckboxItem key={team.teamId} checked={teamFilter.includes(team.teamId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...teamFilter, team.teamId] : teamFilter.filter(id => id !== team.teamId); setTeamFilter(newFilters); }}>{team.name}</DropdownMenuCheckboxItem>))}
+                                    {availableTeamsForFilter.map(team => (<DropdownMenuCheckboxItem key={team.teamId} checked={teamFilter.includes(team.teamId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...teamFilter, team.teamId] : teamFilter.filter(id => id !== team.teamId); setTeamFilter(newFilters); }}>{team.name}</DropdownMenuCheckboxItem>))}
                                     {teamFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setTeamFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -266,21 +300,15 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                  <TooltipProvider>
                     <div className="flex items-center rounded-md bg-muted p-1">
                         <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('list')} className="h-8 w-8"><List /></Button>
-                            </TooltipTrigger>
+                            <TooltipTrigger asChild><Button variant={view === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('list')} className="h-8 w-8"><List /></Button></TooltipTrigger>
                             <TooltipContent><p>List View</p></TooltipContent>
                         </Tooltip>
                          <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('card')} className="h-8 w-8"><LayoutGrid /></Button>
-                            </TooltipTrigger>
+                            <TooltipTrigger asChild><Button variant={view === 'card' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('card')} className="h-8 w-8"><LayoutGrid /></Button></TooltipTrigger>
                             <TooltipContent><p>Card View</p></TooltipContent>
                         </Tooltip>
                          <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('calendar')} className="h-8 w-8"><CalendarDays /></Button>
-                            </TooltipTrigger>
+                            <TooltipTrigger asChild><Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="icon" onClick={() => setView('calendar')} className="h-8 w-8"><CalendarDays /></Button></TooltipTrigger>
                             <TooltipContent><p>Calendar View</p></TooltipContent>
                         </Tooltip>
                     </div>
