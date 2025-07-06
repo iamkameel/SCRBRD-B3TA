@@ -20,6 +20,8 @@ import { AgendaView } from './agenda-view';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface StrategicCalendarClientProps {
     matches: Match[];
@@ -63,6 +65,9 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
     
     const filtersApplied = competitionFilters.length > 0 || divisionFilters.length > 0 || venueFilters.length > 0;
 
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const ITEMS_PER_PAGE = 10;
+
     const filteredMatches = React.useMemo(() => {
         return matches
             .filter(match => {
@@ -78,7 +83,21 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
             });
     }, [matches, competitionFilters, divisionFilters, venueFilters, sortOrder]);
     
-    const competitionsWithFixtures = competitions.filter(c => filteredMatches.some(m => m.competitionId === c.competitionId));
+    const paginatedMatches = filteredMatches.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+    const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [competitionFilters, divisionFilters, venueFilters, sortOrder, view]);
 
     const matchesOnSelectedDate = React.useMemo(() => {
         if (!selectedDate) return [];
@@ -229,10 +248,76 @@ export default function StrategicCalendarClient({ matches, competitions, divisio
                     </div>
                 </div>
             )}
-             {view === 'agenda' && (
+            {view === 'agenda' && (
                 <AgendaView matches={agendaMatches} />
-             )}
-
+            )}
+            {view === 'list' && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Match List</CardTitle>
+                        <CardDescription>All fixtures matching your current filters, sorted chronologically.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead>Match</TableHead>
+                                <TableHead>Date & Time</TableHead>
+                                <TableHead>Competition</TableHead>
+                                <TableHead>Venue</TableHead>
+                                <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedMatches.length > 0 ? (
+                                paginatedMatches.map((match) => (
+                                    <TableRow key={match.matchId}>
+                                    <TableCell className="font-medium">
+                                        <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
+                                                <span>{match.teamAName}</span>
+                                            </div>
+                                            <span className="text-muted-foreground text-xs">vs</span>
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
+                                                <span>{match.teamBName}</span>
+                                            </div>
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
+                                    <TableCell>{match.competitionName || 'Friendly'}</TableCell>
+                                    <TableCell>{match.fieldName}</TableCell>
+                                    <TableCell>
+                                    <Badge
+                                        variant={
+                                        match.status === 'completed' ? 'secondary' :
+                                        match.status === 'live' ? 'destructive' :
+                                        ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
+                                        'default'
+                                        }
+                                        className="capitalize"
+                                    >
+                                        {match.status}
+                                    </Badge>
+                                    </TableCell>
+                                    </TableRow>
+                                ))
+                                ) : (
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center">No matches found matching your filters.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                         {totalPages > 1 && (
+                            <div className="flex items-center justify-center pt-8">
+                                <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>Previous</Button>
+                                <span className="mx-4 text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                                <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>Next</Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
         </div>
     )
 }
