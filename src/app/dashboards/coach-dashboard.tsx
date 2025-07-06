@@ -2,9 +2,9 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from '@/hooks/use-toast';
 import { StatItem } from '@/components/stat-item';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 
 const requestSchema = z.object({
@@ -32,7 +33,7 @@ const requestSchema = z.object({
 });
 type RequestFormValues = z.infer<typeof requestSchema>;
 
-function RequestAssignmentForm({ schools, teams, person, role }: { schools: School[], teams: Team[], person: Person | null, role: string }) {
+function RequestAssignmentForm({ schools, allTeams, person, role, isDialog }: { schools: School[], allTeams: Team[], person: Person | null, role: string, isDialog?: boolean }) {
     const { toast } = useToast();
     const [isPending, startTransition] = React.useTransition();
     const form = useForm<RequestFormValues>({
@@ -41,9 +42,9 @@ function RequestAssignmentForm({ schools, teams, person, role }: { schools: Scho
     
     const selectedSchoolId = form.watch('schoolId');
     const availableTeams = React.useMemo(() => {
-        if (!selectedSchoolId) return teams;
-        return teams.filter(t => t.schoolId === selectedSchoolId);
-    }, [selectedSchoolId, teams]);
+        if (!selectedSchoolId) return allTeams;
+        return allTeams.filter(t => t.schoolId === selectedSchoolId);
+    }, [selectedSchoolId, allTeams]);
     
     React.useEffect(() => {
         form.resetField('teamId');
@@ -69,34 +70,54 @@ function RequestAssignmentForm({ schools, teams, person, role }: { schools: Scho
         });
     }
 
+    const formContent = (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField control={form.control} name="schoolId" render={({ field }) => (
+                    <FormItem><FormLabel>School</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school" /></SelectTrigger></FormControl>
+                        <SelectContent>{schools.map(s => <SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage />
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="teamId" render={({ field }) => (
+                    <FormItem><FormLabel>Team</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!availableTeams.length}>
+                        <FormControl><SelectTrigger><SelectValue placeholder={!selectedSchoolId ? 'Select a school first' : 'Select a team'} /></SelectTrigger></FormControl>
+                        <SelectContent>{availableTeams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage />
+                    </FormItem>
+                )}/>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Sending...' : 'Send Request'}</Button>
+            </form>
+        </Form>
+    );
+
+    if (isDialog) {
+        return formContent;
+    }
+
     return (
-        <Card>
+         <Card>
             <CardHeader>
                 <CardTitle>Request Team Assignment</CardTitle>
                 <CardDescription>You are not currently assigned to a team as a {role}. Select a school and team to request an assignment from the Sportsmaster.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField control={form.control} name="schoolId" render={({ field }) => (
-                            <FormItem><FormLabel>School</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school" /></SelectTrigger></FormControl>
-                                <SelectContent>{schools.map(s => <SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage />
-                            </FormItem>
-                        )}/>
-                        <FormField control={form.control} name="teamId" render={({ field }) => (
-                            <FormItem><FormLabel>Team</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value} disabled={!availableTeams.length}>
-                                <FormControl><SelectTrigger><SelectValue placeholder={!selectedSchoolId ? 'Select a school first' : 'Select a team'} /></SelectTrigger></FormControl>
-                                <SelectContent>{availableTeams.map(t => <SelectItem key={t.teamId} value={t.teamId}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage />
-                            </FormItem>
-                        )}/>
-                        <Button type="submit" disabled={isPending}>{isPending ? 'Sending...' : 'Send Request'}</Button>
-                    </form>
-                </Form>
-            </CardContent>
+            <CardContent>{formContent}</CardContent>
         </Card>
     )
+}
+
+function RequestAssignmentDialog({ schools, allTeams, person, role, open, onOpenChange }: { schools: School[], allTeams: Team[], person: Person | null, role: string, open: boolean, onOpenChange: (open: boolean) => void }) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                 <DialogHeader>
+                    <DialogTitle>Request New Team Assignment</DialogTitle>
+                    <DialogDescription>Select a school and team to request an assignment.</DialogDescription>
+                </DialogHeader>
+                <RequestAssignmentForm schools={schools} allTeams={allTeams} person={person} role={role} isDialog />
+            </DialogContent>
+        </Dialog>
+    );
 }
 
 function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
@@ -113,22 +134,6 @@ function StatCard({ title, value, icon: Icon }: { title: string, value: string |
     );
 }
 
-function ManagementLink({ href, title, description, icon: Icon }: { href: string; title:string; description: string; icon: React.ElementType; }) {
-    return (
-        <div className="p-4 transition-colors border rounded-lg hover:bg-muted/50 flex items-center gap-4">
-            <Icon className="w-8 h-8 text-muted-foreground shrink-0" />
-            <Link href={href} className="flex-1 group">
-                <h3 className="font-semibold group-hover:underline">{title}</h3>
-                <p className="text-sm text-muted-foreground">{description}</p>
-            </Link>
-             <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                <Link href={href} aria-label={`Navigate to ${title}`}>
-                   <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </Link>
-            </Button>
-        </div>
-    );
-}
 
 interface TeamManagerDashboardData {
     kpis: {
@@ -140,16 +145,12 @@ interface TeamManagerDashboardData {
     upcomingMatches: Match[];
     teams: Team[];
     pendingRequests: AssignmentRequest[];
+    allSchools?: School[];
+    allTeams?: Team[];
 }
 
 function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
     const { kpis, upcomingMatches, teams, pendingRequests } = data;
-    const managementLinks = [
-        { href: `/teams/${teams[0]?.teamId}`, title: "Manage Roster", description: "View and update player assignments.", icon: Users },
-        { href: "/matches", title: "View All Fixtures", description: "See the full schedule for all teams.", icon: ClipboardList },
-        { href: "/equipment", title: "Equipment Hub", description: "Assign and track team equipment.", icon: Backpack },
-        { href: "/transport", title: "Transport Hub", description: "Arrange transport for upcoming matches.", icon: Bus },
-    ];
     
     return (
         <div className="flex flex-col gap-8">
@@ -157,6 +158,27 @@ function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
                 <h1 className="text-2xl font-bold">Team Manager Dashboard</h1>
                 <p className="text-sm opacity-90">Your command center for team logistics and operations.</p>
             </header>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Your Assigned Teams</CardTitle>
+                    <CardDescription>An overview of all teams you currently manage.</CardDescription>
+                </CardHeader>
+                 <CardContent>
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Team Name</TableHead><TableHead>Division</TableHead><TableHead>Season</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {teams.map(team => (
+                                <TableRow key={team.teamId}>
+                                    <TableCell className="font-medium"><Link href={`/teams/${team.teamId}`} className="hover:underline">{team.name}</Link></TableCell>
+                                    <TableCell>{team.divisionName}</TableCell>
+                                    <TableCell>{team.seasonName}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard title="Managed Teams" value={kpis.managedTeams} icon={Users} />
@@ -164,47 +186,11 @@ function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
                 <StatCard title="Pending Availability" value={kpis.pendingAvailability} icon={ClipboardCheck} />
                 <StatCard title="Transport Needed" value={kpis.transportNeeded} icon={AlertCircle} />
             </div>
-            
-            {pendingRequests && pendingRequests.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Your Pending Requests</CardTitle>
-                        <CardDescription>Status of your recent assignment requests.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableBody>
-                                {pendingRequests.map(req => (
-                                    <TableRow key={req.requestId}>
-                                        <TableCell>
-                                            <p className="font-semibold">Request to be {req.role}</p>
-                                            <p className="text-sm text-muted-foreground">for {req.targetName}</p>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant="outline">{req.status}</Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            )}
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Management Hub</CardTitle>
-                    <CardDescription>Quick access to key logistical and management areas for your team(s).</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {managementLinks.map(link => <ManagementLink key={link.href} {...link} />)}
-                </CardContent>
-            </Card>
 
             <Card>
                 <CardHeader>
                     <CardTitle>Upcoming Fixtures</CardTitle>
-                    <CardDescription>Your next 5 scheduled matches.</CardDescription>
+                    <CardDescription>Your next 5 scheduled matches across all your teams.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {upcomingMatches.length > 0 ? (
@@ -237,7 +223,8 @@ function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
 
 interface CoachDashboardProps {
   data: {
-    team: Team | null;
+    teams: Team[];
+    team: Team | null; // The primary team for detailed cards
     nextMatch: Match | null;
     recentMatches: Match[];
     teamStats: TeamStats | null;
@@ -254,97 +241,59 @@ interface CoachDashboardProps {
 
 function CoachDashboardInternal({ data }: CoachDashboardProps) {
   const { person } = useAuth();
-  const { team, nextMatch, recentMatches, teamStats, leaderboards, upcomingSessions, pendingRequests } = data;
+  const { teams, team, nextMatch, recentMatches, teamStats, leaderboards, upcomingSessions } = data;
   const activeRole = person?.activeRole || 'User';
-
-  if (!team || !teamStats) {
-    return (
-      <div className="flex flex-col gap-8">
-        <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold">{activeRole} Dashboard</h1>
-            <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
-        </header>
-        <RequestAssignmentForm schools={data.allSchools || []} teams={data.allTeams || []} person={person} role={activeRole} />
-        {pendingRequests && pendingRequests.length > 0 && (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Your Pending Requests</CardTitle>
-                    <CardDescription>Status of your recent assignment requests.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableBody>
-                            {pendingRequests.map(req => (
-                                <TableRow key={req.requestId}>
-                                    <TableCell>
-                                        <p className="font-semibold">Request to be {req.role}</p>
-                                        <p className="text-sm text-muted-foreground">for {req.targetName}</p>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Badge variant="outline">{req.status}</Badge>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-        )}
-      </div>
-    );
-  }
-
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = React.useState(false);
+  
   return (
     <div className="flex flex-col gap-8">
       <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold">{activeRole} Dashboard</h1>
         <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
-        <p className="text-sm opacity-90 mt-1">{team.schoolName} &bull; {team.name}</p>
       </header>
       
-      {pendingRequests && pendingRequests.length > 0 && (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Your Pending Requests</CardTitle>
-                    <CardDescription>Status of your recent assignment requests.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableBody>
-                            {pendingRequests.map(req => (
-                                <TableRow key={req.requestId}>
-                                    <TableCell>
-                                        <p className="font-semibold">Request to be {req.role}</p>
-                                        <p className="text-sm text-muted-foreground">for {req.targetName}</p>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Badge variant="outline">{req.status}</Badge>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-        )}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+            <div>
+                <CardTitle>Your Assignments</CardTitle>
+                <CardDescription>An overview of all teams you are currently assigned to.</CardDescription>
+            </div>
+            <Button onClick={() => setIsRequestDialogOpen(true)} variant="outline">
+                <PlusCircle className="mr-2 h-4 w-4" />Request New Assignment
+            </Button>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader><TableRow><TableHead>Team</TableHead><TableHead>School</TableHead><TableHead>Division</TableHead></TableRow></TableHeader>
+                <TableBody>
+                {teams.map(t => (
+                    <TableRow key={t.teamId}>
+                        <TableCell className="font-medium"><Link href={`/teams/${t.teamId}`} className="hover:underline">{t.name}</Link></TableCell>
+                        <TableCell>{t.schoolName}</TableCell>
+                        <TableCell>{t.divisionName}</TableCell>
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">
-          {/* Next Match */}
           <Card>
             <CardHeader>
               <CardTitle>Next Match</CardTitle>
               {nextMatch ? (
-                <CardDescription>Prepare for your upcoming fixture against {nextMatch.teamAId === team.teamId ? nextMatch.teamBName : nextMatch.teamAName}.</CardDescription>
+                <CardDescription>Your next upcoming fixture is for {team?.name}.</CardDescription>
               ) : (
-                <CardDescription>No upcoming matches scheduled.</CardDescription>
+                <CardDescription>No upcoming matches scheduled for your primary team.</CardDescription>
               )}
             </CardHeader>
             <CardContent>
               {nextMatch ? (
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <p className="text-xl font-bold">vs {nextMatch.teamAId === team.teamId ? nextMatch.teamBName : nextMatch.teamAName}</p>
+                    <p className="text-xl font-bold">vs {nextMatch.teamAId === team?.teamId ? nextMatch.teamBName : nextMatch.teamAName}</p>
                     <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                       <Calendar className="h-4 w-4" />
                       {format(nextMatch.dateTime, 'PPP, p')} at {nextMatch.fieldName}
@@ -354,35 +303,6 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-4">No upcoming matches.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent Form */}
-          <Card>
-            <CardHeader><CardTitle>Recent Form</CardTitle><CardDescription>A look at your last 3 completed matches.</CardDescription></CardHeader>
-            <CardContent>
-              {recentMatches.length > 0 ? (
-                <Table>
-                  <TableBody>
-                    {recentMatches.map(match => (
-                      <TableRow key={match.matchId}>
-                        <TableCell>
-                           <p className="font-medium">vs {match.teamAId === team.teamId ? match.teamBName : match.teamAName}</p>
-                           <p className="text-xs text-muted-foreground">{format(match.dateTime, 'dd MMM yyyy')}</p>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant={match.winnerTeamId === team.teamId ? 'default' : 'destructive'} className={match.winnerTeamId ? '' : 'bg-yellow-500'}>
-                            {match.winnerTeamId === team.teamId ? 'Win' : (match.winnerTeamId ? 'Loss' : 'Draw')}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-1">{match.result}</p>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-center text-muted-foreground py-4">No completed matches found.</p>
               )}
             </CardContent>
           </Card>
@@ -406,55 +326,17 @@ function CoachDashboardInternal({ data }: CoachDashboardProps) {
                 <Button asChild variant="outline" className="w-full mt-4"><Link href="/planner">Go to Planner</Link></Button>
               </CardContent>
             </Card>
-            {/* Team Stats */}
-            <Card>
-                <CardHeader><CardTitle>Season Snapshot</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4">
-                    <StatItem label="Played" value={teamStats.matchesPlayed} />
-                    <StatItem label="Won" value={teamStats.matchesWon} />
-                    <StatItem label="Lost" value={teamStats.matchesLost} />
-                    <StatItem label="NRR" value={teamStats.netRunRate.toFixed(2)} />
-                </CardContent>
-            </Card>
-
-            {/* Top Performers */}
-            <Card>
-                <CardHeader><CardTitle>Top Performers</CardTitle><CardDescription>Current season leaders on your team.</CardDescription></CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <h4 className="font-semibold text-sm flex items-center gap-2"><Target className="text-primary"/>Top Run Scorers</h4>
-                        {leaderboards.topRunScorers.length > 0 ? leaderboards.topRunScorers.slice(0, 3).map(p => (
-                            <div key={p.personId} className="flex items-center gap-3 text-sm">
-                                <Avatar className="h-8 w-8"><AvatarImage src={p.profileImageUrl} /><AvatarFallback>{p.firstName?.[0]}{p.lastName?.[0]}</AvatarFallback></Avatar>
-                                <Link href={`/people/${p.personId}`} className="font-medium hover:underline flex-1 truncate">{p.firstName} {p.lastName}</Link>
-                                <span className="font-bold">{p.stats.totalRuns}</span>
-                            </div>
-                        )) : <p className="text-xs text-muted-foreground text-center">No batting stats yet.</p>}
-                    </div>
-                    <div className="space-y-4 mt-6">
-                        <h4 className="font-semibold text-sm flex items-center gap-2"><Medal className="text-primary"/>Top Wicket Takers</h4>
-                        {leaderboards.topWicketTakers.length > 0 ? leaderboards.topWicketTakers.slice(0, 3).map(p => (
-                            <div key={p.personId} className="flex items-center gap-3 text-sm">
-                                <Avatar className="h-8 w-8"><AvatarImage src={p.profileImageUrl} /><AvatarFallback>{p.firstName?.[0]}{p.lastName?.[0]}</AvatarFallback></Avatar>
-                                <Link href={`/people/${p.personId}`} className="font-medium hover:underline flex-1 truncate">{p.firstName} {p.lastName}</Link>
-                                <span className="font-bold">{p.stats.wicketsTaken}</span>
-                            </div>
-                        )) : <p className="text-xs text-muted-foreground text-center">No bowling stats yet.</p>}
-                    </div>
-                </CardContent>
-            </Card>
-            {/* Quick Actions */}
-            <Card>
-                <CardHeader><CardTitle>Logistics & Management</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-2 gap-2">
-                    <Button asChild variant="outline"><Link href={`/teams/${team.teamId}`}><Users />Roster</Link></Button>
-                    <Button asChild variant="outline"><Link href="/matches"><ClipboardList />Fixtures</Link></Button>
-                    <Button asChild variant="outline"><Link href="/equipment"><Backpack />Equipment</Link></Button>
-                    <Button asChild variant="outline"><Link href="/transport"><Bus />Transport</Link></Button>
-                </CardContent>
-            </Card>
         </div>
       </div>
+      
+       <RequestAssignmentDialog
+            schools={data.allSchools || []}
+            allTeams={data.allTeams || []}
+            person={person}
+            role={activeRole}
+            open={isRequestDialogOpen}
+            onOpenChange={setIsRequestDialogOpen}
+        />
     </div>
   );
 }
@@ -473,21 +355,17 @@ export default function CoachDashboard() {
         if (activeRole === 'Team Manager') {
             return getTeamManagerDashboardData(person.personId);
         }
-        // Default to coach data for Coach, Asst Coach, Captain
         return getCoachDashboardData(person.personId);
       };
 
       fetchData()
         .then(async (fetchedData: any) => {
-            if (activeRole !== 'Team Manager' && !fetchedData.team) {
+            const teamsExist = fetchedData.teams && fetchedData.teams.length > 0;
+            if (!teamsExist) {
                 const [allSchools, allTeams] = await Promise.all([getSchools(), getTeams()]);
                 setData({ ...fetchedData, allSchools, allTeams });
-            } else if (activeRole === 'Team Manager' && fetchedData.teams.length === 0) {
-                 const [allSchools, allTeams] = await Promise.all([getSchools(), getTeams()]);
-                 setData({ ...fetchedData, allSchools, allTeams });
-            }
-            else {
-                setData(fetchedData);
+            } else {
+                 setData({ ...fetchedData, allSchools: [], allTeams: []}); // Avoid fetching if not needed
             }
         })
         .catch(error => {
@@ -502,28 +380,51 @@ export default function CoachDashboard() {
     }
   }, [person, activeRole]);
 
-  if (loading) {
+  if (loading || !data) {
     return <DashboardSkeleton />;
   }
   
   if (activeRole === 'Team Manager') {
-    if (!data || data.teams.length === 0) {
-      return (
-         <div className="flex flex-col gap-8">
-            <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
-                <h1 className="text-2xl font-bold">{activeRole} Dashboard</h1>
-                <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
-            </header>
-            <RequestAssignmentForm schools={data?.allSchools || []} teams={data?.allTeams || []} person={person} role={activeRole} />
-        </div>
-      );
-    }
     return <TeamManagerDashboardUI data={data as TeamManagerDashboardData} />;
   }
   
-  // Default to Coach view
-  if (!data) {
-    return <div/>;
+  const noTeamsAssigned = !data.teams || data.teams.length === 0;
+
+  if (noTeamsAssigned) {
+    return (
+      <div className="flex flex-col gap-8">
+         <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold">{activeRole} Dashboard</h1>
+            <p className="text-sm opacity-90">Welcome, {person?.firstName || 'User'}!</p>
+        </header>
+        <RequestAssignmentForm schools={data.allSchools} allTeams={data.allTeams} person={person} role={activeRole || ''} />
+         {data.pendingRequests && data.pendingRequests.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Your Pending Requests</CardTitle>
+                    <CardDescription>Status of your recent assignment requests.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableBody>
+                            {data.pendingRequests.map((req: AssignmentRequest) => (
+                                <TableRow key={req.requestId}>
+                                    <TableCell>
+                                        <p className="font-semibold">Request to be {req.role}</p>
+                                        <p className="text-sm text-muted-foreground">for {req.targetName}</p>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge variant="outline">{req.status}</Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
+      </div>
+    );
   }
   
   return <CoachDashboardInternal data={data} />;
