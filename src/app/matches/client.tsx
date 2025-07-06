@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format, isSameDay } from "date-fns";
-import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy, AlignLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -43,10 +43,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EditMatchDialog } from "./edit-match-dialog";
 import { StrategicCalendarView, competitionTypeColors } from '../strategic-calendar/strategic-calendar-view';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { AlignLeft } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const MATCH_STATUSES: MatchStatus[] = ['scheduled', 'live', 'completed', 'postponed', 'cancelled', 'abandoned'];
 
 function MatchListItem({ match }: { match: Match }) {
   return (
@@ -85,7 +84,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 8;
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<string[]>(['completed']); // Default filter
+  const [statusTab, setStatusTab] = React.useState<MatchStatus | 'all' | 'other'>('scheduled');
   const [competitionFilter, setCompetitionFilter] = React.useState<string[]>([]);
   const [teamFilter, setTeamFilter] = React.useState<string[]>([]);
   
@@ -122,15 +121,21 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   
   const filteredMatches = React.useMemo(() => {
     return matches.filter(match => {
-        const matchesSearch = `${match.teamAName} ${match.teamBName}`
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter.length === 0 || statusFilter.includes(match.status);
+        let matchesStatus: boolean;
+        if (statusTab === 'all') {
+            matchesStatus = true;
+        } else if (statusTab === 'other') {
+            matchesStatus = ['postponed', 'cancelled', 'abandoned'].includes(match.status);
+        } else {
+            matchesStatus = match.status === statusTab;
+        }
+        
+        const matchesSearch = `${match.teamAName} ${match.teamBName}`.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCompetition = competitionFilter.length === 0 || competitionFilter.includes(match.competitionId || "friendly");
         const matchesTeam = teamFilter.length === 0 || teamFilter.some(teamId => teamId === match.teamAId || teamId === match.teamBId);
-        return matchesSearch && matchesStatus && matchesCompetition && matchesTeam;
+        return matchesStatus && matchesSearch && matchesCompetition && matchesTeam;
     });
-  }, [matches, searchQuery, statusFilter, competitionFilter, teamFilter]);
+  }, [matches, searchQuery, statusTab, competitionFilter, teamFilter]);
   
   const matchesOnSelectedDate = React.useMemo(() => {
     if (!selectedDate) return [];
@@ -139,7 +144,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, competitionFilter, teamFilter, view]);
+  }, [searchQuery, statusTab, competitionFilter, teamFilter, view]);
 
 
   const paginatedMatches = filteredMatches.slice(
@@ -154,11 +159,10 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
     }
   };
 
-  const filtersApplied = searchQuery || statusFilter.length > 0 || competitionFilter.length > 0 || teamFilter.length > 0;
+  const filtersApplied = searchQuery || competitionFilter.length > 0 || teamFilter.length > 0;
   
   const clearFilters = () => {
     setSearchQuery("");
-    setStatusFilter([]);
     setCompetitionFilter([]);
     setTeamFilter([]);
   }
@@ -168,8 +172,8 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Match Results</h1>
-            <p className="text-muted-foreground">View all completed match results.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Matches</h1>
+            <p className="text-muted-foreground">View all upcoming, live, and completed matches.</p>
           </div>
           {isAdmin && (
             <Button asChild>
@@ -181,11 +185,21 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
           )}
         </header>
 
+        <Tabs defaultValue="scheduled" onValueChange={(value) => setStatusTab(value as any)}>
+            <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
+                <TabsTrigger value="live">Live</TabsTrigger>
+                <TabsTrigger value="completed">Completed</TabsTrigger>
+                <TabsTrigger value="other">Other</TabsTrigger>
+                <TabsTrigger value="all">All</TabsTrigger>
+            </TabsList>
+        </Tabs>
+
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Results List</CardTitle>
+                <CardTitle>Match List</CardTitle>
                 <CardDescription>A list of all matches in the system.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -208,7 +222,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                          <div className="space-y-2">
                             <h4 className="font-medium leading-none">Filter Matches</h4>
                             <p className="text-sm text-muted-foreground">
-                            Find matches by team, status, or competition.
+                            Find matches by team or competition.
                             </p>
                         </div>
                         {filtersApplied && <Button variant="ghost" size="sm" onClick={clearFilters}>Clear</Button>}
@@ -224,16 +238,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                             className="col-span-2 h-8"
                           />
                         </div>
-                        <div className="grid grid-cols-3 items-center gap-4">
-                            <Label>Status</Label>
-                            <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal capitalize"><span className="truncate">{statusFilter.length === 0 && "Select statuses..."}{statusFilter.length === 1 && statusFilter[0]}{statusFilter.length > 1 && `${statusFilter.length} statuses selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Status</DropdownMenuLabel><DropdownMenuSeparator />
-                                    {MATCH_STATUSES.map(status => (<DropdownMenuCheckboxItem key={status} checked={statusFilter.includes(status)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...statusFilter, status] : statusFilter.filter(id => id !== status); setStatusFilter(newFilters); }} className="capitalize">{status}</DropdownMenuCheckboxItem>))}
-                                    {statusFilter.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setStatusFilter([])} className="justify-center text-sm">Clear filter</DropdownMenuItem></>)}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-
+                        
                         <div className="grid grid-cols-3 items-center gap-4">
                             <Label>Competition</Label>
                             <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{competitionFilter.length === 0 && "Select competitions..."}{competitionFilter.length === 1 && (competitions.find(c => c.competitionId === competitionFilter[0])?.name || "Friendly")}{competitionFilter.length > 1 && `${competitionFilter.length} comps selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
@@ -341,7 +346,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                             </TableRow>
                         ))
                         ) : (
-                        <TableRow><TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found. Get started by creating a new match."}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found."}</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
@@ -425,10 +430,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
 
       {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone. This will permanently delete this match and all of its associated data (lineups, officials, scorecards).</AlertDialogDescription>
-          </AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete this match and all of its associated data (lineups, officials, scorecards).</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setMatchToDelete(null)} disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Match"}</AlertDialogAction>

@@ -1,4 +1,5 @@
 
+
 import {
     LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database,
     Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack,
@@ -35,8 +36,7 @@ const adminNavGroups = [
         title: "Match Operations",
         icon: Swords,
         items: [
-            { href: '/fixtures', label: 'Fixtures', icon: ClipboardList },
-            { href: '/matches', label: 'Results', icon: Trophy },
+            { href: '/matches', label: 'Matches', icon: ClipboardList },
             { href: '/strategic-calendar', label: 'Strategic Calendar', icon: CalendarRange, adminOnly: true },
             { href: '/scouting', label: 'Scouting Assistant', icon: UserSearch },
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
@@ -118,7 +118,7 @@ const coachNavGroups = [
             { href: '/teams', label: 'Manage Roster', icon: Users },
             { href: '/planner', label: 'Session Planner', icon: CalendarDays },
             { href: '/drills', label: 'Drill Library', icon: Target },
-            { href: '/fixtures', label: 'Fixtures', icon: ClipboardList },
+            { href: '/matches', label: 'Matches', icon: ClipboardList },
         ]
     },
     {
@@ -148,7 +148,7 @@ const playerNavGroups = [
         title: "My Matches",
         icon: Swords,
         items: [
-            { href: '/fixtures', label: 'Fixtures', icon: ClipboardList },
+            { href: '/matches', label: 'Matches', icon: ClipboardList },
         ]
     },
     {
@@ -176,7 +176,7 @@ const officialNavGroups = [
         title: "Assignments",
         icon: ClipboardList,
         items: [
-            { href: '/fixtures', label: 'Fixtures', icon: ClipboardList },
+            { href: '/matches', label: 'Matches', icon: ClipboardList },
         ]
     },
     {
@@ -216,7 +216,7 @@ const guardianNavGroups = [
         title: "My Family",
         icon: Users,
         items: [
-            { href: '/fixtures', label: 'Schedule', icon: CalendarDays },
+            { href: '/matches', label: 'Schedule', icon: CalendarDays },
             { href: '/teams', label: 'Teams', icon: Users },
             { href: '/people', label: 'Profiles', icon: User },
         ]
@@ -240,8 +240,7 @@ const spectatorNavGroups = [
         title: "Explore",
         icon: Trophy,
         items: [
-            { href: '/fixtures', label: 'Fixtures', icon: ClipboardList },
-            { href: '/matches', label: 'Results', icon: Trophy },
+            { href: '/matches', label: 'Matches', icon: ClipboardList },
             { href: '/rankings', label: 'Rankings', icon: Trophy },
             { href: '/awards', label: 'Awards', icon: Medal },
         ]
