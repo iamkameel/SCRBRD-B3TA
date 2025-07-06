@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -25,30 +24,6 @@ interface StrategicCalendarViewProps {
     onDateSelect: (date: Date | undefined) => void;
     displayMonth: Date;
     onMonthChange: (date: Date) => void;
-}
-
-function CustomDayContent(props: DayContentProps) {
-    const { date, activeModifiers } = props;
-    const matchesOnDay: Match[] = (date as any).__matches || [];
-
-    return (
-        <>
-            {format(date, "d")}
-            {activeModifiers.hasMatch && matchesOnDay.length > 0 && (
-                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center justify-center gap-1">
-                    {matchesOnDay.slice(0, 3).map(match => (
-                        <div
-                            key={match.matchId}
-                            className={cn(
-                                "h-1.5 w-1.5 rounded-full",
-                                competitionTypeColors[match.competitionType || 'Friendlies'] || 'bg-gray-400'
-                            )}
-                        />
-                    ))}
-                </div>
-            )}
-        </>
-    );
 }
 
 function CustomCaption({ displayMonth, onMonthChange }: { displayMonth: Date, onMonthChange: (date: Date) => void }) {
@@ -106,26 +81,50 @@ function CustomCaption({ displayMonth, onMonthChange }: { displayMonth: Date, on
 }
 
 export function StrategicCalendarView({ matches, selectedDate, onDateSelect, displayMonth, onMonthChange }: StrategicCalendarViewProps) {
-    const modifiers = React.useMemo(() => {
-        const dateMap = new Map<string, { date: Date; matches: Match[] }>();
-
-        for (const match of matches) {
-            const dayKey = format(match.dateTime, 'yyyy-MM-dd');
-            if (!dateMap.has(dayKey)) {
-                const newDate = new Date(match.dateTime);
-                dateMap.set(dayKey, { date: newDate, matches: [] });
+    // Create a lookup map of dates to matches, which is a stable pattern.
+    const matchesByDate = React.useMemo(() => {
+        return matches.reduce((acc, match) => {
+            const dateKey = format(match.dateTime, 'yyyy-MM-dd');
+            if (!acc[dateKey]) {
+                acc[dateKey] = [];
             }
-            dateMap.get(dayKey)!.matches.push(match);
-        }
-
-        const matchDays: Date[] = [];
-        for (const { date, matches } of dateMap.values()) {
-            (date as any).__matches = matches;
-            matchDays.push(date);
-        }
-        
-        return { hasMatch: matchDays };
+            acc[dateKey].push(match);
+            return acc;
+        }, {} as Record<string, Match[]>);
     }, [matches]);
+
+    // The modifier now just checks for the existence of a key, not passing data.
+    const modifiers = {
+        hasMatch: (date: Date) => {
+            const dateKey = format(date, 'yyyy-MM-dd');
+            return !!matchesByDate[dateKey];
+        }
+    };
+    
+    // Define the DayContent component within this component's scope so it can access 'matchesByDate'
+    function CustomDayContent(props: DayContentProps) {
+        const dateKey = format(props.date, 'yyyy-MM-dd');
+        const matchesOnDay = matchesByDate[dateKey] || [];
+    
+        return (
+            <>
+                {format(props.date, "d")}
+                {matchesOnDay.length > 0 && (
+                    <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center justify-center gap-1">
+                        {matchesOnDay.slice(0, 3).map(match => (
+                            <div
+                                key={match.matchId}
+                                className={cn(
+                                    "h-1.5 w-1.5 rounded-full",
+                                    competitionTypeColors[match.competitionType || 'Friendlies'] || 'bg-gray-400'
+                                )}
+                            />
+                        ))}
+                    </div>
+                )}
+            </>
+        );
+    }
 
     return (
         <DayPicker
