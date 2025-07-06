@@ -30,6 +30,8 @@ import { getFields } from '@/lib/actions/fields';
 import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
 import type { Team, School, Division, Season, Person, Field, Competition } from '@/lib/data';
 import { UserRoleDialog } from '@/app/user-management/user-role-dialog';
+import { cn } from '@/lib/utils';
+
 
 const PersonDialog = dynamic(() => import('@/app/people/person-dialog').then(mod => mod.PersonDialog), {
   ssr: false,
@@ -65,6 +67,54 @@ interface DialogData {
     allPeople: Person[];
 }
 
+const GradientUserIcon = () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+        <defs>
+            <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{stopColor: '#21c45e'}} />
+                <stop offset="100%" style={{stopColor: '#94dca4'}} />
+            </linearGradient>
+        </defs>
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" stroke="url(#icon-grad)" />
+        <circle cx="12" cy="7" r="4" stroke="url(#icon-grad)" />
+    </svg>
+);
+
+const GradientUserCogIcon = () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+         <defs>
+            <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{stopColor: '#21c45e'}} />
+                <stop offset="100%" style={{stopColor: '#94dca4'}} />
+            </linearGradient>
+        </defs>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="url(#icon-grad)" />
+        <circle cx="9" cy="7" r="4" stroke="url(#icon-grad)" />
+        <circle cx="19" cy="11" r="2" stroke="url(#icon-grad)" />
+        <path d="M19 8v1" stroke="url(#icon-grad)" />
+        <path d="M19 13v1" stroke="url(#icon-grad)" />
+        <path d="m21.6 9.5-.87.5" stroke="url(#icon-grad)" />
+        <path d="m17.27 12-.87.5" stroke="url(#icon-grad)" />
+        <path d="m21.6 12.5-.87-.5" stroke="url(#icon-grad)" />
+        <path d="m17.27 10-.87-.5" stroke="url(#icon-grad)" />
+    </svg>
+);
+
+const GradientUsersIcon = () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+         <defs>
+            <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{stopColor: '#21c45e'}} />
+                <stop offset="100%" style={{stopColor: '#94dca4'}} />
+            </linearGradient>
+        </defs>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="url(#icon-grad)" />
+        <circle cx="9" cy="7" r="4" stroke="url(#icon-grad)" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="url(#icon-grad)" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="url(#icon-grad)" />
+    </svg>
+);
+
 function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
     return (
         <Card>
@@ -79,17 +129,18 @@ function StatCard({ title, value, icon: Icon }: { title: string, value: string |
     );
 }
 
-function ManagementLink({ href, title, description, icon: Icon, onAddClick }: { href: string; title:string; description: string; icon: React.ElementType; onAddClick?: () => void; }) {
+function ManagementLink({ href, title, description, icon: Icon, onAddClick, variant = 'default' }: { href: string; title:string; description: string; icon: React.ElementType; onAddClick?: () => void; variant?: 'default' | 'themed' }) {
+    const isThemed = variant === 'themed';
     return (
-        <div className="p-4 transition-colors border rounded-lg hover:bg-muted/50 flex items-center gap-4">
-            <Icon className="w-8 h-8 text-muted-foreground shrink-0" />
+        <div className={cn("p-4 transition-colors border rounded-lg flex items-center gap-4", isThemed ? "hover:bg-[#94dca4]/20" : "hover:bg-muted/50")}>
+            <Icon />
             <Link href={href} className="flex-1 group">
                 <h3 className="font-semibold group-hover:underline">{title}</h3>
                 <p className="text-sm text-muted-foreground">{description}</p>
             </Link>
             <div className="flex items-center shrink-0">
                 {onAddClick ? (
-                    <Button onClick={onAddClick} variant="outline" size="icon" className="h-9 w-9">
+                    <Button onClick={onAddClick} size="icon" className={cn("h-9 w-9", isThemed ? "bg-[#26a66c] text-white hover:bg-[#8bcaac]" : "")} variant={isThemed ? undefined : "outline"}>
                         <PlusCircle className="h-4 w-4" />
                         <span className="sr-only">Add new for {title}</span>
                     </Button>
@@ -178,19 +229,19 @@ export default function AdminDashboard() {
   const { kpis, pendingRequests } = data;
 
   const managementLinks = [
-    { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: User, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
-    { href: "/people", title: "Staff Management", description: "Manage coaches, medical staff, and grounds-keepers.", icon: UserCog, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
-    { href: "/people", title: "Official Management", description: "Manage umpires, scorers, and other match officials.", icon: Users, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
-    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users, onAddClick: () => setDialogState(s => ({...s, team: true})) },
-    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
-    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList },
-    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: Building, onAddClick: () => setDialogState(s => ({...s, school: true})) },
-    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: MapPin, onAddClick: () => setDialogState(s => ({...s, field: true})) },
-    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus },
-    { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: Banknote, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
-    { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: Handshake, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
-    { href: "/user-management", title: "User Management", description: "Invite new users or manage existing user roles.", icon: UserCog, onAddClick: () => setDialogState(s => ({ ...s, userRole: true })) },
-    { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
+    { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: GradientUserIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })), variant: 'themed' },
+    { href: "/people", title: "Staff Management", description: "Manage coaches, medical staff, and grounds-keepers.", icon: GradientUserCogIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })), variant: 'themed' },
+    { href: "/people", title: "Official Management", description: "Manage umpires, scorers, and other match officials.", icon: GradientUsersIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })), variant: 'themed' },
+    { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: () => <Users className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, team: true})) },
+    { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: () => <Trophy className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
+    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: () => <ClipboardList className="w-8 h-8 text-muted-foreground shrink-0" /> },
+    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: () => <Building className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, school: true})) },
+    { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: () => <MapPin className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, field: true})) },
+    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: () => <Bus className="w-8 h-8 text-muted-foreground shrink-0" /> },
+    { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: () => <Banknote className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
+    { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: () => <Handshake className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
+    { href: "/user-management", title: "User Management", description: "Invite new users or manage existing user roles.", icon: () => <UserCog className="w-8 h-8 text-muted-foreground shrink-0" />, onAddClick: () => setDialogState(s => ({ ...s, userRole: true })) },
+    { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: () => <Database className="w-8 h-8 text-muted-foreground shrink-0" /> },
   ];
 
   return (
