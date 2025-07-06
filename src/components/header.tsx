@@ -114,9 +114,9 @@ function NotificationBell() {
     const isOfficial = person?.roles.includes('Umpire') || person?.roles.includes('Scorer');
 
     React.useEffect(() => {
-        if (isOfficial) {
+        if (isOfficial && person?.personId) {
             setLoading(true);
-            getUnconfirmedAssignmentsCount().then(num => {
+            getUnconfirmedAssignmentsCount(person.personId).then(num => {
                 setCount(num);
                 setLoading(false);
             });
@@ -124,7 +124,7 @@ function NotificationBell() {
             setLoading(false);
             setCount(0);
         }
-    }, [isOfficial, pathname]);
+    }, [isOfficial, person, pathname]);
 
     if (!isOfficial) {
         return null;

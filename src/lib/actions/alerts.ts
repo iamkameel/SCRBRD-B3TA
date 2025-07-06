@@ -82,14 +82,16 @@ export async function getFixtureConflicts(): Promise<FixtureConflict[]> {
     return conflicts;
 }
 
-export async function getUnconfirmedAssignmentsCount(): Promise<number> {
-    const userId = await getUserId();
-    if (!userId) return 0;
+export async function getUnconfirmedAssignmentsCount(personId: string): Promise<number> {
+    const authedUserId = await getUserId();
+    if (!authedUserId) return 0; // Auth check
+    
+    if (!personId) return 0;
     
     try {
         const q = query(
             collectionGroup(db, 'officials'), 
-            where('personId', '==', userId), 
+            where('personId', '==', personId), 
             where('confirmed', '==', false)
         );
         const snapshot = await getDocs(q);
