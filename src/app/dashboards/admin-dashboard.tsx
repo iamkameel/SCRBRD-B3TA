@@ -165,13 +165,15 @@ export default function AdminDashboard() {
   const { kpis, pendingRequests } = data;
 
   const managementLinks = [
-    { href: "/people", title: "Personnel Management", description: "Manage all players, staff, and officials.", icon: UserCog, addHref: "/people" },
+    { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: User },
+    { href: "/people", title: "Staff Management", description: "Manage coaches, medical staff, and grounds-keepers.", icon: UserCog },
+    { href: "/people", title: "Official Management", description: "Manage umpires, scorers, and other match officials.", icon: Users },
     { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users, onAddClick: () => setDialogState(s => ({...s, team: true})) },
     { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
-    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList, addHref: "/new-match" },
+    { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList },
     { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: Building, onAddClick: () => setDialogState(s => ({...s, school: true})) },
     { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: MapPin, onAddClick: () => setDialogState(s => ({...s, field: true})) },
-    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus, addHref: "/transport" },
+    { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus },
     { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: Banknote, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
     { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: Handshake, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
     { href: "/user-management", title: "User Management", description: "Invite and manage system users.", icon: UserCog },
