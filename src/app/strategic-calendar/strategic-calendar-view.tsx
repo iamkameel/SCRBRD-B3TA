@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import * as React from 'react';
-import { format, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 import { DayPicker, type DayContentProps } from 'react-day-picker';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -106,8 +107,6 @@ function CustomCaption({ displayMonth, onMonthChange }: { displayMonth: Date, on
 
 export function StrategicCalendarView({ matches, selectedDate, onDateSelect, displayMonth, onMonthChange }: StrategicCalendarViewProps) {
     const modifiers = React.useMemo(() => {
-        const matchDays: Date[] = [];
-        
         const dateMap = new Map<string, { date: Date; matches: Match[] }>();
 
         for (const match of matches) {
@@ -119,6 +118,7 @@ export function StrategicCalendarView({ matches, selectedDate, onDateSelect, dis
             dateMap.get(dayKey)!.matches.push(match);
         }
 
+        const matchDays: Date[] = [];
         for (const { date, matches } of dateMap.values()) {
             (date as any).__matches = matches;
             matchDays.push(date);

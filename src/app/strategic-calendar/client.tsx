@@ -34,16 +34,20 @@ function MatchListItem({ match }: { match: Match }) {
   return (
     <Link href={`/matches/${match.matchId}`} className="block p-2 -mx-2 rounded-md hover:bg-muted">
       <div className="flex items-center gap-3">
-        <div className={cn("w-1 h-8 rounded-full", competitionTypeColors[match.competitionType || 'Friendlies'] || 'bg-gray-400')}></div>
+        <div className={cn("w-1 self-stretch rounded-full", competitionTypeColors[match.competitionType || 'Friendlies'] || 'bg-gray-400')} />
         <div className="flex-1">
-          <div className="flex items-center gap-1.5 text-xs">
-            <Avatar className="h-4 w-4"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName?.[0]}</AvatarFallback></Avatar>
-            <span className="font-semibold">{match.teamAName}</span>
-            <span className="text-muted-foreground">vs</span>
-            <Avatar className="h-4 w-4"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
-            <span className="font-semibold">{match.teamBName}</span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
+            <div className="flex items-center justify-between gap-2 text-sm">
+                <div className="flex items-center gap-2 truncate">
+                    <Avatar className="h-5 w-5"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName?.[0]}</AvatarFallback></Avatar>
+                    <span className="font-semibold truncate">{match.teamAName}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">vs</span>
+                <div className="flex items-center gap-2 truncate justify-end">
+                    <span className="font-semibold truncate text-right">{match.teamBName}</span>
+                    <Avatar className="h-5 w-5"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
+                </div>
+            </div>
+          <p className="text-xs text-muted-foreground mt-1 text-center">
             {format(match.dateTime, 'p')} @ {match.fieldName}
           </p>
         </div>
