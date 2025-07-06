@@ -269,7 +269,7 @@ export function Header() {
             <div className="flex-1 w-full" />
             
             <Button asChild variant="ghost" size="icon" className="rounded-full hover:bg-white/20">
-                <Link href="/fixtures">
+                <Link href="/matches">
                     <Calendar className="h-5 w-5" />
                     <span className="sr-only">Fixtures</span>
                 </Link>

@@ -81,7 +81,7 @@ function UmpireScorerDashboardInternal({ assignments }: UmpireScorerDashboardInt
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+      <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold">Officials Dashboard</h1>
         <p className="text-sm opacity-90">Your upcoming match assignments and tasks.</p>
       </header>

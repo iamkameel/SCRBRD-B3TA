@@ -115,17 +115,20 @@ const GradientUsersIcon = () => (
     </svg>
 );
 
-function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
+function StatCard({ title, value, icon: Icon, description, href }: { title: string; value: string | number; icon: React.ElementType; description?: string, href: string }) {
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-            </CardContent>
-        </Card>
+        <Link href={href} className="block group">
+            <Card className="h-full transition-colors group-hover:bg-accent/20 dark:group-hover:bg-accent/10 group-hover:border-primary/30">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{value}</div>
+                    {description && <p className="text-xs text-muted-foreground">{description}</p>}
+                </CardContent>
+            </Card>
+        </Link>
     );
 }
 
@@ -140,7 +143,7 @@ function ManagementLink({ href, title, description, icon: Icon, onAddClick, vari
             </Link>
             <div className="flex items-center shrink-0">
                 {onAddClick ? (
-                    <Button onClick={onAddClick} size="icon" className={cn("h-9 w-9", isThemed ? "bg-[#26a66c] text-white hover:bg-[#8bcaac]" : "")} variant={isThemed ? undefined : "outline"}>
+                    <Button onClick={onAddClick} size="icon" className={cn("h-9 w-9", isThemed ? "bg-primary text-primary-foreground hover:bg-primary/90" : "")} variant={isThemed ? undefined : "outline"}>
                         <PlusCircle className="h-4 w-4" />
                         <span className="sr-only">Add new for {title}</span>
                     </Button>
@@ -247,7 +250,7 @@ export default function AdminDashboard() {
   return (
     <>
     <div className="flex flex-col gap-8">
-        <header className="bg-gradient-to-r from-emerald-600 to-green-500 text-white p-6 rounded-lg shadow-md">
+        <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold">Admin Dashboard</h1>
@@ -298,21 +301,21 @@ export default function AdminDashboard() {
         <Card>
             <CardHeader>
                 <CardTitle>Global Overview</CardTitle>
-                <CardDescription>High-level metrics across the entire system.</CardDescription>
+                <CardDescription>High-level metrics across the entire system. Click a card to navigate.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} />
-                <StatCard title="Schools" value={kpis.schools} icon={Building} />
-                <StatCard title="Teams" value={kpis.teams} icon={Users} />
-                <StatCard title="Players" value={kpis.players} icon={User} />
-                <StatCard title="Staff" value={kpis.staff} icon={UserCog} />
-                <StatCard title="Medical & Support" value={kpis.medicalSupport} icon={HeartPulse} />
-                <StatCard title="Fields & Venues" value={kpis.fieldsVenues} icon={MapPin} />
-                <StatCard title="Officials" value={kpis.officials} icon={Users} />
-                <StatCard title="Ground Staff" value={kpis.groundStaff} icon={Wrench} />
-                <StatCard title="Fixtures" value={kpis.fixtures} icon={ClipboardList} />
-                <StatCard title="Transport" value={kpis.transport} icon={Bus} />
-                <StatCard title="Awards" value={kpis.awards} icon={Medal} />
+                <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} href="/competitions" description="active this season" />
+                <StatCard title="Schools" value={kpis.schools} icon={Building} href="/schools" description="registered in system" />
+                <StatCard title="Teams" value={kpis.teams} icon={Users} href="/teams" description="across all divisions"/>
+                <StatCard title="Players" value={kpis.players} icon={User} href="/people" description="active players" />
+                <StatCard title="Staff" value={kpis.staff} icon={UserCog} href="/people" description="coaches & officials" />
+                <StatCard title="Medical & Support" value={kpis.medicalSupport} icon={HeartPulse} href="/people" description="all support staff" />
+                <StatCard title="Fields & Venues" value={kpis.fieldsVenues} icon={MapPin} href="/fields" description="available for booking" />
+                <StatCard title="Officials" value={kpis.officials} icon={Users} href="/people" description="umpires & scorers" />
+                <StatCard title="Ground Staff" value={kpis.groundStaff} icon={Wrench} href="/people" description="assigned groundskeepers" />
+                <StatCard title="Fixtures" value={kpis.fixtures} icon={ClipboardList} href="/matches" description="total matches" />
+                <StatCard title="Transport" value={kpis.transport} icon={Bus} href="/transport" description="vehicles in fleet" />
+                <StatCard title="Awards" value={kpis.awards} icon={Medal} href="/awards" description="trophies & accolades" />
             </CardContent>
         </Card>
       
