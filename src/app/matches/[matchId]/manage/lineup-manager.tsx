@@ -17,7 +17,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { GripVertical, Save, Wand2, Loader2, User, Swords, ShieldHalf, UserCheck, Users } from 'lucide-react';
+import { GripVertical, Save, Wand2, Loader2, User, Swords, ShieldHalf, UserCheck, Users, ShieldCheck } from 'lucide-react';
 
 import type { Match, RosterMemberWithStats, AvailabilityStatus } from '@/lib/data';
 import { Button } from '@/components/ui/button';
@@ -153,6 +153,16 @@ export function LineupManager({
   };
 
   const activePlayer = rosterWithStats.find(p => p.personId === activeId);
+
+  if (lineupConfirmed) {
+      return (
+        <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
+          <ShieldCheck className="h-16 w-16 text-green-500 mb-4" />
+          <h2 className="text-2xl font-bold">Lineup Confirmed</h2>
+          <p className="text-muted-foreground">This lineup has been finalized and can no longer be edited.</p>
+        </Card>
+      );
+  }
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>

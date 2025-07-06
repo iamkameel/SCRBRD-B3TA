@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal, Edit } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal, Edit, Lock, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -234,6 +234,9 @@ interface MatchDetailsClientProps {
   vehicles: Vehicle[];
   drivers: Person[];
   canManage: boolean;
+  isManagerForA: boolean;
+  isManagerForB: boolean;
+  isOfficialForMatch: boolean;
 }
 
 export default function MatchDetailsClient({ 
@@ -241,7 +244,7 @@ export default function MatchDetailsClient({
     teamARosterWithStats, teamBRosterWithStats, 
     teamALineup, teamBLineup, scorecard, 
     transportAssignments, vehicles, drivers,
-    canManage
+    canManage, isManagerForA, isManagerForB, isOfficialForMatch,
 }: MatchDetailsClientProps) {
   const { toast } = useToast();
   const { person } = useAuth();
@@ -265,6 +268,12 @@ export default function MatchDetailsClient({
   const [isGeneratingForecast, startForecastGeneration] = React.useTransition();
   const [forecastedPlayer, setForecastedPlayer] = React.useState<string>('');
   const [forecastResult, setForecastResult] = React.useState<PlayerPerformanceForecast | null>(null);
+  
+  const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
+  const areBothLineupsConfirmed = match.lineupConfirmedByCaptainA && match.lineupConfirmedByCaptainB;
+  
+  const canViewTeamA = isAdmin || isManagerForA || isOfficialForMatch || areBothLineupsConfirmed;
+  const canViewTeamB = isAdmin || isManagerForB || isOfficialForMatch || areBothLineupsConfirmed;
 
   React.useEffect(() => {
     setIsClient(true);
@@ -606,40 +615,54 @@ export default function MatchDetailsClient({
                             <div className="flex justify-between items-center">
                                 <h3 className="font-semibold">{match.teamAName}</h3>
                                 {match.lineupConfirmedByCaptainA ? (
-                                    <Badge variant="secondary" className="bg-green-100 text-green-800">Confirmed</Badge>
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800"><CheckCircle className="h-4 w-4 mr-1"/>Confirmed</Badge>
                                 ) : (
-                                    <Badge variant="outline">Pending</Badge>
+                                    <Badge variant="outline"><Clock className="h-4 w-4 mr-1"/>Pending</Badge>
                                 )}
                             </div>
-                            {teamALineup.length > 0 ? (
-                                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                                    {teamALineup.map(playerId => {
-                                        const player = teamARosterWithStats.find(p => p.personId === playerId);
-                                        return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
-                                    })}
-                                </ol>
+                            {canViewTeamA ? (
+                                teamALineup.length > 0 ? (
+                                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                                        {teamALineup.map(playerId => {
+                                            const player = teamARosterWithStats.find(p => p.personId === playerId);
+                                            return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
+                                        })}
+                                    </ol>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
+                                )
                             ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
+                                <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
+                                    <Lock className="h-6 w-6 mx-auto mb-2"/>
+                                    <p>Lineup will be revealed once both teams confirm.</p>
+                                </div>
                             )}
                         </div>
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-semibold">{match.teamBName}</h3>
                                 {match.lineupConfirmedByCaptainB ? (
-                                    <Badge variant="secondary" className="bg-green-100 text-green-800">Confirmed</Badge>
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800"><CheckCircle className="h-4 w-4 mr-1"/>Confirmed</Badge>
                                 ) : (
-                                    <Badge variant="outline">Pending</Badge>
+                                    <Badge variant="outline"><Clock className="h-4 w-4 mr-1"/>Pending</Badge>
                                 )}
                             </div>
-                             {teamBLineup.length > 0 ? (
-                                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                                    {teamBLineup.map(playerId => {
-                                        const player = teamBRosterWithStats.find(p => p.personId === playerId);
-                                        return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
-                                    })}
-                                </ol>
+                            {canViewTeamB ? (
+                                teamBLineup.length > 0 ? (
+                                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                                        {teamBLineup.map(playerId => {
+                                            const player = teamBRosterWithStats.find(p => p.personId === playerId);
+                                            return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
+                                        })}
+                                    </ol>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
+                                )
                             ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
+                                <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
+                                    <Lock className="h-6 w-6 mx-auto mb-2"/>
+                                    <p>Lineup will be revealed once both teams confirm.</p>
+                                </div>
                             )}
                         </div>
                     </CardContent>

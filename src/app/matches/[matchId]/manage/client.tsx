@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineupManager } from './lineup-manager';
 import type { Match, RosterMemberWithStats } from '@/lib/data';
+import { useAuth } from '@/lib/auth-context';
 
 interface ManageLineupClientProps {
   match: Match;
@@ -14,6 +15,8 @@ interface ManageLineupClientProps {
   teamBRosterWithStats: RosterMemberWithStats[];
   teamALineup: string[];
   teamBLineup: string[];
+  isManagerForA: boolean;
+  isManagerForB: boolean;
 }
 
 export default function ManageLineupClient({
@@ -21,8 +24,16 @@ export default function ManageLineupClient({
   teamARosterWithStats,
   teamBRosterWithStats,
   teamALineup,
-  teamBLineup
+  teamBLineup,
+  isManagerForA,
+  isManagerForB,
 }: ManageLineupClientProps) {
+    const { person } = useAuth();
+    const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
+
+    const canManageA = isAdmin || isManagerForA;
+    const canManageB = isAdmin || isManagerForB;
+
     return (
         <div className="flex flex-col gap-8">
             <header>
@@ -33,10 +44,10 @@ export default function ManageLineupClient({
                 <p className="text-muted-foreground">{match.teamAName} vs {match.teamBName}</p>
             </header>
             
-            <Tabs defaultValue="team-a-lineup" className="w-full">
+            <Tabs defaultValue={canManageA ? "team-a-lineup" : "team-b-lineup"} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="team-a-lineup">{match.teamAName}</TabsTrigger>
-                    <TabsTrigger value="team-b-lineup" disabled={!match.teamBId}>{match.teamBName || 'TBD'}</TabsTrigger>
+                    <TabsTrigger value="team-a-lineup" disabled={!canManageA}>{match.teamAName}</TabsTrigger>
+                    <TabsTrigger value="team-b-lineup" disabled={!match.teamBId || !canManageB}>{match.teamBName || 'TBD'}</TabsTrigger>
                 </TabsList>
                 <TabsContent value="team-a-lineup" className="mt-4">
                     <LineupManager 

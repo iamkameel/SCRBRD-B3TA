@@ -1,11 +1,10 @@
 
-
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import MatchDetailsClient from './client';
 import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
-import { getPlayers, getPerson, getPeopleByRole } from '@/lib/actions/players';
+import { getPlayers, getPerson } from '@/lib/actions/players';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import { Button } from '@/components/ui/button';
@@ -72,7 +71,9 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getRosterWithStats(teamBRoster)
   ]);
   
+  const user = userId ? await getPerson(userId) : null;
   const canManage = isManagerForA || isManagerForB;
+  const isOfficialForMatch = officials.some(o => o.personId === userId);
 
   return <MatchDetailsClient 
     match={match} 
@@ -87,6 +88,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     vehicles={vehicles}
     drivers={drivers}
     canManage={canManage}
+    isManagerForA={isManagerForA}
+    isManagerForB={isManagerForB}
+    isOfficialForMatch={isOfficialForMatch}
   />;
 }
-

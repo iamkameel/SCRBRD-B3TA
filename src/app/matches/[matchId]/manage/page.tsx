@@ -93,5 +93,7 @@ export default async function ManageLineupPage({ params }: { params: { matchId: 
     teamBRosterWithStats={teamBRosterWithStats}
     teamALineup={teamALineup}
     teamBLineup={teamBLineup}
+    isManagerForA={isManagerForA}
+    isManagerForB={isManagerForB}
   />;
 }
