@@ -7,7 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from 'next/link';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, SlidersHorizontal, Trophy, Wand2, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, SlidersHorizontal, Trophy, Wand2, Loader2, CalendarIcon } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,8 +32,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +45,131 @@ import { deleteCompetitionAction, autoScheduleFixturesAction } from '@/lib/actio
 import { CompetitionCard } from "./competition-card";
 import { CompetitionDialog } from './competition-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
+const scheduleSchema = z.object({
+  startDate: z.date({ required_error: "A start date is required." }),
+  endDate: z.date({ required_error: "An end date is required." }),
+}).refine(data => data.endDate >= data.startDate, {
+  message: "End date must be on or after start date.",
+  path: ["endDate"],
+});
+
+type ScheduleFormValues = z.infer<typeof scheduleSchema>;
+
+interface AutoScheduleDialogProps {
+  competition: Competition;
+  season: Season;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+function AutoScheduleDialog({ competition, season, open, onOpenChange }: AutoScheduleDialogProps) {
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+
+  const form = useForm<ScheduleFormValues>({
+    resolver: zodResolver(scheduleSchema),
+    defaultValues: {
+      startDate: season.startDate > new Date() ? season.startDate : new Date(),
+      endDate: season.endDate,
+    },
+  });
+
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        startDate: season.startDate > new Date() ? season.startDate : new Date(),
+        endDate: season.endDate,
+      });
+    }
+  }, [open, form, season]);
+
+  function onSubmit(data: ScheduleFormValues) {
+    startTransition(async () => {
+      try {
+        await autoScheduleFixturesAction(competition.competitionId, data.startDate, data.endDate);
+        toast({ title: "Fixtures Scheduled", description: "The match schedule has been generated and saved." });
+        onOpenChange(false);
+      } catch (error) {
+        toast({ title: "Error Scheduling", description: error instanceof Error ? error.message : "Could not schedule fixtures.", variant: "destructive" });
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Auto-Schedule Fixtures for {competition.name}</DialogTitle>
+          <DialogDescription>
+            Select a start and end date for the fixture generation. Matches will be scheduled weekly on Saturdays within this range. The date range must be within the season dates ({format(season.startDate, 'PPP')} - {format(season.endDate, 'PPP')}).
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < season.startDate || date > season.endDate} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>End Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < (form.getValues('startDate') || season.startDate) || date > season.endDate} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancel</Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                {isPending ? "Scheduling..." : "Generate Schedule"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 const COMPETITION_TYPES = ['League', 'Cup', 'Tournament', 'Festival', 'Friendlies'] as const;
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
@@ -53,7 +182,6 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isCompetitionDialogOpen, setIsCompetitionDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const [schedulingId, setSchedulingId] = React.useState<string | null>(null);
   const [competitionToSchedule, setCompetitionToSchedule] = React.useState<Competition | null>(null);
 
 
@@ -125,21 +253,6 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
     if (sortConfig.key !== column) return null;
     if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
     return <ArrowDown className="ml-2 h-4 w-4" />;
-  };
-
-  const handleAutoSchedule = (competitionId: string) => {
-    startTransition(async () => {
-        setSchedulingId(competitionId);
-        try {
-            await autoScheduleFixturesAction(competitionId);
-            toast({ title: "Fixtures Scheduled", description: "The match schedule has been generated and saved." });
-        } catch (error) {
-            toast({ title: "Error Scheduling", description: error instanceof Error ? error.message : "Could not schedule fixtures.", variant: "destructive" });
-        } finally {
-            setSchedulingId(null);
-            setCompetitionToSchedule(null);
-        }
-    });
   };
 
   const handleDelete = () => {
@@ -320,7 +433,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                                {comp.type === 'League' && <DropdownMenuItem onSelect={() => setCompetitionToSchedule(comp)} disabled={isPending}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>}
+                                {comp.type === 'League' && <DropdownMenuItem onSelect={() => setCompetitionToSchedule(comp)}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>}
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -366,17 +479,14 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
       
       {isAdmin && <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />}
       
-      <AlertDialog open={!!competitionToSchedule} onOpenChange={() => setCompetitionToSchedule(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Confirm Auto-Scheduling</AlertDialogTitle><AlertDialogDescription>This will generate a full round-robin schedule for '{competitionToSchedule?.name}'. This action cannot be undone. Are you sure you want to proceed?</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending && schedulingId === competitionToSchedule?.competitionId}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleAutoSchedule(competitionToSchedule!.competitionId)} disabled={isPending && schedulingId === competitionToSchedule?.competitionId}>
-                {isPending && schedulingId === competitionToSchedule?.competitionId ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Scheduling...</> : "Proceed"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {competitionToSchedule && (
+        <AutoScheduleDialog
+          competition={competitionToSchedule}
+          season={seasons.find(s => s.seasonId === competitionToSchedule.seasonId)!}
+          open={!!competitionToSchedule}
+          onOpenChange={() => setCompetitionToSchedule(null)}
+        />
+      )}
 
       {isAdmin && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

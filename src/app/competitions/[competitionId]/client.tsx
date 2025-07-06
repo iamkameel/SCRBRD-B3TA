@@ -4,31 +4,151 @@
 import * as React from "react";
 import Link from 'next/link';
 import { format } from "date-fns";
-import { ArrowLeft, Users, ClipboardList, Trophy, GitMerge, Wand2, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, ClipboardList, Trophy, GitMerge, Wand2, Loader2, CalendarIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { Competition, Match, StandingTeam, LeaderboardPlayer } from "@/lib/data";
+import type { Competition, Match, StandingTeam, LeaderboardPlayer, Season } from "@/lib/data";
 import { TopRunScorersChart, TopWicketTakersChart } from './competition-charts';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { autoScheduleFixturesAction } from "@/lib/actions/competitions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+
+const scheduleSchema = z.object({
+  startDate: z.date({ required_error: "A start date is required." }),
+  endDate: z.date({ required_error: "An end date is required." }),
+}).refine(data => data.endDate >= data.startDate, {
+  message: "End date must be on or after start date.",
+  path: ["endDate"],
+});
+
+type ScheduleFormValues = z.infer<typeof scheduleSchema>;
+
+interface AutoScheduleDialogProps {
+  competition: Competition;
+  season: Season;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+function AutoScheduleDialog({ competition, season, open, onOpenChange }: AutoScheduleDialogProps) {
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+
+  const form = useForm<ScheduleFormValues>({
+    resolver: zodResolver(scheduleSchema),
+    defaultValues: {
+      startDate: season.startDate > new Date() ? season.startDate : new Date(),
+      endDate: season.endDate,
+    },
+  });
+
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        startDate: season.startDate > new Date() ? season.startDate : new Date(),
+        endDate: season.endDate,
+      });
+    }
+  }, [open, form, season]);
+
+  function onSubmit(data: ScheduleFormValues) {
+    startTransition(async () => {
+      try {
+        await autoScheduleFixturesAction(competition.competitionId, data.startDate, data.endDate);
+        toast({ title: "Fixtures Scheduled", description: "The match schedule has been generated and saved." });
+        onOpenChange(false);
+      } catch (error) {
+        toast({ title: "Error Scheduling", description: error instanceof Error ? error.message : "Could not schedule fixtures.", variant: "destructive" });
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Auto-Schedule Fixtures for {competition.name}</DialogTitle>
+          <DialogDescription>
+            Select a start and end date for the fixture generation. Matches will be scheduled weekly on Saturdays within this range. The date range must be within the season dates ({format(season.startDate, 'PPP')} - {format(season.endDate, 'PPP')}).
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < season.startDate || date > season.endDate} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>End Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < (form.getValues('startDate') || season.startDate) || date > season.endDate} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancel</Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                {isPending ? "Scheduling..." : "Generate Schedule"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 interface CompetitionDetailsClientProps {
     competition: Competition;
@@ -38,6 +158,7 @@ interface CompetitionDetailsClientProps {
         topRunScorers: LeaderboardPlayer[];
         topWicketTakers: LeaderboardPlayer[];
     };
+    seasons: Season[];
 }
 
 const BracketMatch = React.forwardRef<HTMLDivElement, { match: Match }>(({ match }, ref) => {
@@ -163,11 +284,10 @@ function TournamentBracket({ rounds }: { rounds: { round: number; matches: Match
     );
 }
 
-export default function CompetitionDetailsClient({ competition, standings, matches, leaderboards }: CompetitionDetailsClientProps) {
-    const { toast } = useToast();
+export default function CompetitionDetailsClient({ competition, standings, matches, leaderboards, seasons }: CompetitionDetailsClientProps) {
     const [isClient, setIsClient] = React.useState(false);
     React.useEffect(() => { setIsClient(true); }, []);
-    const [isScheduling, startSchedulingTransition] = React.useTransition();
+    const [isSchedulingDialogOpen, setIsSchedulingDialogOpen] = React.useState(false);
     
     const { topRunScorers, topWicketTakers } = leaderboards;
     const isLeague = competition.type === 'League';
@@ -186,19 +306,11 @@ export default function CompetitionDetailsClient({ competition, standings, match
             matches: matchesInRound.sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime()),
         })).sort((a, b) => a.round - b.round);
     }, [matches]);
-
-    const handleAutoSchedule = () => {
-        startSchedulingTransition(async () => {
-            try {
-                await autoScheduleFixturesAction(competition.competitionId);
-                toast({ title: "Fixtures Scheduled", description: "The match schedule has been generated and saved." });
-            } catch (error) {
-                toast({ title: "Error Scheduling", description: error instanceof Error ? error.message : "Could not schedule fixtures.", variant: "destructive" });
-            }
-        });
-    }
+    
+    const competitionSeason = seasons.find(s => s.seasonId === competition.seasonId);
 
     return (
+        <>
         <div className="flex flex-col gap-8">
             <header>
                 <Link href="/competitions" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -214,28 +326,10 @@ export default function CompetitionDetailsClient({ competition, standings, match
                     <div className="flex flex-col items-start sm:items-end gap-2">
                          <Badge variant={competition.status === 'Completed' ? 'secondary' : 'default'} className="capitalize h-fit">{competition.status}</Badge>
                          {competition.type === 'League' && competition.status !== 'Completed' && matches.length === 0 && (
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button disabled={isScheduling}>
-                                        {isScheduling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                        Auto-Schedule Fixtures
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirm Auto-Scheduling</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will generate a full round-robin schedule for all teams in this league. This action cannot be undone. Are you sure you want to proceed?
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleAutoSchedule} disabled={isScheduling}>
-                                            {isScheduling ? "Scheduling..." : "Proceed"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <Button onClick={() => setIsSchedulingDialogOpen(true)}>
+                                <Wand2 className="mr-2 h-4 w-4" />
+                                Auto-Schedule Fixtures
+                            </Button>
                          )}
                     </div>
                 </div>
@@ -404,5 +498,14 @@ export default function CompetitionDetailsClient({ competition, standings, match
                 </TabsContent>
             </Tabs>
         </div>
+        {competitionSeason && (
+            <AutoScheduleDialog 
+                competition={competition}
+                season={competitionSeason}
+                open={isSchedulingDialogOpen}
+                onOpenChange={setIsSchedulingDialogOpen}
+            />
+        )}
+        </>
     );
 }

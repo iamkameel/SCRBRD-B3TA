@@ -352,7 +352,7 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
   }
 }
 
-export async function autoScheduleFixturesAction(competitionId: string) {
+export async function autoScheduleFixturesAction(competitionId: string, startDate: Date, endDate: Date) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     await checkManagementPermission(userId);
@@ -378,6 +378,9 @@ export async function autoScheduleFixturesAction(competitionId: string) {
     ]);
 
     if (!season) throw new Error("Season not found for this competition.");
+    if (startDate < season.startDate || endDate > season.endDate) {
+        throw new Error("The selected date range must be within the season's start and end dates.");
+    }
     if (fields.length === 0) throw new Error("No available fields to schedule matches on.");
     
     const validTeams = teams.filter((t): t is Team => t !== null);
@@ -396,7 +399,7 @@ export async function autoScheduleFixturesAction(competitionId: string) {
     const matchesPerRound = numTeams / 2;
     const fixturesToCreate = [];
     
-    let matchDate = new Date(season.startDate);
+    let matchDate = new Date(startDate);
     while (matchDate.getDay() !== 6) { // Find the next Saturday
         matchDate.setDate(matchDate.getDate() + 1);
     }
@@ -422,7 +425,8 @@ export async function autoScheduleFixturesAction(competitionId: string) {
                 dateTime: Timestamp.fromDate(fixtureDateTime),
                 status: 'scheduled',
                 userId,
-                lineupConfirmedByCaptainA: false, lineupConfirmedByCaptainB: false,
+                lineupConfirmedByCaptainA: false,
+                lineupConfirmedByCaptainB: false,
             });
         }
         
@@ -432,8 +436,8 @@ export async function autoScheduleFixturesAction(competitionId: string) {
         }
         
         matchDate.setDate(matchDate.getDate() + 7);
-        if (matchDate > season.endDate) {
-            throw new Error("Not enough time in the season to schedule all matches. Please extend the season end date.");
+        if (matchDate > endDate) {
+            throw new Error("Not enough time in the selected date range to schedule all matches. Please extend the end date.");
         }
     }
 

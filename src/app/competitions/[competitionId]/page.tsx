@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation';
 import { getCompetition, getCompetitionStandings, getCompetitionLeaderboards, getMatchesByCompetition } from '@/lib/actions/competitions';
 import CompetitionDetailsClient from './client';
+import { getSeasons } from '@/lib/actions/seasons';
 
 export default async function CompetitionDetailsPage({ params }: { params: { competitionId: string } }) {
   const competition = await getCompetition(params.competitionId);
@@ -10,10 +11,11 @@ export default async function CompetitionDetailsPage({ params }: { params: { com
     notFound();
   }
 
-  const [standings, matches, leaderboards] = await Promise.all([
+  const [standings, matches, leaderboards, seasons] = await Promise.all([
     getCompetitionStandings(params.competitionId),
     getMatchesByCompetition(params.competitionId),
     getCompetitionLeaderboards(params.competitionId),
+    getSeasons(),
   ]);
 
   return (
@@ -22,6 +24,7 @@ export default async function CompetitionDetailsPage({ params }: { params: { com
       standings={standings}
       matches={matches}
       leaderboards={leaderboards}
+      seasons={seasons}
     />
   );
 }
