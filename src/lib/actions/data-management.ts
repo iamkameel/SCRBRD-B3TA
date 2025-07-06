@@ -193,6 +193,28 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 await commitBatchIfNeeded();
             }
         }
+        
+        // Process Fields (now that schools exist)
+        for (const item of sampleData.fields) {
+            const { fieldId: tempId, ...itemData } = item;
+            const newFieldData: { [key: string]: any } = { ...itemData, userId };
+            if (item.schoolId) {
+                const newSchoolId = idMap.get(item.schoolId);
+                if (newSchoolId) {
+                    newFieldData.schoolId = newSchoolId;
+                    newFieldData.schoolName = sampleData.schools.find(s => s.schoolId === item.schoolId)?.name;
+                }
+            }
+             if (!newFieldData.status) newFieldData.status = 'Available';
+            const docRef = doc(collection(db, 'fields'));
+            batch.set(docRef, newFieldData);
+            if (tempId) { // Check if tempId exists
+                idMap.set(tempId, docRef.id);
+            }
+            itemCount++;
+            await commitBatchIfNeeded();
+        }
+
         await batch.commit(); // Commit remaining items from first stage
         batch = writeBatch(db);
         itemCount = 0; // Reset counter for new batch series
