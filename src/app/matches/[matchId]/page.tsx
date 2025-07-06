@@ -1,4 +1,5 @@
 
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -10,6 +11,7 @@ import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transpo
 import { Button } from '@/components/ui/button';
 import type { RosterMember, PlayerStats, RosterMemberWithStats } from '@/lib/data';
 import { getPlayerStats } from '@/lib/actions/stats';
+import { getUserId } from '@/lib/auth';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const { matchId } = params;
@@ -55,8 +57,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getPlayers(),
     getTeamRoster(match.teamAId),
     match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
-    getMatchLineup(matchId, match.teamAId),
-    match.teamBId ? getMatchLineup(matchId, match.teamBId) : Promise.resolve([]),
+    getMatchLineup(match.matchId, match.teamAId),
+    match.teamBId ? getMatchLineup(match.matchId, match.teamBId) : Promise.resolve([]),
     getScorecard(matchId),
     getMatchTransportAssignments(matchId),
     getVehicles(),
@@ -87,3 +89,4 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     canManage={canManage}
   />;
 }
+
