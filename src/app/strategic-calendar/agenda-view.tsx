@@ -56,7 +56,7 @@ export function AgendaView({ matches }: { matches: Match[] }) {
             </div>
             <div className="mb-8">
                 <h2 className="text-xl font-bold">{format(date, 'MMMM do, yyyy')}</h2>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">{format(date, 'eeee')} <Badge variant="outline">{dayMatches.length} Fixtures</Badge></p>
+                <div className="text-sm text-muted-foreground flex items-center gap-2">{format(date, 'eeee')} <Badge variant="outline">{dayMatches.length} Fixtures</Badge></div>
             </div>
             <div className="space-y-6">
               {dayMatches.map((match) => {
@@ -95,5 +95,3 @@ export function AgendaView({ matches }: { matches: Match[] }) {
     </div>
   );
 }
-
-    
