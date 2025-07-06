@@ -17,7 +17,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { GripVertical, Save, Wand2, Loader2, User, Swords, ShieldHalf, ShieldCheck, UserCheck, Search, Plus, X } from 'lucide-react';
+import { GripVertical, Save, Wand2, Loader2, User, Users, Swords, ShieldHalf, ShieldCheck, UserCheck, Search, Plus, X } from 'lucide-react';
 
 import type { Match, RosterMemberWithStats, PlayerStats } from '@/lib/data';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ import { saveMatchLineupAction, confirmLineupAction } from '@/lib/actions/matche
 import { autoSelectLineupAction } from '@/lib/actions/analysis';
 import { useAuth } from '@/lib/auth-context';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { SortablePlayerCard, getPrimaryRole } from './player-card';
+import { SortablePlayerCard, PlayerCard, getPrimaryRole } from './player-card';
 
 interface LineupManagerProps {
   teamId: string;
