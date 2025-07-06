@@ -43,7 +43,7 @@ export function CompetitionCard({ competition, onEdit, onDelete, onAutoSchedule,
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 -mr-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                                {competition.type === 'League' && <DropdownMenuItem onSelect={onAutoSchedule}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>}
+                                <DropdownMenuItem onSelect={onAutoSchedule} disabled={competition.status === 'Completed'}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                             </DropdownMenuContent>

@@ -433,7 +433,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                                {comp.type === 'League' && <DropdownMenuItem onSelect={() => setCompetitionToSchedule(comp)}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>}
+                                <DropdownMenuItem onSelect={() => setCompetitionToSchedule(comp)} disabled={comp.status === 'Completed'}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>

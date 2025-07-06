@@ -325,7 +325,7 @@ export default function CompetitionDetailsClient({ competition, standings, match
                     </div>
                     <div className="flex flex-col items-start sm:items-end gap-2">
                          <Badge variant={competition.status === 'Completed' ? 'secondary' : 'default'} className="capitalize h-fit">{competition.status}</Badge>
-                         {competition.type === 'League' && competition.status !== 'Completed' && matches.length === 0 && (
+                         {competition.status !== 'Completed' && matches.length === 0 && (
                             <Button onClick={() => setIsSchedulingDialogOpen(true)}>
                                 <Wand2 className="mr-2 h-4 w-4" />
                                 Auto-Schedule Fixtures

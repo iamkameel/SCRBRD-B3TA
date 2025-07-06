@@ -78,7 +78,7 @@ export const getCompetition = cache(async (competitionId: string): Promise<Compe
 const competitionSchema = z.object({
   name: z.string().min(1, { message: "Competition name is required." }),
   competitionClass: z.string().optional(),
-  type: z.enum(['League', 'Cup', 'Tournament', 'Festival', 'Friendlies']),
+  type: z.enum(['League', 'Cup', 'Tournament', 'Festival', 'Friendlies'], { required_error: "Type is required." }),
   seasonId: z.string({ required_error: "Please select a season." }),
   divisionId: z.string({ required_error: "Please select a division." }),
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
@@ -359,7 +359,6 @@ export async function autoScheduleFixturesAction(competitionId: string, startDat
 
     const competition = await getCompetition(competitionId);
     if (!competition) throw new Error("Competition not found.");
-    if (competition.type !== 'League') throw new Error("Auto-scheduling is currently only supported for 'League' competitions.");
 
     const existingMatches = await getMatchesByCompetition(competitionId);
     if (existingMatches.length > 0) {
