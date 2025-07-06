@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle, HeartPulse, Wrench, Medal, Mail, ThumbsUp, ThumbsDown, Loader2, Handshake } from 'lucide-react';
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@
 import { format } from 'date-fns';
 import { reviewAssignmentRequestAction } from '@/lib/actions/requests';
 import type { AssignmentRequest } from '@/lib/data';
+import { useAuth } from '@/lib/auth-context';
 import { TeamDialog } from '@/app/teams/team-dialog';
 import { CompetitionDialog } from '@/app/competitions/competition-dialog';
 import { SchoolDialog } from '@/app/schools/school-dialog';
@@ -27,6 +29,11 @@ import { getCompetitions } from '@/lib/actions/competitions';
 import { getFields } from '@/lib/actions/fields';
 import { getPeopleByRole } from '@/lib/actions/players';
 import type { Team, School, Division, Season, Person, Field, Competition } from '@/lib/data';
+
+const PersonDialog = dynamic(() => import('@/app/people/person-dialog').then(mod => mod.PersonDialog), {
+  ssr: false,
+});
+
 
 interface AdminDashboardData {
     kpis: {
@@ -97,6 +104,7 @@ function ManagementLink({ href, title, description, icon: Icon, onAddClick }: { 
 }
 
 export default function AdminDashboard() {
+  const { person } = useAuth();
   const [data, setData] = React.useState<AdminDashboardData | null>(null);
   const [dialogData, setDialogData] = React.useState<DialogData | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -111,6 +119,7 @@ export default function AdminDashboard() {
       field: false,
       financial: false,
       sponsor: false,
+      person: false,
   });
 
   const handleReview = (requestId: string, decision: 'approve' | 'deny') => {
@@ -165,9 +174,9 @@ export default function AdminDashboard() {
   const { kpis, pendingRequests } = data;
 
   const managementLinks = [
-    { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: User },
-    { href: "/people", title: "Staff Management", description: "Manage coaches, medical staff, and grounds-keepers.", icon: UserCog },
-    { href: "/people", title: "Official Management", description: "Manage umpires, scorers, and other match officials.", icon: Users },
+    { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: User, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
+    { href: "/people", title: "Staff Management", description: "Manage coaches, medical staff, and grounds-keepers.", icon: UserCog, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
+    { href: "/people", title: "Official Management", description: "Manage umpires, scorers, and other match officials.", icon: Users, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
     { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: Users, onAddClick: () => setDialogState(s => ({...s, team: true})) },
     { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: Trophy, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
     { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: ClipboardList },
@@ -273,6 +282,16 @@ export default function AdminDashboard() {
             <FieldDialog mode="add" open={dialogState.field} onOpenChange={(open) => setDialogState(s => ({...s, field: open}))} schools={dialogData.schools} groundskeepers={dialogData.groundskeeper} />
             <TransactionDialog mode="add" open={dialogState.financial} onOpenChange={(open) => setDialogState(s => ({...s, financial: open}))} />
             <SponsorDialog mode="add" open={dialogState.sponsor} onOpenChange={(open) => setDialogState(s => ({...s, sponsor: open}))} />
+            {dialogState.person && (
+                <PersonDialog
+                    mode="add"
+                    person={undefined}
+                    currentUser={person}
+                    open={dialogState.person}
+                    onOpenChange={(open) => setDialogState(s => ({ ...s, person: open }))}
+                    schools={dialogData.schools}
+                />
+            )}
         </>
     )}
     </>
