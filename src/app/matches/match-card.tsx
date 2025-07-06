@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -39,15 +40,15 @@ export function MatchCard({ match, onEdit, onDelete, isAdmin }: MatchCardProps) 
                     <div className="flex-1 mr-2">
                         <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize mb-2">{match.status}</Badge>
                         <CardTitle className="text-lg">
-                             <Link href={`/matches/${match.matchId}`} className="hover:underline leading-tight">
+                             <Link href={`/matches/${match.matchId}`} className="hover:underline leading-tight block">
                                 <div className="flex items-center gap-2">
                                     <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
-                                    <span>{match.teamAName}</span>
+                                    <span className="truncate">{match.teamAName}</span>
                                 </div>
-                                <div className="text-xs text-muted-foreground font-normal pl-4 my-0.5">vs</div>
+                                <div className="text-xs text-muted-foreground font-normal pl-8 my-0.5">vs</div>
                                 <div className="flex items-center gap-2">
                                     <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
-                                    <span>{match.teamBName}</span>
+                                    <span className="truncate">{match.teamBName}</span>
                                 </div>
                              </Link>
                         </CardTitle>

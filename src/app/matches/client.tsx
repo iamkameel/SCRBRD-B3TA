@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DropdownMenu,
@@ -414,6 +414,17 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                 </div>
             )}
           </CardContent>
+          <CardFooter className="border-t pt-4 mt-4">
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                <span className="font-semibold">Legend:</span>
+                {Object.entries(competitionTypeColors).map(([type, colorClass]) => (
+                    <div key={type} className="flex items-center gap-1.5">
+                        <div className={cn("w-2.5 h-2.5 rounded-full", colorClass || 'bg-gray-400')}></div>
+                        <span className="capitalize">{type}</span>
+                    </div>
+                ))}
+            </div>
+          </CardFooter>
         </Card>
       </div>
 
