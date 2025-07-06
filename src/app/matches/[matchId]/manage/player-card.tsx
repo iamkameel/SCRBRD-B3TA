@@ -12,12 +12,12 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { StatItem } from '@/components/stat-item';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export const getPrimaryRole = (player: RosterMemberWithStats) => {
     const { stats, roles } = player;
     const playerRoles = new Set(roles);
 
-    // Wicket-Keeper is a specialized role, so check for it first.
     if (playerRoles.has('Wicket-Keeper')) {
         return { label: 'Wicket-Keeper', icon: ShieldHalf, key: 'WK' };
     }
@@ -32,14 +32,25 @@ export const getPrimaryRole = (player: RosterMemberWithStats) => {
     return { label: 'Player', icon: User, key: 'BAT' };
 };
 
+const getPlayerSpecialities = (player: RosterMemberWithStats): string => {
+    const specialities: string[] = [];
+    if (player.physicalAttributes?.battingHand) {
+        specialities.push(`${player.physicalAttributes.battingHand}-hand Bat`);
+    }
+    if (player.physicalAttributes?.bowlingStyles && player.physicalAttributes.bowlingStyles.length > 0) {
+        specialities.push(...player.physicalAttributes.bowlingStyles);
+    }
+    return specialities.join(' | ');
+};
+
 
 interface PlayerCardProps {
     player: RosterMemberWithStats;
     index?: number;
     isDragging?: boolean;
     availability?: { status: AvailabilityStatus; note?: string };
-    onAction?: () => void;
-    actionIcon?: React.ElementType;
+    isSelected: boolean;
+    onSelect: (checked: boolean) => void;
     dragHandleProps?: any;
 }
 
@@ -67,8 +78,9 @@ const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note
 };
 
 export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
-    ({ player, index, isDragging, availability, onAction, actionIcon: ActionIcon, dragHandleProps }, ref) => {
+    ({ player, index, isDragging, availability, isSelected, onSelect, dragHandleProps }, ref) => {
     const { label: roleLabel, icon: RoleIcon } = getPrimaryRole(player);
+    const specialities = getPlayerSpecialities(player);
     
     return (
         <div ref={ref} className={cn("flex items-center bg-card p-2 border rounded-lg shadow-sm w-full", isDragging && "opacity-50 shadow-2xl")}>
@@ -76,12 +88,13 @@ export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
                 <GripVertical className="h-5 w-5 text-muted-foreground" />
             </div>
             {index && <span className="font-bold text-lg w-5 text-center text-muted-foreground">{index}</span>}
-             <div className="flex items-center gap-3 flex-1 ml-2">
+             <Checkbox checked={isSelected} onCheckedChange={onSelect} className="mx-2"/>
+             <div className="flex items-center gap-3 flex-1">
                 <Avatar className="h-10 w-10">
                     <AvatarImage src={player.profileImageUrl} />
                     <AvatarFallback>{player.personName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
+                <div className="flex-1 overflow-hidden">
                     <p className="font-semibold">{player.personName}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <RoleIcon className="h-3 w-3" />
@@ -89,6 +102,7 @@ export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
                         {player.isCaptain && <Badge variant="outline" className="text-amber-500 border-amber-500 px-1 py-0 text-[10px]">C</Badge>}
                         {player.isViceCaptain && <Badge variant="outline" className="px-1 py-0 text-[10px]">VC</Badge>}
                     </div>
+                    {specialities && <p className="text-xs text-muted-foreground truncate">{specialities}</p>}
                 </div>
             </div>
             <div className="flex items-center gap-4 mx-4">
@@ -97,19 +111,12 @@ export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
                 <StatItem label="Wkts" value={player.stats.wicketsTaken} size="small" />
             </div>
             <AvailabilityBadge status={availability?.status} note={availability?.note} />
-            <div className="pl-2">
-               {ActionIcon && onAction && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onAction(); }}>
-                        <ActionIcon className="h-4 w-4" />
-                    </Button>
-                )}
-            </div>
         </div>
     );
 });
 PlayerCard.displayName = "PlayerCard";
 
-export const SortablePlayerCard = ({ player, index, availability, onAction, actionIcon }: { player: RosterMemberWithStats; index?: number; availability?: { status: AvailabilityStatus; note?: string }; onAction: () => void; actionIcon: React.ElementType; }) => {
+export const SortablePlayerCard = ({ player, index, availability, isSelected, onSelect }: { player: RosterMemberWithStats; index?: number; availability?: { status: AvailabilityStatus; note?: string }; isSelected: boolean; onSelect: (checked: boolean) => void; }) => {
     const {
         attributes,
         listeners,
@@ -130,8 +137,8 @@ export const SortablePlayerCard = ({ player, index, availability, onAction, acti
             player={player} 
             index={index} 
             availability={availability} 
-            onAction={onAction}
-            actionIcon={actionIcon}
+            isSelected={isSelected}
+            onSelect={onSelect}
             dragHandleProps={{...attributes, ...listeners}}
         />
     );

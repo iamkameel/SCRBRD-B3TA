@@ -17,7 +17,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { GripVertical, Save, Wand2, Loader2, User, Users, Swords, ShieldHalf, ShieldCheck, UserCheck, Search, Plus, X } from 'lucide-react';
+import { GripVertical, Save, Wand2, Loader2, User, Users, Swords, ShieldHalf, ShieldCheck, UserCheck, Search, Plus, X, Trash2 } from 'lucide-react';
 
 import type { Match, RosterMemberWithStats, PlayerStats } from '@/lib/data';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,8 @@ import { autoSelectLineupAction } from '@/lib/actions/analysis';
 import { useAuth } from '@/lib/auth-context';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { SortablePlayerCard, PlayerCard, getPrimaryRole } from './player-card';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface LineupManagerProps {
   teamId: string;
@@ -59,6 +61,9 @@ export function LineupManager({
 
   const [squadPlayers, setSquadPlayers] = React.useState<RosterMemberWithStats[]>([]);
   const [lineupPlayers, setLineupPlayers] = React.useState<RosterMemberWithStats[]>([]);
+  
+  const [selectedSquadIds, setSelectedSquadIds] = React.useState<string[]>([]);
+  const [selectedLineupIds, setSelectedLineupIds] = React.useState<string[]>([]);
 
   const [searchQuery, setSearchQuery] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState('All');
@@ -89,6 +94,31 @@ export function LineupManager({
           setLineupPlayers(lineup => lineup.filter(p => p.personId !== playerId));
           setSquadPlayers(squad => [...squad, playerToRemove].sort((a,b) => a.personName.localeCompare(b.personName)));
       }
+  };
+  
+  const handleAddSelected = () => {
+    const playersToAdd = squadPlayers.filter(p => selectedSquadIds.includes(p.personId));
+    const newLinupCount = lineupPlayers.length + playersToAdd.length;
+    if (newLinupCount > 11) {
+        toast({ title: 'Selection Too Large', description: `You can only add ${11 - lineupPlayers.length} more players.`, variant: 'destructive'});
+        return;
+    }
+    setLineupPlayers(prev => [...prev, ...playersToAdd]);
+    setSquadPlayers(prev => prev.filter(p => !selectedSquadIds.includes(p.personId)));
+    setSelectedSquadIds([]);
+  };
+
+  const handleRemoveSelected = () => {
+    const playersToRemove = lineupPlayers.filter(p => selectedLineupIds.includes(p.personId));
+    setLineupPlayers(prev => prev.filter(p => !selectedLineupIds.includes(p.personId)));
+    setSquadPlayers(prev => [...prev, ...playersToRemove].sort((a, b) => a.personName.localeCompare(b.personName)));
+    setSelectedLineupIds([]);
+  };
+
+  const handleClearAll = () => {
+    setSquadPlayers(prev => [...prev, ...lineupPlayers].sort((a, b) => a.personName.localeCompare(b.personName)));
+    setLineupPlayers([]);
+    setSelectedLineupIds([]);
   };
 
   const sensors = useSensors(
@@ -216,17 +246,30 @@ export function LineupManager({
                         </div>
                     </div>
                 </CardHeader>
+                <div className="flex justify-between items-center p-2 border-y">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="select-all-squad"
+                      checked={filteredSquadPlayers.length > 0 && selectedSquadIds.length === filteredSquadPlayers.length}
+                      onCheckedChange={(checked) => setSelectedSquadIds(checked ? filteredSquadPlayers.map(p => p.personId) : [])}
+                    />
+                    <Label htmlFor="select-all-squad" className="text-sm font-normal">Select All</Label>
+                  </div>
+                  <Button size="sm" onClick={handleAddSelected} disabled={selectedSquadIds.length === 0}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Selected ({selectedSquadIds.length})
+                  </Button>
+                </div>
                 <SortableContext items={filteredSquadPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
-                    <CardContent id="squad" className="min-h-[300px]">
-                        <ScrollArea className="h-[600px] pr-4">
+                    <CardContent id="squad" className="min-h-[300px] p-2">
+                        <ScrollArea className="h-[600px] pr-2">
                             <div className="space-y-2">
                                 {filteredSquadPlayers.map(player => (
                                     <SortablePlayerCard 
                                       key={player.personId} 
                                       player={player} 
                                       availability={match.availability?.[player.personId]}
-                                      onAction={() => addPlayerToLineup(player.personId)}
-                                      actionIcon={Plus}
+                                      isSelected={selectedSquadIds.includes(player.personId)}
+                                      onSelect={(checked) => setSelectedSquadIds(prev => checked ? [...prev, player.personId] : prev.filter(id => id !== player.personId))}
                                     />
                                 ))}
                                 {filteredSquadPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">No players found matching filters.</p>}
@@ -241,17 +284,35 @@ export function LineupManager({
                      <div className="flex justify-between items-center">
                         <CardTitle className="flex items-center gap-2"><ShieldHalf /> Selected XI ({lineupPlayers.length}/11)</CardTitle>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            {lineupComposition.BAT && <span>{lineupComposition.BAT} BAT</span>}
-                            {lineupComposition.BOWL && <span>{lineupComposition.BOWL} BOWL</span>}
-                            {lineupComposition.AR && <span>{lineupComposition.AR} AR</span>}
-                            {lineupComposition.WK && <span>{lineupComposition.WK} WK</span>}
+                            {lineupComposition.BAT > 0 && <span>{lineupComposition.BAT} BAT</span>}
+                            {lineupComposition.BOWL > 0 && <span>{lineupComposition.BOWL} BOWL</span>}
+                            {lineupComposition.AR > 0 && <span>{lineupComposition.AR} AR</span>}
+                            {lineupComposition.WK > 0 && <span>{lineupComposition.WK} WK</span>}
                         </div>
                     </div>
-                    <CardDescription>Drag to reorder the batting lineup.</CardDescription>
+                    <CardDescription>Drag to reorder the batting lineup. Use checkboxes for bulk removal.</CardDescription>
                 </CardHeader>
+                <div className="flex justify-between items-center p-2 border-y">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="select-all-lineup"
+                      checked={lineupPlayers.length > 0 && selectedLineupIds.length === lineupPlayers.length}
+                      onCheckedChange={(checked) => setSelectedLineupIds(checked ? lineupPlayers.map(p => p.personId) : [])}
+                    />
+                    <Label htmlFor="select-all-lineup" className="text-sm font-normal">Select All</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="destructive" onClick={handleRemoveSelected} disabled={selectedLineupIds.length === 0}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Remove Selected ({selectedLineupIds.length})
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleClearAll} disabled={lineupPlayers.length === 0}>
+                      Clear All
+                    </Button>
+                  </div>
+                </div>
                 <SortableContext items={lineupPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
-                     <CardContent id="lineup" className="min-h-[300px]">
-                        <ScrollArea className="h-[600px] pr-4">
+                     <CardContent id="lineup" className="min-h-[300px] p-2">
+                        <ScrollArea className="h-[600px] pr-2">
                              <div className="space-y-2">
                                 {lineupPlayers.map((player, index) => (
                                     <SortablePlayerCard 
@@ -259,8 +320,8 @@ export function LineupManager({
                                       player={player} 
                                       index={index + 1} 
                                       availability={match.availability?.[player.personId]}
-                                      onAction={() => removePlayerFromLineup(player.personId)}
-                                      actionIcon={X}
+                                      isSelected={selectedLineupIds.includes(player.personId)}
+                                      onSelect={(checked) => setSelectedLineupIds(prev => checked ? [...prev, player.personId] : prev.filter(id => id !== player.personId))}
                                     />
                                 ))}
                                 {lineupPlayers.length < 11 && (

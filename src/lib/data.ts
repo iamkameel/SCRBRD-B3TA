@@ -162,6 +162,7 @@ export interface RosterMember {
 export interface RosterMemberWithStats extends RosterMember {
     stats: PlayerStats;
     profileImageUrl?: string;
+    physicalAttributes?: Person['physicalAttributes'];
 }
 
 
