@@ -185,7 +185,7 @@ export default function AdminDashboard() {
     { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: Bus },
     { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: Banknote, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
     { href: "/sponsors", title: "Sponsors", description: "Manage league and team sponsors.", icon: Handshake, onAddClick: () => setDialogState(s => ({...s, sponsor: true})) },
-    { href: "/user-management", title: "User Management", description: "Invite and manage system users.", icon: UserCog },
+    { href: "/user-management", title: "User Management", description: "Invite and manage system users.", icon: UserCog, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
     { href: "/data-management", title: "Data Management", description: "Migrate sample data or clear records.", icon: Database },
   ];
 
