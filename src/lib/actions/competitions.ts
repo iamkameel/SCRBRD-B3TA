@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person, Match } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
-import { getTeam, getTeams } from './teams';
+import { getTeam, getTeams, getTeamStats } from './teams';
 import { getPlayerStats } from './stats';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
