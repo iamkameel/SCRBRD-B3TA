@@ -20,7 +20,7 @@ function MedicalDashboardInternal({ matches }: { matches: Match[] }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 rounded-lg shadow-md">
+      <header className="bg-gradient-to-r from-[#069669] to-[#3ac96f] text-primary-foreground p-6 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold">Medical Staff Dashboard</h1>
         <p className="text-sm opacity-90">Welcome, {person?.activeRole}! Overview of upcoming matches.</p>
       </header>

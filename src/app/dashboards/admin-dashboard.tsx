@@ -118,7 +118,7 @@ const GradientUsersIcon = () => (
 function StatCard({ title, value, icon: Icon, description, href }: { title: string; value: string | number; icon: React.ElementType; description?: string, href: string }) {
     return (
         <Link href={href} className="block group">
-            <Card className="h-full transition-colors group-hover:bg-accent/20 dark:group-hover:bg-accent/10 group-hover:border-primary/30">
+            <Card className="h-full transition-colors group-hover:bg-[#94dca4]/20 dark:group-hover:bg-[#94dca4]/10 group-hover:border-primary/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{title}</CardTitle>
                     <Icon className="h-4 w-4 text-muted-foreground" />
@@ -143,7 +143,7 @@ function ManagementLink({ href, title, description, icon: Icon, onAddClick, vari
             </Link>
             <div className="flex items-center shrink-0">
                 {onAddClick ? (
-                    <Button onClick={onAddClick} size="icon" className={cn("h-9 w-9", isThemed ? "bg-primary text-primary-foreground hover:bg-primary/90" : "")} variant={isThemed ? undefined : "outline"}>
+                    <Button onClick={onAddClick} size="icon" className={cn("h-9 w-9", isThemed ? "bg-[#26a66c] text-white hover:bg-[#8bcaac]" : "")} variant={isThemed ? undefined : "outline"}>
                         <PlusCircle className="h-4 w-4" />
                         <span className="sr-only">Add new for {title}</span>
                     </Button>
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
   return (
     <>
     <div className="flex flex-col gap-8">
-        <header className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 rounded-lg shadow-md">
+        <header className="bg-gradient-to-r from-[#069669] to-[#3ac96f] text-primary-foreground p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold">Admin Dashboard</h1>

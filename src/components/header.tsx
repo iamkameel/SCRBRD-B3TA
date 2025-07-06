@@ -188,7 +188,7 @@ export function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-40 flex items-center h-14 gap-4 px-4 border-b lg:px-6 bg-primary text-primary-foreground">
+        <header className="sticky top-0 z-40 flex items-center h-14 gap-4 px-4 lg:px-6 bg-gradient-to-r from-[#069669] to-[#3ac96f] text-primary-foreground">
             <Sheet>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="shrink-0 hover:bg-white/20 md:hidden">
