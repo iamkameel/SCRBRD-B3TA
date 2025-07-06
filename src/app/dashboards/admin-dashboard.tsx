@@ -259,7 +259,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                {managementLinks.map(link => (
-                   <ManagementLink key={link.href} {...link} />
+                   <ManagementLink key={link.title} {...link} />
                ))}
             </CardContent>
         </Card>
