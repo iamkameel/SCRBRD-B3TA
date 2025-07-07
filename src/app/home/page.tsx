@@ -1,8 +1,13 @@
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Wand2, ClipboardList, CalendarCheck, BarChartHorizontal, BrainCircuit, UserCog } from 'lucide-react';
@@ -19,217 +24,247 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
   </div>
 );
 
-const TestimonialCard = ({ quote, name, role, avatarSrc, avatarHint }: { quote: string, name: string, role: string, avatarSrc: string, avatarHint: string }) => (
-    <Card className="flex flex-col justify-between bg-card/80 backdrop-blur-sm">
-        <CardContent className="pt-6">
-            <p className="text-muted-foreground">"{quote}"</p>
-        </CardContent>
-        <CardHeader>
-            <div className="flex items-center gap-4">
-                <Avatar>
-                    <AvatarImage src={avatarSrc} alt={name} />
-                    <AvatarFallback data-ai-hint={avatarHint}>{name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <CardTitle className="text-base">{name}</CardTitle>
-                    <CardDescription>{role}</CardDescription>
-                </div>
-            </div>
-        </CardHeader>
-    </Card>
+const TestimonialCard = ({
+  quote,
+  name,
+  role,
+  avatarSrc,
+  avatarHint,
+}: {
+  quote: string;
+  name: string;
+  role: string;
+  avatarSrc: string;
+  avatarHint: string;
+}) => (
+  <Card className="flex flex-col justify-between bg-card/80 backdrop-blur-sm">
+    <CardContent className="pt-6">
+      <p className="text-muted-foreground">"{quote}"</p>
+    </CardContent>
+    <CardHeader>
+      <div className="flex items-center gap-4">
+        <Avatar>
+          <AvatarImage src={avatarSrc} alt={name} />
+          <AvatarFallback data-ai-hint={avatarHint}>
+            {name.split(' ').map((n) => n[0]).join('')}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <CardTitle className="text-base">{name}</CardTitle>
+          <CardDescription>{role}</CardDescription>
+        </div>
+      </div>
+    </CardHeader>
+  </Card>
 );
 
 export default function LandingPage() {
   return (
     <>
-        {/* Hero Section */}
-        <section className="relative w-full py-20 md:py-32 lg:py-40 text-primary-foreground">
-            <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3718433.jpg"
-                alt="A cricket player hitting a shot"
-                data-ai-hint="cricket action"
-                fill
-                className="object-cover -z-10"
-            />
-            <div className="absolute inset-0 bg-black/60 -z-10" />
-            <div className="container relative z-10">
-                <div className="flex flex-col items-center justify-center space-y-6 text-center">
-                    <Badge variant="secondary" className="w-fit">The All-in-One Cricket Platform</Badge>
-                    <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                        Manage, Score, and Analyze Like a Pro
-                    </h1>
-                    <p className="max-w-[700px] md:text-xl">
-                        SCRBRD elevates cricket management. Go beyond the scorecard with live scoring, powerful AI analytics, and seamless league administration.
-                    </p>
-                    <div className="flex flex-col gap-4 min-[400px]:flex-row">
-                        <Button asChild size="lg">
-                            <Link href="/signup">Get Started</Link>
-                        </Button>
-                        <Button asChild size="lg" variant="secondary">
-                            <Link href="#features">Learn More</Link>
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">A Feature for Every Part of the Game</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  From grassroots to the top leagues, SCRBRD provides the tools to streamline operations and uncover game-winning insights.
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl items-stretch gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 lg:max-w-none">
-               <FeatureCard 
-                icon={ClipboardList} 
-                title="Comprehensive Management"
-                description="Manage schools, teams, players, and officials in one unified hub. Streamline your entire league administration from a single dashboard."
-              />
-              <FeatureCard 
-                icon={CalendarCheck} 
-                title="Intelligent Scheduling"
-                description="Plan your season with our AI-powered fixture scheduler and strategic calendar. Avoid clashes, manage venues, and assign transport with ease."
-              />
-               <FeatureCard 
-                icon={Wand2} 
-                title="Live Scoring & AI Scorecards"
-                description="Capture every ball with our intuitive live scoring interface or generate a complete, realistic scorecard with a single click using AI."
-              />
-              <FeatureCard 
-                icon={BarChartHorizontal} 
-                title="Advanced Match Analytics"
-                description="Go beyond the result. Analyze completed matches with interactive Manhattan, Worm, and Wagon Wheel charts for deep visual insights."
-              />
-              <FeatureCard 
-                icon={BrainCircuit} 
-                title="AI-Powered Insights"
-                description="Leverage AI for everything from match previews and journalistic summaries to player-of-the-match selections and performance forecasts."
-              />
-              <FeatureCard 
-                icon={UserCog} 
-                title="Holistic Player Development"
-                description="Track player progress with a dedicated performance tracker, log skills with radar charts, and generate AI-driven development plans."
-              />
+      {/* Hero Section */}
+      <section className="relative w-full py-20 md:py-32 lg:py-40 text-primary-foreground">
+        <Image
+          src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3718433.jpg"
+          alt="A cricket player hitting a shot"
+          data-ai-hint="cricket action"
+          fill
+          className="object-cover -z-10"
+        />
+        <div className="absolute inset-0 bg-black/60 -z-10" />
+        <div className="container relative z-10">
+          <div className="flex flex-col items-center justify-center space-y-6 text-center">
+            <Badge variant="secondary" className="w-fit">
+              The All-in-One Cricket Platform
+            </Badge>
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+              Manage, Score, and Analyze Like a Pro
+            </h1>
+            <p className="max-w-[700px] md:text-xl">
+              SCRBRD elevates cricket management. Go beyond the scorecard with live scoring, powerful AI analytics, and seamless league administration.
+            </p>
+            <div className="flex flex-col gap-4 min-[400px]:flex-row">
+                <Button asChild size="lg">
+                    <Link href="/signup">Get Started</Link>
+                </Button>
+                <Button asChild size="lg" variant="secondary">
+                    <Link href="#features">Learn More</Link>
+                </Button>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-         {/* How It Works Section */}
-        <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
-            <Image 
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg" 
-                alt="Grass texture background"
-                data-ai-hint="grass texture"
-                fill
-                className="object-cover -z-10"
-            />
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm -z-10" />
-            <div className="container relative z-10">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                    <div className="space-y-2">
-                        <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary font-medium">Streamlined Workflow</div>
-                        <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Get Up and Running in Minutes</h2>
-                        <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                            Our logical four-step process makes setting up and managing your season a breeze.
-                        </p>
-                    </div>
-                </div>
-                <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-4 lg:gap-12">
-                    <div className="flex flex-col items-center text-center">
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"><span className="text-2xl font-bold">1</span></div>
-                        <h3 className="text-xl font-bold">Setup</h3>
-                        <p className="text-muted-foreground">Define your foundational data: seasons, divisions, schools, fields, and people.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"><span className="text-2xl font-bold">2</span></div>
-                        <h3 className="text-xl font-bold">Organize</h3>
-                        <p className="text-muted-foreground">Create teams, assign players to rosters, and group them into competitions.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"><span className="text-2xl font-bold">3</span></div>
-                        <h3 className="text-xl font-bold">Schedule</h3>
-                        <p className="text-muted-foreground">Create fixtures with our smart clash detection and assign officials and transport.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"><span className="text-2xl font-bold">4</span></div>
-                        <h3 className="text-xl font-bold">Analyze</h3>
-                        <p className="text-muted-foreground">Score live or use AI to generate results, then dive deep into the stats and analytics.</p>
-                    </div>
-                </div>
+      {/* Features Section */}
+      <section id="features" className="w-full py-12 md:py-24 lg:py-32">
+        <div className="container">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">A Feature for Every Part of the Game</h2>
+              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                From grassroots to the top leagues, SCRBRD provides the tools to streamline operations and uncover game-winning insights.
+              </p>
             </div>
-        </section>
+          </div>
+          <div className="mx-auto grid max-w-5xl items-stretch gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 lg:max-w-none">
+             <FeatureCard 
+              icon={ClipboardList} 
+              title="Comprehensive Management"
+              description="Manage schools, teams, players, and officials in one unified hub. Streamline your entire league administration from a single dashboard."
+            />
+            <FeatureCard
+              icon={CalendarCheck} 
+              title="Intelligent Scheduling"
+              description="Plan your season with our AI-powered fixture scheduler and strategic calendar. Avoid clashes, manage venues, and assign transport with ease."
+            />
+             <FeatureCard 
+              icon={Wand2} 
+              title="Live Scoring & AI Scorecards"
+              description="Capture every ball with our intuitive live scoring interface or generate a complete, realistic scorecard with a single click using AI."
+            />
+            <FeatureCard 
+              icon={BarChartHorizontal} 
+              title="Advanced Match Analytics"
+              description="Go beyond the result. Analyze completed matches with interactive Manhattan, Worm, and Wagon Wheel charts for deep visual insights."
+            />
+            <FeatureCard 
+              icon={BrainCircuit} 
+              title="AI-Powered Insights"
+              description="Leverage AI for everything from match previews and journalistic summaries to player-of-the-match selections and performance forecasts."
+            />
+            <FeatureCard 
+              icon={UserCog} 
+              title="Holistic Player Development"
+              description="Track player progress with a dedicated performance tracker, log skills with radar charts, and generate AI-driven development plans."
+            />
+          </div>
+        </div>
+      </section>
 
-        {/* Testimonials Section */}
-        <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
-           <Image 
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg"
-                alt="Cricket crowd background"
-                data-ai-hint="cricket crowd"
-                fill
-                className="object-cover -z-10"
-            />
-            <div className="absolute inset-0 bg-background/60 -z-10" />
-            <div className="container relative z-10">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Trusted by Coaches and Admins</h2>
-                </div>
-                <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-                    <TestimonialCard 
-                        quote="SCRBRD has revolutionized how we manage our school's cricket program. The time saved on admin allows me to focus on coaching. The AI player reports are a game-changer."
-                        name="John Smith"
-                        role="Head Coach, Westville Boy's High School"
-                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg"
-                        avatarHint="man portrait"
-                    />
-                    <TestimonialCard 
-                        quote="As a league administrator, tracking standings and fixtures used to be a nightmare. Now, it's all automated and beautifully presented. I can't imagine running our league without it."
-                        name="Priya Sharma"
-                        role="League Administrator, KZN Youth League"
-                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg"
-                        avatarHint="woman portrait"
-                    />
-                     <TestimonialCard 
-                        quote="The live scoring is incredibly intuitive, and our parents love following along online. The automated match summaries are a fantastic bonus for our weekly newsletter."
-                        name="David Chen"
-                        role="Team Manager, DHS U16A"
-                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg"
-                        avatarHint="man portrait"
-                    />
-                </div>
-            </div>
-        </section>
+      {/* How It Works Section */}
+      <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
+          <Image
+              src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg" 
+              alt="Grass texture background"
+              data-ai-hint="grass texture"
+              fill
+              className="object-cover -z-10"
+          />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm -z-10" />
+          <div className="container relative z-10">
+              <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                  <div className="space-y-2">
+                      <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary font-medium">Streamlined Workflow</div>
+                      <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Get Up and Running in Minutes</h2>
+                      <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                          Our logical four-step process makes setting up and managing your season a breeze.
+                      </p>
+                  </div>
+              </div>
+              <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-4 lg:gap-12">
+                  <div className="flex flex-col items-center text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <span className="text-2xl font-bold">1</span>
+                      </div>
+                      <h3 className="text-xl font-bold">Setup</h3>
+                      <p className="text-muted-foreground">
+                        Define your foundational data: seasons, divisions, schools, fields,
+                        and people.
+                      </p>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <span className="text-2xl font-bold">2</span>
+                      </div>
+                      <h3 className="text-xl font-bold">Organize</h3>
+                      <p className="text-muted-foreground">Create teams, assign players to rosters, and group them into competitions.</p>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <span className="text-2xl font-bold">3</span>
+                      </div>
+                      <h3 className="text-xl font-bold">Schedule</h3>
+                      <p className="text-muted-foreground">Create fixtures with our smart clash detection and assign officials and transport.</p>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <span className="text-2xl font-bold">4</span>
+                      </div>
+                      <h3 className="text-xl font-bold">Analyze</h3>
+                      <p className="text-muted-foreground">
+                        Score live or use AI to generate results, then dive deep into the
+                        stats and analytics.
+                      </p>
+                  </div>
+              </div>
+          </div>
+      </section>
 
-        {/* CTA Section */}
-        <section className="relative w-full py-12 md:py-24 lg:py-32 text-primary-foreground overflow-hidden">
-            <Image 
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3718433.jpg"
-                alt="Cricket action shot"
-                data-ai-hint="cricket action"
-                fill
-                className="object-cover -z-10"
-            />
-            <div className="absolute inset-0 bg-primary/90 -z-10" />
-            <div className="container relative z-10 grid items-center justify-center gap-4 text-center">
-                <div className="space-y-3">
-                    <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                        Ready to Elevate Your Game?
-                    </h2>
-                    <p className="mx-auto max-w-[600px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                        Take control of your cricket season. Explore the dashboard and see the power of SCRBRD for yourself.
-                    </p>
-                </div>
-                <div className="mx-auto w-full max-w-sm space-x-2">
-                   <Button asChild size="lg" variant="secondary">
-                     <Link href="/signup">Get Started Now</Link>
-                   </Button>
-                </div>
-            </div>
-        </section>
+      {/* Testimonials Section */}
+      <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
+         <Image 
+              src="https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg"
+              alt="Cricket crowd background"
+              data-ai-hint="cricket crowd"
+              fill
+              className="object-cover -z-10"
+          />
+          <div className="absolute inset-0 bg-background/60 -z-10" />
+          <div className="container relative z-10">
+              <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                  <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Trusted by Coaches and Admins</h2>
+              </div>
+              <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
+                  <TestimonialCard 
+                      quote="SCRBRD has revolutionized how we manage our school's cricket program. The time saved on admin allows me to focus on coaching. The AI player reports are a game-changer."
+                      name="John Smith"
+                      role="Head Coach, Westville Boy's High School"
+                      avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg"
+                      avatarHint="man portrait"
+                  />
+                  <TestimonialCard 
+                      quote="As a league administrator, tracking standings and fixtures used to be a nightmare. Now, it's all automated and beautifully presented. I can't imagine running our league without it."
+                      name="Priya Sharma"
+                      role="League Administrator, KZN Youth League"
+                      avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg"
+                      avatarHint="woman portrait"
+                  />
+                   <TestimonialCard 
+                      quote="The live scoring is incredibly intuitive, and our parents love following along online. The automated match summaries are a fantastic bonus for our weekly newsletter."
+                      name="David Chen"
+                      role="Team Manager, DHS U16A"
+                      avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg"
+                      avatarHint="man portrait"
+                  />
+              </div>
+          </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative w-full py-12 md:py-24 lg:py-32 text-primary-foreground overflow-hidden">
+          <Image 
+              src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3718433.jpg"
+              alt="Cricket action shot"
+              data-ai-hint="cricket action"
+              fill
+              className="object-cover -z-10"
+          />
+          <div className="absolute inset-0 bg-primary/90 -z-10" />
+          <div className="container relative z-10 grid items-center justify-center gap-4 text-center">
+              <div className="space-y-3">
+                  <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                      Ready to Elevate Your Game?
+              </h2>
+                  <p className="mx-auto max-w-[600px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                      Take control of your cricket season. Explore the dashboard and see the power of SCRBRD for yourself.
+                  </p>
+              </div>
+              <div className="mx-auto w-full max-w-sm space-x-2">
+                 <Button asChild size="lg" variant="secondary">
+                   <Link href="/signup">Get Started Now</Link>
+                 </Button>
+              </div>
+          </div>
+      </section>
     </>
   );
 }
