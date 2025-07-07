@@ -185,7 +185,7 @@ export default function LandingPage() {
                         quote="SCRBRD has revolutionized how we manage our school's cricket program. The time saved on admin allows me to focus on coaching. The AI player reports are a game-changer."
                         name="John Smith"
                         role="Head Coach, Westville Boy's High School"
-                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpgg"
+                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg"
                         avatarHint="man portrait"
                     />
                     <TestimonialCard 
