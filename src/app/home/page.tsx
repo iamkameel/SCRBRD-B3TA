@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Wand2, ClipboardList, CalendarCheck, BarChartHorizontal, BrainCircuit, UserCog } from 'lucide-react';
 
 const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
-  <div className="flex flex-col items-center p-6 text-center bg-card rounded-lg border shadow-sm">
+  <div className="flex flex-col items-center p-6 text-center bg-card rounded-lg border shadow-sm h-full">
     <div className="p-3 mb-4 bg-primary/10 rounded-full">
       <Icon className="h-8 w-8 text-primary" />
     </div>
@@ -20,7 +20,7 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
 );
 
 const TestimonialCard = ({ quote, name, role, avatarSrc, avatarHint }: { quote: string, name: string, role: string, avatarSrc: string, avatarHint: string }) => (
-    <Card className="flex flex-col justify-between">
+    <Card className="flex flex-col justify-between bg-card/80 backdrop-blur-sm">
         <CardContent className="pt-6">
             <p className="text-muted-foreground">"{quote}"</p>
         </CardContent>
@@ -64,7 +64,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <Image
-                src="https://placehold.co/600x600.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3800541.jpg"
                 width="600"
                 height="600"
                 alt="A stylised image of a cricket stadium"
@@ -122,8 +122,16 @@ export default function LandingPage() {
         </section>
 
          {/* How It Works Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
-            <div className="container">
+        <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
+            <Image 
+                src="https://placehold.co/1920x1080.png" 
+                alt="Grass texture background"
+                data-ai-hint="grass texture"
+                fill
+                className="object-cover -z-10"
+            />
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm -z-10" />
+            <div className="container relative z-10">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <div className="space-y-2">
                         <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary font-medium">Streamlined Workflow</div>
@@ -159,55 +167,72 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Trusted by Coaches and Admins</h2>
+        <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
+           <Image 
+                src="https://placehold.co/1920x1080.png"
+                alt="Cricket crowd background"
+                data-ai-hint="cricket crowd"
+                fill
+                className="object-cover -z-10"
+            />
+            <div className="absolute inset-0 bg-background/60 -z-10" />
+            <div className="container relative z-10">
+                <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Trusted by Coaches and Admins</h2>
+                </div>
+                <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
+                    <TestimonialCard 
+                        quote="SCRBRD has revolutionized how we manage our school's cricket program. The time saved on admin allows me to focus on coaching. The AI player reports are a game-changer."
+                        name="John Smith"
+                        role="Head Coach, Westville Boy's High School"
+                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpgg"
+                        avatarHint="man portrait"
+                    />
+                    <TestimonialCard 
+                        quote="As a league administrator, tracking standings and fixtures used to be a nightmare. Now, it's all automated and beautifully presented. I can't imagine running our league without it."
+                        name="Priya Sharma"
+                        role="League Administrator, KZN Youth League"
+                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg"
+                        avatarHint="woman portrait"
+                    />
+                     <TestimonialCard 
+                        quote="The live scoring is incredibly intuitive, and our parents love following along online. The automated match summaries are a fantastic bonus for our weekly newsletter."
+                        name="David Chen"
+                        role="Team Manager, DHS U16A"
+                        avatarSrc="https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg"
+                        avatarHint="man portrait"
+                    />
+                </div>
             </div>
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-                <TestimonialCard 
-                    quote="SCRBRD has revolutionized how we manage our school's cricket program. The time saved on admin allows me to focus on coaching. The AI player reports are a game-changer."
-                    name="John Smith"
-                    role="Head Coach, Greenwood High"
-                    avatarSrc="https://placehold.co/100x100.png"
-                    avatarHint="man portrait"
-                />
-                <TestimonialCard 
-                    quote="As a league administrator, tracking standings and fixtures used to be a nightmare. Now, it's all automated and beautifully presented. I can't imagine running our league without it."
-                    name="Priya Sharma"
-                    role="League Administrator, City Youth League"
-                    avatarSrc="https://placehold.co/100x100.png"
-                    avatarHint="woman portrait"
-                />
-                 <TestimonialCard 
-                    quote="The live scoring is incredibly intuitive, and our parents love following along online. The automated match summaries are a fantastic bonus for our weekly newsletter."
-                    name="David Chen"
-                    role="Team Manager, U16 Warriors"
-                    avatarSrc="https://placehold.co/100x100.png"
-                    avatarHint="man portrait"
-                />
-            </div>
-          </div>
         </section>
 
         {/* CTA Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground">
-          <div className="container grid items-center justify-center gap-4 text-center">
-            <div className="space-y-3">
-              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                Ready to Elevate Your Game?
-              </h2>
-              <p className="mx-auto max-w-[600px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Take control of your cricket season. Explore the dashboard and see the power of SCRBRD for yourself.
-              </p>
+        <section className="relative w-full py-12 md:py-24 lg:py-32 text-primary-foreground overflow-hidden">
+            <Image 
+                src="https://placehold.co/1920x1080.png"
+                alt="Cricket action shot"
+                data-ai-hint="cricket action"
+                fill
+                className="object-cover -z-10"
+            />
+            <div className="absolute inset-0 bg-primary/90 -z-10" />
+            <div className="container relative z-10 grid items-center justify-center gap-4 text-center">
+                <div className="space-y-3">
+                    <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                        Ready to Elevate Your Game?
+                    </h2>
+                    <p className="mx-auto max-w-[600px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                        Take control of your cricket season. Explore the dashboard and see the power of SCRBRD for yourself.
+                    </p>
+                </div>
+                <div className="mx-auto w-full max-w-sm space-x-2">
+                   <Button asChild size="lg" variant="secondary">
+                     <Link href="/signup">Get Started Now</Link>
+                   </Button>
+                </div>
             </div>
-            <div className="mx-auto w-full max-w-sm space-x-2">
-               <Button asChild size="lg" variant="secondary">
-                 <Link href="/signup">Get Started Now</Link>
-               </Button>
-            </div>
-          </div>
         </section>
     </>
   );
 }
+
