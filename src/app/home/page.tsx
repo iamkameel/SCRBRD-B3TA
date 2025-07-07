@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -78,21 +79,21 @@ const forEveryRole = [
 
 const testimonials = [
   {
-    name: 'Sarah Jennings',
-    role: 'Head of Sport, Michaelhouse',
+    name: 'Priya Sharmma',
+    role: 'Head of Sport',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'woman smiling',
     testimonial: 'SCRBRD has revolutionized how we manage our cricket program. The strategic calendar and AI analysis give us an unprecedented edge in planning and execution. It\'s an indispensable tool.',
   },
   {
     name: 'David Miller',
-    role: '1st XI Coach, Westville Boys\' High',
+    role: '1st XI Coach',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'man portrait',
     testimonial: 'The player development tracker is a game-changer. I can visualize a player\'s progress over the season and have data-backed conversations about their performance. The AI insights are incredibly accurate.',
   },
   {
-    name: 'James Hart',
+    name: 'Nkosi Sipamla',
     role: 'Parent & Spectator',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'father portrait',
@@ -107,24 +108,25 @@ export default function LandingPage() {
       <PublicHeader />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full py-24 md:py-32 lg:py-40 overflow-hidden">
+        <section className="relative w-full py-20 md:py-32 lg:py-40">
           <Image
-            src="https://maverickdesign.co.za/wp-content/uploads/2025/07/cricket-stadium-dramatic-light.jpg"
-            alt="A dramatic shot of a cricket stadium at night"
-            data-ai-hint="cricket stadium night"
+            src="https://placehold.co/1200x800.png"
+            alt="A cricket player hitting a shot against a dramatic background"
             fill
             className="object-cover -z-10"
+            priority
+            data-ai-hint="cricket action"
           />
           <div className="absolute inset-0 bg-black/60 -z-10" />
-          <div className="container px-4 md:px-6">
-            <div className="max-w-3xl text-center mx-auto">
+          <div className="container grid lg:grid-cols-2 gap-8 items-center">
+            <div className="max-w-xl text-left">
               <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
                 The Future of Cricket Management is Here.
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-300">
                 From AI-powered analytics to seamless logistics, SCRBRD is the all-in-one platform to elevate your team, league, or school.
               </p>
-              <div className="mt-10 flex items-center justify-center gap-x-6">
+              <div className="mt-10 flex items-center gap-x-6">
                 <Button asChild size="lg">
                   <Link href="/signup">Get Started For Free</Link>
                 </Button>
@@ -133,12 +135,22 @@ export default function LandingPage() {
                 </Button>
               </div>
             </div>
+            <div className="hidden lg:block">
+              <Image
+                src="https://placehold.co/600x600.png"
+                width="600"
+                height="600"
+                alt="SCRBRD app dashboard interface"
+                className="rounded-lg shadow-2xl"
+                data-ai-hint="app dashboard"
+              />
+            </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-muted/50">
-          <div className="container px-4 md:px-6">
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background via-green-50 dark:via-green-900/10 to-background">
+          <div className="container">
             <div className="mx-auto max-w-2xl lg:text-center">
               <h2 className="text-base font-semibold leading-7 text-primary">Everything You Need</h2>
               <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -165,8 +177,15 @@ export default function LandingPage() {
         </section>
         
         {/* For Every Role Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-            <div className="container mx-auto px-4 md:px-6">
+        <section className="relative w-full py-12 md:py-24 lg:py-32">
+            <Image
+                src="https://placehold.co/1200x800.png"
+                alt="A cricket team huddling on the field"
+                fill
+                className="object-cover -z-10 opacity-5"
+                data-ai-hint="cricket team"
+            />
+            <div className="container">
                 <div className="mx-auto max-w-2xl lg:text-center">
                     <h2 className="text-base font-semibold leading-7 text-primary">Built for the whole team</h2>
                     <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -178,7 +197,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                     {forEveryRole.map((role) => (
-                        <Card key={role.role}>
+                        <Card key={role.role} className="bg-background/80 backdrop-blur-sm">
                             <CardHeader>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground mb-4">
                                   <role.icon className="h-6 w-6" aria-hidden="true" />
@@ -198,13 +217,13 @@ export default function LandingPage() {
         {/* Testimonials Section */}
         <section className="relative w-full py-12 md:py-24 lg:py-32 bg-muted/50 overflow-hidden">
              <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/grass-texture-green.jpg"
+                src="https://placehold.co/1200x800.png"
                 alt="Close-up of cricket pitch grass"
                 fill
                 className="object-cover -z-10 opacity-10"
                 data-ai-hint="cricket grass"
             />
-          <div className="container px-4 md:px-6">
+          <div className="container">
             <div className="mx-auto max-w-2xl lg:text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 Trusted by Schools and Coaches
@@ -213,7 +232,7 @@ export default function LandingPage() {
                 See what leaders in school cricket are saying about SCRBRD.
               </p>
             </div>
-            <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm leading-6 text-gray-900 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-3">
+            <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm leading-6 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-3">
               {testimonials.map((testimonial) => (
                 <Card key={testimonial.name} className="bg-card/80 backdrop-blur-sm">
                   <CardContent className="pt-6">
@@ -240,14 +259,14 @@ export default function LandingPage() {
         {/* Final CTA Section */}
         <section className="relative w-full py-24 md:py-32 overflow-hidden">
              <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/cricket-team-huddle.jpg"
-                alt="A cricket team huddling on the field"
+                src="https://placehold.co/1200x800.png"
+                alt="Dramatic lighting on a cricket stadium at night"
                 fill
                 className="object-cover -z-10"
-                data-ai-hint="cricket team"
+                data-ai-hint="cricket stadium night"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40 -z-10" />
-          <div className="container px-4 md:px-6 text-center">
+          <div className="container text-center">
             <h2 className="text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
               Ready to elevate your game?
             </h2>
