@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Wand2, ClipboardList, Users, CalendarCheck, BarChartHorizontal, UserCog } from 'lucide-react';
+import { Wand2, ClipboardList, CalendarCheck, BarChartHorizontal, BrainCircuit, UserCog } from 'lucide-react';
 
 const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
   <div className="flex flex-col items-center p-6 text-center bg-card rounded-lg border shadow-sm">
@@ -88,33 +88,33 @@ export default function LandingPage() {
             <div className="mx-auto grid max-w-5xl items-stretch gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 lg:max-w-none">
               <FeatureCard 
                 icon={ClipboardList} 
-                title="Live Scoring"
-                description="Intuitive ball-by-ball scoring interface with real-time updates and live win probability calculations."
-              />
-              <FeatureCard 
-                icon={Wand2} 
-                title="AI-Powered Analytics"
-                description="Generate match summaries, previews, player of the match selections, and even player development plans."
-              />
-              <FeatureCard 
-                icon={Users} 
                 title="Comprehensive Management"
-                description="Effortlessly manage teams, players, competitions, fields, and transport logistics all in one place."
+                description="Manage schools, teams, players, and officials in one unified hub. Streamline your entire league administration from a single dashboard."
+              />
+              <FeatureCard 
+                icon={CalendarCheck} 
+                title="Intelligent Scheduling"
+                description="Plan your season with our AI-powered fixture scheduler and strategic calendar. Avoid clashes, manage venues, and assign transport with ease."
               />
                <FeatureCard 
-                icon={CalendarCheck} 
-                title="Scheduling & Logistics"
-                description="Advanced fixture creation with clash detection, plus vehicle and driver assignments for match days."
+                icon={Wand2} 
+                title="Live Scoring & AI Scorecards"
+                description="Capture every ball with our intuitive live scoring interface or generate a complete, realistic scorecard with a single click using AI."
               />
               <FeatureCard 
                 icon={BarChartHorizontal} 
-                title="Detailed Statistics"
-                description="Automatically calculated player and team stats. Compare head-to-head to find the competitive edge."
+                title="Advanced Match Analytics"
+                description="Go beyond the result. Analyze completed matches with interactive Manhattan, Worm, and Wagon Wheel charts for deep visual insights."
+              />
+              <FeatureCard 
+                icon={BrainCircuit} 
+                title="AI-Powered Insights"
+                description="Leverage AI for everything from match previews and journalistic summaries to player-of-the-match selections and performance forecasts."
               />
               <FeatureCard 
                 icon={UserCog} 
-                title="Role-Based Dashboards"
-                description="Tailored dashboards for Admins, Coaches, Umpires, and Drivers to see the info that matters most to them."
+                title="Holistic Player Development"
+                description="Track player progress with a dedicated performance tracker, log skills with radar charts, and generate AI-driven development plans."
               />
             </div>
           </div>
