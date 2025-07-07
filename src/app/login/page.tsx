@@ -77,7 +77,7 @@ export default function LoginPage() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
       <Image
-          src="https://firebasestudio-hosting.web.app/images/cricket-stadium-night.jpg"
+          src="https://maverickdesign.co.za/wp-content/uploads/2025/07/cricket-stadium_1.png"
           alt="Cricket stadium background"
           data-ai-hint="cricket stadium night"
           fill

@@ -58,6 +58,10 @@ export interface Person {
   developmentPlanGeneratedAt?: Date;
   fcmTokens?: string[];
   skills?: PersonSkills;
+  status?: 'active' | 'pending_review' | 'inactive';
+  requestedSchoolName?: string;
+  usedInviteCode?: string;
+  requestedPlayerLink?: string;
 }
 
 export interface School {
