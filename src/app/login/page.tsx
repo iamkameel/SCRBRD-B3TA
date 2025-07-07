@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -17,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmailAction } from '@/lib/actions/auth';
+import { Logo } from '@/components/icons/logo';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -76,16 +76,17 @@ export default function LoginPage() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
       <Image
-          src="https://placehold.co/1920x1080.png"
+          src="https://firebasestudio-hosting.web.app/images/cricket-stadium-night.jpg"
           alt="Cricket stadium background"
-          data-ai-hint="cricket stadium floodlights"
+          data-ai-hint="cricket stadium night"
           fill
           className="object-cover -z-10"
         />
        <div className="absolute inset-0 bg-black/60 -z-10" />
       <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome Back!</CardTitle>
+        <CardHeader className="text-center items-center">
+          <Logo />
+          <CardTitle className="text-2xl pt-4">Welcome Back!</CardTitle>
           <CardDescription>Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <CardContent>

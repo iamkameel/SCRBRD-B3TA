@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -17,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { createUserProfileAction } from '@/lib/actions/auth';
+import { Logo } from '@/components/icons/logo';
 
 const signupSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -72,16 +72,17 @@ export default function SignupPage() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
        <Image
-          src="https://placehold.co/1920x1080.png"
+          src="https://firebasestudio-hosting.web.app/images/cricket-stadium-night.jpg"
           alt="Cricket stadium background"
-          data-ai-hint="cricket stadium floodlights"
+          data-ai-hint="cricket stadium night"
           fill
           className="object-cover -z-10"
         />
        <div className="absolute inset-0 bg-black/60 -z-10" />
       <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Create an Account</CardTitle>
+        <CardHeader className="text-center items-center">
+          <Logo />
+          <CardTitle className="text-2xl pt-4">Create an Account</CardTitle>
           <CardDescription>Join SCRBRD and start managing your league today.</CardDescription>
         </CardHeader>
         <CardContent>
