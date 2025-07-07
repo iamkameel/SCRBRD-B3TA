@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,8 +70,16 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/50">
-      <Card className="w-full max-w-md">
+    <div className="relative flex items-center justify-center min-h-screen">
+       <Image
+          src="https://placehold.co/1920x1080.png"
+          alt="Cricket stadium background"
+          data-ai-hint="cricket stadium floodlights"
+          fill
+          className="object-cover -z-10"
+        />
+       <div className="absolute inset-0 bg-black/60 -z-10" />
+      <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Create an Account</CardTitle>
           <CardDescription>Join SCRBRD and start managing your league today.</CardDescription>
