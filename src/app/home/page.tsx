@@ -124,7 +124,7 @@ export default function LandingPage() {
          {/* How It Works Section */}
         <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
             <Image 
-                src="https://placehold.co/1920x1080.png" 
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg" 
                 alt="Grass texture background"
                 data-ai-hint="grass texture"
                 fill
@@ -169,7 +169,7 @@ export default function LandingPage() {
         {/* Testimonials Section */}
         <section className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
            <Image 
-                src="https://placehold.co/1920x1080.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg"
                 alt="Cricket crowd background"
                 data-ai-hint="cricket crowd"
                 fill
@@ -209,7 +209,7 @@ export default function LandingPage() {
         {/* CTA Section */}
         <section className="relative w-full py-12 md:py-24 lg:py-32 text-primary-foreground overflow-hidden">
             <Image 
-                src="https://placehold.co/1920x1080.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3718433.jpg"
                 alt="Cricket action shot"
                 data-ai-hint="cricket action"
                 fill
