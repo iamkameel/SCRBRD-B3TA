@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -62,40 +63,50 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative w-full py-20 md:py-32 lg:py-40 text-primary-foreground">
+      <section className="relative w-full overflow-hidden py-20 md:py-32 lg:py-40">
         <Image
-          src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3718433.jpg"
-          alt="A cricket player hitting a shot"
-          data-ai-hint="cricket action"
+          src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg"
+          alt="Cricket stadium background"
+          data-ai-hint="stadium grass"
           fill
           className="object-cover -z-10"
         />
-        <div className="absolute inset-0 bg-black/60 -z-10" />
-        <div className="container relative z-10">
-          <div className="flex flex-col items-center justify-center space-y-6 text-center">
-            <Badge variant="secondary" className="w-fit">
-              The All-in-One Cricket Platform
-            </Badge>
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-              Manage, Score, and Analyze Like a Pro
-            </h1>
-            <p className="max-w-[700px] md:text-xl">
-              SCRBRD elevates cricket management. Go beyond the scorecard with live scoring, powerful AI analytics, and seamless league administration.
-            </p>
-            <div className="flex flex-col gap-4 min-[400px]:flex-row">
-                <Button asChild size="lg">
-                    <Link href="/signup">Get Started</Link>
-                </Button>
-                <Button asChild size="lg" variant="secondary">
-                    <Link href="#features">Learn More</Link>
-                </Button>
+        <div className="absolute inset-0 bg-background/80 -z-10" />
+        <div className="container grid gap-8 md:grid-cols-2 md:items-center">
+            <div className="flex flex-col items-start space-y-6 text-left">
+                <Badge variant="secondary" className="w-fit">
+                    The All-in-One Cricket Platform
+                </Badge>
+                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                    Manage, Score, and Analyze Like a Pro
+                </h1>
+                <p className="max-w-lg md:text-xl">
+                    SCRBRD elevates cricket management. Go beyond the scorecard with live scoring, powerful AI analytics, and seamless league administration.
+                </p>
+                <div className="flex flex-col gap-4 min-[400px]:flex-row">
+                    <Button asChild size="lg">
+                        <Link href="/signup">Get Started</Link>
+                    </Button>
+                    <Button asChild size="lg" variant="secondary">
+                        <Link href="#features">Learn More</Link>
+                    </Button>
+                </div>
             </div>
-          </div>
+            <div className="relative hidden h-full min-h-[400px] w-full items-center justify-center md:flex">
+                <Image
+                    src="https://placehold.co/600x400.png"
+                    alt="SCRBRD App Screenshot"
+                    data-ai-hint="app dashboard"
+                    width={550}
+                    height={450}
+                    className="rounded-xl shadow-2xl"
+                />
+            </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="w-full py-12 md:py-24 lg:py-32">
+      <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-primary/5 to-background">
         <div className="container">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
