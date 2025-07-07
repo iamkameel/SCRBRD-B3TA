@@ -43,7 +43,7 @@ export default function LandingPage() {
     <>
         {/* Hero Section */}
         <section className="w-full py-20 md:py-32 lg:py-40 bg-muted/30">
-          <div className="container px-4 md:px-6">
+          <div className="container">
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
               <div className="flex flex-col justify-center space-y-6">
                 <Badge variant="outline" className="w-fit">The All-in-One Cricket Platform</Badge>
@@ -76,7 +76,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section id="features" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">A Feature for Every Part of the Game</h2>
@@ -122,7 +122,7 @@ export default function LandingPage() {
 
          {/* How It Works Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
-            <div className="container px-4 md:px-6">
+            <div className="container">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <div className="space-y-2">
                         <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary font-medium">Streamlined Workflow</div>
@@ -159,7 +159,7 @@ export default function LandingPage() {
 
         {/* Testimonials Section */}
         <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Trusted by Coaches and Admins</h2>
             </div>
@@ -191,7 +191,7 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground">
-          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
+          <div className="container grid items-center justify-center gap-4 text-center">
             <div className="space-y-3">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
                 Ready to Elevate Your Game?
