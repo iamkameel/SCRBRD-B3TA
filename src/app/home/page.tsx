@@ -43,36 +43,34 @@ export default function LandingPage() {
   return (
     <>
         {/* Hero Section */}
-        <section className="w-full py-20 md:py-32 lg:py-40 bg-muted/30">
-          <div className="container">
-            <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
-              <div className="flex flex-col justify-center space-y-6">
-                <Badge variant="outline" className="w-fit">The All-in-One Cricket Platform</Badge>
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                  Manage, Score, and Analyze Like a Pro
-                </h1>
-                <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                  SCRBRD elevates cricket management. Go beyond the scorecard with live scoring, powerful AI analytics, and seamless league administration.
-                </p>
-                <div className="flex flex-col gap-4 min-[400px]:flex-row">
-                  <Button asChild size="lg">
-                    <Link href="/signup">Get Started</Link>
-                  </Button>
-                  <Button asChild size="lg" variant="outline">
-                    <Link href="#features">Learn More</Link>
-                  </Button>
+        <section className="relative w-full py-20 md:py-32 lg:py-40 text-primary-foreground">
+            <Image
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3718433.jpg"
+                alt="A cricket player hitting a shot"
+                data-ai-hint="cricket action"
+                fill
+                className="object-cover -z-10"
+            />
+            <div className="absolute inset-0 bg-black/60 -z-10" />
+            <div className="container relative z-10">
+                <div className="flex flex-col items-center justify-center space-y-6 text-center">
+                    <Badge variant="secondary" className="w-fit">The All-in-One Cricket Platform</Badge>
+                    <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                        Manage, Score, and Analyze Like a Pro
+                    </h1>
+                    <p className="max-w-[700px] md:text-xl">
+                        SCRBRD elevates cricket management. Go beyond the scorecard with live scoring, powerful AI analytics, and seamless league administration.
+                    </p>
+                    <div className="flex flex-col gap-4 min-[400px]:flex-row">
+                        <Button asChild size="lg">
+                            <Link href="/signup">Get Started</Link>
+                        </Button>
+                        <Button asChild size="lg" variant="secondary">
+                            <Link href="#features">Learn More</Link>
+                        </Button>
+                    </div>
                 </div>
-              </div>
-              <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3800541.jpg"
-                width="600"
-                height="600"
-                alt="A stylised image of a cricket stadium"
-                data-ai-hint="cricket stadium illustration"
-                className="mx-auto aspect-square overflow-hidden rounded-xl object-cover"
-              />
             </div>
-          </div>
         </section>
 
         {/* Features Section */}
@@ -87,7 +85,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl items-stretch gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 lg:max-w-none">
-              <FeatureCard 
+               <FeatureCard 
                 icon={ClipboardList} 
                 title="Comprehensive Management"
                 description="Manage schools, teams, players, and officials in one unified hub. Streamline your entire league administration from a single dashboard."
@@ -235,4 +233,3 @@ export default function LandingPage() {
     </>
   );
 }
-
