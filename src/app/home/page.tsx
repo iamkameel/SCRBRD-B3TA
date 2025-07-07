@@ -104,7 +104,7 @@ const testimonials = [
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex flex-col min-h-screen text-foreground">
       <PublicHeader />
       <main className="flex-1">
         {/* Hero Section */}
@@ -138,8 +138,8 @@ export default function LandingPage() {
             <div className="hidden lg:block">
               <Image
                 src="https://placehold.co/600x600.png"
-                width="600"
-                height="600"
+                width={600}
+                height={600}
                 alt="SCRBRD app dashboard interface"
                 className="rounded-lg shadow-2xl"
                 data-ai-hint="app dashboard"
