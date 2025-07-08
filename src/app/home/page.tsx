@@ -1,4 +1,3 @@
-
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -6,7 +5,6 @@ import {
   BarChart2,
   BookOpen,
   Bus,
-  CalendarDays,
   ClipboardList,
   Shield,
   Swords,
@@ -81,21 +79,21 @@ const testimonials = [
   {
     name: 'Priya Sharmma',
     role: 'Head of Sport',
-    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg',
+    avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'woman smiling',
     testimonial: 'SCRBRD has revolutionized how we manage our cricket program. The strategic calendar and AI analysis give us an unprecedented edge in planning and execution. It\'s an indispensable tool.',
   },
   {
     name: 'David Miller',
     role: '1st XI Coach',
-    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg',
+    avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'man portrait',
     testimonial: 'The player development tracker is a game-changer. I can visualize a player\'s progress over the season and have data-backed conversations about their performance. The AI insights are incredibly accurate.',
   },
   {
     name: 'Nkosi Sipamla',
     role: 'Parent & Spectator',
-    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg',
+    avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'father portrait',
     testimonial: 'As a parent, staying updated with my son\'s schedule and performance has never been easier. The app is intuitive and provides all the information I need right at my fingertips. Truly fantastic!',
   },
@@ -110,12 +108,12 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="relative w-full py-20 md:py-32 lg:py-40">
           <Image
-            src="https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg"
+            src="https://placehold.co/1920x1080.png"
             alt="Cricket stadium under lights"
             fill
             className="object-cover -z-10"
             priority
-            data-ai-hint="cricket action"
+            data-ai-hint="cricket stadium dramatic light"
           />
           <div className="absolute inset-0 bg-black/60 -z-10" />
           <div className="container grid lg:grid-cols-2 gap-8 items-center">
@@ -137,12 +135,12 @@ export default function LandingPage() {
             </div>
             <div className="hidden lg:block">
               <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3800541.jpg"
+                src="https://placehold.co/600x600.png"
                 width={600}
                 height={600}
-                alt="SCRBRD app dashboard interface"
+                alt="A cricket player at the stumps"
                 className="rounded-lg shadow-2xl"
-                data-ai-hint="app dashboard"
+                data-ai-hint="cricket action"
               />
             </div>
           </div>
@@ -177,13 +175,13 @@ export default function LandingPage() {
         </section>
         
         {/* For Every Role Section */}
-        <section className="relative w-full py-12 md:py-24 lg:py-32">
+        <section id="user-experience" className="relative w-full py-12 md:py-24 lg:py-32">
             <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/huuddle-700.jpg"
+                src="https://placehold.co/1920x1080.png"
                 alt="A cricket team huddling on the field"
                 fill
                 className="object-cover -z-10 opacity-5"
-                data-ai-hint="cricket team"
+                data-ai-hint="cricket team huddle"
             />
             <div className="container">
                 <div className="mx-auto max-w-2xl lg:text-center">
@@ -197,7 +195,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                     {forEveryRole.map((role) => (
-                        <Card key={role.role} className="bg-background/80 backdrop-blur-sm">
+                        <Card key={role.role} className="bg-card/80 backdrop-blur-sm">
                             <CardHeader>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground mb-4">
                                   <role.icon className="h-6 w-6" aria-hidden="true" />
@@ -215,9 +213,9 @@ export default function LandingPage() {
 
 
         {/* Testimonials Section */}
-        <section className="relative w-full py-12 md:py-24 lg:py-32 bg-muted/50 overflow-hidden">
+        <section id="testimonials" className="relative w-full py-12 md:py-24 lg:py-32 bg-muted/50 overflow-hidden">
              <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg"
+                src="https://placehold.co/1920x1080.png"
                 alt="Close-up of cricket pitch grass"
                 fill
                 className="object-cover -z-10 opacity-10"
@@ -259,11 +257,11 @@ export default function LandingPage() {
         {/* Final CTA Section */}
         <section className="relative w-full py-24 md:py-32 overflow-hidden">
              <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg"
+                src="https://placehold.co/1920x1080.png"
                 alt="Grassy Cricket Field"
                 fill
                 className="object-cover -z-10"
-                data-ai-hint="cricket stadium night"
+                data-ai-hint="cricket stadium grass"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40 -z-10" />
           <div className="container text-center">
