@@ -1,3 +1,6 @@
+'use client';
+
+import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -12,12 +15,14 @@ import {
   Trophy,
   Users,
   Wand2,
+  Quote,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PublicFooter } from '@/components/public-footer';
 import { PublicHeader } from '@/components/public-header';
+import { cn } from '@/lib/utils';
 
 const features = [
   {
@@ -101,14 +106,17 @@ const testimonials = [
 
 
 export default function LandingPage() {
+  const [activeIndex, setActiveIndex] = React.useState(1);
+  const activeTestimonial = testimonials[activeIndex];
+  
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
       <PublicHeader />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full py-20 md:py-32 lg:py-40">
           <Image
-            src="https://placehold.co/1920x1080.png"
+            src="https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg"
             alt="Cricket stadium under lights"
             fill
             className="object-cover -z-10"
@@ -135,7 +143,7 @@ export default function LandingPage() {
             </div>
             <div className="hidden lg:block">
               <Image
-                src="https://placehold.co/600x600.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3800541.jpg"
                 width={600}
                 height={600}
                 alt="A cricket player at the stumps"
@@ -177,7 +185,7 @@ export default function LandingPage() {
         {/* For Every Role Section */}
         <section id="user-experience" className="relative w-full py-12 md:py-24 lg:py-32">
             <Image
-                src="https://placehold.co/1920x1080.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/huuddle-700.jpg"
                 alt="A cricket team huddling on the field"
                 fill
                 className="object-cover -z-10 opacity-5"
@@ -213,16 +221,9 @@ export default function LandingPage() {
 
 
         {/* Testimonials Section */}
-        <section id="testimonials" className="relative w-full py-12 md:py-24 lg:py-32 bg-muted/50 overflow-hidden">
-             <Image
-                src="https://placehold.co/1920x1080.png"
-                alt="Close-up of cricket pitch grass"
-                fill
-                className="object-cover -z-10 opacity-10"
-                data-ai-hint="cricket grass"
-            />
+        <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 bg-muted/50 overflow-hidden">
           <div className="container">
-            <div className="mx-auto max-w-2xl lg:text-center">
+            <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 Trusted by Schools and Coaches
               </h2>
@@ -230,34 +231,57 @@ export default function LandingPage() {
                 See what leaders in school cricket are saying about SCRBRD.
               </p>
             </div>
-            <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm leading-6 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-3">
-              {testimonials.map((testimonial) => (
-                <Card key={testimonial.name} className="bg-card/80 backdrop-blur-sm">
-                  <CardContent className="pt-6">
-                    <p className="text-muted-foreground">"{testimonial.testimonial}"</p>
-                  </CardContent>
-                  <CardHeader>
-                    <div className="flex items-center gap-x-4">
-                      <Avatar>
-                        <AvatarImage src={testimonial.avatar} data-ai-hint={testimonial.dataAiHint} />
-                        <AvatarFallback>{testimonial.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold text-foreground">{testimonial.name}</div>
-                        <div className="text-muted-foreground">{testimonial.role}</div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
+
+            <div className="relative mt-16 max-w-3xl mx-auto">
+              {/* Testimonial Bubble */}
+              <div className="relative rounded-lg bg-background p-8 shadow-lg">
+                <Quote className="absolute -top-3 -left-3 h-10 w-10 text-primary/10" strokeWidth={1} />
+                <blockquote className="relative text-center text-lg font-medium leading-relaxed text-foreground">
+                  <p>"{activeTestimonial.testimonial}"</p>
+                </blockquote>
+              </div>
+              {/* Pointer */}
+              <div className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-2 w-4 h-4 bg-background rotate-45" />
+            </div>
+
+            <div className="mt-12 text-center">
+              {/* Avatar Selectors */}
+              <div className="flex justify-center items-center gap-4">
+                {testimonials.map((testimonial, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setActiveIndex(index)} 
+                    className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-muted/50"
+                  >
+                    <Avatar
+                      className={cn(
+                        "h-14 w-14 cursor-pointer transition-all duration-300 ease-in-out",
+                        activeIndex === index
+                          ? "scale-110 ring-2 ring-primary ring-offset-4 ring-offset-background"
+                          : "scale-90 opacity-60 hover:scale-100 hover:opacity-100"
+                      )}
+                    >
+                      <AvatarImage src={testimonial.avatar} data-ai-hint={testimonial.dataAiHint} />
+                      <AvatarFallback>{testimonial.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                  </button>
+                ))}
+              </div>
+
+              {/* Active Testimonial Info */}
+              <div className="mt-6 transition-opacity duration-300">
+                <p className="text-lg font-semibold text-foreground">{activeTestimonial.name}</p>
+                <p className="text-muted-foreground">{activeTestimonial.role}</p>
+              </div>
             </div>
           </div>
         </section>
 
+
         {/* Final CTA Section */}
         <section className="relative w-full py-24 md:py-32 overflow-hidden">
              <Image
-                src="https://placehold.co/1920x1080.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg"
                 alt="Grassy Cricket Field"
                 fill
                 className="object-cover -z-10"
