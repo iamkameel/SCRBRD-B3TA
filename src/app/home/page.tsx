@@ -81,21 +81,21 @@ const testimonials = [
   {
     name: 'Priya Sharmma',
     role: 'Head of Sport',
-    avatar: 'https://placehold.co/100x100.png',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg',
     dataAiHint: 'woman smiling',
     testimonial: 'SCRBRD has revolutionized how we manage our cricket program. The strategic calendar and AI analysis give us an unprecedented edge in planning and execution. It\'s an indispensable tool.',
   },
   {
     name: 'David Miller',
     role: '1st XI Coach',
-    avatar: 'https://placehold.co/100x100.png',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg',
     dataAiHint: 'man portrait',
     testimonial: 'The player development tracker is a game-changer. I can visualize a player\'s progress over the season and have data-backed conversations about their performance. The AI insights are incredibly accurate.',
   },
   {
     name: 'Nkosi Sipamla',
     role: 'Parent & Spectator',
-    avatar: 'https://placehold.co/100x100.png',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg',
     dataAiHint: 'father portrait',
     testimonial: 'As a parent, staying updated with my son\'s schedule and performance has never been easier. The app is intuitive and provides all the information I need right at my fingertips. Truly fantastic!',
   },
@@ -104,14 +104,14 @@ const testimonials = [
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen text-foreground">
+    <div className="dark flex flex-col min-h-screen">
       <PublicHeader />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full py-20 md:py-32 lg:py-40">
           <Image
-            src="https://placehold.co/1200x800.png"
-            alt="A cricket player hitting a shot against a dramatic background"
+            src="https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg"
+            alt="Cricket stadium under lights"
             fill
             className="object-cover -z-10"
             priority
@@ -137,7 +137,7 @@ export default function LandingPage() {
             </div>
             <div className="hidden lg:block">
               <Image
-                src="https://placehold.co/600x600.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3800541.jpg"
                 width={600}
                 height={600}
                 alt="SCRBRD app dashboard interface"
@@ -179,7 +179,7 @@ export default function LandingPage() {
         {/* For Every Role Section */}
         <section className="relative w-full py-12 md:py-24 lg:py-32">
             <Image
-                src="https://placehold.co/1200x800.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/huuddle-700.jpg"
                 alt="A cricket team huddling on the field"
                 fill
                 className="object-cover -z-10 opacity-5"
@@ -217,7 +217,7 @@ export default function LandingPage() {
         {/* Testimonials Section */}
         <section className="relative w-full py-12 md:py-24 lg:py-32 bg-muted/50 overflow-hidden">
              <Image
-                src="https://placehold.co/1200x800.png"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg"
                 alt="Close-up of cricket pitch grass"
                 fill
                 className="object-cover -z-10 opacity-10"
@@ -259,8 +259,8 @@ export default function LandingPage() {
         {/* Final CTA Section */}
         <section className="relative w-full py-24 md:py-32 overflow-hidden">
              <Image
-                src="https://placehold.co/1200x800.png"
-                alt="Dramatic lighting on a cricket stadium at night"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg"
+                alt="Grassy Cricket Field"
                 fill
                 className="object-cover -z-10"
                 data-ai-hint="cricket stadium night"

@@ -15,6 +15,12 @@ export function PublicHeader() {
             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4">
             Features
             </Link>
+            <Link href="#user-experience" className="text-sm font-medium hover:underline underline-offset-4">
+            Built for the whole team
+            </Link>
+            <Link href="#testimonials" className="text-sm font-medium hover:underline underline-offset-4">
+ Testimonials
+            </Link>
             <Button asChild variant="outline">
                 <Link href="/login">Log In</Link>
             </Button>
