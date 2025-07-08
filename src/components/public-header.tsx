@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons/logo';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function PublicHeader() {
   return (
@@ -26,6 +27,7 @@ export function PublicHeader() {
             <Button asChild>
                 <Link href="/signup">Sign Up</Link>
             </Button>
+            <ThemeToggle />
         </nav>
       </div>
     </header>
