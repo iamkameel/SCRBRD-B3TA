@@ -5,15 +5,19 @@ import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, Shield, Trophy, UserCog, ArrowRight, Mail, ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react';
+import { Users, MapPin, Shield, Trophy, UserCog, ArrowRight, Mail, ThumbsUp, ThumbsDown, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from "date-fns";
-import type { Competition, Team, Person, Field, AssignmentRequest } from '@/lib/data';
+import type { Competition, Team, Person, Field, AssignmentRequest, Match, MatchStatus } from '@/lib/data';
 import { getSportsmasterDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 import { reviewAssignmentRequestAction } from '@/lib/actions/requests';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth-context';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -38,6 +42,85 @@ interface SportsmasterDashboardData {
         fields: number;
     };
     pendingRequests: AssignmentRequest[];
+    matches: Match[];
+}
+
+function FixturesCard({ matches }: { matches: Match[] }) {
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [statusFilter, setStatusFilter] = React.useState<MatchStatus | 'all'>('scheduled');
+
+    const filteredMatches = React.useMemo(() => {
+        return matches.filter(match => {
+            const searchMatch = `${match.teamAName} ${match.teamBName} ${match.competitionName} ${match.fieldName}`.toLowerCase().includes(searchTerm.toLowerCase());
+            const statusMatch = statusFilter === 'all' || match.status === statusFilter;
+            return searchMatch && statusMatch;
+        });
+    }, [matches, searchTerm, statusFilter]);
+    
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Fixtures Overview</CardTitle>
+                <CardDescription>A list of all fixtures across your assigned schools.</CardDescription>
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search fixtures..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    </div>
+                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Filter by status..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                            <SelectItem value="live">Live</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="postponed">Postponed</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </CardHeader>
+            <CardContent>
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Match</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Competition</TableHead>
+                            <TableHead>Venue</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredMatches.length > 0 ? (
+                            filteredMatches.map((match) => (
+                            <TableRow key={match.matchId}>
+                                <TableCell className="font-medium">
+                                    <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
+                                            <span>{match.teamAName}</span>
+                                        </div>
+                                        <span className="text-muted-foreground text-xs">vs</span>
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
+                                            <span>{match.teamBName}</span>
+                                        </div>
+                                    </Link>
+                                </TableCell>
+                                <TableCell>{format(match.dateTime, "dd MMM, p")}</TableCell>
+                                <TableCell>{match.competitionName}</TableCell>
+                                <TableCell>{match.fieldName}</TableCell>
+                            </TableRow>
+                            ))
+                        ) : (
+                            <TableRow><TableCell colSpan={4} className="h-24 text-center">No fixtures found matching your criteria.</TableCell></TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
 }
 
 export default function SportsmasterDashboard() {
@@ -52,7 +135,7 @@ export default function SportsmasterDashboard() {
     if (person?.personId) {
         setLoading(true);
         getSportsmasterDashboardData().then(fetchedData => {
-            setData(fetchedData);
+            setData(fetchedData as SportsmasterDashboardData);
             setLoading(false);
             }).catch(error => {
             console.error("Failed to load sportsmaster dashboard data:", error);
@@ -82,6 +165,7 @@ export default function SportsmasterDashboard() {
   const {
     kpis,
     pendingRequests,
+    matches,
   } = data;
   
   return (
@@ -91,23 +175,23 @@ export default function SportsmasterDashboard() {
         <p className="text-sm opacity-90">Strategic oversight for your assigned schools and districts.</p>
       </header>
         
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Mail />Assignment Requests</CardTitle>
-                <CardDescription>Review pending requests from coaches and other staff.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Request</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {pendingRequests && pendingRequests.length > 0 ? (
-                            pendingRequests.map(req => (
+        {pendingRequests && pendingRequests.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Mail />Assignment Requests</CardTitle>
+                    <CardDescription>Review pending requests from coaches and other staff.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Request</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {pendingRequests.map(req => (
                                 <TableRow key={req.requestId}>
                                     <TableCell>
                                         <p className="font-semibold">{req.requesterName}</p>
@@ -123,18 +207,12 @@ export default function SportsmasterDashboard() {
                                         </Button>
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={3} className="h-24 text-center">
-                                    No pending requests.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
 
         <Card>
             <CardHeader><CardTitle>Global Overview</CardTitle><CardDescription>High-level metrics across all schools and divisions you oversee.</CardDescription></CardHeader>
@@ -145,6 +223,8 @@ export default function SportsmasterDashboard() {
                 <StatCard title="Fields & Venues" value={kpis.fields} icon={MapPin} description="available for booking" />
             </CardContent>
         </Card>
+        
+        <FixturesCard matches={matches} />
       
         <Card>
             <CardHeader>

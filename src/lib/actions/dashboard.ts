@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest, TrainingSession } from '@/lib/data';
@@ -172,12 +173,14 @@ export async function getSportsmasterDashboardData() {
         players,
         fields,
         pendingRequests,
+        matches,
     ] = await Promise.all([
         getCompetitions(),
         getTeams(),
         getPlayers(),
         getFields(),
         getPendingAssignmentRequests(),
+        getMatches(),
     ]);
 
     return {
@@ -188,6 +191,7 @@ export async function getSportsmasterDashboardData() {
             fields: fields.length,
         },
         pendingRequests,
+        matches,
     };
 }
 
