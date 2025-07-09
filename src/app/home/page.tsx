@@ -85,21 +85,21 @@ const testimonials = [
   {
     name: 'Priya Sharmma',
     role: 'Head of Sport',
-    avatar: 'https://placehold.co/100x100.png',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg',
     dataAiHint: 'woman smiling',
     testimonial: 'SCRBRD has revolutionized how we manage our cricket program. The strategic calendar and AI analysis give us an unprecedented edge in planning and execution. It\'s an indispensable tool.',
   },
   {
-    name: 'David Miller',
+    name: 'Jonah Miller',
     role: '1st XI Coach',
-    avatar: 'https://placehold.co/100x100.png',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg',
     dataAiHint: 'man portrait',
     testimonial: 'The player development tracker is a game-changer. I can visualize a player\'s progress over the season and have data-backed conversations about their performance. The AI insights are incredibly accurate.',
   },
   {
     name: 'Nkosi Sipamla',
     role: 'Parent & Spectator',
-    avatar: 'https://placehold.co/100x100.png',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg',
     dataAiHint: 'father portrait',
     testimonial: 'As a parent, staying updated with my son\'s schedule and performance has never been easier. The app is intuitive and provides all the information I need right at my fingertips. Truly fantastic!',
   },
@@ -111,23 +111,18 @@ export default function LandingPage() {
   const activeTestimonial = testimonials[activeIndex];
   
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
       <PublicHeader />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full py-20 md:py-32 lg:py-40">
-          <Image
-            src="https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg"
-            alt="Cricket stadium under lights"
-            fill
-            className="object-cover -z-10"
-            priority
-            data-ai-hint="cricket stadium dramatic light"
-          />
-          <div className="absolute inset-0 bg-black/60 -z-10" />
-          <div className="container grid lg:grid-cols-2 gap-8 items-center">
-            <div className="max-w-xl text-left">
-              <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
+        <section
+          className="relative w-full py-20 md:py-32 lg:py-40 bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg')" }}
+        >
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="container relative z-10 grid lg:grid-cols-2 gap-8 items-center">
+            <div className="max-w-xl text-left text-primary-foreground">
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
                 The Future of Cricket Management is Here.
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-300">
@@ -184,40 +179,38 @@ export default function LandingPage() {
         </section>
         
         {/* For Every Role Section */}
-        <section id="user-experience" className="relative w-full py-12 md:py-24 lg:py-32">
-            <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/huuddle-700.jpg"
-                alt="A cricket team huddling on the field"
-                fill
-                className="object-cover -z-10 opacity-5"
-                data-ai-hint="cricket team huddle"
-            />
-            <div className="container">
-                <div className="mx-auto max-w-2xl lg:text-center">
-                    <h2 className="text-base font-semibold leading-7 text-primary">Built for the whole team</h2>
-                    <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                        A dedicated experience for every role
-                    </p>
-                     <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                        Whether you're managing a league, coaching a team, or following the action, SCRBRD provides the tools you need to succeed.
-                    </p>
-                </div>
-                <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-                    {forEveryRole.map((role) => (
-                        <Card key={role.role} className="bg-card/80 backdrop-blur-sm">
-                            <CardHeader>
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground mb-4">
-                                  <role.icon className="h-6 w-6" aria-hidden="true" />
-                                </div>
-                                <CardTitle>{role.role}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <CardDescription>{role.description}</CardDescription>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </div>
+        <section
+          id="user-experience"
+          className="relative w-full py-12 md:py-24 lg:py-32 bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/huuddle-700.jpg')" }}
+        >
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+          <div className="container relative z-10">
+              <div className="mx-auto max-w-2xl lg:text-center">
+                  <h2 className="text-base font-semibold leading-7 text-primary">Built for the whole team</h2>
+                  <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                      A dedicated experience for every role
+                  </p>
+                   <p className="mt-6 text-lg leading-8 text-muted-foreground">
+                      Whether you're managing a league, coaching a team, or following the action, SCRBRD provides the tools you need to succeed.
+                  </p>
+              </div>
+              <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+                  {forEveryRole.map((role) => (
+                      <Card key={role.role} className="bg-card/80 backdrop-blur-sm">
+                          <CardHeader>
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground mb-4">
+                                <role.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <CardTitle>{role.role}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                              <CardDescription>{role.description}</CardDescription>
+                          </CardContent>
+                      </Card>
+                  ))}
+              </div>
+          </div>
         </section>
 
 
@@ -280,16 +273,12 @@ export default function LandingPage() {
 
 
         {/* Final CTA Section */}
-        <section className="relative w-full py-24 md:py-32 overflow-hidden">
-             <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg"
-                alt="Grassy Cricket Field"
-                fill
-                className="object-cover -z-10"
-                data-ai-hint="cricket stadium grass"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40 -z-10" />
-          <div className="container text-center">
+        <section
+          className="relative w-full py-24 md:py-32 overflow-hidden bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg')" }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40" />
+          <div className="container relative z-10 text-center">
             <h2 className="text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
               Ready to elevate your game?
             </h2>
