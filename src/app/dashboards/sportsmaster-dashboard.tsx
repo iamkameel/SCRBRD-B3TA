@@ -58,7 +58,7 @@ function FixturesCard({ matches }: { matches: Match[] }) {
     }, [matches, searchTerm, statusFilter]);
     
     return (
-        <Card>
+        <Card className="flex flex-col h-full">
             <CardHeader>
                 <CardTitle>Fixtures Overview</CardTitle>
                 <CardDescription>A list of all fixtures across your assigned schools.</CardDescription>
@@ -81,14 +81,12 @@ function FixturesCard({ matches }: { matches: Match[] }) {
                     </Select>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1">
                  <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Match</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead>Competition</TableHead>
-                            <TableHead>Venue</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -97,20 +95,19 @@ function FixturesCard({ matches }: { matches: Match[] }) {
                             <TableRow key={match.matchId}>
                                 <TableCell className="font-medium">
                                     <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
-                                            <span>{match.teamAName}</span>
-                                        </div>
-                                        <span className="text-muted-foreground text-xs">vs</span>
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
-                                            <span>{match.teamBName}</span>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-5 w-5"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
+                                                <span>{match.teamAName}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-5 w-5"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
+                                                <span>{match.teamBName}</span>
+                                            </div>
                                         </div>
                                     </Link>
                                 </TableCell>
                                 <TableCell>{format(match.dateTime, "dd MMM, p")}</TableCell>
-                                <TableCell>{match.competitionName}</TableCell>
-                                <TableCell>{match.fieldName}</TableCell>
                             </TableRow>
                             ))
                         ) : (
@@ -213,67 +210,72 @@ export default function SportsmasterDashboard() {
                 </CardContent>
             </Card>
         )}
-
-        <Card>
-            <CardHeader><CardTitle>Global Overview</CardTitle><CardDescription>High-level metrics across all schools and divisions you oversee.</CardDescription></CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <StatCard title="Competitions" value={kpis.competitions} icon={Shield} description="active this season" />
-                <StatCard title="Teams" value={kpis.teams} icon={Users} description="across all divisions"/>
-                <StatCard title="Players" value={kpis.players} icon={Users} description="registered" />
-                <StatCard title="Fields & Venues" value={kpis.fields} icon={MapPin} description="available for booking" />
-            </CardContent>
-        </Card>
         
-        <FixturesCard matches={matches} />
-      
-        <Card>
-            <CardHeader>
-                <CardTitle>Management Hub</CardTitle>
-                <CardDescription>Quick access to key management areas.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Link href="/teams" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
-                    <div className="flex items-center gap-4">
-                        <Users className="w-8 h-8 text-muted-foreground shrink-0" />
-                        <div className="flex-1">
-                            <h3 className="font-semibold">Team Management</h3>
-                            <p className="text-sm text-muted-foreground">Assign players and staff to rosters.</p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
-                    </div>
-                </Link>
-                <Link href="/competitions" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
-                    <div className="flex items-center gap-4">
-                        <Trophy className="w-8 h-8 text-muted-foreground shrink-0" />
-                        <div className="flex-1">
-                            <h3 className="font-semibold">Competition Management</h3>
-                            <p className="text-sm text-muted-foreground">Create and manage leagues and cups.</p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
-                    </div>
-                </Link>
-                 <Link href="/matches" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
-                    <div className="flex items-center gap-4">
-                        <Users className="w-8 h-8 text-muted-foreground shrink-0" />
-                        <div className="flex-1">
-                            <h3 className="font-semibold">Fixture Management</h3>
-                            <p className="text-sm text-muted-foreground">Schedule and update matches.</p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
-                    </div>
-                </Link>
-                 <Link href="/people" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
-                    <div className="flex items-center gap-4">
-                        <UserCog className="w-8 h-8 text-muted-foreground shrink-0" />
-                        <div className="flex-1">
-                            <h3 className="font-semibold">Personnel Management</h3>
-                            <p className="text-sm text-muted-foreground">View all registered people.</p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
-                    </div>
-                </Link>
-            </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2 space-y-8">
+                <Card>
+                    <CardHeader><CardTitle>Global Overview</CardTitle><CardDescription>High-level metrics across all schools and divisions you oversee.</CardDescription></CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        <StatCard title="Competitions" value={kpis.competitions} icon={Shield} description="active this season" />
+                        <StatCard title="Teams" value={kpis.teams} icon={Users} description="across all divisions"/>
+                        <StatCard title="Players" value={kpis.players} icon={Users} description="registered" />
+                        <StatCard title="Fields & Venues" value={kpis.fields} icon={MapPin} description="available for booking" />
+                    </CardContent>
+                </Card>
+            
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Management Hub</CardTitle>
+                        <CardDescription>Quick access to key management areas.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <Link href="/teams" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
+                            <div className="flex items-center gap-4">
+                                <Users className="w-8 h-8 text-muted-foreground shrink-0" />
+                                <div className="flex-1">
+                                    <h3 className="font-semibold">Team Management</h3>
+                                    <p className="text-sm text-muted-foreground">Assign players and staff to rosters.</p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                            </div>
+                        </Link>
+                        <Link href="/competitions" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
+                            <div className="flex items-center gap-4">
+                                <Trophy className="w-8 h-8 text-muted-foreground shrink-0" />
+                                <div className="flex-1">
+                                    <h3 className="font-semibold">Competition Management</h3>
+                                    <p className="text-sm text-muted-foreground">Create and manage leagues and cups.</p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                            </div>
+                        </Link>
+                        <Link href="/matches" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
+                            <div className="flex items-center gap-4">
+                                <Users className="w-8 h-8 text-muted-foreground shrink-0" />
+                                <div className="flex-1">
+                                    <h3 className="font-semibold">Fixture Management</h3>
+                                    <p className="text-sm text-muted-foreground">Schedule and update matches.</p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                            </div>
+                        </Link>
+                        <Link href="/people" className="block p-4 transition-colors border rounded-lg hover:bg-muted/50">
+                            <div className="flex items-center gap-4">
+                                <UserCog className="w-8 h-8 text-muted-foreground shrink-0" />
+                                <div className="flex-1">
+                                    <h3 className="font-semibold">Personnel Management</h3>
+                                    <p className="text-sm text-muted-foreground">View all registered people.</p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                            </div>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-1">
+                <FixturesCard matches={matches} />
+            </div>
+        </div>
     </div>
   );
 }
