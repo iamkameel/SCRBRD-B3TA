@@ -266,8 +266,9 @@ export async function getTeamManagerDashboardData(personId: string) {
 
 export async function getCoachDashboardData(personId: string) {
     const assignments = await getPersonTeamAssignments(personId);
+    // A user is a coach if they have a coaching role on ANY team, regardless of their activeRole.
     const teamManagementRoles = ['Admin', 'Sportsmaster', 'Coach', 'Assistant Coach', 'Team Manager', 'Captain', 'Vice-Captain'];
-    const coachAssignments = assignments.filter(a => teamManagementRoles.includes(a.role));
+    const coachAssignments = assignments.filter(a => teamManagementRoles.some(role => a.role === role));
 
     const pendingRequests = await getPendingAssignmentRequests();
 
@@ -277,6 +278,7 @@ export async function getCoachDashboardData(personId: string) {
     
     const teams = (await Promise.all(coachAssignments.map(a => getTeam(a.teamId)))).filter((t): t is Team => t !== null);
     
+    // Use the first team as the primary for dashboard details, can be made configurable later
     const primaryTeamId = teams[0]?.teamId;
     if (!primaryTeamId) {
         return { teams: [], team: null, nextMatch: null, recentMatches: [], teamStats: null, leaderboards: { topRunScorers: [], topWicketTakers: [] }, upcomingSessions: [], pendingRequests };

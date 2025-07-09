@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -360,8 +361,8 @@ export default function CoachDashboard() {
 
       fetchData()
         .then(async (fetchedData: any) => {
-            const teamsExist = fetchedData.teams && fetchedData.teams.length > 0;
-            if (!teamsExist) {
+            const noTeamsAssigned = !fetchedData.teams || fetchedData.teams.length === 0;
+            if (noTeamsAssigned) {
                 const [allSchools, allTeams] = await Promise.all([getSchools(), getTeams()]);
                 setData({ ...fetchedData, allSchools, allTeams });
             } else {
