@@ -266,7 +266,7 @@ export async function getTeamManagerDashboardData(personId: string) {
 
 export async function getCoachDashboardData(personId: string) {
     const assignments = await getPersonTeamAssignments(personId);
-    const teamManagementRoles = ['Admin', 'Sportsmaster', 'Coach', 'Assistant Coach', 'Team Manager', 'Captain'];
+    const teamManagementRoles = ['Admin', 'Sportsmaster', 'Coach', 'Assistant Coach', 'Team Manager', 'Captain', 'Vice-Captain'];
     const coachAssignments = assignments.filter(a => teamManagementRoles.includes(a.role));
 
     const pendingRequests = await getPendingAssignmentRequests();
