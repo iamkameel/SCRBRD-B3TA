@@ -151,7 +151,7 @@ interface TeamManagerDashboardData {
 }
 
 function TeamManagerDashboardUI({ data }: { data: TeamManagerDashboardData }) {
-    const { kpis, upcomingMatches, teams, pendingRequests } = data;
+    const { kpis, upcomingMatches, teams } = data;
     
     return (
         <div className="flex flex-col gap-8">
@@ -242,7 +242,7 @@ interface CoachDashboardProps {
 
 function CoachDashboardInternal({ data }: CoachDashboardProps) {
   const { person } = useAuth();
-  const { teams, team, nextMatch, recentMatches, teamStats, leaderboards, upcomingSessions } = data;
+  const { teams, team, nextMatch, upcomingSessions } = data;
   const activeRole = person?.activeRole || 'User';
   const [isRequestDialogOpen, setIsRequestDialogOpen] = React.useState(false);
   
