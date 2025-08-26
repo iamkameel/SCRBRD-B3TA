@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -12,6 +10,7 @@ import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 export function PlayerDevelopmentCard({ personId, initialPlan, initialPlanDate }: { personId: string, initialPlan: PlayerDevelopmentPlanOutput | null, initialPlanDate?: Date }) {
     const { toast } = useToast();
@@ -94,8 +93,12 @@ export function PlayerDevelopmentCard({ personId, initialPlan, initialPlanDate }
                              <Accordion type="single" collapsible className="w-full">
                                 {plan.recommendations.map((rec, index) => (
                                     <AccordionItem value={`item-${index}`} key={index}>
-                                        <AccordionTrigger>{rec.title}</AccordionTrigger>
-                                        <AccordionContent className="whitespace-pre-wrap">{rec.description}</AccordionContent>
+                                        <AccordionTrigger>
+                                            <Link href={`/drills#${rec.drillId}`} className="hover:underline">
+                                                {rec.drillName}
+                                            </Link>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="whitespace-pre-wrap">{rec.justification}</AccordionContent>
                                     </AccordionItem>
                                 ))}
                             </Accordion>

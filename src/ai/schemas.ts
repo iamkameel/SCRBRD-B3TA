@@ -158,6 +158,13 @@ export type SelectLineupOutput = z.infer<typeof SelectLineupOutputSchema>;
 
 
 // From generate-player-development-plan-flow.ts
+export const AvailableDrillSchema = z.object({
+    drillId: z.string(),
+    name: z.string(),
+    category: z.enum(['Batting', 'Bowling', 'Fielding', 'Fitness', 'Tactical']),
+    description: z.string(),
+});
+
 export const RecentPerformanceSchema = z.object({
     opponent: z.string(),
     runs: z.number(),
@@ -167,15 +174,17 @@ export const PlayerDevelopmentPlanPromptInputSchema = z.object({
     playerName: z.string(),
     playerStats: SimplifiedPlayerStatsSchema,
     recentPerformances: z.array(RecentPerformanceSchema),
+    availableDrills: z.array(AvailableDrillSchema).optional(), // Make optional here, will be added in flow
 });
 
 export const PlayerDevelopmentPlanSchema = z.object({
   strengths: z.array(z.string()).describe("A list of the player's key strengths based on their stats."),
   weaknesses: z.array(z.string()).describe("A list of areas where the player can improve based on their stats and recent form."),
   recommendations: z.array(z.object({
-    title: z.string().describe("A short, descriptive title for the recommended drill or focus area."),
-    description: z.string().describe("A detailed, step-by-step description of the drill or what the player should focus on to improve."),
-  })).length(3, { message: "Provide exactly three targeted recommendations." }).describe("A list of three personalized recommendations and drills."),
+    drillId: z.string().describe("The ID of the recommended drill from the provided list."),
+    drillName: z.string().describe("The name of the recommended drill."),
+    justification: z.string().describe("A detailed, step-by-step description of why this drill was chosen and how it will help the player improve."),
+  })).min(1).max(2).describe("A list of 1-2 personalized drill recommendations from the provided drill library."),
 });
 export type PlayerDevelopmentPlanOutput = z.infer<typeof PlayerDevelopmentPlanSchema>;
 
