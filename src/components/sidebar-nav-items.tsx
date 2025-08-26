@@ -1,5 +1,4 @@
 
-
 import {
     LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database,
     Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack,
@@ -15,7 +14,8 @@ import {
     HelpCircle,
     ScrollText,
     BookOpen,
-    FileClock
+    FileClock,
+    ListChecks
 } from 'lucide-react';
 
 const topLevelNavItems = [
@@ -26,6 +26,7 @@ const referenceGroup = {
     title: "Reference",
     icon: BookOpen,
     items: [
+        { href: '/features', label: 'Features', icon: ListChecks },
         { href: '/roles', label: 'User Roles', icon: Users },
         { href: '/rulebook', label: 'Rule Book', icon: ScrollText },
         { href: '/help', label: 'Help & Onboarding', icon: HelpCircle },
