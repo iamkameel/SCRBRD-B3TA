@@ -15,6 +15,7 @@ import {
 import { queryStatsAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from './ui/avatar';
+import { Button } from './ui/button';
 
 export function CommandSearch() {
     const router = useRouter();
