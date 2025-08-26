@@ -6,8 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FileText, FileBarChart, Receipt, FileClock } from 'lucide-react';
+import { PlusCircle, FileText, FileBarChart, Receipt, FileClock, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 
 interface BillingData {
   estimates: any[];
@@ -29,6 +38,29 @@ const EmptyState = ({ title, description }: { title: string, description: string
   </TableRow>
 );
 
+function CreateDocumentDialog() {
+    const [open, setOpen] = React.useState(false);
+    
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2" />
+                    Create New Document
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2"><Wrench/>Feature Under Construction</DialogTitle>
+                    <DialogDescription className="pt-4">
+                        The ability to create new estimates, invoices, and other billing documents is coming soon!
+                    </DialogDescription>
+                </DialogHeader>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export default function BillingClient({ initialData }: BillingClientProps) {
   const { estimates, invoices, statements, receipts } = initialData;
 
@@ -39,10 +71,7 @@ export default function BillingClient({ initialData }: BillingClientProps) {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Billing</h1>
           <p className="text-muted-foreground">Manage cost estimates, invoices, statements, and receipts.</p>
         </div>
-        <Button disabled>
-          <PlusCircle className="mr-2" />
-          Create New Document
-        </Button>
+        <CreateDocumentDialog />
       </header>
 
       <Tabs defaultValue="invoices" className="w-full">
