@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -35,7 +34,7 @@ const EmptyState = ({ title, description }: { title: string, description: string
   </TableRow>
 );
 
-const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
 
 export default function BillingClient({ initialInvoices, clients }: BillingClientProps) {
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = React.useState(false);

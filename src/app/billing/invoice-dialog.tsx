@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -104,7 +103,7 @@ export function InvoiceDialog({ clients, open, onOpenChange }: { clients: School
     });
   };
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

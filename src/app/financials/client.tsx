@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from "react";
@@ -53,7 +51,7 @@ export default function FinancialsClient({ transactions, isAdmin }: { transactio
   }, [transactions]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
   }
 
   return (
