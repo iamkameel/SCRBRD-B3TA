@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -81,4 +80,3 @@ export function AvailabilityStatusCard({ title, roster, availability }: Availabi
         </Card>
     );
 }
-

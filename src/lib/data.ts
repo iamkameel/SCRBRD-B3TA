@@ -152,6 +152,7 @@ export interface Team {
     primary?: string;
     secondary?: string;
   };
+  analysisReport?: string;
 }
 
 export interface RosterMember {
