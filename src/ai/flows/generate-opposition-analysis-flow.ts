@@ -7,7 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getTeamStats, getTeamRoster } from '@/lib/actions/teams';
+import { getTeamStats, getTeamRoster, getTeam } from '@/lib/actions/teams';
 import { getPlayerStats } from '@/lib/actions/stats';
 import type { RosterMember } from '@/lib/data';
 import { OppositionAnalysisInputSchema } from '@/ai/schemas';
@@ -38,15 +38,20 @@ Generate only the analysis text.`,
 const generateOppositionAnalysisFlow = ai.defineFlow(
   {
     name: 'generateOppositionAnalysisFlow',
-    inputSchema: z.object({ opponentTeamId: z.string(), opponentTeamName: z.string() }),
+    inputSchema: z.object({ opponentTeamId: z.string() }),
     outputSchema: z.string(),
   },
-  async ({ opponentTeamId, opponentTeamName }) => {
+  async ({ opponentTeamId }) => {
     
-    const [teamStats, teamRoster] = await Promise.all([
+    const [team, teamStats, teamRoster] = await Promise.all([
+      getTeam(opponentTeamId),
       getTeamStats(opponentTeamId),
       getTeamRoster(opponentTeamId),
     ]);
+
+    if (!team) {
+      throw new Error(`Team with ID ${opponentTeamId} not found.`);
+    }
     
     const getPlayersWithStats = async (roster: RosterMember[]) => {
         const playerPromises = roster.filter(m => m.role === 'Player').slice(0, 5).map(async (member) => {
@@ -63,7 +68,7 @@ const generateOppositionAnalysisFlow = ai.defineFlow(
     const playersWithStats = await getPlayersWithStats(teamRoster);
 
     const { output } = await generateOppositionAnalysisPrompt({
-        opponentTeamName: opponentTeamName,
+        opponentTeamName: team.name,
         opponentTeamStats: JSON.stringify(teamStats, null, 2),
         opponentKeyPlayers: JSON.stringify(playersWithStats, null, 2),
     });
@@ -72,6 +77,6 @@ const generateOppositionAnalysisFlow = ai.defineFlow(
   }
 );
 
-export async function generateOppositionAnalysis(input: { opponentTeamId: string; opponentTeamName: string; }): Promise<string> {
+export async function generateOppositionAnalysis(input: { opponentTeamId: string; }): Promise<string> {
     return generateOppositionAnalysisFlow(input);
 }

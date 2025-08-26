@@ -233,15 +233,27 @@ export async function generateOppositionAnalysisAction(matchId: string, opponent
 
     const match = await getMatch(matchId);
     if (!match) throw new Error("Match not found or permission denied.");
-
-    const analysisText = await generateOppositionAnalysis({ opponentTeamId, opponentTeamName: match.teamAName });
     
+    if (match.status === 'completed') {
+        const analysisText = await generateOppositionAnalysis({ opponentTeamId });
+
+        if (!analysisText) {
+            throw new Error("AI failed to generate an opposition analysis.");
+        }
+
+        const teamRef = doc(db, 'teams', opponentTeamId);
+        await updateDoc(teamRef, { analysisReport: analysisText });
+
+        revalidatePath(`/teams/${opponentTeamId}`);
+        return { success: true, message: "Team analysis generated successfully and saved to the team's profile." };
+    }
+
+
     if (match.status !== 'scheduled') {
         throw new Error("Opposition analysis can only be generated for scheduled matches.");
     }
     
-    const opponentTeamName = opponentTeamId === match.teamAId ? match.teamAName : match.teamBName;
-
+    const analysisText = await generateOppositionAnalysis({ opponentTeamId });
 
     if (!analysisText) {
         throw new Error("AI failed to generate an opposition analysis.");

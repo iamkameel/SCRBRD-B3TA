@@ -396,7 +396,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
   const handleGenerateAnalysis = () => {
     startAnalysisGeneration(async () => {
         try {
-            const result = await generateOppositionAnalysisAction({ matchId: '', opponentTeamId: team.teamId, opponentTeamName: team.name });
+            const result = await generateOppositionAnalysisAction(team.teamId);
             setAnalysisResult(result);
             toast({ title: "Analysis Complete", description: "The team's strengths and weaknesses have been analyzed." });
         } catch (error) {
