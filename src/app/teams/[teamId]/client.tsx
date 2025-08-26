@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit, Search, Loader2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowLeft, Trash2, Edit, Search, Loader2, BrainCircuit } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Team, Person, RosterMember, TeamStats, Match } from "@/lib/data";
 import { addPlayerToRosterAction, removeRosterAssignmentAction, updateRosterAssignmentAction, getEligiblePlayersForTeam, bulkAddPlayersToRosterAction } from '@/lib/actions/teams';
+import { generateOppositionAnalysisAction } from '@/lib/actions/analysis';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,7 +60,7 @@ const editAssignmentSchema = assignmentSchema.omit({ personId: true });
 type EditAssignmentFormValues = z.infer<typeof editAssignmentSchema>;
 
 const PLAYER_ROLES = ["Player"];
-const STAFF_ROLES = ["Coach", "Assistant Coach", "Team Manager", "Trainer", "Physio", "Scorer"];
+const STAFF_ROLES = ["Coach", "Assistant Coach", "Team Manager", "Trainer", "Physiotherapist", "Scorer"];
 const TEAM_ASSIGNABLE_ROLES = [...PLAYER_ROLES, ...STAFF_ROLES];
 const STATUSES = ["active", "on_trial", "injured", "retired", "on_loan"];
 
@@ -264,7 +265,7 @@ function BulkAddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: b
                                                           checked={field.value?.includes(p.personId)}
                                                           onCheckedChange={(checked) => {
                                                             return checked
-                                                              ? field.onChange([...field.value, p.personId])
+                                                              ? field.onChange([...(field.value || []), p.personId])
                                                               : field.onChange(
                                                                   field.value?.filter(
                                                                     (value) => value !== p.personId
@@ -333,7 +334,7 @@ function EditAssignmentDialog({ teamId, member, open, onOpenChange }: { teamId: 
     });
   }
   
-  const isPlayer = member.role === 'Player';
+  const isPlayer = form.watch('role') === 'Player';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -388,6 +389,21 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
   
   const playerRoster = initialRoster.filter(m => PLAYER_ROLES.includes(m.role));
   const staffRoster = initialRoster.filter(m => STAFF_ROLES.includes(m.role));
+
+  const [isGeneratingAnalysis, startAnalysisGeneration] = React.useTransition();
+  const [analysisResult, setAnalysisResult] = React.useState<string | null>(team.analysisReport || null);
+
+  const handleGenerateAnalysis = () => {
+    startAnalysisGeneration(async () => {
+        try {
+            const result = await generateOppositionAnalysisAction({ matchId: '', opponentTeamId: team.teamId, opponentTeamName: team.name });
+            setAnalysisResult(result);
+            toast({ title: "Analysis Complete", description: "The team's strengths and weaknesses have been analyzed." });
+        } catch (error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate analysis.", variant: "destructive" });
+        }
+    });
+  };
 
   React.useEffect(() => {
     setIsClient(true);
@@ -454,9 +470,10 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
         </header>
         
         <Tabs defaultValue="roster">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="roster">Roster</TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
             </TabsList>
             <TabsContent value="roster" className="mt-4 space-y-8">
                 <Card>
@@ -586,6 +603,39 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                     </CardContent>
                 </Card>
             </TabsContent>
+             <TabsContent value="analysis" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>AI Team Analysis</CardTitle>
+                                <CardDescription>Generate a summary of this team's strengths and weaknesses based on season stats.</CardDescription>
+                            </div>
+                            <Button onClick={handleGenerateAnalysis} disabled={isGeneratingAnalysis}>
+                                <BrainCircuit className={`mr-2 h-4 w-4 ${isGeneratingAnalysis ? 'animate-spin' : ''}`} />
+                                {isGeneratingAnalysis ? 'Analyzing...' : (analysisResult ? 'Regenerate Analysis' : 'Generate Analysis')}
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {isGeneratingAnalysis && (
+                             <div className="flex flex-col items-center justify-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="mt-4 text-muted-foreground">The AI coach is analyzing the team's performance...</p>
+                            </div>
+                        )}
+                        {!isGeneratingAnalysis && analysisResult && (
+                            <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">{analysisResult}</div>
+                        )}
+                         {!isGeneratingAnalysis && !analysisResult && (
+                            <div className="flex flex-col items-center justify-center h-48 text-center border-2 border-dashed rounded-lg">
+                                <p className="font-semibold">No analysis available.</p>
+                                <p className="text-sm text-muted-foreground">Click the button to generate one.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </TabsContent>
         </Tabs>
       </div>
       
@@ -633,5 +683,3 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
     </>
   )
 }
-
-    
