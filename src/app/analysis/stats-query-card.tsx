@@ -48,7 +48,7 @@ export function StatsQueryCard() {
       <CardHeader>
         <CardTitle>Natural Language Stats Query</CardTitle>
         <CardDescription>
-          Ask a question about the league stats in plain English, and the AI will find the answer for you.
+          Ask a question about league stats or a specific match, and the AI will find the answer.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -61,7 +61,7 @@ export function StatsQueryCard() {
                 <FormItem className="flex-1">
                   <FormControl>
                     <Input
-                      placeholder="e.g., Who has the most wickets?"
+                      placeholder="e.g., Who scored the most runs in the MHS vs HC match?"
                       {...field}
                       disabled={isPending}
                     />

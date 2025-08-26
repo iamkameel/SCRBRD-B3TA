@@ -7,6 +7,8 @@ import { getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
 import { getSeasons } from '@/lib/actions/seasons';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { getTeams } from '@/lib/actions/teams';
+import { getMatches, getScorecard } from '@/lib/actions/matches';
+import { InningsSchema } from '@/ai/schemas';
 
 const StatTypeSchema = z.enum(["top_run_scorers", "top_wicket_takers", "team_standings"]);
 
@@ -24,7 +26,7 @@ const TeamStatSchema = z.object({
 export const getCricketStats = ai.defineTool(
   {
     name: 'getCricketStats',
-    description: 'Returns cricket statistics for players and teams. Use this to find out who has the most runs, most wickets, or to see team standings. You can filter by season, competition, or team.',
+    description: 'Returns overall cricket statistics for players and teams. Use this to find out who has the most runs, most wickets, or to see team standings. You can filter by season, competition, or team.',
     inputSchema: z.object({
         statType: StatTypeSchema.describe("The type of statistic to retrieve."),
         seasonName: z.string().optional().describe("The name of the season to filter by, e.g., '2024/25 Season'"),
@@ -73,5 +75,50 @@ export const getCricketStats = ai.defineTool(
     }
     
     throw new Error('Invalid stat type');
+  }
+);
+
+
+export const getMatchStats = ai.defineTool(
+  {
+    name: 'getMatchStats',
+    description: 'Returns detailed scorecard data for a specific match between two teams. Use this to answer questions about a single game, such as "who scored the most runs in the MHS vs HC match?".',
+    inputSchema: z.object({
+        teamAName: z.string().describe("The name of one of the teams in the match."),
+        teamBName: z.string().describe("The name of the other team in the match."),
+    }),
+    outputSchema: z.object({
+        matchId: z.string(),
+        teamAName: z.string(),
+        teamBName: z.string(),
+        result: z.string().optional(),
+        innings1: InningsSchema,
+        innings2: InningsSchema,
+    }),
+  },
+  async ({ teamAName, teamBName }) => {
+    const allMatches = await getMatches();
+    
+    const foundMatch = allMatches.find(m => 
+      (m.teamAName.toLowerCase().includes(teamAName.toLowerCase()) && m.teamBName.toLowerCase().includes(teamBName.toLowerCase())) ||
+      (m.teamAName.toLowerCase().includes(teamBName.toLowerCase()) && m.teamBName.toLowerCase().includes(teamAName.toLowerCase()))
+    );
+
+    if (!foundMatch || foundMatch.status !== 'completed') {
+      throw new Error(`A completed match between ${teamAName} and ${teamBName} could not be found.`);
+    }
+
+    const scorecard = await getScorecard(foundMatch.matchId);
+    if (!scorecard) {
+      throw new Error(`A scorecard for the match between ${teamAName} and ${teamBName} could not be found.`);
+    }
+
+    return {
+      matchId: foundMatch.matchId,
+      teamAName: foundMatch.teamAName,
+      teamBName: foundMatch.teamBName,
+      result: foundMatch.result,
+      ...scorecard,
+    };
   }
 );
