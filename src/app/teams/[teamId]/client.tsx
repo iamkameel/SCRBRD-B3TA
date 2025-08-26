@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -382,7 +383,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
   const [selectedMember, setSelectedMember] = React.useState<RosterMember | null>(null);
   const [memberToEdit, setMemberToEdit] = React.useState<RosterMember | null>(null);
   
-  const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = React.useState(false);
+  const [isBulkAddPlayerDialogOpen, setIsBulkAddPlayerDialogOpen] = React.useState(false);
   const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
@@ -479,7 +480,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div><CardTitle>Player Roster</CardTitle><CardDescription>The main squad of players for the team.</CardDescription></div>
-                    {canManage && <Button onClick={() => setIsAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Players</Button>}
+                    {canManage && <Button onClick={() => setIsBulkAddPlayerDialogOpen(true)}><PlusCircle className="mr-2" />Add Players</Button>}
                   </CardHeader>
                   <CardContent>
                     <Table>

@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, SlidersHorizontal, List, LayoutGrid, ChevronDown, ArrowUp, ArrowDown, Building, Users } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, Building, Users } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Person, School, Team, Division } from "@/lib/data";
 import { deletePlayerAction } from '@/lib/actions/players';
-import { bulkAssignPeopleToTeamAction } from '@/lib/actions/teams';
+import { bulkAddPlayersToRosterAction } from '@/lib/actions/teams';
 import { PersonCard } from "./person-card";
 import { ROLE_GROUPS } from "@/lib/roles";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -127,7 +127,7 @@ function BulkAssignTeamDialog({
   function onSubmit(data: z.infer<typeof bulkAssignTeamSchema>) {
     startTransition(async () => {
       try {
-        await bulkAssignPeopleToTeamAction(data.teamId, personIds);
+        await bulkAddPlayersToRosterAction(data.teamId, personIds);
         toast({ title: "Assignment Successful", description: `${personIds.length} people have been added to the team.` });
         onSuccess();
         onOpenChange(false);

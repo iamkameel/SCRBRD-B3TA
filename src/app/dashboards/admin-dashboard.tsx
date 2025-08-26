@@ -310,7 +310,7 @@ export default function AdminDashboard() {
         <>
             <SchoolDialog mode="add" open={dialogState.school} onOpenChange={(open) => setDialogState(s => ({...s, school: open}))} />
             <TeamDialog mode="add" open={dialogState.team} onOpenChange={(open) => setDialogState(s => ({...s, team: open}))} schools={dialogData.schools} divisions={dialogData.divisions} seasons={dialogData.seasons} />
-            <CompetitionDialog mode="add" open={dialogState.competition} onOpenChange={(open) => setDialogState(s => ({...s, competition: open}))} seasons={dialogData.seasons} divisions={dialogData.divisions} teams={dialogData.teams} />
+            <CompetitionDialog mode="add" open={dialogState.competition} onOpenChange={(open) => setDialogState(s => ({...s, competition: open}))} seasons={dialogData.seasons} divisions={dialogData.divisions} teams={dialogData.teams} sponsors={[]}/>
             <FieldDialog mode="add" open={dialogState.field} onOpenChange={(open) => setDialogState(s => ({...s, field: open}))} schools={dialogData.schools} groundskeepers={dialogData.groundskeeper} />
             <TransactionDialog mode="add" open={dialogState.financial} onOpenChange={(open) => setDialogState(s => ({...s, financial: open}))} />
             <SponsorDialog mode="add" open={dialogState.sponsor} onOpenChange={(open) => setDialogState(s => ({...s, sponsor: open}))} />

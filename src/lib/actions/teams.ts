@@ -691,45 +691,6 @@ export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> 
   }
 });
 
-export async function bulkAssignPeopleToTeamAction(teamId: string, data: { playerIds: string[]; status: string; }) {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated.");
-
-    const hasPermission = await isTeamManagerOrAdmin(teamId, userId);
-    if (!hasPermission) {
-        throw new Error("You do not have permission to add players to this team.");
-    }
-    
-    const validatedFields = bulkAddPlayersSchema.safeParse(data);
-    if (!validatedFields.success) {
-        throw new Error("Invalid player data provided for bulk assignment.");
-    }
-    
-    const { playerIds, status } = validatedFields.data;
-    const rosterCol = collection(db, 'teams', teamId, 'roster');
-    const existingRoster = await getTeamRoster(teamId);
-    const existingPlayerIds = new Set(existingRoster.map(p => p.personId));
-
-    const batch = writeBatch(db);
-    for (const personId of playerIds) {
-        if (!existingPlayerIds.has(personId)) {
-            const newRosterDoc = doc(rosterCol);
-            batch.set(newRosterDoc, {
-                personId,
-                role: 'Player',
-                status,
-                isCaptain: false,
-                isViceCaptain: false,
-            });
-        }
-    }
-    
-    await batch.commit();
-    revalidatePath('/people');
-    revalidatePath(`/teams/${teamId}`);
-}
-
-
 export async function isTeamManagerOrAdmin(teamId: string, userId: string): Promise<boolean> {
     const user = await getPerson(userId);
     if (!user) return false;

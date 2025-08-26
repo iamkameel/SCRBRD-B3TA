@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -35,6 +36,7 @@ import { ROLE_GROUPS } from "@/lib/roles";
 import type { Person } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
 import { deletePlayerAction } from '@/lib/actions/players';
+import { UserRoleDialog } from "./user-role-dialog";
 
 const PersonDialog = dynamic(() => import('../people/person-dialog').then(mod => mod.PersonDialog), {
   ssr: false,
@@ -47,9 +49,9 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
   const [isPending, startTransition] = React.useTransition();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilters, setRoleFilters] = React.useState<string[]>([]);
-  const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [selectedPerson, setSelectedPerson] = React.useState<Person | null>(null);
   const [isPersonDialogOpen, setIsPersonDialogOpen] = React.useState(false);
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   const canAddUsers = currentUser?.roles.includes('Admin') ?? false;
@@ -94,7 +96,7 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
             Invite and manage users with access to the system.
             </p>
         </div>
-        {canAddUsers && <Button onClick={() => { setDialogMode('add'); setSelectedPerson(null); setIsPersonDialogOpen(true); }}><PlusCircle className="mr-2" />Add User</Button>}
+        {canAddUsers && <Button onClick={() => { setIsRoleDialogOpen(true); }}><PlusCircle className="mr-2" />Add or Manage User Roles</Button>}
       </header>
 
       <Card>
@@ -232,6 +234,7 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
         </AlertDialogContent>
     </AlertDialog>
     {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} currentUser={currentUser} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} schools={[]}/>}
+    {canAddUsers && <UserRoleDialog users={users} currentUser={currentUser} open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen} />}
     </>
   );
 }
