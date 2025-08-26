@@ -29,7 +29,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -48,6 +47,7 @@ import { useAuth } from "@/lib/auth-context";
 import { ManhattanChart, WormChart, WagonWheelSummary } from "./match-charts";
 import { PlayerAvailabilityCard } from './player-availability-card';
 import { AvailabilityStatusCard } from "./availability-status-card";
+import { LineupManager } from "./manage/lineup-manager";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -501,8 +501,8 @@ export default function MatchDetailsClient({
         <Tabs defaultValue="scorecard" className="w-full">
             <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
-                <TabsTrigger value="visuals" disabled={match.status !== 'completed'}><BarChartHorizontal className="mr-2 h-4 w-4"/>Visuals</TabsTrigger>
                 <TabsTrigger value="lineups"><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
+                <TabsTrigger value="visuals" disabled={match.status !== 'completed'}><BarChartHorizontal className="mr-2 h-4 w-4"/>Visuals</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
                 <TabsTrigger value="highlights"><Film className="mr-2 h-4 w-4"/>Highlights</TabsTrigger>
                 <TabsTrigger value="logistics"><Bus className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
@@ -596,34 +596,10 @@ export default function MatchDetailsClient({
                 </Card>
             </TabsContent>
             
-            <TabsContent value="visuals" className="mt-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <ManhattanChart />
-                    <WormChart />
-                    <WagonWheelSummary />
-                </div>
-            </TabsContent>
-
             <TabsContent value="lineups" className="mt-4">
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Playing XI</CardTitle>
-                                <CardDescription>The final playing XI for each team.</CardDescription>
-                            </div>
-                            {canManage && match.status === 'scheduled' && (
-                                <Button asChild>
-                                    <Link href={`/matches/${match.matchId}/manage`}>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        Manage Lineups
-                                    </Link>
-                                </Button>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <Card>
+                        <CardHeader>
                             <div className="flex justify-between items-center">
                                 <h3 className="font-semibold">{match.teamAName}</h3>
                                 {match.lineupConfirmedByCaptainA ? (
@@ -632,53 +608,63 @@ export default function MatchDetailsClient({
                                     <Badge variant="outline"><Clock className="h-4 w-4 mr-1"/>Pending</Badge>
                                 )}
                             </div>
+                        </CardHeader>
+                        <CardContent>
                             {canViewTeamA ? (
-                                teamALineup.length > 0 ? (
-                                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                                        {teamALineup.map(playerId => {
-                                            const player = teamARosterWithStats.find(p => p.personId === playerId);
-                                            return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
-                                        })}
-                                    </ol>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
-                                )
+                                <LineupManager 
+                                    key={`team-a-${match.matchId}`}
+                                    teamId={match.teamAId}
+                                    teamName={match.teamAName}
+                                    match={match}
+                                    rosterWithStats={teamARosterWithStats}
+                                    initialLineupIds={teamALineup}
+                                />
                             ) : (
                                 <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
                                     <Lock className="h-6 w-6 mx-auto mb-2"/>
                                     <p>Lineup will be revealed once both teams confirm.</p>
                                 </div>
                             )}
-                        </div>
-                        <div className="space-y-4">
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
                             <div className="flex justify-between items-center">
                                 <h3 className="font-semibold">{match.teamBName}</h3>
-                                {match.lineupConfirmedByCaptainB ? (
+                                 {match.lineupConfirmedByCaptainB ? (
                                     <Badge variant="secondary" className="bg-green-100 text-green-800"><CheckCircle className="h-4 w-4 mr-1"/>Confirmed</Badge>
                                 ) : (
                                     <Badge variant="outline"><Clock className="h-4 w-4 mr-1"/>Pending</Badge>
                                 )}
                             </div>
-                            {canViewTeamB ? (
-                                teamBLineup.length > 0 ? (
-                                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                                        {teamBLineup.map(playerId => {
-                                            const player = teamBRosterWithStats.find(p => p.personId === playerId);
-                                            return <li key={playerId}>{player ? player.personName : 'Unknown Player'}</li>
-                                        })}
-                                    </ol>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-4">Lineup not set.</p>
-                                )
+                        </CardHeader>
+                        <CardContent>
+                             {canViewTeamB ? (
+                                <LineupManager 
+                                    key={`team-b-${match.matchId}`}
+                                    teamId={match.teamBId}
+                                    teamName={match.teamBName}
+                                    match={match}
+                                    rosterWithStats={teamBRosterWithStats}
+                                    initialLineupIds={teamBLineup}
+                                />
                             ) : (
                                 <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
                                     <Lock className="h-6 w-6 mx-auto mb-2"/>
                                     <p>Lineup will be revealed once both teams confirm.</p>
                                 </div>
                             )}
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                 </div>
+            </TabsContent>
+            
+            <TabsContent value="visuals" className="mt-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <ManhattanChart />
+                    <WormChart />
+                    <WagonWheelSummary />
+                </div>
             </TabsContent>
 
             <TabsContent value="analysis" className="mt-4">
