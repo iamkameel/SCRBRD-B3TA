@@ -22,7 +22,8 @@ export async function getSeasons(): Promise<Season[]> {
   if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
-    const q = query(seasonsCollection, where("userId", "==", userId));
+    // Seasons are global, so no user-based query needed for reads.
+    const q = query(seasonsCollection);
     const seasonSnapshot = await getDocs(q);
     const seasonsList = seasonSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -46,7 +47,7 @@ export const getSeason = cache(async (seasonId: string): Promise<Season | null> 
   try {
     const seasonDocRef = doc(db, 'seasons', seasonId);
     const seasonSnap = await getDoc(seasonDocRef);
-    if (!seasonSnap.exists() || seasonSnap.data().userId !== userId) {
+    if (!seasonSnap.exists()) {
       return null;
     }
     const data = seasonSnap.data();
@@ -110,7 +111,7 @@ export async function updateSeasonAction(data: z.infer<typeof updateSeasonSchema
     const { seasonId, name, startDate, endDate, active } = validatedFields.data;
     const seasonDocRef = doc(db, 'seasons', seasonId);
     const seasonSnap = await getDoc(seasonDocRef);
-    if (!seasonSnap.exists() || seasonSnap.data().userId !== userId) throw new Error("Season not found or you do not have permission to edit it.");
+    if (!seasonSnap.exists()) throw new Error("Season not found or you do not have permission to edit it.");
 
     try {
         await updateDoc(seasonDocRef, { name, startDate: Timestamp.fromDate(startDate), endDate: Timestamp.fromDate(endDate), active });
@@ -129,7 +130,7 @@ export async function deleteSeasonAction(seasonId: string) {
   
   const seasonDocRef = doc(db, 'seasons', seasonId);
   const seasonSnap = await getDoc(seasonDocRef);
-  if (!seasonSnap.exists() || seasonSnap.data().userId !== userId) throw new Error("Season not found or you do not have permission to delete it.");
+  if (!seasonSnap.exists()) throw new Error("Season not found or you do not have permission to delete it.");
   
   try {
     await deleteDoc(seasonDocRef);

@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -524,7 +523,7 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
 
     try {
         const collectionName = collectionNameMap[subsetName];
-        const q = query(collection(db, collectionName), where("userId", "==", userId));
+        const q = query(collection(db, collectionName));
         const snapshot = await getDocs(q);
 
         if (snapshot.empty) {

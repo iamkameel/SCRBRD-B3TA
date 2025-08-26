@@ -23,7 +23,7 @@ export async function getDivisions(): Promise<Division[]> {
   if (!userId) return [];
   try {
     const divisionsCollection = collection(db, 'divisions');
-    const q = query(divisionsCollection, where("userId", "==", userId));
+    const q = query(divisionsCollection);
     const divisionSnapshot = await getDocs(q);
     const divisionsList = divisionSnapshot.docs.map(doc => ({
       divisionId: doc.id,
@@ -42,7 +42,7 @@ export const getDivision = cache(async (divisionId: string): Promise<Division | 
   try {
     const divisionDocRef = doc(db, 'divisions', divisionId);
     const divisionSnap = await getDoc(divisionDocRef);
-    if (!divisionSnap.exists() || divisionSnap.data().userId !== userId) {
+    if (!divisionSnap.exists()) {
       return null;
     }
     return {
@@ -111,7 +111,7 @@ export async function updateDivisionAction(data: z.infer<typeof updateDivisionSc
 
     // Verify ownership
     const divisionSnap = await getDoc(divisionDocRef);
-    if (!divisionSnap.exists() || divisionSnap.data().userId !== userId) {
+    if (!divisionSnap.exists()) {
         throw new Error("Division not found or you do not have permission to edit it.");
     }
 
@@ -138,7 +138,7 @@ export async function deleteDivisionAction(divisionId: string) {
   const divisionDocRef = doc(db, 'divisions', divisionId);
 
   const divisionSnap = await getDoc(divisionDocRef);
-  if (!divisionSnap.exists() || divisionSnap.data().userId !== userId) {
+  if (!divisionSnap.exists()) {
     throw new Error("Division not found or you do not have permission to delete it.");
   }
   

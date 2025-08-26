@@ -1,11 +1,10 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp, writeBatch, documentId } from 'firebase/firestore';
 import type { Competition, StandingTeam, LeaderboardPlayer, Team, Person, Match } from '@/lib/data';
 import { getSeason } from './seasons';
 import { getDivision } from './divisions';
@@ -28,7 +27,7 @@ export async function getCompetitions(): Promise<Competition[]> {
   if (!userId) return [];
   try {
     const competitionsCollection = collection(db, 'competitions');
-    const q = query(competitionsCollection, where("userId", "==", userId));
+    const q = query(competitionsCollection);
     const [competitionSnapshot, teamsSnapshot] = await Promise.all([
         getDocs(q),
         getTeams()
@@ -63,7 +62,7 @@ export const getCompetition = cache(async (competitionId: string): Promise<Compe
   try {
     const competitionDocRef = doc(db, 'competitions', competitionId);
     const competitionSnap = await getDoc(competitionDocRef);
-    if (!competitionSnap.exists() || competitionSnap.data().userId !== userId) {
+    if (!competitionSnap.exists()) {
       return null;
     }
     return {
@@ -151,7 +150,7 @@ export async function updateCompetitionAction(data: z.infer<typeof updateCompeti
     const competitionDocRef = doc(db, 'competitions', competitionId);
 
     const competitionSnap = await getDoc(competitionDocRef);
-    if (!competitionSnap.exists() || competitionSnap.data().userId !== userId) {
+    if (!competitionSnap.exists()) {
         throw new Error("Competition not found or you do not have permission to edit it.");
     }
     
@@ -202,7 +201,7 @@ export async function deleteCompetitionAction(competitionId: string) {
   const competitionDocRef = doc(db, 'competitions', competitionId);
 
   const competitionSnap = await getDoc(competitionDocRef);
-  if (!competitionSnap.exists() || competitionSnap.data().userId !== userId) {
+  if (!competitionSnap.exists()) {
     throw new Error("Competition not found or you do not have permission to delete it.");
   }
   
@@ -264,8 +263,8 @@ export async function getCompetitionLeaderboards(competitionId: string): Promise
 
     const playerIds = new Set<string>();
     for (const match of matches) {
-        const lineupAref = doc(db, 'matches', match.matchId, 'lineups', match.teamAId);
-        const lineupPromises: Promise<any>[] = [getDoc(lineupAref)];
+        const lineupADocRef = doc(db, 'matches', match.matchId, 'lineups', match.teamAId);
+        const lineupPromises: Promise<any>[] = [getDoc(lineupADocRef)];
 
         if (match.teamBId) {
             const lineupBref = doc(db, 'matches', match.matchId, 'lineups', match.teamBId);
@@ -321,7 +320,7 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
   if (!competitionId) return [];
   try {
     const matchesCollection = collection(db, 'matches');
-    const q = query(matchesCollection, where("userId", "==", userId), where("competitionId", "==", competitionId));
+    const q = query(matchesCollection, where("competitionId", "==", competitionId));
     
     const [teams, matchSnapshot] = await Promise.all([
       getTeams(),

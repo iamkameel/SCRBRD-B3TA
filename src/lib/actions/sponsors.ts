@@ -22,7 +22,7 @@ export async function getSponsors(): Promise<Sponsor[]> {
   if (!userId) return [];
   try {
     const sponsorsCollection = collection(db, 'sponsors');
-    const q = query(sponsorsCollection, where("userId", "==", userId));
+    const q = query(sponsorsCollection);
     const sponsorSnapshot = await getDocs(q);
     const sponsorsList = sponsorSnapshot.docs.map(doc => ({
       sponsorId: doc.id,
@@ -82,7 +82,7 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
     const sponsorDocRef = doc(db, 'sponsors', sponsorId);
 
     const sponsorSnap = await getDoc(sponsorDocRef);
-    if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
+    if (!sponsorSnap.exists()) {
         throw new Error("Sponsor not found or you do not have permission to edit it.");
     }
 
@@ -107,7 +107,7 @@ export async function deleteSponsorAction(sponsorId: string) {
   
   const sponsorDocRef = doc(db, 'sponsors', sponsorId);
   const sponsorSnap = await getDoc(sponsorDocRef);
-  if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
+  if (!sponsorSnap.exists()) {
     throw new Error("Sponsor not found or you do not have permission to delete it.");
   }
   

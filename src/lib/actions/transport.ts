@@ -24,7 +24,7 @@ export async function getVehicles(): Promise<Vehicle[]> {
   if (!userId) return [];
   try {
     const vehiclesCollection = collection(db, 'vehicles');
-    const q = query(vehiclesCollection, where("userId", "==", userId));
+    const q = query(vehiclesCollection);
     const vehicleSnapshot = await getDocs(q);
     const vehiclesList = vehicleSnapshot.docs.map(doc => ({
       vehicleId: doc.id,
@@ -92,7 +92,7 @@ export async function updateVehicleAction(data: z.infer<typeof updateVehicleSche
     const vehicleDocRef = doc(db, 'vehicles', vehicleId);
 
     const vehicleSnap = await getDoc(vehicleDocRef);
-    if (!vehicleSnap.exists() || vehicleSnap.data().userId !== userId) {
+    if (!vehicleSnap.exists()) {
         throw new Error("Vehicle not found or you do not have permission to edit it.");
     }
 
@@ -117,7 +117,7 @@ export async function deleteVehicleAction(vehicleId: string) {
   
   const vehicleDocRef = doc(db, 'vehicles', vehicleId);
   const vehicleSnap = await getDoc(vehicleDocRef);
-  if (!vehicleSnap.exists() || vehicleSnap.data().userId !== userId) {
+  if (!vehicleSnap.exists()) {
     throw new Error("Vehicle not found or you do not have permission to delete it.");
   }
   
@@ -264,7 +264,7 @@ export async function assignVehicleToMatchAction(matchId: string, data: z.infer<
     getPerson(driverId),
   ]);
   
-  if (!vehicle.exists() || vehicle.data()?.userId !== userId) throw new Error("Vehicle not found.");
+  if (!vehicle.exists()) throw new Error("Vehicle not found.");
   if (!driver || !driver.roles.includes('Driver')) throw new Error("Person is not a valid driver.");
 
   const assignmentsCol = collection(db, 'matches', matchId, 'transportAssignments');

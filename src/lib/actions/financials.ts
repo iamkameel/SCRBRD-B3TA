@@ -22,7 +22,7 @@ export async function getTransactions(): Promise<Transaction[]> {
   if (!userId) return [];
   try {
     const transactionsCollection = collection(db, 'financials');
-    const q = query(transactionsCollection, where("userId", "==", userId));
+    const q = query(transactionsCollection);
     const transactionSnapshot = await getDocs(q);
     const transactionsList = transactionSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -91,7 +91,7 @@ export async function updateTransactionAction(data: z.infer<typeof updateTransac
     const transactionDocRef = doc(db, 'financials', transactionId);
 
     const transactionSnap = await getDoc(transactionDocRef);
-    if (!transactionSnap.exists() || transactionSnap.data().userId !== userId) {
+    if (!transactionSnap.exists()) {
         throw new Error("Transaction not found or you do not have permission to edit it.");
     }
 
@@ -116,7 +116,7 @@ export async function deleteTransactionAction(transactionId: string) {
   
   const transactionDocRef = doc(db, 'financials', transactionId);
   const transactionSnap = await getDoc(transactionDocRef);
-  if (!transactionSnap.exists() || transactionSnap.data().userId !== userId) {
+  if (!transactionSnap.exists()) {
     throw new Error("Transaction not found or you do not have permission to delete it.");
   }
   

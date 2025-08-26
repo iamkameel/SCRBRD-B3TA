@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -15,7 +14,7 @@ export async function getEquipment(): Promise<EquipmentItem[]> {
   const userId = await getUserId();
   if (!userId) return [];
   try {
-    const q = query(collection(db, 'equipment'), where("userId", "==", userId));
+    const q = query(collection(db, 'equipment'));
     const snapshot = await getDocs(q);
     const equipmentList = snapshot.docs.map(doc => ({
       itemId: doc.id, ...doc.data()
@@ -72,7 +71,7 @@ export async function updateEquipmentItemAction(data: z.infer<typeof updateItemS
     const { itemId, ...updateData } = validatedFields.data;
     const itemRef = doc(db, 'equipment', itemId);
     const itemSnap = await getDoc(itemRef);
-    if (!itemSnap.exists() || itemSnap.data().userId !== userId) throw new Error("Item not found or permission denied.");
+    if (!itemSnap.exists()) throw new Error("Item not found or permission denied.");
     try {
         await updateDoc(itemRef, updateData);
     } catch (error) {
@@ -87,10 +86,10 @@ export async function deleteEquipmentItemAction(itemId: string) {
   await checkManagementPermission(userId);
   const itemRef = doc(db, 'equipment', itemId);
   const itemSnap = await getDoc(itemRef);
-  if (!itemSnap.exists() || itemSnap.data().userId !== userId) throw new Error("Item not found or permission denied.");
+  if (!itemSnap.exists()) throw new Error("Item not found or permission denied.");
   
   const batch = writeBatch(db);
-  const assignmentsQuery = query(collection(db, 'equipmentAssignments'), where("itemId", "==", itemId), where("userId", "==", userId));
+  const assignmentsQuery = query(collection(db, 'equipmentAssignments'), where("itemId", "==", itemId));
   const assignmentsSnapshot = await getDocs(assignmentsQuery);
   assignmentsSnapshot.forEach(doc => batch.delete(doc.ref));
   batch.delete(itemRef);
@@ -109,7 +108,7 @@ export async function assignEquipmentAction(itemId: string, personId: string) {
   await checkAssignmentPermission(userId);
   const itemRef = doc(db, 'equipment', itemId);
   const [itemSnap, person] = await Promise.all([ getDoc(itemRef), getPerson(personId) ]);
-  if (!itemSnap.exists() || itemSnap.data().userId !== userId) throw new Error("Item not found or permission denied.");
+  if (!itemSnap.exists()) throw new Error("Item not found or permission denied.");
   if (itemSnap.data().status !== 'Available') throw new Error("Item is not available for assignment.");
   if (!person) throw new Error("Player not found.");
 
@@ -142,7 +141,7 @@ export async function returnEquipmentAction(assignmentId: string) {
   await checkAssignmentPermission(userId);
   const assignmentRef = doc(db, 'equipmentAssignments', assignmentId);
   const assignmentSnap = await getDoc(assignmentRef);
-  if (!assignmentSnap.exists() || assignmentSnap.data().userId !== userId) throw new Error("Assignment not found or permission denied.");
+  if (!assignmentSnap.exists()) throw new Error("Assignment not found or permission denied.");
   
   const { itemId, returnedDate } = assignmentSnap.data();
   if(returnedDate) throw new Error("This item has already been returned.");
@@ -170,7 +169,7 @@ export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignm
     const userId = await getUserId();
     if (!userId) return [];
     try {
-        const q = query(collection(db, 'equipmentAssignments'), where("userId", "==", userId));
+        const q = query(collection(db, 'equipmentAssignments'));
         const snapshot = await getDocs(q);
 
         const assignmentsPromises = snapshot.docs.map(async (docSnap) => {
