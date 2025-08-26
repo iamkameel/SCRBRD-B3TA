@@ -25,7 +25,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName } from "@/lib/actions/data-management";
+import { migrateSampleDataAction, deleteAllDataAction, migrateSubsetAction, deleteSubsetAction, type SubsetName, exportDataAction } from "@/lib/actions/data-management";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SUBSETS: { name: SubsetName }[] = [
@@ -50,6 +50,7 @@ const INDEPENDENT_SUBSETS: SubsetName[] = [
 export default function DataManagementClient() {
   const [isMigrating, startMigrationTransition] = React.useTransition();
   const [isDeleting, startDeletionTransition] = React.useTransition();
+  const [isExporting, startExportingTransition] = React.useTransition();
   const [actionToConfirm, setActionToConfirm] = React.useState<'migrateAll' | 'deleteAll' | SubsetName | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   
@@ -106,8 +107,30 @@ export default function DataManagementClient() {
       }
     });
   }
+  
+  const handleExportSubset = (subset: SubsetName) => {
+    startExportingTransition(async () => {
+      toast({ title: `Exporting ${subset}...` });
+      const result = await exportDataAction(subset);
+      if (result.csv) {
+          const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          link.setAttribute('href', url);
+          link.setAttribute('download', `${subset.toLowerCase()}_export.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast({ title: "Export Complete", description: `Data for ${subset} has been downloaded.` });
+      } else if (result.error) {
+        toast({ title: "Export Failed", description: result.error, variant: "destructive" });
+      } else {
+         toast({ title: "Nothing to Export", description: `There is no data to export for ${subset}.` });
+      }
+    });
+  };
 
-  const isProcessing = isMigrating || isDeleting;
+  const isProcessing = isMigrating || isDeleting || isExporting;
 
   return (
     <>
@@ -189,6 +212,18 @@ export default function DataManagementClient() {
                             <TableRow key={name}>
                               <TableCell className="font-medium">{name}</TableCell>
                               <TableCell className="flex justify-end gap-2">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button size="sm" variant="outline" onClick={() => handleExportSubset(name)} disabled={isExporting}>
+                                                    <Download className="mr-2 h-4 w-4" /> Export
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Export all {name} data to a CSV file.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
