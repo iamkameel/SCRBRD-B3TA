@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -47,6 +48,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { LiveScoringInterface } from "./live-scoring-interface";
 import { useAuth } from "@/lib/auth-context";
 import { ManhattanChart, WormChart, WagonWheelSummary } from "./match-charts";
+import { PlayerAvailabilityCard } from './player-availability-card';
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -274,6 +276,8 @@ export default function MatchDetailsClient({
   
   const canViewTeamA = isAdmin || isManagerForA || isOfficialForMatch || areBothLineupsConfirmed;
   const canViewTeamB = isAdmin || isManagerForB || isOfficialForMatch || areBothLineupsConfirmed;
+  
+  const isPlayerInMatch = teamALineup.includes(person?.personId || '') || teamBLineup.includes(person?.personId || '');
 
   React.useEffect(() => {
     setIsClient(true);
@@ -485,6 +489,8 @@ export default function MatchDetailsClient({
                 </div>
             </div>
         </header>
+
+        {match.status === 'scheduled' && isPlayerInMatch && <PlayerAvailabilityCard match={match} />}
 
         <Tabs defaultValue="scorecard" className="w-full">
             <TabsList className="grid w-full grid-cols-6">
