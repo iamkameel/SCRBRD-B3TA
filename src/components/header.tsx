@@ -41,6 +41,7 @@ import {
 import { ScrollArea } from './ui/scroll-area';
 import { ROLE_GROUPS } from '@/lib/roles';
 import { getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
+import { CommandSearch } from './command-search';
 
 function RoleSwitcher() {
     const { person } = useAuth();
@@ -265,6 +266,8 @@ export function Header() {
                     </ScrollArea>
                 </SheetContent>
             </Sheet>
+            
+            <CommandSearch />
 
             <div className="flex-1 w-full" />
             
