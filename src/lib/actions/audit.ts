@@ -2,10 +2,10 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, getDocs } from 'firebase/firestore';
 import { getUserId } from '@/lib/auth';
 import { getPerson } from './players';
-import type { Person } from '../data';
+import type { Person, AuditLog } from '../data';
 import { revalidatePath } from 'next/cache';
 
 interface LogAuditEventParams {
@@ -49,14 +49,14 @@ export async function logAuditEvent(params: Omit<LogAuditEventParams, 'actorId'>
     }
 }
 
-export async function getAuditLogs(): Promise<any[]> {
+export async function getAuditLogs(): Promise<AuditLog[]> {
     const userId = await getUserId();
     if (!userId) return [];
     
     const actor = await getPerson(userId);
     if (!actor || !actor.roles.includes('Admin')) {
         // In a real scenario, you might want to return an empty array for non-admins
-        // or throw an error. For simplicity, we'll restrict access.
+        // or throw an error. For this application, we'll restrict access.
         return [];
     }
 
@@ -66,7 +66,7 @@ export async function getAuditLogs(): Promise<any[]> {
             logId: doc.id,
             ...doc.data(),
             timestamp: (doc.data().timestamp as Timestamp).toDate(),
-        }));
+        } as AuditLog));
         return logs.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
     } catch (error) {
         console.error("Error fetching audit logs:", error);
