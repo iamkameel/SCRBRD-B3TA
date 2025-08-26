@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview An AI flow to generate a highlight reel from a match scorecard.
@@ -17,13 +16,13 @@ const HighlightReelTextOnlySchema = z.object({
   highlights: z.array(z.object({
     over: z.string().describe("The over in which the event occurred, e.g., '19.2'."),
     description: z.string().describe("A short, exciting, one-sentence description of the key moment."),
-  })).describe("A list of key moments from the match, ordered chronologically."),
+  })).min(5).max(8).describe("A list of 5 to 8 key moments from the match, ordered chronologically."),
 });
 
 const prompt = ai.definePrompt({
     name: 'generateHighlightReelPrompt',
     input: { schema: GenerateMatchReportInputSchema },
-    output: { schema: HighlightReelTextOnlySchema }, // Use the text-only schema for the LLM
+    output: { schema: HighlightReelTextOnlySchema },
     prompt: `You are an expert cricket commentator and video editor. Your task is to analyze the provided T20 match scorecard JSON data and identify the most exciting and pivotal moments to create a highlight reel.
 
 Focus on:

@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Shared Zod schemas for AI flows.
  * This file does not contain 'use server' and can be imported safely on the client and server.
@@ -210,7 +209,7 @@ export const UmpireDecisionSchema = z.object({
   finalDecision: z.enum(['Out', 'Not Out']),
   drsOutcome: z.string().describe("A concise summary like 'Original decision stands' or 'Decision Overturned'."),
   pitching: z.enum(['In-Line', 'Outside Leg', 'Outside Off']),
-  impact: z.enum(['In-Line', 'Outside Leg', 'Outside Off', 'Too High']),
+  impact: z.enum(['In-Line', 'Outside Off', 'Too High']),
   wickets: z.enum(['Hitting', 'Missing', "Umpire's Call"]),
   justification: z.string().describe("A brief, step-by-step justification for the final decision, explaining each component (pitching, impact, wickets)."),
 });

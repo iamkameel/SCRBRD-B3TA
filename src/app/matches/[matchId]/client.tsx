@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from "react";
@@ -877,7 +875,7 @@ export default function MatchDetailsClient({
                         <div className="flex items-center justify-between">
                             <div>
                                 <CardTitle>AI Highlight Reel</CardTitle>
-                                <CardDescription>Key moments from the match, identified by AI.</CardDescription>
+                                <CardDescription>Key moments from the match, identified and visualized by AI.</CardDescription>
                             </div>
                             {match.status === 'completed' && innings1 && (
                                 <Button onClick={handleGenerateHighlights} disabled={isGeneratingHighlights}>
@@ -891,7 +889,7 @@ export default function MatchDetailsClient({
                         {isGeneratingHighlights && (
                             <div className="flex flex-col items-center justify-center h-48">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                <p className="mt-4 text-muted-foreground">Finding key moments...</p>
+                                <p className="mt-4 text-muted-foreground">AI is creating a visual highlight reel...</p>
                             </div>
                         )}
                         {!isGeneratingHighlights && !highlightReel && (
