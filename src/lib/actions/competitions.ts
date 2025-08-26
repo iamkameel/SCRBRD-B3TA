@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -84,6 +85,7 @@ const competitionSchema = z.object({
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
   winnerTeamId: z.string().optional(),
   teamIds: z.array(z.string()).optional(),
+  sponsorIds: z.array(z.string()).optional(),
 });
 
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
@@ -98,7 +100,7 @@ export async function addCompetitionAction(data: CompetitionFormValues) {
     throw new Error('Invalid competition data.');
   }
 
-  const { name, type, competitionClass, seasonId, divisionId, status, winnerTeamId, teamIds } = validatedFields.data;
+  const { name, type, competitionClass, seasonId, divisionId, status, winnerTeamId, teamIds, sponsorIds } = validatedFields.data;
 
   const [season, division] = await Promise.all([
       getSeason(seasonId),
@@ -110,7 +112,7 @@ export async function addCompetitionAction(data: CompetitionFormValues) {
   }
   
   const newCompetitionData: { [key: string]: any } = {
-    name, type, competitionClass: competitionClass || '', seasonId, seasonName: season.name, divisionId, divisionName: division.name, status, userId, teamIds: teamIds || [],
+    name, type, competitionClass: competitionClass || '', seasonId, seasonName: season.name, divisionId, divisionName: division.name, status, userId, teamIds: teamIds || [], sponsorIds: sponsorIds || [],
   };
   
   if (status === 'Completed' && winnerTeamId) {
@@ -145,7 +147,7 @@ export async function updateCompetitionAction(data: z.infer<typeof updateCompeti
         throw new Error('Invalid competition data.');
     }
 
-    const { competitionId, name, type, competitionClass, seasonId, divisionId, status, winnerTeamId, teamIds } = validatedFields.data;
+    const { competitionId, name, type, competitionClass, seasonId, divisionId, status, winnerTeamId, teamIds, sponsorIds } = validatedFields.data;
     const competitionDocRef = doc(db, 'competitions', competitionId);
 
     const competitionSnap = await getDoc(competitionDocRef);
@@ -163,7 +165,7 @@ export async function updateCompetitionAction(data: z.infer<typeof updateCompeti
     }
     
     const updatePayload: { [key: string]: any } = {
-        name, type, competitionClass: competitionClass || '', seasonId, seasonName: season.name, divisionId, divisionName: division.name, status, teamIds: teamIds || [],
+        name, type, competitionClass: competitionClass || '', seasonId, seasonName: season.name, divisionId, divisionName: division.name, status, teamIds: teamIds || [], sponsorIds: sponsorIds || [],
     };
 
     if (status === 'Completed' && winnerTeamId) {

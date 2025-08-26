@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import * as React from "react";
 import Link from 'next/link';
 import { format } from "date-fns";
-import { ArrowLeft, Users, ClipboardList, Trophy, GitMerge, Wand2, Loader2, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Users, ClipboardList, Trophy, GitMerge, Wand2, Loader2, CalendarIcon, Handshake } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { Competition, Match, StandingTeam, LeaderboardPlayer, Season } from "@/lib/data";
+import type { Competition, Match, StandingTeam, LeaderboardPlayer, Season, Sponsor } from "@/lib/data";
 import { TopRunScorersChart, TopWicketTakersChart } from './competition-charts';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -159,6 +160,7 @@ interface CompetitionDetailsClientProps {
         topWicketTakers: LeaderboardPlayer[];
     };
     seasons: Season[];
+    sponsors: Sponsor[];
 }
 
 const BracketMatch = React.forwardRef<HTMLDivElement, { match: Match }>(({ match }, ref) => {
@@ -284,7 +286,7 @@ function TournamentBracket({ rounds }: { rounds: { round: number; matches: Match
     );
 }
 
-export default function CompetitionDetailsClient({ competition, standings, matches, leaderboards, seasons }: CompetitionDetailsClientProps) {
+export default function CompetitionDetailsClient({ competition, standings, matches, leaderboards, seasons, sponsors }: CompetitionDetailsClientProps) {
     const [isClient, setIsClient] = React.useState(false);
     React.useEffect(() => { setIsClient(true); }, []);
     const [isSchedulingDialogOpen, setIsSchedulingDialogOpen] = React.useState(false);
@@ -308,6 +310,11 @@ export default function CompetitionDetailsClient({ competition, standings, match
     }, [matches]);
     
     const competitionSeason = seasons.find(s => s.seasonId === competition.seasonId);
+    
+    const linkedSponsors = React.useMemo(() => {
+        if (!competition.sponsorIds || competition.sponsorIds.length === 0) return [];
+        return sponsors.filter(s => competition.sponsorIds?.includes(s.sponsorId));
+    }, [competition.sponsorIds, sponsors]);
 
     return (
         <>
@@ -340,6 +347,24 @@ export default function CompetitionDetailsClient({ competition, standings, match
                     </div>
                 )}
             </header>
+
+            {linkedSponsors.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Handshake className="h-5 w-5" />Sponsors</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap items-center gap-8">
+                        {linkedSponsors.map(sponsor => (
+                            <a key={sponsor.sponsorId} href={sponsor.website} target="_blank" rel="noopener noreferrer" className="grayscale hover:grayscale-0 transition-all opacity-60 hover:opacity-100">
+                                <Avatar className="h-16 w-32 rounded-md">
+                                    <AvatarImage src={sponsor.logoUrl} alt={sponsor.name} className="object-contain" />
+                                    <AvatarFallback>{sponsor.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </a>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
             <Tabs defaultValue={isLeague ? "standings" : "bracket"}>
                 <TabsList className="grid w-full grid-cols-3">

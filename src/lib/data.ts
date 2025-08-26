@@ -387,6 +387,7 @@ export interface Competition {
   winnerTeamId?: string;
   winnerTeamName?: string;
   teamIds?: string[];
+  sponsorIds?: string[];
   winnerTeamLogoUrl?: string;
 }
 

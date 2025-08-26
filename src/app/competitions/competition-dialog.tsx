@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -12,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import type { Competition, Season, Division, Team } from "@/lib/data";
+import type { Competition, Season, Division, Team, Sponsor } from "@/lib/data";
 import { addCompetitionAction, updateCompetitionAction } from '@/lib/actions/competitions';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,6 +31,7 @@ const competitionSchema = z.object({
   status: z.enum(['Draft', 'In Progress', 'Completed']).default('Draft'),
   winnerTeamId: z.string().optional(),
   teamIds: z.array(z.string()).optional(),
+  sponsorIds: z.array(z.string()).optional(),
 });
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
 
@@ -71,7 +73,7 @@ const COMPETITION_TYPE_DEFINITIONS = [
 
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 
-export function CompetitionDialog({ mode, competition, seasons, divisions, teams, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], open: boolean, onOpenChange: (open: boolean) => void }) {
+export function CompetitionDialog({ mode, competition, seasons, divisions, teams, sponsors, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], sponsors: Sponsor[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [schoolFilters, setSchoolFilters] = React.useState<string[]>([]);
@@ -87,8 +89,9 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
       status: competition.status,
       winnerTeamId: competition.winnerTeamId || "",
       teamIds: competition.teamIds || [],
+      sponsorIds: competition.sponsorIds || [],
     } : {
-      name: "", competitionClass: " ", type: "League", status: "Draft", winnerTeamId: "", teamIds: [],
+      name: "", competitionClass: " ", type: "League", status: "Draft", winnerTeamId: "", teamIds: [], sponsorIds: [],
     },
   });
   
@@ -126,13 +129,13 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && competition) {
-        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || " ", teamIds: competition.teamIds || [] });
+        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || " ", teamIds: competition.teamIds || [], sponsorIds: competition.sponsorIds || [] });
       } else {
         const activeSeason = seasons.find(s => {
             const now = new Date();
             return s.active && now >= s.startDate && now <= s.endDate;
         });
-        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: activeSeason?.seasonId, divisionId: undefined, winnerTeamId: "", teamIds: [] });
+        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: activeSeason?.seasonId, divisionId: undefined, winnerTeamId: "", teamIds: [], sponsorIds: [] });
       }
       setSchoolFilters([]);
     }
@@ -228,13 +231,14 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Step 3: Assign Teams</CardTitle>
-                    <CardDescription>Select participating teams. The list is filtered based on your selections in Step 1.</CardDescription>
+                    <CardTitle>Step 3: Assign Teams & Sponsors</CardTitle>
+                    <CardDescription>Select participating teams and official sponsors for this competition.</CardDescription>
                 </CardHeader>
-                <CardContent className={cn(!seasonId || !divisionId ? "opacity-50 cursor-not-allowed" : "")}>
-                    <fieldset disabled={!seasonId || !divisionId} className="space-y-4">
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <fieldset disabled={!seasonId || !divisionId} className="space-y-4">
                         <FormField control={form.control} name="teamIds" render={() => (
                             <FormItem>
+                            <FormLabel>Participating Teams</FormLabel>
                             {eligibleTeams.length > 0 && (
                                 <div className="mb-4">
                                     <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="w-full justify-between font-normal"><span className="truncate">{schoolFilters.length === 0 && "Filter by School..."}{schoolFilters.length === 1 && eligibleSchools.find(s => s.schoolId === schoolFilters[0])?.schoolName}{schoolFilters.length > 1 && `${schoolFilters.length} schools selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
@@ -253,6 +257,19 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
                             </FormItem>
                         )}/>
                     </fieldset>
+                    <FormField control={form.control} name="sponsorIds" render={() => (
+                        <FormItem>
+                            <FormLabel>Sponsors (Optional)</FormLabel>
+                            <ScrollArea className="h-48 rounded-md border">
+                                <div className="p-4">
+                                {sponsors.length > 0 ? (
+                                    sponsors.map((sponsor) => (<FormField key={sponsor.sponsorId} control={form.control} name="sponsorIds" render={({ field }) => { return (<FormItem key={sponsor.sponsorId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(sponsor.sponsorId)} onCheckedChange={(checked) => {return checked ? field.onChange([...(field.value || []), sponsor.sponsorId]) : field.onChange(field.value?.filter((value) => value !== sponsor.sponsorId))}}/></FormControl><FormLabel className="font-normal">{sponsor.name}</FormLabel></FormItem>)}}/>))
+                                ) : ( <p className="text-sm text-muted-foreground text-center pt-4">No sponsors available. Add them on the Sponsors page.</p>)}
+                                </div>
+                            </ScrollArea>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
                 </CardContent>
             </Card>
 

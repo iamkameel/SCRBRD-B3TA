@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from 'next/link';
 import { format } from "date-fns";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, SlidersHorizontal, Trophy, Wand2, Loader2, CalendarIcon } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, SlidersHorizontal, Trophy, Wand2, Loader2, CalendarIcon, Handshake } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +40,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { Competition, Season, Division, Team } from "@/lib/data";
+import type { Competition, Season, Division, Team, Sponsor } from "@/lib/data";
 import { deleteCompetitionAction, autoScheduleFixturesAction } from '@/lib/actions/competitions';
 import { CompetitionCard } from "./competition-card";
 import { CompetitionDialog } from './competition-dialog';
@@ -175,7 +175,7 @@ const COMPETITION_TYPES = ['League', 'Cup', 'Tournament', 'Festival', 'Friendlie
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 type SortableColumn = 'name' | 'type' | 'seasonName' | 'divisionName' | 'status';
 
-export default function CompetitionsClient({ competitions, seasons, divisions, teams, isAdmin }: { competitions: Competition[], seasons: Season[], divisions: Division[], teams: Team[], isAdmin: boolean }) {
+export default function CompetitionsClient({ competitions, seasons, divisions, teams, sponsors, isAdmin }: { competitions: Competition[], seasons: Season[], divisions: Division[], teams: Team[], sponsors: Sponsor[], isAdmin: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedCompetition, setSelectedCompetition] = React.useState<Competition | null>(null);
@@ -477,7 +477,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
         </Card>
       </div>
       
-      {isAdmin && <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />}
+      {isAdmin && <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} sponsors={sponsors} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />}
       
       {competitionToSchedule && (
         <AutoScheduleDialog
