@@ -67,6 +67,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
         status: (data.role === 'Player' || data.role === 'Spectator') ? 'active' : 'pending_review',
         notificationPreferences: { email: true, push: false },
         createdAt: Timestamp.now(),
+        userId: user.uid, // Add the Firebase Auth UID to the profile
     };
 
     if (data.role === 'Player' || data.role === 'Coach') {
