@@ -49,6 +49,7 @@ import { LiveScoringInterface } from "./live-scoring-interface";
 import { useAuth } from "@/lib/auth-context";
 import { ManhattanChart, WormChart, WagonWheelSummary } from "./match-charts";
 import { PlayerAvailabilityCard } from './player-availability-card';
+import { AvailabilityStatusCard } from "./availability-status-card";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -492,6 +493,13 @@ export default function MatchDetailsClient({
 
         {match.status === 'scheduled' && isPlayerInMatch && <PlayerAvailabilityCard match={match} />}
 
+        {match.status === 'scheduled' && (isManagerForA || isManagerForB) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {isManagerForA && <AvailabilityStatusCard title={`${match.teamAName} Availability`} roster={teamARosterWithStats} availability={match.availability} />}
+                {isManagerForB && <AvailabilityStatusCard title={`${match.teamBName} Availability`} roster={teamBRosterWithStats} availability={match.availability} />}
+            </div>
+        )}
+
         <Tabs defaultValue="scorecard" className="w-full">
             <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
@@ -923,7 +931,7 @@ export default function MatchDetailsClient({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Transport &amp; Logistics</CardTitle><CardDescription>Manage vehicles and drivers assigned to this match.</CardDescription></div><AssignTransportDialog matchId={match.matchId} vehicles={vehicles} drivers={drivers} transportAssignments={transportAssignments} /></CardHeader>
-                        <CardContent><Table><TableHeader><TableRow><TableHead>Vehicle</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{transportAssignments.length > 0 ? (transportAssignments.map(t => (<TableRow key={t.assignmentId}><TableCell className="font-medium">{t.vehicleName}</TableCell><TableCell>{t.vehicleType}</TableCell><TableCell>{t.driverName}</TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedTransport(t); setIsDeleteTransportDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No transport assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Vehicle</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{transportAssignments.length > 0 ? (transportAssignments.map(t => (<TableRow key={t.assignmentId}><TableCell className="font-medium">{t.vehicleName}</TableCell><TableCell>{t.vehicleType}</TableCell><TableCell>{t.driverName}</TableCell><TableCell className="text-right"><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => { setSelectedTransport(t); setIsDeleteTransportDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2" />Remove</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="h-24 text-center">No transport assigned to this match yet.</TableCell></TableRow>)}</TableBody></Table></CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Match Officials</CardTitle><CardDescription>Manage the umpires and scorers assigned to this match.</CardDescription></div><AssignOfficialDialog matchId={match.matchId} people={people.filter(p => !initialOfficials.some(o => o.personId === p.personId) && (p.roles.includes('Umpire') || p.roles.includes('Scorer')))} /></CardHeader>
