@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -11,6 +12,7 @@ import { getPlayers, getPerson } from './players';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { getDivisions } from './divisions';
+import { logAuditEvent } from './audit';
 
 export const getTeams = cache(async (): Promise<Team[]> => {
   const userId = await getUserId();
@@ -459,7 +461,8 @@ export async function deleteTeamAction(teamId: string) {
         throw new Error("You do not have permission to delete teams.");
     }
     
-    if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
+    const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found or permission denied.");
 
     const batch = writeBatch(db);
 
@@ -491,6 +494,10 @@ export async function deleteTeamAction(teamId: string) {
     
     try {
         await batch.commit();
+        await logAuditEvent({
+            action: 'team.delete',
+            target: { type: 'Team', id: teamId, name: team.name },
+        });
     } catch (error) {
         console.error("Error deleting team and associated data: ", error);
         throw new Error("Could not delete team.");
@@ -684,46 +691,40 @@ export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> 
   }
 });
 
-export async function bulkAssignPeopleToTeamAction(teamId: string, personIds: string[]) {
+export async function bulkAssignPeopleToTeamAction(teamId: string, data: { playerIds: string[]; status: string; }) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
-    const user = await getPerson(userId);
-    if (!user || !user.roles.some(role => ['Admin', 'Sportsmaster', 'Team Manager'].includes(role))) {
-        throw new Error("You do not have permission to modify team rosters.");
+    const hasPermission = await isTeamManagerOrAdmin(teamId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to add players to this team.");
     }
-
-    const team = await getTeam(teamId);
-    if (!team) throw new Error("Team not found or permission denied.");
-
-    if (!personIds || personIds.length === 0) {
-        throw new Error("No people selected for assignment.");
+    
+    const validatedFields = bulkAddPlayersSchema.safeParse(data);
+    if (!validatedFields.success) {
+        throw new Error("Invalid player data provided for bulk assignment.");
     }
-
+    
+    const { playerIds, status } = validatedFields.data;
     const rosterCol = collection(db, 'teams', teamId, 'roster');
-    const existingRosterSnap = await getDocs(rosterCol);
-    const existingPlayerIds = new Set(existingRosterSnap.docs.map(d => d.data().personId));
+    const existingRoster = await getTeamRoster(teamId);
+    const existingPlayerIds = new Set(existingRoster.map(p => p.personId));
 
     const batch = writeBatch(db);
-    for (const personId of personIds) {
+    for (const personId of playerIds) {
         if (!existingPlayerIds.has(personId)) {
-            const newRosterDocRef = doc(rosterCol);
-            batch.set(newRosterDocRef, {
+            const newRosterDoc = doc(rosterCol);
+            batch.set(newRosterDoc, {
                 personId,
-                role: 'Player', // Default role for bulk add
-                status: 'active', // Default status
+                role: 'Player',
+                status,
                 isCaptain: false,
                 isViceCaptain: false,
             });
         }
     }
-
-    try {
-        await batch.commit();
-    } catch(error) {
-        console.error("Error bulk adding people to roster:", error);
-        throw new Error("Could not add people to roster.");
-    }
+    
+    await batch.commit();
     revalidatePath('/people');
     revalidatePath(`/teams/${teamId}`);
 }

@@ -20,6 +20,7 @@ import { getUserId } from '@/lib/auth';
 import { getSponsors } from './sponsors';
 import { getTransactions } from './financials';
 import type { Person } from '../data';
+import { logAuditEvent } from './audit';
 
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
@@ -31,6 +32,11 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
+    const actorId = await getUserId();
+    if (!actorId) {
+        return { success: false, message: "User not authenticated." };
+    }
+    
     try {
         const BATCH_LIMIT = 490; // Stay safely under the 500 limit
         let batch = writeBatch(db);
@@ -43,7 +49,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         const adminIds = new Set(adminSnapshot.docs.map(d => d.id));
 
         const collectionsToClear = [
-            'sessions', 'drills', 'assignmentRequests',
+            'sessions', 'drills', 'assignmentRequests', 'auditLogs',
             'equipmentAssignments', 'financials', 'sponsors', 'equipment',
             'transportAssignments', 'familyLinks', 'vehicles',
             'matches', 'teams', 'competitions',
@@ -108,6 +114,12 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         if (operationCount > 0) {
             await batch.commit();
         }
+
+        await logAuditEvent({
+            action: 'data.delete_all',
+            target: { type: 'System', id: 'all_data' },
+            details: { itemsDeleted: deletedCount }
+        });
 
         revalidatePath('/data-management');
         return { success: true, message: "All non-admin application data has been deleted." };
@@ -355,6 +367,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
         }
         
         await batch.commit(); // Final commit
+        
+        await logAuditEvent({
+            action: 'data.migrate_all',
+            target: { type: 'System', id: 'all_data' },
+        });
+
         revalidatePath('/', 'layout');
         return { success: true, message: `Sample data migrated successfully.` };
 
@@ -423,6 +441,13 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
             // @ts-ignore
             await deleteAction(item[idKey]);
         }
+
+        await logAuditEvent({
+            action: `data.delete_subset`,
+            target: { type: 'System', id: subsetName },
+            details: { count: items.length }
+        });
+
         revalidatePath('/data-management');
         return { success: true, message: `All ${subsetName} data has been deleted.` };
     } catch (error) {
@@ -474,6 +499,13 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
             count++;
         }
         await batch.commit();
+
+        await logAuditEvent({
+            action: `data.migrate_subset`,
+            target: { type: 'System', id: subsetName },
+            details: { count: count }
+        });
+
         revalidatePath('/data-management');
         return { success: true, message: `${count} sample ${subsetName} migrated.` };
 

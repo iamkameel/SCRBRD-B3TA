@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -12,6 +13,7 @@ import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { logAuditEvent } from './audit';
 
 export async function getPlayers(): Promise<Person[]> {
   const userId = await getUserId();
@@ -362,12 +364,19 @@ export async function addPlayerAction(data: z.infer<typeof personSchema>) {
   const { assignedSchoolId, ...restOfData } = validated.data;
 
   try {
-    await addDoc(collection(db, 'people'), { 
+    const docRef = await addDoc(collection(db, 'people'), { 
       ...restOfData,
       dateOfBirth: restOfData.dateOfBirth ? Timestamp.fromDate(restOfData.dateOfBirth) : null,
       assignedSchools: assignedSchoolId ? [assignedSchoolId] : [],
       notificationPreferences: { email: true, push: false },
     });
+
+    await logAuditEvent({
+        action: 'person.create',
+        target: { type: 'Person', id: docRef.id, name: `${restOfData.firstName} ${restOfData.lastName}` },
+        details: { roles: restOfData.roles }
+    });
+
   } catch (error) {
     console.error("Error adding document: ", error);
     throw new Error("Could not add person.");
@@ -408,6 +417,12 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
 
   try {
     await updateDoc(personRef, updatePayload);
+    await logAuditEvent({
+        action: 'person.update',
+        target: { type: 'Person', id: personId, name: `${updateData.firstName} ${updateData.lastName}` },
+        details: { updatedFields: Object.keys(updateData) }
+    });
+
   } catch (error) {
     console.error("Error updating person:", error);
     throw new Error("Could not update person.");
@@ -426,6 +441,9 @@ export async function deletePlayerAction(personId: string) {
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
   if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
+
+  const personData = personSnap.data();
+  const personName = `${personData.firstName} ${personData.lastName}`;
   
   const batch = writeBatch(db);
   
@@ -453,6 +471,10 @@ export async function deletePlayerAction(personId: string) {
 
   try {
     await batch.commit();
+    await logAuditEvent({
+        action: 'person.delete',
+        target: { type: 'Person', id: personId, name: personName },
+    });
   } catch (error) {
     console.error("Error deleting person and associated data: ", error);
     throw new Error("Could not delete person.");

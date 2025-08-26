@@ -14,7 +14,8 @@ import {
     UserSearch,
     HelpCircle,
     ScrollText,
-    BookOpen
+    BookOpen,
+    FileClock
 } from 'lucide-react';
 
 const topLevelNavItems = [
@@ -98,6 +99,7 @@ const adminNavGroups = [
         items: [
             { href: '/user-management', label: 'User Management', icon: UserCog },
             { href: '/data-management', label: 'Data Management', icon: Database },
+            { href: '/audit-log', label: 'Audit Log', icon: FileClock },
         ]
     },
     referenceGroup

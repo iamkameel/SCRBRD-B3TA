@@ -567,3 +567,17 @@ export interface AwardsData {
     topRunScorer: LeaderboardPlayer | null;
     topWicketTaker: LeaderboardPlayer | null;
 }
+
+export interface AuditLog {
+  logId: string;
+  timestamp: Date;
+  actorId: string;
+  actorName: string;
+  action: string; // e.g., 'user.role.update', 'match.delete'
+  target: {
+    type: string; // e.g., 'Person', 'Match'
+    id: string;
+    name?: string;
+  };
+  details?: Record<string, any>;
+}
