@@ -91,6 +91,7 @@ const adminNavGroups = [
         items: [
             { href: '/sponsors', label: 'Sponsors', icon: Handshake },
             { href: '/financials', label: 'Financials', icon: Landmark },
+            { href: '/billing', label: 'Billing', icon: FileText },
         ]
     },
     {
