@@ -268,7 +268,7 @@ export function LiveScoringInterface({
                         <div className="flex items-center justify-between">
                             <CardTitle>Win Probability</CardTitle>
                             <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate}>
-                                <Wand2 className={`mr-2 h-4 w-4 ${isGeneratingUpdate ? 'animate-spin' : ''}`} />
+                                <Wand2 className={cn('mr-2 h-4 w-4', isGeneratingUpdate && 'animate-spin')} />
                                 Analyze
                             </Button>
                         </div>
