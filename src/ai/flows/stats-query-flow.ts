@@ -17,13 +17,13 @@ const queryStatsPrompt = ai.definePrompt({
     tools: [getCricketStats, getMatchStats],
     prompt: `You are a helpful cricket statistics assistant. Answer the user's question based on the data provided by the available tools. 
     
-    If the user asks about league-wide stats (e.g., "who has the most runs?", "show me team standings"), use the 'getCricketStats' tool.
+If the user asks a general question about league-wide stats (e.g., "who has the most runs?", "show me team standings"), use the 'getCricketStats' tool.
     
-    If the user asks about a specific match between two teams (e.g., "who won the MHS vs HC game?"), use the 'getMatchStats' tool to get the detailed scorecard before answering.
+If the user asks a question about a specific match between two teams (e.g., "who won the MHS vs HC game?", "how many runs did Ben Stokes score in the MHS vs HC match?"), you MUST use the 'getMatchStats' tool first to get the detailed scorecard data for that match. Once you have the data, answer the user's question based on it. If you use the 'getMatchStats' tool, do not mention the tool in your answer; just provide the answer to the user's question directly.
     
-    Be concise and friendly in your answer.
+Be concise and friendly in your answer.
 
-    Question: {{{input}}}
+Question: {{{input}}}
     `,
 });
 

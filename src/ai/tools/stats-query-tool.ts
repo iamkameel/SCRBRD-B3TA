@@ -104,8 +104,12 @@ export const getMatchStats = ai.defineTool(
       (m.teamAName.toLowerCase().includes(teamBName.toLowerCase()) && m.teamBName.toLowerCase().includes(teamAName.toLowerCase()))
     );
 
-    if (!foundMatch || foundMatch.status !== 'completed') {
-      throw new Error(`A completed match between ${teamAName} and ${teamBName} could not be found.`);
+    if (!foundMatch) {
+      throw new Error(`A match between ${teamAName} and ${teamBName} could not be found.`);
+    }
+    
+    if (foundMatch.status !== 'completed') {
+        throw new Error(`The match between ${teamAName} and ${teamBName} has not been completed yet. No scorecard data is available.`);
     }
 
     const scorecard = await getScorecard(foundMatch.matchId);
