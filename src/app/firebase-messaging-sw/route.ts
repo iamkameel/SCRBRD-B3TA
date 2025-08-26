@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
     const swScript = `
-        importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-        importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+        importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js');
+        importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js');
         
         const firebaseConfig = {
           apiKey: "${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}",
@@ -15,7 +15,10 @@ export async function GET() {
           appId: "${process.env.NEXT_PUBLIC_FIREBASE_APP_ID}",
         };
         
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
         const messaging = firebase.messaging();
 
         // Handler for messages when the app is in the background.
