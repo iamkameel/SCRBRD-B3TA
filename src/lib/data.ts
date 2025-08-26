@@ -1,4 +1,5 @@
 
+
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -171,7 +172,7 @@ export interface RosterMemberWithStats extends RosterMember {
 
 
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'postponed' | 'cancelled' | 'abandoned';
-export type AvailabilityStatus = 'attending' | 'unavailable' | 'tentative';
+export type AvailabilityStatus = 'attending' | 'unavailable' | 'tentative' | 'injured';
 
 export interface PlayerOfTheMatch {
   name: string;

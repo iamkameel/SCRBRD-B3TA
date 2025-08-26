@@ -54,12 +54,13 @@ export function PlayerAvailabilityCard({ match }: { match: Match }) {
                 <RadioGroup 
                     defaultValue={currentAvailability?.status} 
                     onValueChange={(value) => handleStatusChange(value as AvailabilityStatus)}
-                    className="grid grid-cols-3 gap-4"
+                    className="grid grid-cols-2 md:grid-cols-4 gap-4"
                     disabled={isPending}
                 >
                     <div><RadioGroupItem value="attending" id="attending" className="peer sr-only" /><Label htmlFor="attending" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Attending</Label></div>
                     <div><RadioGroupItem value="unavailable" id="unavailable" className="peer sr-only" /><Label htmlFor="unavailable" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Unavailable</Label></div>
                     <div><RadioGroupItem value="tentative" id="tentative" className="peer sr-only" /><Label htmlFor="tentative" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Maybe</Label></div>
+                     <div><RadioGroupItem value="injured" id="injured" className="peer sr-only" /><Label htmlFor="injured" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Injured</Label></div>
                 </RadioGroup>
                 <div className="space-y-2">
                     <Label htmlFor="availability-note">Note (Optional)</Label>

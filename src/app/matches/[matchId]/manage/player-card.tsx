@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, User, Swords, ShieldHalf, CheckCircle, XCircle, HelpCircle } from 'lucide-react';
+import { GripVertical, User, Swords, ShieldHalf, CheckCircle, XCircle, HelpCircle, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RosterMemberWithStats, PlayerStats, AvailabilityStatus } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +59,7 @@ const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note
         attending: { icon: CheckCircle, className: "bg-green-100 text-green-800 border-green-200" },
         unavailable: { icon: XCircle, className: "bg-red-100 text-red-800 border-red-200" },
         tentative: { icon: HelpCircle, className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+        injured: { icon: Heart, className: "bg-orange-100 text-orange-800 border-orange-200" },
     };
 
     const config = status ? statusConfig[status] : null;
