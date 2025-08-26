@@ -15,7 +15,8 @@ import {
     ScrollText,
     BookOpen,
     FileClock,
-    ListChecks
+    ListChecks,
+    FileText
 } from 'lucide-react';
 
 const topLevelNavItems = [
