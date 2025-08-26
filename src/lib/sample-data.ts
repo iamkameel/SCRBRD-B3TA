@@ -197,7 +197,7 @@ const sampleDataPrecursor = {
 };
 
 const competitions = [
-    { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['MHS_open_1xi', 'HC_open_1xi', 'DHS_open_1xi', 'WBHS_open_1xi'] },
+    { competitionId: 'comp_1', name: 'KZN Open League', type: 'League', seasonId: 'season_1', divisionId: 'div_open', status: 'In Progress', teamIds: ['MHS_open_1xi', 'HC_open_1xi', 'DHS_open_1xi', 'WBHS_open_1xi'], sponsorIds: ['sponsor_1'] },
     { competitionId: 'comp_2', name: 'KZN u16 League', type: 'League', seasonId: 'season_1', divisionId: 'div_u16', status: 'In Progress', teamIds: ['MHS_u16_a', 'HC_u16_a', 'DHS_u16_a', 'WBHS_u16_a'] },
 ];
 
