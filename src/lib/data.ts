@@ -582,3 +582,27 @@ export interface AuditLog {
   };
   details?: Record<string, any>;
 }
+
+// Billing types
+export interface InvoiceLineItem {
+    id: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+}
+
+export interface Invoice {
+    invoiceId: string;
+    invoiceNumber: string;
+    clientId: string;
+    clientName: string;
+    issueDate: Date;
+    dueDate: Date;
+    status: 'Draft' | 'Sent' | 'Paid' | 'Overdue';
+    lineItems: InvoiceLineItem[];
+    subtotal: number;
+    tax: number;
+    total: number;
+    notes?: string;
+}

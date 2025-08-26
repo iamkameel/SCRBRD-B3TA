@@ -1,14 +1,13 @@
 
 import BillingClient from './client';
+import { getInvoices } from '@/lib/actions/billing';
+import { getSchools } from '@/lib/actions/schools';
 
 export default async function BillingPage() {
-  // In a real implementation, you would fetch billing data here.
-  // For now, we'll pass empty arrays to the client component.
-  const data = {
-    estimates: [],
-    invoices: [],
-    statements: [],
-    receipts: [],
-  };
-  return <BillingClient initialData={data} />;
+  const [invoices, schools] = await Promise.all([
+    getInvoices(),
+    getSchools(),
+  ]);
+
+  return <BillingClient initialInvoices={invoices} clients={schools} />;
 }
