@@ -663,9 +663,14 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
     
     const match = matchSnap.data() as Match;
-    const liveScore = match.liveScore || {
+    const liveScore: LiveScore = match.liveScore || {
         runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}
     };
+
+    // Initialize stats objects if they don't exist
+    if (!liveScore.batsmanStats) liveScore.batsmanStats = {};
+    if (!liveScore.bowlerStats) liveScore.bowlerStats = {};
+    if (!liveScore.shots) liveScore.shots = [];
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
         throw new Error("Live scoring players are not set up.");
