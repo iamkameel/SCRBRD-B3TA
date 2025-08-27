@@ -115,7 +115,9 @@ export function LiveScoringInterface({
 
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
-  const needsNewBatsman = !isAllOut && liveScore.wickets > 0 && !onStrikeBatsmanId;
+  const needsNewBatsman = isReadyToScore && isAllOut;
+  const isEndOfOver = liveScore.balls === 0 && liveScore.overs > 0 && liveScore.currentOver.length === 0;
+
   const canEndInnings = isAllOut || isOversFinished;
   const canUndo = !!match.previousLiveScore;
 
@@ -235,32 +237,6 @@ export function LiveScoringInterface({
             <PlayerInActionCard title="Bowler" person={bowler} stats={`${bowlerStats.wickets}/${bowlerStats.runsConceded} (${bowlerStats.overs}.${bowlerStats.balls})`} icon={Play} />
         </div>
 
-      <Card>
-        <CardHeader><CardTitle>Player Selection</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-                <Label>On Strike Batsman</Label>
-                <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
-                    <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                    <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2">
-                <Label>Non-Striker Batsman</Label>
-                <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating}>
-                    <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                    <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2">
-                <Label>Current Bowler</Label>
-                <Select value={bowlerId} onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}><SelectTrigger><SelectValue placeholder="Select Bowler"/></SelectTrigger>
-                    <SelectContent>{bowlingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
-                </Select>
-            </div>
-        </CardContent>
-      </Card>
-
       {isAllOut ? (
         <Card className="p-8 text-center bg-muted">
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
@@ -270,17 +246,55 @@ export function LiveScoringInterface({
                 {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
             </Button>
         </Card>
-      ) : needsNewBatsman ? (
+      ) : !isReadyToScore ? (
+        <Card>
+            <CardHeader><CardTitle>Player Selection</CardTitle><CardDescription>Select the opening batsmen and bowler to start scoring.</CardDescription></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                    <Label>On Strike Batsman</Label>
+                    <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
+                        <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                        <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Non-Striker Batsman</Label>
+                    <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating}>
+                        <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                        <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Current Bowler</Label>
+                    <Select value={bowlerId} onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}><SelectTrigger><SelectValue placeholder="Select Bowler"/></SelectTrigger>
+                        <SelectContent>{bowlingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                    </Select>
+                </div>
+            </CardContent>
+        </Card>
+      ) : liveScore.wickets > batsmenOut.length ? (
         <Card className="p-8 text-center bg-yellow-50 dark:bg-yellow-900/30">
             <Users className="mx-auto h-12 w-12 text-yellow-600 dark:text-yellow-400" />
             <h3 className="mt-4 text-xl font-bold">Wicket! Select Next Batsman</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Choose the new batsman for the 'On Strike' position to continue scoring.</p>
+            <div className="space-y-2 max-w-xs mx-auto mt-4">
+                <Label>Next Batsman</Label>
+                <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                    <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
+                    <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
+                </Select>
+            </div>
         </Card>
-      ) : !isReadyToScore ? (
-        <Card className="p-8 text-center">
-            <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500" />
-            <h3 className="mt-4 text-lg font-medium">Setup Required</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Please select the opening batsmen and bowler to begin scoring.</p>
+      ) : isEndOfOver ? (
+         <Card className="p-8 text-center bg-blue-50 dark:bg-blue-900/30">
+            <Users className="mx-auto h-12 w-12 text-blue-600 dark:text-blue-400" />
+            <h3 className="mt-4 text-xl font-bold">End of Over</h3>
+            <div className="space-y-2 max-w-xs mx-auto mt-4">
+                <Label>Select New Bowler</Label>
+                <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
+                    <SelectTrigger><SelectValue placeholder="Select new bowler"/></SelectTrigger>
+                    <SelectContent>{bowlingTeamRoster.filter(p => p.personId !== bowlerId).map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                </Select>
+            </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
