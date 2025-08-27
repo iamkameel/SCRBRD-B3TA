@@ -17,6 +17,16 @@ const checkManagementPermission = async (userId: string) => {
     }
 }
 
+const getDivisionRank = (divisionName: string): number => {
+    if (divisionName.toLowerCase() === 'open') return 100;
+    const match = divisionName.match(/u(\d+)/i);
+    if (match) {
+        return parseInt(match[1], 10);
+    }
+    return 0; // Fallback for any other format
+};
+
+
 // This function now fetches data from Firestore for the current user
 export async function getDivisions(): Promise<Division[]> {
   const userId = await getUserId();
@@ -29,6 +39,10 @@ export async function getDivisions(): Promise<Division[]> {
       divisionId: doc.id,
       name: doc.data().name,
     }));
+    
+    // Sort divisions logically: Open, then descending by age group
+    divisionsList.sort((a, b) => getDivisionRank(b.name) - getDivisionRank(a.name));
+
     return divisionsList;
   } catch (error) {
     console.error("Error fetching divisions:", error);
