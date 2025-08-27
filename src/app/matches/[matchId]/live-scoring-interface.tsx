@@ -6,7 +6,7 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, Extras, BowlingAngle } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -69,7 +69,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex items-center gap-1 mt-1 justify-end">
+    <div className="flex items-center gap-1.5 mt-2 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -79,6 +79,9 @@ function OverHistory({ balls }: { balls: string[] }) {
             ball.includes('W') && 'bg-destructive text-destructive-foreground',
             ball.includes('4') && 'bg-blue-500 text-white',
             ball.includes('6') && 'bg-purple-600 text-white',
+            ball === '1' && 'bg-white/80 text-black',
+            ball === '2' && 'bg-lime-300 text-black',
+            ball === '3' && 'bg-amber-300 text-black',
             ball === '.' && 'bg-gray-500 text-white',
             (ball.includes('wd') || ball.includes('nb')) && 'bg-yellow-500 text-black'
           )}
@@ -159,9 +162,6 @@ export function LiveScoringInterface({
   const isOversFinished = liveScore.overs >= 20;
   const needsNewBatsman = isReadyToScore && !liveScore.onStrikeBatsmanId && !isAllOut;
   
-  // A legal delivery is one that is not a wide or a no-ball. Since we don't have the last event type here,
-  // we can infer a legal delivery happened if the ball count is less than 6 (as it would have reset on the 6th legal ball).
-  // This is primarily for the client-side UI logic. The server action has the canonical check.
   const isLegalDelivery = (liveScore.balls || 0) < 6;
   
   const isEndOfOver = isLegalDelivery && liveScore.balls === 0 && liveScore.overs > 0 && (liveScore.overs !== (match.liveScore?.overs || 0));
@@ -169,8 +169,7 @@ export function LiveScoringInterface({
   const canEndInnings = isAllOut || isOversFinished;
   const canUndo = !!match.previousLiveScore;
 
-  const availableOnStrikeBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId);
-  const availableNonStrikers = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== onStrikeBatsmanId);
+  const availableBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId && p.personId !== onStrikeBatsmanId);
   const availableBowlers = bowlingTeamRoster.filter(p => p.personId !== liveScore.lastBowlerId);
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler' | 'bowlingAngle', value: string) => {
@@ -200,7 +199,7 @@ export function LiveScoringInterface({
   const handleRecordBall = (eventData: { event: string; runs?: number, dismissal?: { type: string; fielderIds?: string[] } }) => {
     startTransition(async () => {
         try {
-            await recordBallAction(matchId, { ...eventData, ...currentShot });
+            await recordBallAction(match.matchId, { ...eventData, ...currentShot });
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         } finally {
@@ -260,36 +259,36 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 space-y-3 font-sans shadow-lg">
-            {/* Team Names */}
-            <div className="grid grid-cols-3 items-center gap-2">
-                <p className="font-semibold text-sm sm:text-base uppercase truncate text-left">{battingTeam.name}</p>
-                <div />
-                <p className="font-semibold text-sm sm:text-base uppercase truncate text-right">{bowlingTeam.name}</p>
-            </div>
-
-            {/* Main Scoreboard */}
-            <div className="grid grid-cols-3 items-center gap-2">
-                <div className="flex items-center justify-start gap-2 sm:gap-3">
-                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
+        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg">
+            {/* Team Names & Score */}
+            <div className="grid grid-cols-3 items-start gap-2">
+                <div className="text-left space-y-1">
+                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center gap-2">
+                        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                        {battingTeam.name}
+                    </p>
                     <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
                 </div>
                 
-                <div className="text-center text-xs text-gray-300">
-                    <p className="font-bold text-sm sm:text-base">OVERS: {liveScore.overs}.{liveScore.balls}</p>
+                <div className="text-center text-xs text-gray-300 pt-2">
+                    <p className="font-bold text-sm sm:text-base">OVERS</p>
+                    <p className="font-bold text-3xl sm:text-4xl">{liveScore.overs}.{liveScore.balls}</p>
                 </div>
                 
-                <div className="flex items-center justify-end gap-2 sm:gap-3">
-                    <div className="text-right">
+                <div className="text-right space-y-1">
+                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">
+                        {bowlingTeam.name}
+                        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                    </p>
+                    <div>
                         <p className="text-xs sm:text-sm font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
                         <OverHistory balls={liveScore.currentOver} />
                     </div>
-                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                 </div>
             </div>
 
              {/* Batsmen Bar & Context */}
-             <div className="flex flex-col items-center gap-2 mt-2">
+             <div className="flex flex-col items-center gap-2 mt-4">
                 <div className="flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1">
                     <div className="flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full">
                        <span className="font-bold text-xs sm:text-sm uppercase truncate">{nonStriker?.personName.split(' ').pop()}</span>
@@ -323,39 +322,41 @@ export function LiveScoringInterface({
                     {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
                 </Button>
             </Card>
-        ) : (
+        ) : needsNewBatsman ? (
              <Card>
                 <CardHeader>
-                    <CardTitle>Player Selection</CardTitle>
-                    <CardDescription>Select the current batsmen and bowler.</CardDescription>
+                    <CardTitle className="text-destructive flex items-center gap-2"><CheckCircle />Wicket!</CardTitle>
+                    <CardDescription>Select the next incoming batsman to continue scoring.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                <CardContent>
                     <div className="space-y-2">
-                        <Label>On Strike Batsman</Label>
-                        <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
-                            <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                            <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Non-Striker</Label>
-                        <Select value={nonStrikerBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating || needsNewBatsman}>
-                            <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                            <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Current Bowler</Label>
-                        <Select value={bowlerId || ''} onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating || needsNewBatsman}>
-                            <SelectTrigger><SelectValue placeholder="Select Bowler"/></SelectTrigger>
-                            <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                        <Label>Incoming Batsman</Label>
+                        <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                            <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
+                            <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                 </CardContent>
              </Card>
-        )}
+        ) : isEndOfOver ? (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-primary flex items-center gap-2"><CheckCircle /> Over Complete!</CardTitle>
+                    <CardDescription>Select the next bowler to start the new over.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <Label>Next Bowler</Label>
+                        <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
+                            <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
+                            <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
+                </CardContent>
+            </Card>
+        ) : null}
 
-        {isReadyToScore && (
+        {isReadyToScore && !needsNewBatsman && !isEndOfOver && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 space-y-4">
                     <Card>
