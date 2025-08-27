@@ -497,7 +497,7 @@ export async function removeOfficialFromMatchAction(matchId: string, assignmentI
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     const match = await getMatch(matchId);
-    if (!match) throw new Error("Match not found or you do not have permission to edit it.");
+    if (!match) throw new Error("Match not found or permission denied.");
     try {
         await deleteDoc(doc(db, 'matches', matchId, 'officials', assignmentId));
     } catch (error) {
@@ -718,7 +718,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         liveScore.extras.total += runsFromBall;
         if (ball.event === 'bye') liveScore.extras.byes += runsFromBall;
         if (ball.event === 'leg_bye') liveScore.extras.legByes += runsFromBall;
-    } else { // Normal runs from the bat
+    } else if (!isWicket) { // Normal runs from the bat
         liveScore.runs += runsFromBall;
         liveScore.extras.partnership += runsFromBall;
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
@@ -737,7 +737,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
         // No-balls and wides are credited against the bowler
         if (isNoBall || isWide) liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
-        else liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
+        else if(!isWicket && ball.event !== 'bye' && ball.event !== 'leg_bye') liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
         
         if (isWicket && ball.dismissal?.type !== 'Run Out') liveScore.bowlerStats[bowlerId].wickets++;
     }

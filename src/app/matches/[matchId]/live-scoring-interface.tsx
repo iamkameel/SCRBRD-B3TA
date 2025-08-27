@@ -6,7 +6,7 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, Extras, BowlingAngle } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -69,7 +69,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex items-center gap-1.5 mt-2 justify-end">
+    <div className="flex items-center gap-1.5 mt-1 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -261,7 +261,7 @@ export function LiveScoringInterface({
     <div className="space-y-4">
         <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg">
             {/* Team Names & Score */}
-            <div className="grid grid-cols-3 items-start gap-2">
+            <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-left space-y-1">
                     <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center gap-2">
                         <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -270,7 +270,7 @@ export function LiveScoringInterface({
                     <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
                 </div>
                 
-                <div className="text-center text-xs text-gray-300 pt-2">
+                <div className="text-center text-xs text-gray-300">
                     <p className="font-bold text-sm sm:text-base">OVERS</p>
                     <p className="font-bold text-3xl sm:text-4xl">{liveScore.overs}.{liveScore.balls}</p>
                 </div>
@@ -322,39 +322,44 @@ export function LiveScoringInterface({
                     {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
                 </Button>
             </Card>
-        ) : needsNewBatsman ? (
-             <Card>
-                <CardHeader>
-                    <CardTitle className="text-destructive flex items-center gap-2"><CheckCircle />Wicket!</CardTitle>
-                    <CardDescription>Select the next incoming batsman to continue scoring.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <Label>Incoming Batsman</Label>
-                        <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
-                            <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
-                            <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
-                        </Select>
-                    </div>
-                </CardContent>
-             </Card>
-        ) : isEndOfOver ? (
+        ) : (
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-primary flex items-center gap-2"><CheckCircle /> Over Complete!</CardTitle>
-                    <CardDescription>Select the next bowler to start the new over.</CardDescription>
+                    <CardTitle>Player Selection & Controls</CardTitle>
+                    <CardDescription>Select the current players and record the outcome of each ball.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <Label>Next Bowler</Label>
-                        <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
-                            <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
-                            <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
-                        </Select>
-                    </div>
+                <CardContent className="space-y-4">
+                    {needsNewBatsman ? (
+                        <div className="space-y-2">
+                            <Label className="text-destructive font-bold">WICKET! Select Incoming Batsman</Label>
+                            <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                                <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
+                                <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                    ) : isEndOfOver ? (
+                        <div className="space-y-2">
+                            <Label className="text-primary font-bold">End of Over! Select Next Bowler</Label>
+                            <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
+                                <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
+                                <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                    ) : (
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>On Strike</Label>
+                                <Input value={onStrikeBatsman?.personName || 'Not Set'} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Bowler</Label>
+                                <Input value={bowler?.personName || 'Not Set'} disabled />
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
-            </Card>
-        ) : null}
+             </Card>
+        )}
 
         {isReadyToScore && !needsNewBatsman && !isEndOfOver && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
