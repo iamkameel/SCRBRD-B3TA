@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -8,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type LeaderboardPlayer, type StandingTeam, type Division } from '@/lib/data';
+import { type LeaderboardPlayer, type StandingTeam, type Division, type Team } from '@/lib/data';
 import { getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
 import { Loader2 } from 'lucide-react';
 
@@ -20,31 +21,53 @@ interface RankingsClientProps {
     initialStandings: StandingTeam[];
     divisions: Division[];
     initialDivisionId?: string;
+    allTeams: Team[];
 }
 
-export default function RankingsClient({ initialLeaderboards, initialStandings, divisions, initialDivisionId }: RankingsClientProps) {
+export default function RankingsClient({ initialLeaderboards, initialStandings, divisions, initialDivisionId, allTeams }: RankingsClientProps) {
     const [loading, setLoading] = React.useState(false);
     const [selectedDivisionId, setSelectedDivisionId] = React.useState<string | undefined>(initialDivisionId);
+    const [selectedTeamClass, setSelectedTeamClass] = React.useState<string | undefined>('all');
+
     const [leaderboards, setLeaderboards] = React.useState(initialLeaderboards);
     const [standings, setStandings] = React.useState(initialStandings);
 
-    const handleDivisionChange = async (divisionId: string) => {
-        setLoading(true);
-        setSelectedDivisionId(divisionId);
-        try {
-            const [newLeaderboards, newStandings] = await Promise.all([
-                getLeaderboards({ divisionId }),
-                getTeamStandings(divisionId)
-            ]);
-            setLeaderboards(newLeaderboards);
-            setStandings(newStandings);
-        } catch (error) {
-            console.error("Failed to fetch new ranking data", error);
-            // Optionally, show a toast notification
-        } finally {
-            setLoading(false);
-        }
-    };
+    const availableClasses = React.useMemo(() => {
+        if (!selectedDivisionId) return [];
+        const classSet = new Set<string>();
+        allTeams.forEach(team => {
+            if (team.divisionId === selectedDivisionId && team.teamClass) {
+                classSet.add(team.teamClass);
+            }
+        });
+        return Array.from(classSet).sort();
+    }, [selectedDivisionId, allTeams]);
+    
+    React.useEffect(() => {
+      setSelectedTeamClass('all');
+    }, [selectedDivisionId]);
+
+    const fetchData = React.useCallback(async () => {
+      if (!selectedDivisionId) return;
+      setLoading(true);
+      try {
+          const teamClassParam = selectedTeamClass === 'all' ? undefined : selectedTeamClass;
+          const [newLeaderboards, newStandings] = await Promise.all([
+              getLeaderboards({ divisionId: selectedDivisionId, teamClass: teamClassParam }),
+              getTeamStandings(selectedDivisionId, teamClassParam)
+          ]);
+          setLeaderboards(newLeaderboards);
+          setStandings(newStandings);
+      } catch (error) {
+          console.error("Failed to fetch new ranking data", error);
+      } finally {
+          setLoading(false);
+      }
+    }, [selectedDivisionId, selectedTeamClass]);
+
+    React.useEffect(() => {
+        fetchData();
+    }, [fetchData]);
     
     const { topRunScorers, topWicketTakers } = leaderboards;
 
@@ -55,9 +78,9 @@ export default function RankingsClient({ initialLeaderboards, initialStandings, 
                 <p className="text-muted-foreground">View overall team and player leaderboards by division.</p>
             </header>
 
-            <div className="flex justify-end">
+            <div className="flex gap-4 justify-end">
                 <div className="w-full max-w-xs">
-                     <Select value={selectedDivisionId} onValueChange={handleDivisionChange}>
+                     <Select value={selectedDivisionId} onValueChange={setSelectedDivisionId}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a division..." />
                         </SelectTrigger>
@@ -65,6 +88,21 @@ export default function RankingsClient({ initialLeaderboards, initialStandings, 
                             {divisions.map(division => (
                                 <SelectItem key={division.divisionId} value={division.divisionId}>
                                     {division.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className="w-full max-w-xs">
+                     <Select value={selectedTeamClass} onValueChange={setSelectedTeamClass} disabled={!selectedDivisionId || availableClasses.length === 0}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a class..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Classes</SelectItem>
+                            {availableClasses.map(cls => (
+                                <SelectItem key={cls} value={cls}>
+                                    {cls}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -118,7 +156,7 @@ export default function RankingsClient({ initialLeaderboards, initialStandings, 
                                         </TableRow>
                                         ))
                                     ) : (
-                                        <TableRow><TableCell colSpan={6} className="h-24 text-center">No team stats available. Complete some matches to see standings.</TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={6} className="h-24 text-center">No team stats available for this selection.</TableCell></TableRow>
                                     )}
                                     </TableBody>
                                 </Table>
@@ -140,7 +178,7 @@ export default function RankingsClient({ initialLeaderboards, initialStandings, 
                                             <div className="flex-1"><Link href={`/people/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link><p className="text-sm text-muted-foreground">Avg: {player.stats.battingAverage.toFixed(2)}</p></div>
                                             <div className="text-right"><p className="font-bold text-lg">{player.stats.totalRuns}</p><p className="text-xs text-muted-foreground">Runs</p></div>
                                         </div>
-                                    )) : <p className="text-sm text-center text-muted-foreground py-8">No batting stats yet.</p>}
+                                    )) : <p className="text-sm text-center text-muted-foreground py-8">No batting stats for this selection.</p>}
                                 </CardContent>
                             </Card>
                             <Card>
@@ -156,7 +194,7 @@ export default function RankingsClient({ initialLeaderboards, initialStandings, 
                                             <div className="flex-1"><Link href={`/people/${player.personId}`} className="font-semibold hover:underline">{player.firstName} {player.lastName}</Link><p className="text-sm text-muted-foreground">Econ: {player.stats.economyRate.toFixed(2)}</p></div>
                                             <div className="text-right"><p className="font-bold text-lg">{player.stats.wicketsTaken}</p><p className="text-xs text-muted-foreground">Wickets</p></div>
                                         </div>
-                                    )) : <p className="text-sm text-center text-muted-foreground py-8">No bowling stats yet.</p>}
+                                    )) : <p className="text-sm text-center text-muted-foreground py-8">No bowling stats for this selection.</p>}
                                 </CardContent>
                             </Card>
                         </div>

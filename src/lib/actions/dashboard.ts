@@ -16,26 +16,31 @@ import { getSchools } from './schools';
 import { getMatchTransportAssignments, getVehicles } from './transport';
 
 
-export async function getLeaderboards(filters: { divisionId?: string, seasonId?: string, competitionId?: string, teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
+export async function getLeaderboards(filters: { divisionId?: string; teamClass?: string; seasonId?: string; competitionId?: string; teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
     let players: Person[];
 
     if (filters.teamId) {
         const roster = await getTeamRoster(filters.teamId);
         const playerPromises = roster.filter(m => m.role === 'Player').map(m => getPerson(m.personId));
         players = (await Promise.all(playerPromises)).filter((p): p is Person => p !== null);
-    } else if (filters.divisionId) {
-        const teamsInDivision = await getTeamsByDivision(filters.divisionId);
+    } else {
+        const teams = await getTeamsByDivision(filters.divisionId);
+        const teamsToConsider = filters.teamClass ? teams.filter(t => t.teamClass === filters.teamClass) : teams;
+
         const playerIds = new Set<string>();
-        for(const team of teamsInDivision) {
+        for(const team of teamsToConsider) {
             const roster = await getTeamRoster(team.teamId);
             roster.forEach(member => {
                 if(member.role === 'Player') playerIds.add(member.personId);
             });
         }
+        
+        if (playerIds.size === 0) {
+            return { topRunScorers: [], topWicketTakers: [] };
+        }
+
         const playerPromises = Array.from(playerIds).map(id => getPerson(id));
         players = (await Promise.all(playerPromises)).filter((p): p is Person => p !== null);
-    } else {
-        players = await getPlayers();
     }
     
     const playersWithStats: LeaderboardPlayer[] = await Promise.all(
@@ -58,8 +63,9 @@ export async function getLeaderboards(filters: { divisionId?: string, seasonId?:
     return { topRunScorers, topWicketTakers };
 }
 
-export async function getTeamStandings(divisionId?: string): Promise<StandingTeam[]> {
-    const teams = divisionId ? await getTeamsByDivision(divisionId) : await getTeams();
+export async function getTeamStandings(divisionId?: string, teamClass?: string): Promise<StandingTeam[]> {
+    const teamsInDivision = divisionId ? await getTeamsByDivision(divisionId) : await getTeams();
+    const teams = teamClass ? teamsInDivision.filter(t => t.teamClass === teamClass) : teamsInDivision;
 
     const teamsWithStats: StandingTeam[] = await Promise.all(
         teams.map(async (team) => {
@@ -68,7 +74,6 @@ export async function getTeamStandings(divisionId?: string): Promise<StandingTea
         })
     );
 
-    // Simple sorting: by wins, then NRR. Can be made more complex later.
     const sortedStandings = teamsWithStats.sort((a, b) => {
         if (b.stats.matchesWon !== a.stats.matchesWon) {
             return b.stats.matchesWon - a.stats.matchesWon;
@@ -364,7 +369,7 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
                 const teamMatches = await getTeamMatches(primaryTeamAssignment.teamId);
                 nextMatch = teamMatches
                     .filter(m => m.status === 'scheduled' && m.dateTime >= new Date())
-                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0] || null;
+                    .sort((a, b) => a.date.getTime() - b.date.getTime())[0] || null;
             }
             
             return {
