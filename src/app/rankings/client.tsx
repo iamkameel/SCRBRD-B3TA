@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -27,7 +26,7 @@ interface RankingsClientProps {
 export default function RankingsClient({ initialLeaderboards, initialStandings, divisions, initialDivisionId, allTeams }: RankingsClientProps) {
     const [loading, setLoading] = React.useState(false);
     const [selectedDivisionId, setSelectedDivisionId] = React.useState<string | undefined>(initialDivisionId);
-    const [selectedTeamClass, setSelectedTeamClass] = React.useState<string | undefined>('all');
+    const [selectedTeamClass, setSelectedTeamClass] = React.useState<string | undefined>(undefined);
 
     const [leaderboards, setLeaderboards] = React.useState(initialLeaderboards);
     const [standings, setStandings] = React.useState(initialStandings);
@@ -44,30 +43,34 @@ export default function RankingsClient({ initialLeaderboards, initialStandings, 
     }, [selectedDivisionId, allTeams]);
     
     React.useEffect(() => {
-      setSelectedTeamClass('all');
-    }, [selectedDivisionId]);
-
-    const fetchData = React.useCallback(async () => {
-      if (!selectedDivisionId) return;
-      setLoading(true);
-      try {
-          const teamClassParam = selectedTeamClass === 'all' ? undefined : selectedTeamClass;
-          const [newLeaderboards, newStandings] = await Promise.all([
-              getLeaderboards({ divisionId: selectedDivisionId, teamClass: teamClassParam }),
-              getTeamStandings(selectedDivisionId, teamClassParam)
-          ]);
-          setLeaderboards(newLeaderboards);
-          setStandings(newStandings);
-      } catch (error) {
-          console.error("Failed to fetch new ranking data", error);
-      } finally {
-          setLoading(false);
+      // When division changes, default to the first available class
+      if (availableClasses.length > 0) {
+        setSelectedTeamClass(availableClasses[0]);
+      } else {
+        setSelectedTeamClass(undefined);
       }
-    }, [selectedDivisionId, selectedTeamClass]);
+    }, [selectedDivisionId, availableClasses]);
 
     React.useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+      const fetchData = async () => {
+        if (!selectedDivisionId) return;
+        setLoading(true);
+        try {
+            const [newLeaderboards, newStandings] = await Promise.all([
+                getLeaderboards({ divisionId: selectedDivisionId, teamClass: selectedTeamClass }),
+                getTeamStandings(selectedDivisionId, selectedTeamClass)
+            ]);
+            setLeaderboards(newLeaderboards);
+            setStandings(newStandings);
+        } catch (error) {
+            console.error("Failed to fetch new ranking data", error);
+        } finally {
+            setLoading(false);
+        }
+      };
+      
+      fetchData();
+    }, [selectedDivisionId, selectedTeamClass]);
     
     const { topRunScorers, topWicketTakers } = leaderboards;
 
@@ -99,7 +102,6 @@ export default function RankingsClient({ initialLeaderboards, initialStandings, 
                             <SelectValue placeholder="Select a class..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Classes</SelectItem>
                             {availableClasses.map(cls => (
                                 <SelectItem key={cls} value={cls}>
                                     {cls}
