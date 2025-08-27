@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
+
 function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { liveScore: LiveScore, match: Match, onStrikeBatsman?: RosterMember, nonStriker?: RosterMember }) {
     const [displayMessage, setDisplayMessage] = React.useState<string | null>(null);
 
@@ -60,6 +61,7 @@ function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { 
     );
 }
 
+
 // A simple display component for the current over
 function OverHistory({ balls }: { balls: string[] }) {
   const displayBalls = [...balls];
@@ -67,7 +69,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex items-center gap-1.5 mt-1 justify-end">
+    <div className="flex items-center gap-1 mt-1 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -198,7 +200,7 @@ export function LiveScoringInterface({
   const handleRecordBall = (eventData: { event: string; runs?: number, dismissal?: { type: string; fielderIds?: string[] } }) => {
     startTransition(async () => {
         try {
-            await recordBallAction(match.matchId, { ...eventData, ...currentShot });
+            await recordBallAction(matchId, { ...eventData, ...currentShot });
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         } finally {
@@ -258,26 +260,26 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-2 md:p-3 space-y-2 font-sans shadow-lg">
-            {/* Top Row: Team Names and Logos */}
+        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 space-y-3 font-sans shadow-lg">
+            {/* Team Names */}
             <div className="grid grid-cols-3 items-center gap-2">
-                <p className="font-semibold text-sm sm:text-base uppercase truncate text-center">{battingTeam.name}</p>
+                <p className="font-semibold text-sm sm:text-base uppercase truncate text-left">{battingTeam.name}</p>
                 <div />
-                <p className="font-semibold text-sm sm:text-base uppercase truncate text-center">{bowlingTeam.name}</p>
+                <p className="font-semibold text-sm sm:text-base uppercase truncate text-right">{bowlingTeam.name}</p>
             </div>
 
-            {/* Middle Row: Scores and Avatars */}
+            {/* Main Scoreboard */}
             <div className="grid grid-cols-3 items-center gap-2">
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                <div className="flex items-center justify-start gap-2 sm:gap-3">
                     <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
                 </div>
-
+                
                 <div className="text-center text-xs text-gray-300">
-                     <p className="font-bold text-sm sm:text-base">OVERS: {liveScore.overs}.{liveScore.balls}</p>
+                    <p className="font-bold text-sm sm:text-base">OVERS: {liveScore.overs}.{liveScore.balls}</p>
                 </div>
                 
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                <div className="flex items-center justify-end gap-2 sm:gap-3">
                     <div className="text-right">
                         <p className="text-xs sm:text-sm font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
                         <OverHistory balls={liveScore.currentOver} />
@@ -286,9 +288,9 @@ export function LiveScoringInterface({
                 </div>
             </div>
 
-            {/* Bottom Row: Batsmen and Context */}
+             {/* Batsmen Bar & Context */}
              <div className="flex flex-col items-center gap-2 mt-2">
-                 <div className="flex items-center w-full max-w-lg bg-black/30 rounded-full h-9 sm:h-10 px-1">
+                <div className="flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1">
                     <div className="flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full">
                        <span className="font-bold text-xs sm:text-sm uppercase truncate">{nonStriker?.personName.split(' ').pop()}</span>
                         <span className="font-bold text-xs sm:text-sm">{nonStrikerStats.runs} <span className="opacity-70 font-normal">({nonStrikerStats.balls})</span></span>
@@ -298,11 +300,12 @@ export function LiveScoringInterface({
                         <span className="font-bold text-xs sm:text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
                     </div>
                 </div>
-                 <div className="text-center text-xs text-gray-300 h-4 mt-1">
+                <div className="text-center text-xs text-gray-300 h-4 mt-1">
                     <DynamicContextBar liveScore={liveScore} match={match} onStrikeBatsman={onStrikeBatsman} nonStriker={nonStriker} />
-                 </div>
+                </div>
             </div>
 
+            {/* Bottom Row: Rates */}
              <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs mt-2 text-gray-300">
                 <span>CRR: {runRate.toFixed(2)}</span>
                 { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
@@ -323,10 +326,10 @@ export function LiveScoringInterface({
         ) : (
              <Card>
                 <CardHeader>
-                    <CardTitle>Player Selection & Controls</CardTitle>
-                    <CardDescription>Select the current batsmen and bowler, and the bowler's angle.</CardDescription>
+                    <CardTitle>Player Selection</CardTitle>
+                    <CardDescription>Select the current batsmen and bowler.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div className="space-y-2">
                         <Label>On Strike Batsman</Label>
                         <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
@@ -348,13 +351,6 @@ export function LiveScoringInterface({
                             <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2">
-                        <Label>Bowling Angle</Label>
-                        <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex gap-2">
-                            <Button type="button" onClick={() => handlePlayerSelection('bowlingAngle', 'Over the Wicket')} variant={liveScore.bowlingAngle === 'Over the Wicket' ? 'secondary' : 'outline'} className="flex-1 gap-2"><CornerUpRight /> Over</Button>
-                            <Button type="button" onClick={() => handlePlayerSelection('bowlingAngle', 'Round the Wicket')} variant={liveScore.bowlingAngle === 'Round the Wicket' ? 'secondary' : 'outline'} className="flex-1 gap-2"><CornerUpLeft /> Round</Button>
-                        </RadioGroup>
-                    </div>
                 </CardContent>
              </Card>
         )}
@@ -367,12 +363,23 @@ export function LiveScoringInterface({
                             <CardTitle>Scoring Controls</CardTitle>
                             <CardDescription>Tap the location on the wagon-wheel where the ball was hit.</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex justify-center">
-                            <WagonWheel
-                                onShotSelect={handleShotSelect}
-                                disabled={isPending || isSimulating || needsNewBatsman}
-                                shots={liveScore.shots || []}
-                            />
+                        <CardContent>
+                             <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label className="text-center block">Bowling Angle</Label>
+                                    <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex gap-2 justify-center">
+                                        <Button type="button" onClick={() => handlePlayerSelection('bowlingAngle', 'Over the Wicket')} variant={liveScore.bowlingAngle === 'Over the Wicket' ? 'secondary' : 'outline'} className="flex-1 max-w-xs gap-2"><CornerUpRight /> Over</Button>
+                                        <Button type="button" onClick={() => handlePlayerSelection('bowlingAngle', 'Round the Wicket')} variant={liveScore.bowlingAngle === 'Round the Wicket' ? 'secondary' : 'outline'} className="flex-1 max-w-xs gap-2"><CornerUpLeft /> Round</Button>
+                                    </RadioGroup>
+                                </div>
+                                <div className="flex justify-center">
+                                    <WagonWheel
+                                        onShotSelect={handleShotSelect}
+                                        disabled={isPending || isSimulating || needsNewBatsman}
+                                        shots={liveScore.shots || []}
+                                    />
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
