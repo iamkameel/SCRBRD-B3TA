@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -29,7 +28,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex flex-wrap items-center gap-1 justify-end">
+    <div className="flex items-center gap-1.5 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -259,7 +258,8 @@ export function LiveScoringInterface({
     <>
     <div className="space-y-4">
         <div className="bg-gray-800 text-white rounded-lg p-2 md:p-4 space-y-2 font-sans shadow-lg">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 items-start gap-2">
+                {/* Batting Team */}
                 <div className="flex flex-col items-center text-center">
                     <p className="font-semibold text-sm uppercase truncate mb-2">{battingTeam.name}</p>
                     <div className="flex items-center gap-3">
@@ -268,6 +268,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
+                {/* Center Section */}
                 <div className="col-span-1 flex-1 flex flex-col items-center justify-center w-full">
                     <div className="flex items-center w-full max-w-lg bg-black/30 rounded-full h-10 px-1">
                         <div className={cn("flex-1 flex items-center justify-between px-3 h-full rounded-full")}>
@@ -284,6 +285,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
+                {/* Bowling Team */}
                 <div className="flex flex-col items-center text-center">
                     <p className="font-semibold text-sm uppercase truncate mb-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-3">
