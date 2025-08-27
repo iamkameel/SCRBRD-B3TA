@@ -682,6 +682,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (!liveScore.shots) liveScore.shots = [];
     if (!liveScore.extras) liveScore.extras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
     if (!liveScore.batsmenOut) liveScore.batsmenOut = [];
+    if (!liveScore.ballHistory) liveScore.ballHistory = [];
 
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
@@ -762,6 +763,14 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     // Update current over display
     liveScore.currentOver.push(ball.event);
+    
+    // Update ball history
+    if (liveScore.ballHistory) {
+      liveScore.ballHistory.push(ball.event);
+      if (liveScore.ballHistory.length > 18) {
+        liveScore.ballHistory.shift();
+      }
+    }
 
     // Update overs and balls count
     if (isLegalDelivery) {
@@ -782,6 +791,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
             
             liveScore.currentOver = [];
+            if(liveScore.ballHistory) liveScore.ballHistory.push('|');
             liveScore.lastBowlerId = bowlerId; // Store the last bowler
             if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
             if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = 0;

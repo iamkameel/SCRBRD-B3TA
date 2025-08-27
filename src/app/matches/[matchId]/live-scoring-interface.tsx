@@ -112,6 +112,44 @@ function OverHistory({ balls }: { balls: string[] }) {
   );
 }
 
+function RecentBalls({ history }: { history: string[] }) {
+    if (!history || history.length === 0) {
+        return (
+            <div className="text-center text-xs text-muted-foreground p-2">
+                Ball history will appear here.
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-1.5 flex-wrap">
+            {history.map((ball, index) => {
+                if (ball === '|') {
+                    return <Separator key={`divider-${index}`} orientation="vertical" className="h-6 bg-muted-foreground" />;
+                }
+                return (
+                    <span
+                      key={index}
+                      className={cn(
+                        'flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold',
+                        ball.includes('W') && 'bg-destructive text-destructive-foreground',
+                        ball.includes('4') && 'bg-blue-500 text-white',
+                        ball.includes('6') && 'bg-purple-600 text-white',
+                        ball === '1' && 'bg-gray-200 text-black',
+                        ball === '2' && 'bg-lime-300 text-black',
+                        ball === '3' && 'bg-amber-300 text-black',
+                        ball === '.' && 'bg-gray-500 text-white',
+                        (ball.includes('wd') || ball.includes('nb')) && 'bg-yellow-500 text-black'
+                      )}
+                    >
+                      {ball}
+                    </span>
+                );
+            })}
+        </div>
+    );
+}
+
 function WeatherIcon({ condition, ...props }: { condition: string } & React.ComponentProps<typeof Sun>) {
     switch (condition?.toLowerCase()) {
         case "sunny": return <Sun {...props} />;
@@ -151,7 +189,7 @@ export function LiveScoringInterface({
   }, [match.matchId]);
 
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
-  const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle };
+  const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle, ballHistory: [] };
 
   const [liveScore, setLiveScore] = React.useState<LiveScore>({
       ...defaultLiveScore,
@@ -161,6 +199,7 @@ export function LiveScoringInterface({
           ...match.liveScore?.extras,
       },
       bowlingAngle: match.liveScore?.bowlingAngle || 'Over the Wicket',
+      ballHistory: match.liveScore?.ballHistory || [],
   });
 
   React.useEffect(() => {
@@ -172,6 +211,7 @@ export function LiveScoringInterface({
             ...match.liveScore?.extras,
         },
         bowlingAngle: match.liveScore?.bowlingAngle || 'Over the Wicket',
+        ballHistory: match.liveScore?.ballHistory || [],
     });
   }, [match.liveScore]);
 
@@ -426,20 +466,24 @@ export function LiveScoringInterface({
                                       className="grid grid-cols-2 gap-4"
                                       disabled={isPending || isSimulating}
                                     >
-                                        <div>
-                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="peer sr-only" />
+                                       <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="Over the Wicket" id="angle-over" className="peer sr-only" />
+                                            </FormControl>
                                             <Label htmlFor="angle-over" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
                                                 <CornerUpRight className="mb-2 h-6 w-6"/>
                                                 Over the Wicket
                                             </Label>
-                                        </div>
-                                        <div>
-                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="peer sr-only" />
+                                        </FormItem>
+                                        <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="Round the Wicket" id="angle-round" className="peer sr-only" />
+                                            </FormControl>
                                             <Label htmlFor="angle-round" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
                                                 <CornerUpLeft className="mb-2 h-6 w-6"/>
                                                 Round the Wicket
                                             </Label>
-                                        </div>
+                                        </FormItem>
                                     </RadioGroup>
                                 </div>
                                 <div className="flex justify-center pt-4">
@@ -448,6 +492,10 @@ export function LiveScoringInterface({
                                         disabled={isPending || isSimulating || needsNewBatsman}
                                         shots={liveScore.shots || []}
                                     />
+                                </div>
+                                <div className="pt-4 border-t">
+                                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Recent Balls</h4>
+                                  <RecentBalls history={liveScore.ballHistory || []} />
                                 </div>
                             </div>
                         </CardContent>
@@ -519,6 +567,7 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
 
 

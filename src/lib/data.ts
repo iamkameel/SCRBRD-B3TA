@@ -204,6 +204,7 @@ export interface LiveScore {
     overs: number;
     balls: number;
     currentOver: string[];
+    ballHistory?: string[];
     onStrikeBatsmanId?: string;
     nonStrikerBatsmanId?: string;
     bowlerId?: string;
