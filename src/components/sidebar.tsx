@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/icons/logo';
 import { cn } from '@/lib/utils';
 import { getNavConfig } from './sidebar-nav-items';
@@ -19,13 +19,16 @@ import { ScrollArea } from './ui/scroll-area';
 export function Sidebar() {
   const { person } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const activeRole = person?.activeRole || 'Player'; // Default to a non-admin role
 
   const { topLevel: topLevelNavItems, groups: navGroups } = getNavConfig(activeRole);
+  
+  const currentHref = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
   const defaultOpenItems = React.useMemo(() => 
     navGroups
-      .filter(group => group.items.some(item => pathname.startsWith(item.href)))
+      .filter(group => group.items.some(item => pathname.startsWith(item.href.split('?')[0])))
       .map(group => group.title),
     [pathname, navGroups]
   );
@@ -73,7 +76,7 @@ export function Sidebar() {
                           <AccordionContent className="pl-4 pt-1 pb-0">
                               <div className="flex flex-col gap-1">
                                   {visibleItems.map((item) => {
-                                      const isActive = pathname.startsWith(item.href);
+                                      const isActive = item.href === currentHref;
                                       return (
                                           <Link
                                               key={item.label}
