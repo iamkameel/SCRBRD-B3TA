@@ -24,6 +24,24 @@ import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 
+const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
+    if (!playerId) return 'Select...';
+    
+    const player = roster.find(p => p.personId === playerId);
+    if (!player) return 'Unknown';
+    
+    const lastNameCount = roster.filter(p => p.personName.split(' ').pop() === player.personName.split(' ').pop()).length;
+    
+    if (lastNameCount > 1) {
+        const nameParts = player.personName.split(' ');
+        const firstNameInitial = nameParts[0].charAt(0);
+        const lastName = nameParts.pop();
+        return `${firstNameInitial}. ${lastName}`;
+    }
+    
+    return player.personName;
+};
+
 
 function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { liveScore: LiveScore, match: Match, onStrikeBatsman?: RosterMember, nonStriker?: RosterMember }) {
     const [displayMessage, setDisplayMessage] = React.useState<string | null>(null);
@@ -282,7 +300,7 @@ export function LiveScoringInterface({
                      <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
-                            <p className="text-xs sm:text-sm font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
+                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster).split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -294,11 +312,11 @@ export function LiveScoringInterface({
              <div className="flex flex-col items-center gap-2 pt-2">
                 <div className="flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1">
                     <div className="flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full">
-                       <span className="font-bold text-xs sm:text-sm uppercase truncate">{nonStriker?.personName.split(' ').pop()}</span>
+                       <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(nonStriker?.personId, battingTeamRoster).split(' ').pop()}</span>
                         <span className="font-bold text-xs sm:text-sm">{nonStrikerStats.runs} <span className="opacity-70 font-normal">({nonStrikerStats.balls})</span></span>
                     </div>
                     <div className="flex-1 flex items-center justify-between px-2 sm:px-3 bg-green-500 rounded-full h-[calc(100%-8px)] shadow-md">
-                        <span className="font-bold text-xs sm:text-sm uppercase flex items-center gap-1 truncate"><ChevronRight className="h-4 w-4 flex-shrink-0" />{onStrikeBatsman?.personName.split(' ').pop()}</span>
+                        <span className="font-bold text-xs sm:text-sm uppercase flex items-center gap-1 truncate"><ChevronRight className="h-4 w-4 flex-shrink-0" />{getDisplayName(onStrikeBatsman?.personId, battingTeamRoster).split(' ').pop()}</span>
                         <span className="font-bold text-xs sm:text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
                     </div>
                 </div>
@@ -337,7 +355,7 @@ export function LiveScoringInterface({
                             <Label className="text-destructive font-bold">WICKET! Select Incoming Batsman</Label>
                             <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
                                 <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
-                                <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                                <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, battingTeamRoster)}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
                     ) : isEndOfOver ? (
@@ -345,7 +363,7 @@ export function LiveScoringInterface({
                             <Label className="text-primary font-bold">End of Over! Select Next Bowler</Label>
                             <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
                                 <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
-                                <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                                <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, bowlingTeamRoster)}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
                     ) : (
@@ -452,3 +470,4 @@ export function LiveScoringInterface({
     </>
   );
 }
+
