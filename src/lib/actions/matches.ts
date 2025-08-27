@@ -722,6 +722,41 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     return liveScore;
 }
 
+export async function simulateBallAction(matchId: string) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+
+    // These probabilities can be adjusted for more realistic simulations
+    const outcomes = [
+        { event: '.', runs: 0, probability: 0.4 },
+        { event: '1', runs: 1, probability: 0.3 },
+        { event: '2', runs: 2, probability: 0.1 },
+        { event: '4', runs: 4, probability: 0.1 },
+        { event: 'W', runs: 0, probability: 0.05 },
+        { event: 'wd', probability: 0.02 },
+        { event: '6', runs: 6, probability: 0.02 },
+        { event: 'nb', probability: 0.01 },
+    ];
+
+    const random = Math.random();
+    let cumulativeProbability = 0;
+    let selectedOutcome = outcomes[0];
+
+    for (const outcome of outcomes) {
+        cumulativeProbability += outcome.probability;
+        if (random <= cumulativeProbability) {
+            selectedOutcome = outcome;
+            break;
+        }
+    }
+    
+    // Simulate a random shot placement
+    const angle = Math.random() * 360;
+    const distance = 0.5 + Math.random() * 0.5; // Shots are in the outer half of the field
+
+    await recordBallAction(matchId, { ...selectedOutcome, angle, distance });
+}
+
 export async function undoLastBallAction(matchId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");

@@ -5,11 +5,11 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction } from '@/lib/actions/matches';
+import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
 import { generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
@@ -51,6 +51,7 @@ export function LiveScoringInterface({
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [isSimulating, startSimulation] = React.useTransition();
   const [isGeneratingUpdate, startUpdateGeneration] = React.useTransition();
   const [liveUpdate, setLiveUpdate] = React.useState<LiveMatchUpdateOutput | null>(null);
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
@@ -109,6 +110,16 @@ export function LiveScoringInterface({
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         } finally {
             setCurrentShot(null);
+        }
+    });
+  };
+  
+  const handleSimulateBall = () => {
+    startSimulation(async () => {
+        try {
+            await simulateBallAction(match.matchId);
+        } catch(error) {
+            toast({ title: "Simulation Error", description: error instanceof Error ? error.message : "Could not simulate ball.", variant: "destructive" });
         }
     });
   };
@@ -199,19 +210,19 @@ export function LiveScoringInterface({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
                 <Label>On Strike</Label>
-                <Select value={onStrikeBatsmanId} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || needsNewBatsman}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                <Select value={onStrikeBatsmanId} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || needsNewBatsman || isSimulating}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
                     <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
                 <Label>Non-Striker</Label>
-                <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
                     <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
                 <Label>Bowler</Label>
-                <Select value={bowlerId} onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending}><SelectTrigger><SelectValue placeholder="Select Bowler"/></SelectTrigger>
+                <Select value={bowlerId} onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}><SelectTrigger><SelectValue placeholder="Select Bowler"/></SelectTrigger>
                     <SelectContent>{bowlingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
             </div>
@@ -223,7 +234,7 @@ export function LiveScoringInterface({
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
             <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
             <p className="mt-1 text-sm text-muted-foreground">All 10 wickets have fallen.</p>
-             <Button onClick={handleEndInnings} className="mt-4" disabled={isPending}>
+             <Button onClick={handleEndInnings} className="mt-4" disabled={isPending || isSimulating}>
                 {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
             </Button>
         </Card>
@@ -250,7 +261,7 @@ export function LiveScoringInterface({
                     <CardContent className="flex justify-center">
                         <WagonWheel
                             onShotSelect={handleShotSelect}
-                            disabled={isPending}
+                            disabled={isPending || isSimulating}
                             shots={liveScore.shots}
                         />
                     </CardContent>
@@ -267,7 +278,7 @@ export function LiveScoringInterface({
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>Win Probability</CardTitle>
-                            <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate}>
+                            <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate || isSimulating}>
                                 <Wand2 className={cn('mr-2 h-4 w-4', isGeneratingUpdate && 'animate-spin')} />
                                 Analyze
                             </Button>
@@ -301,11 +312,15 @@ export function LiveScoringInterface({
                  <Card>
                     <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
                     <CardContent className="flex flex-col gap-2">
-                        <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending}>
+                         <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
+                            <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
+                            Simulate Ball
+                        </Button>
+                        <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
                             <Undo className="mr-2 h-4 w-4" />
                             Undo Last Ball
                         </Button>
-                         <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending}>
+                         <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending || isSimulating}>
                             {isFirstInnings ? "End Innings" : "End Match"}
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
