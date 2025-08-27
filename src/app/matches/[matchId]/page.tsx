@@ -13,10 +13,8 @@ import { getPlayerStats } from '@/lib/actions/stats';
 import { getUserId } from '@/lib/auth';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
-  const { matchId } = params;
-  
   const [match, userId] = await Promise.all([
-    getMatch(matchId),
+    getMatch(params.matchId),
     getUserId(),
   ]);
   
@@ -52,14 +50,14 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     isManagerForA,
     isManagerForB
   ] = await Promise.all([
-    getMatchOfficials(matchId),
+    getMatchOfficials(params.matchId),
     getPlayers(),
     getTeamRoster(match.teamAId),
     match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
     getMatchLineup(match.matchId, match.teamAId),
     match.teamBId ? getMatchLineup(match.matchId, match.teamBId) : Promise.resolve([]),
-    getScorecard(matchId),
-    getMatchTransportAssignments(matchId),
+    getScorecard(params.matchId),
+    getMatchTransportAssignments(params.matchId),
     getVehicles(),
     getPeopleByRole('Driver'),
     isTeamManagerOrAdmin(match.teamAId, userId),
