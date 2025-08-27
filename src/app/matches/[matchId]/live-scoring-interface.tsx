@@ -106,10 +106,26 @@ export function LiveScoringInterface({
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
 
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 };
-  const [liveScore, setLiveScore] = React.useState(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras });
+  const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras };
+
+  const [liveScore, setLiveScore] = React.useState<LiveScore>({
+      ...defaultLiveScore,
+      ...match.liveScore,
+      extras: {
+          ...defaultExtras,
+          ...match.liveScore?.extras,
+      }
+  });
 
   React.useEffect(() => {
-    setLiveScore(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras });
+    setLiveScore({
+        ...defaultLiveScore,
+        ...match.liveScore,
+        extras: {
+            ...defaultExtras,
+            ...match.liveScore?.extras,
+        }
+    });
   }, [match.liveScore]);
 
   const batsmenOut = liveScore.batsmenOut || [];
@@ -134,7 +150,7 @@ export function LiveScoringInterface({
 
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
-  const needsNewBatsman = isReadyToScore && isAllOut;
+  const needsNewBatsman = isReadyToScore && liveScore.wickets > batsmenOut.length && !isAllOut;
   const isEndOfOver = liveScore.balls === 0 && liveScore.overs > 0 && liveScore.currentOver.length === 0;
 
   const canEndInnings = isAllOut || isOversFinished;
@@ -277,7 +293,7 @@ export function LiveScoringInterface({
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label>On Strike Batsman</Label>
-                    <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || liveScore.wickets > batsmenOut.length}>
+                    <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
                         <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
                         <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
                     </Select>
@@ -297,7 +313,7 @@ export function LiveScoringInterface({
                 </div>
             </CardContent>
         </Card>
-      ) : liveScore.wickets > batsmenOut.length ? (
+      ) : needsNewBatsman ? (
         <Card className="p-8 text-center bg-yellow-50 dark:bg-yellow-900/30">
             <Users className="mx-auto h-12 w-12 text-yellow-600 dark:text-yellow-400" />
             <h3 className="mt-4 text-xl font-bold">Wicket! Select Next Batsman</h3>
@@ -333,7 +349,7 @@ export function LiveScoringInterface({
                         <WagonWheel
                             onShotSelect={handleShotSelect}
                             disabled={isPending || isSimulating}
-                            shots={liveScore.shots}
+                            shots={liveScore.shots || []}
                         />
                     </CardContent>
                 </Card>
