@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -122,7 +121,7 @@ export function LiveScoringInterface({
 
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
-  const needsNewBatsman = !liveScore.onStrikeBatsmanId && !isAllOut;
+  const needsNewBatsman = isReadyToScore && !liveScore.onStrikeBatsmanId && !isAllOut;
   const isEndOfOver = liveScore.balls === 0 && liveScore.overs > 0 && liveScore.currentOver.length === 6;
   
   const canEndInnings = isAllOut || isOversFinished;
@@ -209,7 +208,7 @@ export function LiveScoringInterface({
   
   const onStrikeStats = liveScore.batsmanStats?.[onStrikeBatsmanId || ''] || { runs: 0, balls: 0 };
   const nonStrikerStats = liveScore.batsmanStats?.[nonStrikerBatsmanId || ''] || { runs: 0, balls: 0 };
-  const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0 };
+  const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
 
   return (
     <>
@@ -400,7 +399,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
-    
-
-    

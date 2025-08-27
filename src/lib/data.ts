@@ -1,5 +1,4 @@
 
-
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -617,4 +616,10 @@ export interface Invoice {
     tax: number;
     total: number;
     notes?: string;
+}
+
+export interface LiveMatchUpdateOutput {
+    winProbability: number;
+    summary: string;
+    tacticalSuggestions?: string[];
 }

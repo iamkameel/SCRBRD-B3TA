@@ -274,7 +274,7 @@ export async function generateLiveMatchUpdateAction(matchId: string): Promise<Li
             bowlingTeamName: bowlingTeamName,
             currentScore: match.liveScore.runs,
             wickets: match.liveScore.wickets,
-            overs: parseFloat(`${match.liveScore.overs}.${match.liveScore.balls}`),
+            overs: parseFloat(`${match.liveScore.overs}.${liveScore.balls}`),
             targetScore: targetScore,
         });
         return result;
