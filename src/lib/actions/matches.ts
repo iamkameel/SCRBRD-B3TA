@@ -728,7 +728,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                 if (!liveScore.batsmenOut) liveScore.batsmenOut = [];
                 liveScore.batsmenOut.push(onStrikeId);
             }
-            liveScore.onStrikeBatsmanId = null;
+            liveScore.onStrikeBatsmanId = undefined;
         }
     }
     
@@ -956,3 +956,5 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
     throw new Error("Could not update availability.");
   }
 }
+
+    

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -151,14 +152,9 @@ export function LiveScoringInterface({
 
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
-  const needsNewBatsman = isReadyToScore && liveScore.wickets > batsmenOut.length && !isAllOut;
-  const isEndOfOver = isLegalBall(liveScore.currentOver[liveScore.currentOver.length - 1]) && liveScore.balls === 0 && liveScore.overs > 0;
+  const needsNewBatsman = !liveScore.onStrikeBatsmanId && !isAllOut;
+  const isEndOfOver = liveScore.balls === 0 && liveScore.overs > 0 && liveScore.currentOver.length === 6;
   
-  function isLegalBall(event?: string) {
-    if (!event) return false;
-    return !['wd', 'nb', 'bye', 'leg_bye'].includes(event);
-  }
-
   const canEndInnings = isAllOut || isOversFinished;
   const canUndo = !!match.previousLiveScore;
 
@@ -434,3 +430,5 @@ export function LiveScoringInterface({
     </>
   );
 }
+
+    
