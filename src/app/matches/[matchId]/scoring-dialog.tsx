@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -26,7 +27,8 @@ interface ScoringDialogProps {
 }
 
 export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }: ScoringDialogProps) {
-  const [view, setView] = React.useState<'runs' | 'wicket'>('runs');
+  const [view, setView] = React.useState<'runs' | 'wicket' | 'extras'>('runs');
+  const [extraType, setExtraType] = React.useState<'wd' | 'nb' | 'bye' | 'leg_bye' | null>(null);
   const [dismissalType, setDismissalType] = React.useState<DismissalType | null>(null);
   const [fielderId, setFielderId] = React.useState<string | undefined>(undefined);
   
@@ -36,6 +38,7 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
           setView('runs');
           setDismissalType(null);
           setFielderId(undefined);
+          setExtraType(null);
       }
   }, [open]);
 
@@ -50,6 +53,17 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
           // These dismissals don't involve fielders, so we can score immediately.
           onScore({ event: 'W', dismissal: { type } });
           onOpenChange(false);
+      }
+  };
+
+  const handleExtraTypeSelect = (type: 'wd' | 'nb' | 'bye' | 'leg_bye') => {
+      setExtraType(type);
+      setView('extras');
+  }
+
+  const handleExtraRunSelect = (runs: number) => {
+      if (extraType) {
+          handleSelect(extraType, runs);
       }
   };
 
@@ -70,36 +84,43 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{view === 'runs' ? 'Record Delivery' : 'Record Wicket'}</DialogTitle>
+          <DialogTitle>
+             {view === 'runs' && 'Record Delivery'}
+             {view === 'wicket' && 'Record Wicket'}
+             {view === 'extras' && `Record ${extraType?.replace('_', ' ')}`}
+          </DialogTitle>
           <DialogDescription>
-            {view === 'runs' 
-                ? "Select the outcome of the ball after tapping the field location."
-                : `How was the batsman dismissed?`}
+            {view === 'runs' && "Select the outcome of the ball after tapping the field location."}
+            {view === 'wicket' && `How was the batsman dismissed?`}
+            {view === 'extras' && `How many ${extraType?.replace('_', ' ')} runs were taken?`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           {view === 'runs' && (
-            <>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium text-sm text-muted-foreground">Runs Scored</h4>
+                <h4 className="font-medium text-sm text-muted-foreground text-center">Runs Scored</h4>
                 <div className="grid grid-cols-4 gap-2">
-                  <Button variant="outline" onClick={() => handleSelect('.', 0)}>0</Button>
+                  <Button variant="outline" size="lg" onClick={() => handleSelect('.', 0)}>0</Button>
                   {[1, 2, 3, 4, 5, 6].map((run) => (
-                    <Button key={run} variant="outline" onClick={() => handleSelect(run.toString(), run)}>
+                    <Button key={run} variant="outline" size="lg" onClick={() => handleSelect(run.toString(), run)}>
                       {run}
                     </Button>
                   ))}
                 </div>
               </div>
-              <Separator />
-              <div className="grid grid-cols-2 gap-2">
-                 <Button variant="destructive" className="w-full" onClick={() => setView('wicket')}>Wicket</Button>
-                 <div className="contents">
-                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleSelect('wd')}>Wide</Button>
-                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleSelect('nb')}>No Ball</Button>
-                 </div>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground text-center">Extras</h4>
+                <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('wd')}>Wide</Button>
+                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('nb')}>No Ball</Button>
+                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('bye')}>Byes</Button>
+                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('leg_bye')}>Leg Byes</Button>
+                </div>
               </div>
-            </>
+               <Separator />
+               <Button variant="destructive" className="w-full" onClick={() => setView('wicket')}>Howzat!</Button>
+            </div>
           )}
           {view === 'wicket' && (
             <div className="space-y-4">
@@ -129,6 +150,18 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
                 <Button onClick={confirmWicket} className="w-full" disabled={!fielderId}>Confirm Wicket</Button>
               )}
             </div>
+          )}
+          {view === 'extras' && (
+              <div className="space-y-4">
+                  <div className="grid grid-cols-4 gap-2">
+                      {[1, 2, 3, 4, 5].map((run) => (
+                          <Button key={run} variant="outline" size="lg" onClick={() => handleExtraRunSelect(run)}>
+                              {run}
+                          </Button>
+                      ))}
+                  </div>
+                   <Button variant="outline" onClick={() => setView('runs')} className="w-full">Back</Button>
+              </div>
           )}
         </div>
       </DialogContent>

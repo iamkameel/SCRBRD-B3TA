@@ -676,10 +676,12 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     const liveScore = currentLiveScore; 
 
     const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
+    const isExtra = ['wd', 'nb', 'bye', 'leg_bye'].includes(ball.event);
     const runsScored = ball.runs ?? 0;
     const isOddRun = runsScored % 2 !== 0;
 
-    if (ball.runs) liveScore.runs += ball.runs;
+    liveScore.runs += runsScored;
+
     if (ball.event === 'W') {
         if (liveScore.wickets < 10) {
             liveScore.wickets++;
@@ -689,11 +691,11 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                 }
                 liveScore.batsmenOut.push(liveScore.onStrikeBatsmanId);
             }
-            liveScore.onStrikeBatsmanId = null; 
+            liveScore.onStrikeBatsmanId = null;
         }
     }
     if (ball.event === 'wd' || ball.event === 'nb') {
-        liveScore.runs++;
+        liveScore.runs++; // The automatic extra run for these deliveries
     }
     
     if (ball.angle !== undefined && ball.distance !== undefined) {
@@ -720,7 +722,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             liveScore.overs++;
             liveScore.balls = 0;
             liveScore.currentOver = [];
-            if (!isOddRun) {
+            if (!isOddRun) { // Don't swap if odd run on last ball
                 [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
                     [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
             }
