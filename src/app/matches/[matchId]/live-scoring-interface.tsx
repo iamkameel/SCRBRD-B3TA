@@ -382,18 +382,31 @@ export function LiveScoringInterface({
                     <Card>
                         <CardHeader>
                             <CardTitle>Scoring Controls</CardTitle>
-                            <CardDescription>Tap the location on the wagon-wheel where the ball was hit.</CardDescription>
+                            <CardDescription>Select the bowling angle, then tap the wagon-wheel where the ball was hit.</CardDescription>
                         </CardHeader>
                         <CardContent>
                              <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label className="text-center block">Bowling Angle</Label>
-                                    <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex gap-2 justify-center">
-                                        <Button type="button" onClick={() => handlePlayerSelection('bowlingAngle', 'Over the Wicket')} variant={liveScore.bowlingAngle === 'Over the Wicket' ? 'secondary' : 'outline'} className="flex-1 max-w-xs gap-2"><CornerUpRight /> Over</Button>
-                                        <Button type="button" onClick={() => handlePlayerSelection('bowlingAngle', 'Round the Wicket')} variant={liveScore.bowlingAngle === 'Round the Wicket' ? 'secondary' : 'outline'} className="flex-1 max-w-xs gap-2"><CornerUpLeft /> Round</Button>
+                                    <RadioGroup 
+                                      onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} 
+                                      value={liveScore.bowlingAngle} 
+                                      className="grid grid-cols-2 gap-4"
+                                      disabled={isPending || isSimulating}
+                                    >
+                                        <Label htmlFor="angle-over" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
+                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
+                                            <CornerUpRight className="mb-2 h-6 w-6"/>
+                                            Over the Wicket
+                                        </Label>
+                                        <Label htmlFor="angle-round" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
+                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
+                                            <CornerUpLeft className="mb-2 h-6 w-6"/>
+                                            Round the Wicket
+                                        </Label>
                                     </RadioGroup>
                                 </div>
-                                <div className="flex justify-center">
+                                <div className="flex justify-center pt-4">
                                     <WagonWheel
                                         onShotSelect={handleShotSelect}
                                         disabled={isPending || isSimulating || needsNewBatsman}
@@ -470,4 +483,6 @@ export function LiveScoringInterface({
     </>
   );
 }
+
+
 
