@@ -199,6 +199,8 @@ export interface LiveScore {
     batsmenOut?: string[];
     liveInnings?: 1 | 2;
     shots?: ShotData[];
+    batsmanStats: { [key: string]: { runs: number, balls: number } };
+    bowlerStats: { [key: string]: { wickets: number, runsConceded: number, overs: number, balls: number, maidens: number } };
 }
 
 export interface Match {

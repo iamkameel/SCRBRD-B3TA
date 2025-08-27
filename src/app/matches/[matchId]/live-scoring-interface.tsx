@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -89,11 +90,10 @@ export function LiveScoringInterface({
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
 
-  const [liveScore, setLiveScore] = React.useState(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] });
-  const [livePlayerStats, setLivePlayerStats] = React.useState<{[key: string]: {runs: number, balls: number, wickets: number, overs: number, runsConceded: number, maidens: number}}>({});
+  const [liveScore, setLiveScore] = React.useState(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} });
 
   React.useEffect(() => {
-    setLiveScore(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] });
+    setLiveScore(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} });
   }, [match.liveScore]);
 
   const batsmenOut = liveScore.batsmenOut || [];
@@ -197,6 +197,10 @@ export function LiveScoringInterface({
         }
     });
   };
+  
+  const onStrikeStats = liveScore.batsmanStats?.[onStrikeBatsmanId || ''] || { runs: 0, balls: 0 };
+  const nonStrikerStats = liveScore.batsmanStats?.[nonStrikerBatsmanId || ''] || { runs: 0, balls: 0 };
+  const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0 };
 
   return (
     <>
@@ -226,9 +230,9 @@ export function LiveScoringInterface({
         </Card>
       
         <div className="flex gap-4">
-            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats={liveScore.batsmanStats?.[onStrikeBatsmanId || ''] && `${liveScore.batsmanStats[onStrikeBatsmanId || ''].runs} (${liveScore.batsmanStats[onStrikeBatsmanId || ''].balls})`} icon={User} />
-            <PlayerInActionCard title="Non-Striker" person={nonStriker} stats={liveScore.batsmanStats?.[nonStrikerBatsmanId || ''] && `${liveScore.batsmanStats[nonStrikerBatsmanId || ''].runs} (${liveScore.batsmanStats[nonStrikerBatsmanId || ''].balls})`} icon={User} />
-            <PlayerInActionCard title="Bowler" person={bowler} stats={liveScore.bowlerStats?.[bowlerId || ''] && `${liveScore.bowlerStats[bowlerId || ''].wickets}/${liveScore.bowlerStats[bowlerId || ''].runsConceded} (${liveScore.bowlerStats[bowlerId || ''].overs}.${liveScore.bowlerStats[bowlerId || ''].balls})`} icon={Play} />
+            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats={`${onStrikeStats.runs} (${onStrikeStats.balls})`} icon={User} />
+            <PlayerInActionCard title="Non-Striker" person={nonStriker} stats={`${nonStrikerStats.runs} (${nonStrikerStats.balls})`} icon={User} />
+            <PlayerInActionCard title="Bowler" person={bowler} stats={`${bowlerStats.wickets}/${bowlerStats.runsConceded} (${bowlerStats.overs}.${bowlerStats.balls})`} icon={Play} />
         </div>
 
       <Card>
@@ -236,7 +240,7 @@ export function LiveScoringInterface({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
                 <Label>On Strike Batsman</Label>
-                <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
                     <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
                     <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
                 </Select>

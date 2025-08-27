@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
@@ -20,7 +20,7 @@ export const getMatches = cache(async (): Promise<Match[]> => {
   
   const currentUser = await getPerson(userId);
   if (!currentUser) return [];
-  
+
   const matchesCollection = collection(db, 'matches');
   let q;
 
@@ -181,7 +181,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       dateTime: Timestamp.fromDate(dateTime),
       status: 'scheduled',
       competitionName: 'Friendly Match',
-      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] },
+      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} },
       userId: userId,
       report: '',
       preview: '',
@@ -209,7 +209,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       fieldName: fieldSnap.data().name,
       dateTime: Timestamp.fromDate(dateTime),
       status: 'scheduled',
-      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] },
+      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} },
       userId: userId,
       report: '',
       preview: '',
@@ -663,72 +663,91 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
     
     const match = matchSnap.data() as Match;
-    const currentLiveScore = match.liveScore || {
-        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [],
+    const liveScore = match.liveScore || {
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}
     };
 
-    if (!currentLiveScore.onStrikeBatsmanId || !currentLiveScore.nonStrikerBatsmanId || !currentLiveScore.bowlerId) {
+    if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
         throw new Error("Live scoring players are not set up.");
     }
     
-    const previousLiveScore = JSON.parse(JSON.stringify(currentLiveScore));
+    const previousLiveScore = JSON.parse(JSON.stringify(liveScore));
 
-    const liveScore = currentLiveScore; 
+    const onStrikeId = liveScore.onStrikeBatsmanId;
+    const bowlerId = liveScore.bowlerId;
 
     const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
     const isExtra = ['wd', 'nb', 'bye', 'leg_bye'].includes(ball.event);
+    const isWicket = ball.event === 'W';
     const runsScored = ball.runs ?? 0;
-    const isOddRun = runsScored % 2 !== 0;
-
+    
+    // Update live scores
     liveScore.runs += runsScored;
+    if (ball.event === 'wd' || ball.event === 'nb') {
+        liveScore.runs++;
+    }
 
-    if (ball.event === 'W') {
+    // Update batsman stats
+    if (onStrikeId && !isExtra) {
+        liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
+        liveScore.batsmanStats[onStrikeId].runs += runsScored;
+        if(isLegalBall) liveScore.batsmanStats[onStrikeId].balls++;
+    }
+    
+    // Update bowler stats
+    if (bowlerId && isLegalBall) {
+        liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+        liveScore.bowlerStats[bowlerId].runsConceded += runsScored;
+        if (isWicket) liveScore.bowlerStats[bowlerId].wickets++;
+    }
+
+    // Handle wickets
+    if (isWicket) {
         if (liveScore.wickets < 10) {
             liveScore.wickets++;
-             if (liveScore.onStrikeBatsmanId) {
-                if (!liveScore.batsmenOut) {
-                    liveScore.batsmenOut = [];
-                }
-                liveScore.batsmenOut.push(liveScore.onStrikeBatsmanId);
+            if (onStrikeId) {
+                if (!liveScore.batsmenOut) liveScore.batsmenOut = [];
+                liveScore.batsmenOut.push(onStrikeId);
             }
             liveScore.onStrikeBatsmanId = null;
         }
     }
-    if (ball.event === 'wd' || ball.event === 'nb') {
-        liveScore.runs++; // The automatic extra run for these deliveries
-    }
     
+    // Update shots
     if (ball.angle !== undefined && ball.distance !== undefined) {
-        if (!liveScore.shots) {
-            liveScore.shots = [];
-        }
-        liveScore.shots.push({
-            runs: runsScored,
-            angle: ball.angle,
-            distance: ball.distance,
-        });
+        if (!liveScore.shots) liveScore.shots = [];
+        liveScore.shots.push({ runs: runsScored, angle: ball.angle, distance: ball.distance });
     }
     
+    // Update current over display
     liveScore.currentOver.push(ball.event);
 
-    if (isLegalBall && isOddRun) {
-        [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
-            [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
-    }
-
+    // Update overs and balls count
     if (isLegalBall) {
+        liveScore.bowlerStats[bowlerId].balls++;
         const endOfOver = liveScore.balls === 5;
         if (endOfOver) {
             liveScore.overs++;
             liveScore.balls = 0;
             liveScore.currentOver = [];
-            if (!isOddRun) { // Don't swap if odd run on last ball
-                [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = 
-                    [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
-            }
+            liveScore.bowlerStats[bowlerId].overs++;
+            liveScore.bowlerStats[bowlerId].balls = 0;
+            // Check for maiden over
+            const overRuns = liveScore.currentOver.reduce((sum, e) => {
+                const run = parseInt(e, 10);
+                return isNaN(run) ? sum : sum + run;
+            }, 0);
+            if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
         } else {
             liveScore.balls++;
         }
+    }
+    
+     // Rotate strike
+    const isOddRun = runsScored % 2 !== 0;
+    const isEndOfOver = isLegalBall && liveScore.balls === 0;
+    if ((isLegalBall && isOddRun && !isEndOfOver) || (isLegalBall && !isOddRun && isEndOfOver)) {
+        [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
     }
 
     await updateDoc(matchRef, { liveScore, previousLiveScore });
@@ -736,11 +755,11 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     return liveScore;
 }
 
+
 export async function simulateBallAction(matchId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
-    // These probabilities can be adjusted for more realistic simulations
     const outcomes = [
         { event: '.', runs: 0, probability: 0.4 },
         { event: '1', runs: 1, probability: 0.3 },
@@ -764,9 +783,8 @@ export async function simulateBallAction(matchId: string) {
         }
     }
     
-    // Simulate a random shot placement
     const angle = Math.random() * 360;
-    const distance = 0.5 + Math.random() * 0.5; // Shots are in the outer half of the field
+    const distance = 0.5 + Math.random() * 0.5;
 
     await recordBallAction(matchId, { ...selectedOutcome, angle, distance });
 }
@@ -813,6 +831,7 @@ export async function endInningsAction(matchId: string) {
         const newLiveScore = {
             runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2, shots: [],
             onStrikeBatsmanId: undefined, nonStrikerBatsmanId: undefined, bowlerId: undefined,
+            batsmanStats: {}, bowlerStats: {},
         };
         
         await updateDoc(matchRef, { 

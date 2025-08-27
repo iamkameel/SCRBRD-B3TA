@@ -226,7 +226,15 @@ const matches = [
             { angle: 90, runs: 1, distance: 0.5 },
             { angle: 270, runs: 4, distance: 0.9 },
             { angle: 45, runs: 1, distance: 0.6 }
-        ]
+        ],
+        batsmanStats: {
+            'WBHS_open_1xi_01': { runs: 5, balls: 4 },
+            'WBHS_open_1xi_02': { runs: 10, balls: 8 },
+            'WBHS_open_1xi_03': { runs: 8, balls: 6 },
+        },
+        bowlerStats: {
+            'DHS_open_1xi_11': { wickets: 1, runsConceded: 15, overs: 1, balls: 2, maidens: 0 },
+        },
       }
     },
 ];
