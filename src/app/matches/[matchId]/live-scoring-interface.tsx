@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -258,10 +257,10 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-2 md:p-3 space-y-2 font-sans shadow-lg">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="bg-gray-800 text-white rounded-lg p-2 md:p-4 space-y-2 font-sans shadow-lg">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex flex-col items-center text-center w-full sm:w-1/4">
-                    <p className="font-semibold text-sm uppercase truncate">{battingTeam.name}</p>
+                    <p className="font-semibold text-sm uppercase truncate mb-2">{battingTeam.name}</p>
                     <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
                         <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
@@ -279,7 +278,7 @@ export function LiveScoringInterface({
                             <span className="font-bold text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs mt-1 text-gray-300">
+                    <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs mt-2 text-gray-300">
                         <span>OVERS: {liveScore.overs}.{liveScore.balls}</span>
                         <span>CRR: {runRate.toFixed(2)}</span>
                         { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
@@ -287,13 +286,13 @@ export function LiveScoringInterface({
                         { isFirstInnings && <span>PROJ: {projectedScore > 0 ? `~${projectedScore}` : '-'}</span>}
                         <span className="flex items-center gap-1"><Handshake className="h-3 w-3" /> {liveScore.extras.partnership}</span>
                     </div>
-                     <div className="text-center text-xs mt-2 text-gray-300">
+                     <div className="text-center text-xs mt-2 text-gray-300 h-4">
                         <DynamicContextBar liveScore={liveScore} match={match} onStrikeBatsman={onStrikeBatsman} nonStriker={nonStriker} />
                     </div>
                 </div>
 
                 <div className="flex flex-col items-center text-center w-full sm:w-1/4">
-                     <p className="font-semibold text-sm uppercase truncate">{bowlingTeam.name}</p>
+                     <p className="font-semibold text-sm uppercase truncate mb-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-3">
                         <div className="text-right">
                             <p className="text-xs font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
