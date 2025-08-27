@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -28,7 +29,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex items-center gap-1.5 justify-end">
+    <div className="flex items-center gap-1 mt-1 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -258,8 +259,8 @@ export function LiveScoringInterface({
     <>
     <div className="space-y-4">
         <div className="bg-gray-800 text-white rounded-lg p-2 md:p-4 space-y-2 font-sans shadow-lg">
-            <div className="grid grid-cols-3 items-start gap-2">
-                {/* Batting Team */}
+            <div className="grid grid-cols-3 items-center gap-2">
+                 {/* Batting Team */}
                 <div className="flex flex-col items-center text-center">
                     <p className="font-semibold text-sm uppercase truncate mb-2">{battingTeam.name}</p>
                     <div className="flex items-center gap-3">
@@ -269,7 +270,7 @@ export function LiveScoringInterface({
                 </div>
 
                 {/* Center Section */}
-                <div className="col-span-1 flex-1 flex flex-col items-center justify-center w-full">
+                 <div className="col-span-1 flex-1 flex flex-col items-center justify-center w-full">
                     <div className="flex items-center w-full max-w-lg bg-black/30 rounded-full h-10 px-1">
                         <div className={cn("flex-1 flex items-center justify-between px-3 h-full rounded-full")}>
                            <span className="font-bold text-sm uppercase truncate">{nonStriker?.personName.split(' ').pop()}</span>
@@ -285,15 +286,13 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                {/* Bowling Team */}
+                 {/* Bowling Team */}
                 <div className="flex flex-col items-center text-center">
                     <p className="font-semibold text-sm uppercase truncate mb-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-3">
                         <div className="text-right">
                             <p className="text-xs font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
-                            <div className="mt-1">
-                                <OverHistory balls={liveScore.currentOver} />
-                            </div>
+                            <OverHistory balls={liveScore.currentOver} />
                         </div>
                         <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
@@ -305,7 +304,7 @@ export function LiveScoringInterface({
                 <span>CRR: {runRate.toFixed(2)}</span>
                 { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
                 { !isFirstInnings && <span>RRR: {+requiredRunRate > 0 ? requiredRunRate : '-'}</span>}
-                { isFirstInnings && <span>PROJ: {projectedScore > 0 ? `~${projectedScore}` : '-'}</span>}
+                { isFirstInnings && <span>PROJECTED: {projectedScore > 0 ? `~${projectedScore}` : '-'}</span>}
                 <span className="flex items-center gap-1"><Handshake className="h-3 w-3" /> {liveScore.extras.partnership}</span>
             </div>
         </div>

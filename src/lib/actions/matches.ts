@@ -691,38 +691,52 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     const onStrikeId = liveScore.onStrikeBatsmanId;
     const bowlerId = liveScore.bowlerId;
 
-    const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
     const isWicket = ball.event === 'W';
-    const runsScored = ball.runs ?? 0;
+    const isNoBall = ball.event === 'nb';
+    const isWide = ball.event === 'wd';
+    const isLegalDelivery = !isNoBall && !isWide;
+    
+    const runsFromBall = ball.runs ?? 0;
     
     // Update live scores
-    if (ball.event === 'wd' || ball.event === 'nb') {
-        liveScore.runs++;
+    if (isWide) {
+        liveScore.runs += 1 + runsFromBall; // 1 for the wide penalty, plus any runs taken
+        liveScore.extras.total += 1 + runsFromBall;
+        liveScore.extras.wides += 1 + runsFromBall;
+    } else if (isNoBall) {
+        liveScore.runs += 1 + runsFromBall; // 1 for the no-ball penalty
         liveScore.extras.total++;
-        if (ball.event === 'wd') liveScore.extras.wides++;
-        if (ball.event === 'nb') liveScore.extras.noBalls++;
+        liveScore.extras.noBalls++;
+        // Runs from the bat on a no-ball are credited to the batsman
+        liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
+        liveScore.batsmanStats[onStrikeId].runs += runsFromBall;
+        liveScore.extras.partnership += runsFromBall;
     } else if (ball.event === 'bye' || ball.event === 'leg_bye') {
-        liveScore.runs += runsScored;
-        liveScore.extras.total += runsScored;
-        if (ball.event === 'bye') liveScore.extras.byes += runsScored;
-        if (ball.event === 'leg_bye') liveScore.extras.legByes += runsScored;
-    } else {
-        liveScore.runs += runsScored;
-        liveScore.extras.partnership += runsScored;
+        liveScore.runs += runsFromBall;
+        liveScore.extras.total += runsFromBall;
+        if (ball.event === 'bye') liveScore.extras.byes += runsFromBall;
+        if (ball.event === 'leg_bye') liveScore.extras.legByes += runsFromBall;
+    } else { // Normal runs from the bat
+        liveScore.runs += runsFromBall;
+        liveScore.extras.partnership += runsFromBall;
+        liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
+        liveScore.batsmanStats[onStrikeId].runs += runsFromBall;
     }
 
 
-    // Update batsman stats
-    if (onStrikeId && !isWicket) {
+    // Update batsman balls faced
+    if (onStrikeId && isLegalDelivery) {
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
-        liveScore.batsmanStats[onStrikeId].runs += runsScored;
-        if(isLegalBall) liveScore.batsmanStats[onStrikeId].balls++;
+        liveScore.batsmanStats[onStrikeId].balls++;
     }
     
     // Update bowler stats
-    if (bowlerId && isLegalBall) {
+    if (bowlerId) {
         liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-        liveScore.bowlerStats[bowlerId].runsConceded += runsScored;
+        // No-balls and wides are credited against the bowler
+        if (isNoBall || isWide) liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
+        else liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
+        
         if (isWicket) liveScore.bowlerStats[bowlerId].wickets++;
     }
 
@@ -733,7 +747,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             if (onStrikeId) {
                 liveScore.batsmenOut.push(onStrikeId);
             }
-            liveScore.onStrikeBatsmanId = undefined;
+            liveScore.onStrikeBatsmanId = undefined; // Clear the on-strike batsman
             liveScore.extras.partnership = 0; // Reset partnership on wicket
         }
     }
@@ -741,14 +755,14 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     // Update shots
     if (ball.angle !== undefined && ball.distance !== undefined) {
         if (!liveScore.shots) liveScore.shots = [];
-        liveScore.shots.push({ runs: runsScored, angle: ball.angle, distance: ball.distance });
+        liveScore.shots.push({ runs: runsFromBall, angle: ball.angle, distance: ball.distance });
     }
     
     // Update current over display
     liveScore.currentOver.push(ball.event);
 
     // Update overs and balls count
-    if (isLegalBall) {
+    if (isLegalDelivery) {
         liveScore.bowlerStats[bowlerId].balls = (liveScore.bowlerStats[bowlerId].balls || 0) + 1;
         
         liveScore.balls++;
@@ -772,9 +786,10 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
     
      // Rotate strike
-    const isOddRun = runsScored % 2 !== 0;
-    const isEndOfOver = isLegalBall && liveScore.balls === 0;
-    if ((isLegalBall && isOddRun && !isEndOfOver) || (isLegalBall && !isOddRun && isEndOfOver)) {
+    const runsThatRotateStrike = runsFromBall + (ball.event === 'bye' || ball.event === 'leg_bye' ? runsFromBall : 0);
+    const isOddRun = runsThatRotateStrike % 2 !== 0;
+    const isEndOfOver = isLegalDelivery && liveScore.balls === 0;
+    if ((isLegalDelivery && isOddRun && !isEndOfOver) || (isLegalDelivery && !isOddRun && isEndOfOver)) {
         [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
     }
 
