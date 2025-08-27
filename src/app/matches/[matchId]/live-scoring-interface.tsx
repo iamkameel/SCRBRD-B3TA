@@ -5,8 +5,8 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput } from '@/lib/data';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play } from 'lucide-react';
+import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
@@ -15,7 +15,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { WagonWheel } from '@/components/wagon-wheel';
 import { ScoringDialog } from './scoring-dialog';
-
+import { Separator } from '@/components/ui/separator';
+import { getPlayerStats } from '@/lib/actions/stats';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 // A simple display component for the current over
 function OverHistory({ balls }: { balls: string[] }) {
@@ -40,6 +43,35 @@ function OverHistory({ balls }: { balls: string[] }) {
   );
 }
 
+function PlayerInActionCard({ title, person, stats, icon: Icon }: { title: string, person?: RosterMember, stats?: string, icon: React.ElementType }) {
+    return (
+        <Card className="flex-1">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    {title}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                {person ? (
+                    <div className="flex items-center gap-3">
+                         <Avatar className="h-10 w-10">
+                            <AvatarImage src={(person as any).profileImageUrl} alt={person.personName} />
+                            <AvatarFallback>{person.personName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold">{person.personName}</p>
+                            {stats && <p className="text-2xl font-bold">{stats}</p>}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="h-12 flex items-center text-sm text-muted-foreground">Select a player...</div>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
 export function LiveScoringInterface({
   teamARoster,
   teamBRoster,
@@ -57,8 +89,13 @@ export function LiveScoringInterface({
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
 
+  const [liveScore, setLiveScore] = React.useState(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] });
+  const [livePlayerStats, setLivePlayerStats] = React.useState<{[key: string]: {runs: number, balls: number, wickets: number, overs: number, runsConceded: number, maidens: number}}>({});
 
-  const liveScore = match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] };
+  React.useEffect(() => {
+    setLiveScore(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] });
+  }, [match.liveScore]);
+
   const batsmenOut = liveScore.batsmenOut || [];
   
   const isFirstInnings = liveScore.liveInnings === 1;
@@ -68,6 +105,10 @@ export function LiveScoringInterface({
   const onStrikeBatsmanId = liveScore.onStrikeBatsmanId;
   const nonStrikerBatsmanId = liveScore.nonStrikerBatsmanId;
   const bowlerId = liveScore.bowlerId;
+
+  const onStrikeBatsman = battingTeamRoster.find(p => p.personId === onStrikeBatsmanId);
+  const nonStriker = battingTeamRoster.find(p => p.personId === nonStrikerBatsmanId);
+  const bowler = bowlingTeamRoster.find(p => p.personId === bowlerId);
   
   const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
   const runRate = liveScore.overs + liveScore.balls / 6 > 0 ? (liveScore.runs / (liveScore.overs + liveScore.balls / 6)).toFixed(2) : '0.00';
@@ -80,7 +121,6 @@ export function LiveScoringInterface({
 
   const availableOnStrikeBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId);
   const availableNonStrikers = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== onStrikeBatsmanId);
-
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler', personId: string) => {
     startTransition(async () => {
@@ -161,69 +201,55 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-            <CardHeader>
-            <CardTitle>Live Score</CardTitle>
-            <CardDescription>
-                Innings {liveScore.liveInnings}: {isFirstInnings ? match.teamAName : match.teamBName} is batting.
-            </CardDescription>
-            </CardHeader>
-            <CardContent>
-            <div className="flex items-center justify-between">
-                <div className="text-6xl font-bold text-foreground">
-                {liveScore.runs} / {liveScore.wickets}
+        <Card className="bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+            <CardContent className="p-4 flex items-center justify-between">
+                <div className="text-center">
+                    <p className="text-lg font-semibold">{isFirstInnings ? match.teamAName : match.teamBName}</p>
+                    <p className="text-5xl font-bold tracking-tighter">{liveScore.runs}-{liveScore.wickets}</p>
+                    <p className="text-sm opacity-80">({liveScore.overs}.{liveScore.balls} Overs)</p>
                 </div>
-                <div className="text-right">
-                <p className="text-3xl font-bold">
-                    {liveScore.overs}.{liveScore.balls}
-                </p>
-                <p className="text-sm text-muted-foreground">Overs</p>
+                {!isFirstInnings && match.firstInningsTotal != null && (
+                     <div className="text-center border-l border-white/20 pl-6 ml-6">
+                        <p className="text-sm opacity-80">Target</p>
+                        <p className="text-3xl font-bold">{match.firstInningsTotal + 1}</p>
+                    </div>
+                )}
+                <div className="text-center">
+                    <p className="text-sm opacity-80">Run Rate</p>
+                    <p className="text-xl font-bold">{runRate}</p>
                 </div>
-            </div>
-            <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-                <span>Run Rate: {runRate}</span>
-                <span>Projected: {+runRate > 0 ? Math.round(+runRate * 20) : 'N/A'}</span>
-            </div>
+                <div className="text-center">
+                    <p className="text-sm opacity-80">Projected</p>
+                    <p className="text-xl font-bold">{+runRate > 0 ? Math.round(+runRate * 20) : '--'}</p>
+                </div>
             </CardContent>
         </Card>
-
-        {!isFirstInnings && match.firstInningsTotal != null && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Target /> Target Score</CardTitle>
-                    <CardDescription>
-                        To win, {match.teamBName} needs to score {match.firstInningsTotal + 1} runs.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-6xl font-bold text-foreground">
-                        {match.firstInningsTotal + 1}
-                    </div>
-                </CardContent>
-            </Card>
-        )}
-      </div>
       
+        <div className="flex gap-4">
+            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats="12 (8)" icon={User} />
+            <PlayerInActionCard title="Non-Striker" person={nonStriker} stats="6 (10)" icon={User} />
+            <PlayerInActionCard title="Bowler" person={bowler} stats="0/15 (2.2)" icon={Play} />
+        </div>
+
       <Card>
         <CardHeader><CardTitle>Player Selection</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-                <Label>On Strike</Label>
-                <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                <Label>On Strike Batsman</Label>
+                <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
                     <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                    <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                    <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label>Non-Striker</Label>
+                <Label>Non-Striker Batsman</Label>
                 <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating}>
                     <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
-                    <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
+                    <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label>Bowler</Label>
+                <Label>Current Bowler</Label>
                 <Select value={bowlerId} onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}><SelectTrigger><SelectValue placeholder="Select Bowler"/></SelectTrigger>
                     <SelectContent>{bowlingTeamRoster.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
