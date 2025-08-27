@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -55,6 +56,50 @@ const StatDisplay = ({ label, value, color }: { label: string, value: string | n
         <p className={cn("text-2xl font-bold", color)}>{value}</p>
     </div>
 );
+
+function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { liveScore: LiveScore; match: Match; onStrikeBatsman?: RosterMemberWithStats; nonStriker?: RosterMemberWithStats }) {
+    const [eventText, setEventText] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        if (!liveScore.currentOver || liveScore.currentOver.length === 0) {
+            return;
+        }
+
+        const lastEvent = liveScore.currentOver[liveScore.currentOver.length - 1];
+        if (lastEvent === 'W') {
+            setEventText('WICKET!');
+            const timer = setTimeout(() => setEventText(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [liveScore.currentOver]);
+
+    // Priority 1: Macro-Narrative (The Chase)
+    if (liveScore.liveInnings === 2 && match.firstInningsTotal !== undefined) {
+        const runsRequired = match.firstInningsTotal + 1 - liveScore.runs;
+        const totalBalls = 120;
+        const ballsBowled = liveScore.overs * 6 + liveScore.balls;
+        const ballsRemaining = totalBalls - ballsBowled;
+        
+        if (runsRequired <= 0) {
+            return <p className="font-semibold">{match.teamBName} won!</p>;
+        }
+
+        return <p className="font-semibold">{match.teamBName} requires {runsRequired} runs from {ballsRemaining} balls.</p>;
+    }
+
+    // Priority 2: Event-Driven Alert
+    if (eventText) {
+        return <p className="font-semibold text-red-400 animate-pulse">{eventText}</p>;
+    }
+    
+    // Priority 3: Micro-Narrative (Default)
+    const pship = liveScore.extras?.partnership || 0;
+    const batsman1Name = onStrikeBatsman?.personName.split(' ').pop() || '...';
+    const batsman2Name = nonStriker?.personName.split(' ').pop() || '...';
+
+    return <p className="font-semibold">Partnership: {pship} ({`${batsman1Name} & ${batsman2Name}`})</p>;
+}
+
 
 export function LiveScoringInterface({
   teamARoster,
@@ -115,7 +160,7 @@ export function LiveScoringInterface({
   const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
   const oversDecimal = liveScore.overs + liveScore.balls / 6;
   const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
-  const requiredRunRate = !isFirstInnings && match.firstInningsTotal ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - oversDecimal)).toFixed(2) : '0.00';
+  const requiredRunRate = !isFirstInnings && match.firstInningsTotal && oversDecimal < 20 ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - oversDecimal)).toFixed(2) : '0.00';
   const projectedScore = isFirstInnings && runRate > 0 ? Math.round(liveScore.runs + ((20 - oversDecimal) * runRate)) : 0;
 
 
@@ -215,8 +260,8 @@ export function LiveScoringInterface({
     <div className="space-y-4">
         <div className="bg-gray-800 text-white rounded-lg p-2 md:p-3 space-y-2 font-sans shadow-lg">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                <div className="flex flex-col items-center w-full sm:w-1/4">
-                    <p className="font-semibold text-sm uppercase">{battingTeam.name}</p>
+                <div className="flex flex-col items-center text-center w-full sm:w-1/4">
+                    <p className="font-semibold text-sm uppercase truncate">{battingTeam.name}</p>
                     <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
                         <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
@@ -226,29 +271,32 @@ export function LiveScoringInterface({
                 <div className="flex-1 flex flex-col items-center w-full">
                     <div className="flex items-center w-full max-w-lg bg-black/30 rounded-full h-10 px-1">
                         <div className={cn("flex-1 flex items-center justify-between px-3 h-full rounded-full")}>
-                           <span className="font-bold text-sm uppercase">{nonStriker?.personName.split(' ').pop()}</span>
+                           <span className="font-bold text-sm uppercase truncate">{nonStriker?.personName.split(' ').pop()}</span>
                             <span className="font-bold text-sm">{nonStrikerStats.runs} <span className="opacity-70 font-normal">({nonStrikerStats.balls})</span></span>
                         </div>
                         <div className={cn("flex-1 flex items-center justify-between px-3 bg-green-500 rounded-full h-9 shadow-md")}>
-                            <span className="font-bold text-sm uppercase flex items-center gap-1"><ChevronRight className="h-4 w-4" />{onStrikeBatsman?.personName.split(' ').pop()}</span>
+                            <span className="font-bold text-sm uppercase flex items-center gap-1 truncate"><ChevronRight className="h-4 w-4 flex-shrink-0" />{onStrikeBatsman?.personName.split(' ').pop()}</span>
                             <span className="font-bold text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-6 text-xs mt-1 text-gray-300">
+                    <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs mt-1 text-gray-300">
                         <span>OVERS: {liveScore.overs}.{liveScore.balls}</span>
-                        { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
                         <span>CRR: {runRate.toFixed(2)}</span>
+                        { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
                         { !isFirstInnings && <span>RRR: {+requiredRunRate > 0 ? requiredRunRate : '-'}</span>}
                         { isFirstInnings && <span>PROJ: {projectedScore > 0 ? `~${projectedScore}` : '-'}</span>}
-                        <span className="flex items-center gap-1"><Handshake className="h-3 w-3" /> P'SHIP: {liveScore.extras.partnership}</span>
+                        <span className="flex items-center gap-1"><Handshake className="h-3 w-3" /> {liveScore.extras.partnership}</span>
+                    </div>
+                     <div className="text-center text-xs mt-2 text-gray-300">
+                        <DynamicContextBar liveScore={liveScore} match={match} onStrikeBatsman={onStrikeBatsman} nonStriker={nonStriker} />
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center w-full sm:w-1/4">
-                    <p className="font-semibold text-sm uppercase">{bowlingTeam.name}</p>
+                <div className="flex flex-col items-center text-center w-full sm:w-1/4">
+                     <p className="font-semibold text-sm uppercase truncate">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-3">
                         <div className="text-right">
-                            <p className="text-xs">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
+                            <p className="text-xs font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
                             <OverHistory balls={liveScore.currentOver} />
                         </div>
                         <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
