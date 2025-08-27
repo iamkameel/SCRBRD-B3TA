@@ -29,7 +29,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -289,7 +289,9 @@ export function LiveScoringInterface({
                     <div className="flex items-center justify-end gap-3">
                         <div className="text-right">
                             <p className="text-xs font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
-                            <OverHistory balls={liveScore.currentOver} />
+                            <div className="mt-1">
+                                <OverHistory balls={liveScore.currentOver} />
+                            </div>
                         </div>
                         <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
