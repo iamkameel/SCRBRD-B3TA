@@ -44,6 +44,13 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
         return "hsl(var(--muted-foreground))";
     }
 
+    const legendItems = [
+        { label: '6 Runs', color: '#EF4444' },
+        { label: '4 Runs', color: '#3B82F6' },
+        { label: '1-3 Runs', color: '#F97316' },
+        { label: 'Dot Ball', color: 'hsl(var(--muted-foreground))' },
+    ];
+
     return (
         <div className="flex flex-col items-center">
             <svg
@@ -127,8 +134,15 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
                     );
                 })}
             </svg>
+            <div className="flex items-center justify-center gap-4 mt-4">
+                {legendItems.map(item => (
+                    <div key={item.label} className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
+                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                    </div>
+                ))}
+            </div>
             <p className="text-sm text-muted-foreground mt-2">Tap on the field to record a shot</p>
         </div>
     );
 }
-
