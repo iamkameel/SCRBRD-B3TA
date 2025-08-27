@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
@@ -171,7 +171,7 @@ export async function addMatchAction(data: FixtureFormValues) {
   }
   
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
-  const defaultLiveScore: LiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras };
+  const defaultLiveScore: LiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' };
 
   if (competitionId === 'friendly') {
     newMatchData = {
@@ -637,7 +637,7 @@ export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]>
 });
 
 // LIVE SCORING ACTIONS
-export async function updateLivePlayersAction(matchId: string, updates: { onStrikeBatsmanId?: string; nonStrikerBatsmanId?: string; bowlerId?: string; }) {
+export async function updateLivePlayersAction(matchId: string, updates: Partial<LiveScore>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
@@ -645,15 +645,17 @@ export async function updateLivePlayersAction(matchId: string, updates: { onStri
     if (!matchSnap.exists()) {
         throw new Error("Match not found or permission denied.");
     }
-
+    
     const liveScoreUpdate: { [key: string]: any } = {};
     if (updates.onStrikeBatsmanId) liveScoreUpdate['liveScore.onStrikeBatsmanId'] = updates.onStrikeBatsmanId;
     if (updates.nonStrikerBatsmanId) liveScoreUpdate['liveScore.nonStrikerBatsmanId'] = updates.nonStrikerBatsmanId;
     if (updates.bowlerId) {
+        const currentLiveScore = matchSnap.data()?.liveScore;
         liveScoreUpdate['liveScore.bowlerId'] = updates.bowlerId;
-        // When a new bowler is selected, we can assume the over is resetting
+        liveScoreUpdate['liveScore.lastBowlerId'] = currentLiveScore?.bowlerId || null;
         liveScoreUpdate['liveScore.currentOver'] = [];
     }
+    if (updates.bowlingAngle) liveScoreUpdate['liveScore.bowlingAngle'] = updates.bowlingAngle;
     
     await updateDoc(matchRef, liveScoreUpdate);
     revalidatePath(`/matches/${matchId}`);
@@ -671,7 +673,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const match = matchSnap.data() as Match;
     const liveScore: LiveScore = match.liveScore || {
-        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 }
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 }, bowlingAngle: 'Over the Wicket'
     };
     
     // Initialize nested objects if they don't exist
@@ -737,7 +739,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         if (isNoBall || isWide) liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
         else liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
         
-        if (isWicket) liveScore.bowlerStats[bowlerId].wickets++;
+        if (isWicket && ball.dismissal?.type !== 'Run Out') liveScore.bowlerStats[bowlerId].wickets++;
     }
 
     // Handle wickets
@@ -763,7 +765,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     // Update overs and balls count
     if (isLegalDelivery) {
-        liveScore.bowlerStats[bowlerId].balls = (liveScore.bowlerStats[bowlerId].balls || 0) + 1;
+        if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = (liveScore.bowlerStats[bowlerId].balls || 0) + 1;
         
         liveScore.balls++;
         const endOfOver = liveScore.balls >= 6;
@@ -780,8 +782,9 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
             
             liveScore.currentOver = [];
-            liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
-            liveScore.bowlerStats[bowlerId].balls = 0;
+            liveScore.lastBowlerId = bowlerId; // Store the last bowler
+            if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
+            if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = 0;
         }
     }
     
@@ -874,7 +877,7 @@ export async function endInningsAction(matchId: string) {
         const newLiveScore: LiveScore = {
             runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2, shots: [],
             onStrikeBatsmanId: undefined, nonStrikerBatsmanId: undefined, bowlerId: undefined,
-            batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 }
+            batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 }, bowlingAngle: 'Over the Wicket'
         };
         
         await updateDoc(matchRef, { 

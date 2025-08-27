@@ -1,4 +1,5 @@
 
+
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -195,6 +196,8 @@ export interface Extras {
     partnership: number;
 }
 
+export type BowlingAngle = 'Over the Wicket' | 'Round the Wicket';
+
 export interface LiveScore {
     runs: number;
     wickets: number;
@@ -204,12 +207,14 @@ export interface LiveScore {
     onStrikeBatsmanId?: string;
     nonStrikerBatsmanId?: string;
     bowlerId?: string;
+    lastBowlerId?: string;
     batsmenOut?: string[];
     liveInnings?: 1 | 2;
     shots?: ShotData[];
     batsmanStats: { [key: string]: { runs: number, balls: number } };
     bowlerStats: { [key: string]: { wickets: number, runsConceded: number, overs: number, balls: number, maidens: number } };
     extras: Extras;
+    bowlingAngle: BowlingAngle;
 }
 
 export interface Match {
