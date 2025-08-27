@@ -15,8 +15,7 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
     const svgRef = React.useRef<SVGSVGElement>(null);
     const size = 300;
     const center = size / 2;
-    const rings = [center * 0.35, center * 0.7, center];
-    const sectors = 8;
+    const infieldRadius = center * 0.55;
 
     const handleClick = (event: React.MouseEvent<SVGSVGElement>) => {
         if (disabled || !svgRef.current) return;
@@ -28,23 +27,21 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
         const dx = x - center;
         const dy = y - center;
 
-        // Calculate angle (0-360 degrees, 0 is to the right)
         let angle = Math.atan2(dy, dx) * (180 / Math.PI);
         if (angle < 0) {
             angle += 360;
         }
-
-        // Calculate distance as a ratio of the max radius
+        
         const distance = Math.sqrt(dx * dx + dy * dy) / center;
 
         onShotSelect({ angle, distance: Math.min(distance, 1) });
     };
-
+    
     const getShotColor = (runs: number) => {
-        if (runs === 4) return "hsl(var(--chart-3))"; // blue
-        if (runs === 6) return "hsl(var(--chart-4))"; // purple
-        if (runs > 0) return "hsl(var(--chart-2))"; // yellow/orange
-        return "hsl(var(--muted-foreground))"; // dot for 0 runs
+        if (runs === 6) return "#EF4444"; // Red
+        if (runs === 4) return "#3B82F6"; // Blue
+        if (runs > 0) return "#F97316"; // Orange
+        return "hsl(var(--muted-foreground))";
     }
 
     return (
@@ -55,40 +52,59 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
                 height={size}
                 viewBox={`0 0 ${size} ${size}`}
                 onClick={handleClick}
-                className={cn("bg-green-100 dark:bg-green-900/20 rounded-full cursor-pointer", disabled && "cursor-not-allowed opacity-50")}
+                className={cn("bg-black rounded-full cursor-pointer", disabled && "cursor-not-allowed opacity-50")}
             >
-                {/* Rings */}
-                {rings.map((radius, i) => (
-                    <circle
-                        key={`ring-${i}`}
-                        cx={center}
-                        cy={center}
-                        r={radius}
-                        fill="none"
-                        stroke="hsla(var(--primary), 0.3)"
-                        strokeWidth="1"
-                    />
-                ))}
-                
-                {/* Pitch */}
-                <rect x={center - 5} y={center-40} width="10" height="80" fill="hsla(var(--primary), 0.4)" />
+                {/* Checkered Infield Pattern */}
+                <defs>
+                    <pattern id="checkered" patternUnits="userSpaceOnUse" width="20" height="20">
+                        <rect x="0" y="0" width="10" height="10" fill="#4CAF50" />
+                        <rect x="10" y="0" width="10" height="10" fill="#43A047" />
+                        <rect x="0" y="10" width="10" height="10" fill="#43A047" />
+                        <rect x="10" y="10" width="10" height="10" fill="#4CAF50" />
+                    </pattern>
+                </defs>
 
-                {/* Sectors */}
-                {Array.from({ length: sectors / 2 }).map((_, i) => (
-                    <line
+                {/* Outfield */}
+                <circle cx={center} cy={center} r={center} fill="#388E3C" />
+                {/* Infield */}
+                <circle cx={center} cy={center} r={infieldRadius} fill="url(#checkered)" />
+
+                {/* Sector Lines */}
+                {Array.from({ length: 4 }).map((_, i) => (
+                     <line
                         key={`sector-${i}`}
-                        x1={center}
-                        y1={center}
-                        x2={center + center * Math.cos(i * Math.PI / (sectors / 2))}
-                        y2={center + center * Math.sin(i * Math.PI / (sectors / 2))}
-                        stroke="hsla(var(--primary), 0.3)"
-                        strokeWidth="1"
+                        x1={center + center * Math.cos(i * Math.PI / 4 + Math.PI / 8)}
+                        y1={center + center * Math.sin(i * Math.PI / 4 + Math.PI / 8)}
+                        x2={center - center * Math.cos(i * Math.PI / 4 + Math.PI / 8)}
+                        y2={center - center * Math.sin(i * Math.PI / 4 + Math.PI / 8)}
+                        stroke="white"
+                        strokeWidth="1.5"
+                        strokeOpacity="0.8"
                     />
                 ))}
+                 <line x1={center} y1={0} x2={center} y2={size} stroke="white" strokeWidth="1.5" strokeOpacity="0.8" />
+                 <line x1={0} y1={center} x2={size} y2={center} stroke="white" strokeWidth="1.5" strokeOpacity="0.8" />
+
+
+                {/* Pitch */}
+                <rect x={center - 7} y={center - 50} width="14" height="100" fill="#BCA48C" />
+                
+                {/* Creases */}
+                <line x1={center - 20} y1={center - 40} x2={center + 20} y2={center - 40} stroke="white" strokeWidth="1.5" />
+                <line x1={center - 20} y1={center + 40} x2={center + 20} y2={center + 40} stroke="white" strokeWidth="1.5" />
+
+                {/* Stumps */}
+                <rect x={center - 4} y={center - 44} width="8" height="6" fill="white" />
+                 <text x={center - 25} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold">OFF</text>
+                 <text x={center + 18} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold">LEG</text>
+
                 
                 {/* Rendered Shots */}
                 {shots.map((shot, index) => {
                     const angleRad = shot.angle * (Math.PI / 180);
+                    // Start from the stumps area
+                    const startX = center; 
+                    const startY = center - 42; 
                     const endX = center + (shot.distance * center) * Math.cos(angleRad);
                     const endY = center + (shot.distance * center) * Math.sin(angleRad);
                     const color = getShotColor(shot.runs);
@@ -100,8 +116,8 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
                     return (
                         <line
                             key={index}
-                            x1={center}
-                            y1={center}
+                            x1={startX}
+                            y1={startY}
                             x2={endX}
                             y2={endY}
                             stroke={color}
@@ -110,10 +126,9 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
                         />
                     );
                 })}
-
-                <circle cx={center} cy={center} r={3} fill="hsl(var(--primary))" />
             </svg>
             <p className="text-sm text-muted-foreground mt-2">Tap on the field to record a shot</p>
         </div>
     );
 }
+
