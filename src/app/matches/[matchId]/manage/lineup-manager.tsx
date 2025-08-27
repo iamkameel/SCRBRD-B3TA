@@ -10,11 +10,13 @@ import {
   useSensors,
   DragOverlay,
   type DragEndEvent,
+  KeyboardSensor,
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { GripVertical, Save, Wand2, Loader2, User, Users, Swords, ShieldHalf, ShieldCheck, UserCheck, Search, Plus, X, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,6 +60,13 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
   const [selectedIds, setSelectedIds] = React.useState<string[]>(initialLineupIds);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState('All');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   React.useEffect(() => {
     // Combine roster and ensure lineup players come first if they exist
