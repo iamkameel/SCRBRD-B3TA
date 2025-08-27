@@ -4,15 +4,15 @@
 import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, User, Swords, ShieldHalf, CheckCircle, XCircle, HelpCircle, Heart } from 'lucide-react';
+import { GripVertical, User, Swords, ShieldHalf, CheckCircle, XCircle, HelpCircle, Heart, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RosterMemberWithStats, PlayerStats, AvailabilityStatus } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { StatItem } from '@/components/stat-item';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 export const getPrimaryRole = (player: RosterMemberWithStats) => {
     const { stats, roles } = player;
@@ -84,34 +84,41 @@ export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
     const specialities = getPlayerSpecialities(player);
     
     return (
-        <div ref={ref} className={cn("flex items-center bg-card p-2 border rounded-lg shadow-sm w-full", isDragging && "opacity-50 shadow-2xl")}>
-             <div {...dragHandleProps} className="cursor-grab p-1 active:cursor-grabbing touch-none">
-                <GripVertical className="h-5 w-5 text-muted-foreground" />
-            </div>
-            {index && <span className="font-bold text-lg w-5 text-center text-muted-foreground">{index}</span>}
-             <Checkbox checked={isSelected} onCheckedChange={onSelect} className="mx-2"/>
-             <div className="flex items-center gap-3 flex-1">
+        <div ref={ref} className={cn(
+          "bg-card p-3 border rounded-lg shadow-sm w-full transition-shadow",
+          isDragging ? "opacity-75 shadow-2xl z-50" : "hover:shadow-md",
+          isSelected && "bg-primary/10 border-primary"
+        )}>
+            <div className="flex items-center gap-2">
+                {dragHandleProps && (
+                    <div {...dragHandleProps} className="cursor-grab p-1 active:cursor-grabbing touch-none">
+                        <GripVertical className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                )}
+                {index && <span className="font-bold text-lg w-5 text-center text-muted-foreground">{index}</span>}
+                <Checkbox checked={isSelected} onCheckedChange={onSelect} className="mx-2"/>
                 <Avatar className="h-10 w-10">
                     <AvatarImage src={player.profileImageUrl} />
                     <AvatarFallback>{player.personName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 overflow-hidden">
-                    <p className="font-semibold">{player.personName}</p>
+                    <p className="font-semibold text-base">{player.personName}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <RoleIcon className="h-3 w-3" />
                         <span>{roleLabel}</span>
                         {player.isCaptain && <Badge variant="outline" className="text-amber-500 border-amber-500 px-1 py-0 text-[10px]">C</Badge>}
                         {player.isViceCaptain && <Badge variant="outline" className="px-1 py-0 text-[10px]">VC</Badge>}
                     </div>
-                    {specialities && <p className="text-xs text-muted-foreground truncate">{specialities}</p>}
                 </div>
+                 <AvailabilityBadge status={availability?.status} note={availability?.note} />
             </div>
-            <div className="flex items-center gap-4 mx-4">
-                <StatItem label="Avg" value={player.stats.battingAverage.toFixed(1)} size="small" />
-                <StatItem label="SR" value={player.stats.strikeRate.toFixed(1)} size="small" />
-                <StatItem label="Wkts" value={player.stats.wicketsTaken} size="small" />
+             <Separator className="my-2" />
+             <div className="flex justify-around items-center pt-1">
+                 <StatItem label="Bat Avg" value={player.stats.battingAverage.toFixed(1)} size="small" />
+                 <StatItem label="Bat SR" value={player.stats.strikeRate.toFixed(1)} size="small" />
+                 <StatItem label="Wkts" value={player.stats.wicketsTaken} size="small" />
+                 <StatItem label="Bowl Econ" value={player.stats.economyRate.toFixed(2)} size="small" />
             </div>
-            <AvailabilityBadge status={availability?.status} note={availability?.note} />
         </div>
     );
 });
@@ -134,13 +141,13 @@ export const SortablePlayerCard = ({ player, index, availability, isSelected, on
     return (
         <PlayerCard 
             ref={setNodeRef}
-            style={style}
             player={player} 
             index={index} 
             availability={availability} 
             isSelected={isSelected}
             onSelect={onSelect}
             dragHandleProps={{...attributes, ...listeners}}
+            style={style}
         />
     );
 };

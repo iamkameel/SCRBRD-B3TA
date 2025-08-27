@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -271,10 +272,6 @@ export default function MatchDetailsClient({
   const [forecastResult, setForecastResult] = React.useState<PlayerPerformanceForecast | null>(null);
   
   const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
-  const areBothLineupsConfirmed = match.lineupConfirmedByCaptainA && match.lineupConfirmedByCaptainB;
-  
-  const canViewTeamA = isAdmin || isManagerForA || isOfficialForMatch || areBothLineupsConfirmed;
-  const canViewTeamB = isAdmin || isManagerForB || isOfficialForMatch || areBothLineupsConfirmed;
   
   const isPlayerInMatch = teamALineup.includes(person?.personId || '') || teamBLineup.includes(person?.personId || '');
 
@@ -412,8 +409,8 @@ export default function MatchDetailsClient({
     setAnalyzedTeamId(teamToAnalyzeId);
     startAnalysisGeneration(async () => {
         try {
-            const result = await generateOppositionAnalysisAction(match.matchId, teamToAnalyzeId);
-            toast({ title: "Success", description: result.message });
+            const result = await generateOppositionAnalysisAction(teamToAnalyzeId);
+            toast({ title: "Success", description: "Analysis has been generated and saved to the team's profile." });
         } catch (error) {
              toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate analysis.", variant: "destructive" });
         } finally {
@@ -597,66 +594,15 @@ export default function MatchDetailsClient({
             </TabsContent>
             
             <TabsContent value="lineups" className="mt-4">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <h3 className="font-semibold">{match.teamAName}</h3>
-                                {match.lineupConfirmedByCaptainA ? (
-                                    <Badge variant="secondary" className="bg-green-100 text-green-800"><CheckCircle className="h-4 w-4 mr-1"/>Confirmed</Badge>
-                                ) : (
-                                    <Badge variant="outline"><Clock className="h-4 w-4 mr-1"/>Pending</Badge>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            {canViewTeamA ? (
-                                <LineupManager 
-                                    key={`team-a-${match.matchId}`}
-                                    teamId={match.teamAId}
-                                    teamName={match.teamAName}
-                                    match={match}
-                                    rosterWithStats={teamARosterWithStats}
-                                    initialLineupIds={teamALineup}
-                                />
-                            ) : (
-                                <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
-                                    <Lock className="h-6 w-6 mx-auto mb-2"/>
-                                    <p>Lineup will be revealed once both teams confirm.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <h3 className="font-semibold">{match.teamBName}</h3>
-                                 {match.lineupConfirmedByCaptainB ? (
-                                    <Badge variant="secondary" className="bg-green-100 text-green-800"><CheckCircle className="h-4 w-4 mr-1"/>Confirmed</Badge>
-                                ) : (
-                                    <Badge variant="outline"><Clock className="h-4 w-4 mr-1"/>Pending</Badge>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                             {canViewTeamB ? (
-                                <LineupManager 
-                                    key={`team-b-${match.matchId}`}
-                                    teamId={match.teamBId}
-                                    teamName={match.teamBName}
-                                    match={match}
-                                    rosterWithStats={teamBRosterWithStats}
-                                    initialLineupIds={teamBLineup}
-                                />
-                            ) : (
-                                <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">
-                                    <Lock className="h-6 w-6 mx-auto mb-2"/>
-                                    <p>Lineup will be revealed once both teams confirm.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                 </div>
+                <LineupManager
+                    match={match}
+                    teamARoster={teamARosterWithStats}
+                    teamBRoster={teamBRosterWithStats}
+                    teamALineup={teamALineup}
+                    teamBLineup={teamBLineup}
+                    canManageA={isManagerForA}
+                    canManageB={isManagerForB}
+                />
             </TabsContent>
             
             <TabsContent value="visuals" className="mt-4">
