@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats } from '@/lib/data';
+import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
@@ -77,8 +77,8 @@ export function LiveScoringInterface({
   teamBRoster,
   match,
 }: {
-  teamARoster: RosterMember[];
-  teamBRoster: RosterMember[];
+  teamARoster: RosterMemberWithStats[];
+  teamBRoster: RosterMemberWithStats[];
   match: Match;
 }) {
   const { toast } = useToast();
@@ -142,7 +142,7 @@ export function LiveScoringInterface({
     setIsScoringDialogOpen(true);
   };
 
-  const handleRecordBall = (eventData: { event: string; runs?: number }) => {
+  const handleRecordBall = (eventData: { event: string; runs?: number, dismissal?: { type: string; fielderIds?: string[] } }) => {
     startTransition(async () => {
         try {
             await recordBallAction(match.matchId, { ...eventData, ...currentShot });
@@ -226,9 +226,9 @@ export function LiveScoringInterface({
         </Card>
       
         <div className="flex gap-4">
-            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats="12 (8)" icon={User} />
-            <PlayerInActionCard title="Non-Striker" person={nonStriker} stats="6 (10)" icon={User} />
-            <PlayerInActionCard title="Bowler" person={bowler} stats="0/15 (2.2)" icon={Play} />
+            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats={liveScore.batsmanStats?.[onStrikeBatsmanId || ''] && `${liveScore.batsmanStats[onStrikeBatsmanId || ''].runs} (${liveScore.batsmanStats[onStrikeBatsmanId || ''].balls})`} icon={User} />
+            <PlayerInActionCard title="Non-Striker" person={nonStriker} stats={liveScore.batsmanStats?.[nonStrikerBatsmanId || ''] && `${liveScore.batsmanStats[nonStrikerBatsmanId || ''].runs} (${liveScore.batsmanStats[nonStrikerBatsmanId || ''].balls})`} icon={User} />
+            <PlayerInActionCard title="Bowler" person={bowler} stats={liveScore.bowlerStats?.[bowlerId || ''] && `${liveScore.bowlerStats[bowlerId || ''].wickets}/${liveScore.bowlerStats[bowlerId || ''].runsConceded} (${liveScore.bowlerStats[bowlerId || ''].overs}.${liveScore.bowlerStats[bowlerId || ''].balls})`} icon={Play} />
         </div>
 
       <Card>
@@ -362,6 +362,7 @@ export function LiveScoringInterface({
         open={isScoringDialogOpen}
         onOpenChange={setIsScoringDialogOpen}
         onScore={handleRecordBall}
+        bowlingTeamRoster={bowlingTeamRoster}
     />
     </>
   );

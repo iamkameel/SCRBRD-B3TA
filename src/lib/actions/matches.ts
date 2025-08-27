@@ -24,7 +24,7 @@ export const getMatches = cache(async (): Promise<Match[]> => {
   const matchesCollection = collection(db, 'matches');
   let q;
 
-  // Admins and Sportsmasters should see all matches, not just their own
+  // Admins and Sportsmasters should see all matches
   if (currentUser.roles.includes('Admin') || currentUser.roles.includes('Sportsmaster')) {
     q = query(matchesCollection);
   } else {
@@ -652,7 +652,7 @@ export async function updateLivePlayersAction(matchId: string, updates: { onStri
     revalidatePath(`/matches/${matchId}`);
 }
 
-export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number }) {
+export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number, dismissal?: { type: string, fielderIds?: string[] } }) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
