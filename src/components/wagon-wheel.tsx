@@ -40,15 +40,19 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
     const getShotColor = (runs: number) => {
         if (runs === 6) return "#EF4444"; // Red
         if (runs === 4) return "#3B82F6"; // Blue
-        if (runs > 0) return "#F97316"; // Orange
-        return "hsl(var(--muted-foreground))";
+        if (runs === 3) return "#FBBF24"; // Amber
+        if (runs === 2) return "#A3E635"; // Lime
+        if (runs === 1) return "#FFFFFF"; // White
+        return "hsl(var(--muted-foreground))"; // Dot ball
     }
 
     const legendItems = [
-        { label: '6 Runs', color: '#EF4444' },
-        { label: '4 Runs', color: '#3B82F6' },
-        { label: '1-3 Runs', color: '#F97316' },
-        { label: 'Dot Ball', color: 'hsl(var(--muted-foreground))' },
+        { label: '6', color: '#EF4444' },
+        { label: '4', color: '#3B82F6' },
+        { label: '3', color: '#FBBF24' },
+        { label: '2', color: '#A3E635' },
+        { label: '1', color: '#FFFFFF' },
+        { label: '0', color: 'hsl(var(--muted-foreground))' },
     ];
 
     return (
@@ -136,7 +140,7 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
             </svg>
             <div className="flex items-center justify-center gap-4 mt-4">
                 {legendItems.map(item => (
-                    <div key={item.label} className="flex items-center gap-2">
+                    <div key={item.label} className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
                         <span className="text-xs text-muted-foreground">{item.label}</span>
                     </div>
