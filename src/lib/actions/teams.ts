@@ -691,6 +691,24 @@ export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> 
   }
 });
 
+export const getTeamsByDivision = cache(async (divisionId: string): Promise<Team[]> => {
+  const userId = await getUserId();
+  if (!userId) return [];
+  try {
+    const teamsCollection = collection(db, 'teams');
+    const q = query(teamsCollection, where("divisionId", "==", divisionId));
+    const teamSnapshot = await getDocs(q);
+    const teamsList = teamSnapshot.docs.map(doc => ({
+      teamId: doc.id,
+      ...doc.data(),
+    } as Team));
+    return teamsList;
+  } catch (error) {
+    console.error(`Error fetching teams for division ${divisionId}:`, error);
+    return [];
+  }
+});
+
 export async function isTeamManagerOrAdmin(teamId: string, userId: string): Promise<boolean> {
     const user = await getPerson(userId);
     if (!user) return false;

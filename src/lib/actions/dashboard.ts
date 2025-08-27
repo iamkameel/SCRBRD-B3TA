@@ -2,9 +2,9 @@
 
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest, TrainingSession } from '@/lib/data';
+import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest, TrainingSession, Division } from '@/lib/data';
 import { getPlayers, getPerson, getPersonLinks } from './players';
-import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches } from './teams';
+import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches, getTeamsByDivision } from './teams';
 import { getPlayerStats } from './stats';
 import { getFieldsForGroundskeeper, getFields } from './fields';
 import { getMatches, getMatchLineup } from './matches';
@@ -16,12 +16,23 @@ import { getSchools } from './schools';
 import { getMatchTransportAssignments, getVehicles } from './transport';
 
 
-export async function getLeaderboards(filters: { seasonId?: string, competitionId?: string, teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
+export async function getLeaderboards(filters: { divisionId?: string, seasonId?: string, competitionId?: string, teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
     let players: Person[];
 
     if (filters.teamId) {
         const roster = await getTeamRoster(filters.teamId);
         const playerPromises = roster.filter(m => m.role === 'Player').map(m => getPerson(m.personId));
+        players = (await Promise.all(playerPromises)).filter((p): p is Person => p !== null);
+    } else if (filters.divisionId) {
+        const teamsInDivision = await getTeamsByDivision(filters.divisionId);
+        const playerIds = new Set<string>();
+        for(const team of teamsInDivision) {
+            const roster = await getTeamRoster(team.teamId);
+            roster.forEach(member => {
+                if(member.role === 'Player') playerIds.add(member.personId);
+            });
+        }
+        const playerPromises = Array.from(playerIds).map(id => getPerson(id));
         players = (await Promise.all(playerPromises)).filter((p): p is Person => p !== null);
     } else {
         players = await getPlayers();
@@ -47,8 +58,8 @@ export async function getLeaderboards(filters: { seasonId?: string, competitionI
     return { topRunScorers, topWicketTakers };
 }
 
-export async function getTeamStandings(): Promise<StandingTeam[]> {
-    const teams = await getTeams();
+export async function getTeamStandings(divisionId?: string): Promise<StandingTeam[]> {
+    const teams = divisionId ? await getTeamsByDivision(divisionId) : await getTeams();
 
     const teamsWithStats: StandingTeam[] = await Promise.all(
         teams.map(async (team) => {
