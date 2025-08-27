@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Input } from '@/components/ui/input';
 
 
 function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { liveScore: LiveScore, match: Match, onStrikeBatsman?: RosterMember, nonStriker?: RosterMember }) {
@@ -69,7 +70,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex items-center gap-1.5 mt-1 justify-end">
+    <div className="flex items-center gap-1 mt-1 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -259,15 +260,15 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg">
+        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3">
             {/* Team Names & Score */}
             <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-left space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center gap-2">
+                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center gap-2">{battingTeam.name}</p>
+                    <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
-                        {battingTeam.name}
-                    </p>
-                    <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
+                        <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
+                    </div>
                 </div>
                 
                 <div className="text-center text-xs text-gray-300">
@@ -276,13 +277,13 @@ export function LiveScoringInterface({
                 </div>
                 
                 <div className="text-right space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">
-                        {bowlingTeam.name}
+                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
+                    <div className="flex items-center justify-end gap-2">
+                         <div>
+                            <p className="text-xs sm:text-sm font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
+                            <OverHistory balls={liveScore.currentOver} />
+                        </div>
                         <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
-                    </p>
-                    <div>
-                        <p className="text-xs sm:text-sm font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
-                        <OverHistory balls={liveScore.currentOver} />
                     </div>
                 </div>
             </div>
