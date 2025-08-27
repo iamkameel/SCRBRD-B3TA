@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, BrainCircuit, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -81,7 +80,7 @@ function TeamAnalysisCard({ teams }: { teams: Team[] }) {
                 {!isPending && analysis && (
                     <div className="p-4 border rounded-lg bg-muted/50 space-y-3 prose dark:prose-invert max-w-none">
                        <h3 className="flex items-center gap-2 not-prose"><BrainCircuit className="h-6 w-6 text-primary" />Scouting Report: {teams.find(t => t.teamId === selectedTeamId)?.name}</h3>
-                       <p className="whitespace-pre-wrap">{analysis}</p>
+                       <div className="whitespace-pre-wrap">{analysis}</div>
                     </div>
                 )}
                  {!isPending && !analysis && (

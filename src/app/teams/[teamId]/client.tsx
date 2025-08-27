@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -642,8 +641,8 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
       
       {canManage && <BulkAddPlayerDialog 
         team={team}
-        open={isAddPlayerDialogOpen} 
-        onOpenChange={setIsAddPlayerDialogOpen} 
+        open={isBulkAddPlayerDialogOpen} 
+        onOpenChange={setIsBulkAddPlayerDialogOpen} 
       />}
       {canManage && <AddStaffDialog 
         teamId={team.teamId}
