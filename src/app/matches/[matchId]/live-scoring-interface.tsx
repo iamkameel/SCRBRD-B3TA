@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -145,8 +144,10 @@ export function LiveScoringInterface({
   
   const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
   const oversDecimal = liveScore.overs + liveScore.balls / 6;
-  const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal).toFixed(2) : '0.00';
+  const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
   const requiredRunRate = !isFirstInnings && match.firstInningsTotal ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - oversDecimal)).toFixed(2) : '0.00';
+  const predictedScore = isFirstInnings && runRate > 0 ? Math.round(liveScore.runs + ((20 - oversDecimal) * runRate)) : 0;
+
 
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
@@ -256,13 +257,15 @@ export function LiveScoringInterface({
                         <p className="text-6xl font-bold tracking-tighter">{liveScore.runs}-{liveScore.wickets}</p>
                     </div>
                 </div>
-                <div className="col-span-7 grid grid-cols-4 gap-2">
+                <div className="col-span-7 grid grid-cols-2 md:grid-cols-4 gap-2">
                     <StatDisplay label="Overs" value={`${liveScore.overs}.${liveScore.balls}`} color="text-green-400" />
-                    {liveScore.liveInnings === 2 && match.firstInningsTotal !== undefined && (
-                        <StatDisplay label="Target" value={match.firstInningsTotal + 1} color="text-yellow-400" />
+                    {isFirstInnings ? (
+                       <StatDisplay label="Predicted" value={predictedScore > 0 ? `~${predictedScore}` : '-'} color="text-yellow-400" />
+                    ) : (
+                        <StatDisplay label="Target" value={match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'} color="text-yellow-400" />
                     )}
-                    <StatDisplay label="Current RR" value={runRate} color="text-blue-400" />
-                    {liveScore.liveInnings === 2 && (
+                    <StatDisplay label="Current RR" value={runRate.toFixed(2)} color="text-blue-400" />
+                    {!isFirstInnings && (
                          <StatDisplay label="Required RR" value={+requiredRunRate > 0 ? requiredRunRate : '-'} color="text-red-400" />
                     )}
                 </div>
@@ -431,4 +434,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
