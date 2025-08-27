@@ -749,7 +749,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             if (onStrikeId) {
                 liveScore.batsmenOut.push(onStrikeId);
             }
-            liveScore.onStrikeBatsmanId = undefined; // Clear the on-strike batsman
+            liveScore.onStrikeBatsmanId = null; // Clear the on-strike batsman
             liveScore.extras.partnership = 0; // Reset partnership on wicket
         }
     }
