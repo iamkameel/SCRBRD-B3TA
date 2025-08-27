@@ -210,13 +210,15 @@ export function LiveScoringInterface({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
                 <Label>On Strike</Label>
-                <Select value={onStrikeBatsmanId} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || needsNewBatsman || isSimulating}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                    <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
                     <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
                 <Label>Non-Striker</Label>
-                <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating}><SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
+                <Select value={nonStrikerBatsmanId} onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating}>
+                    <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
                     <SelectContent>{availableNonStrikers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName}</SelectItem>)}</SelectContent>
                 </Select>
             </div>
