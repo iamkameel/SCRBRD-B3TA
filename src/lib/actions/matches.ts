@@ -17,10 +17,22 @@ import { getUserId } from '@/lib/auth';
 export const getMatches = cache(async (): Promise<Match[]> => {
   const userId = await getUserId();
   if (!userId) return [];
+  
+  const currentUser = await getPerson(userId);
+  if (!currentUser) return [];
+  
+  const matchesCollection = collection(db, 'matches');
+  let q;
+
+  // Admins and Sportsmasters should see all matches, not just their own
+  if (currentUser.roles.includes('Admin') || currentUser.roles.includes('Sportsmaster')) {
+    q = query(matchesCollection);
+  } else {
+    // Other users see matches they created
+    q = query(matchesCollection, where("userId", "==", userId));
+  }
+
   try {
-    const matchesCollection = collection(db, 'matches');
-    const q = query(matchesCollection, where("userId", "==", userId));
-    
     const [teams, matchSnapshot] = await Promise.all([
       getTeams(),
       getDocs(q),
@@ -627,7 +639,7 @@ export async function updateLivePlayersAction(matchId: string, updates: { onStri
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
-    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+    if (!matchSnap.exists()) {
         throw new Error("Match not found or permission denied.");
     }
 
@@ -646,7 +658,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
-    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+    if (!matchSnap.exists()) {
         throw new Error("Match not found or permission denied.");
     }
     
@@ -762,7 +774,7 @@ export async function undoLastBallAction(matchId: string) {
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
-    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+    if (!matchSnap.exists()) {
         throw new Error("Match not found or permission denied.");
     }
 
@@ -784,7 +796,7 @@ export async function endInningsAction(matchId: string) {
     if (!userId) throw new Error("User not authenticated.");
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
-    if (!matchSnap.exists() || matchSnap.data().userId !== userId) {
+    if (!matchSnap.exists()) {
         throw new Error("Match not found or permission denied.");
     }
     
@@ -904,3 +916,4 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
     throw new Error("Could not update availability.");
   }
 }
+
