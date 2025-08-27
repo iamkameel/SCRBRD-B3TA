@@ -146,7 +146,7 @@ export function LiveScoringInterface({
   const oversDecimal = liveScore.overs + liveScore.balls / 6;
   const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
   const requiredRunRate = !isFirstInnings && match.firstInningsTotal ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - oversDecimal)).toFixed(2) : '0.00';
-  const predictedScore = isFirstInnings && runRate > 0 ? Math.round(liveScore.runs + ((20 - oversDecimal) * runRate)) : 0;
+  const projectedScore = isFirstInnings && runRate > 0 ? Math.round(liveScore.runs + ((20 - oversDecimal) * runRate)) : 0;
 
 
   const isAllOut = liveScore.wickets >= 10;
@@ -260,7 +260,7 @@ export function LiveScoringInterface({
                 <div className="col-span-7 grid grid-cols-2 md:grid-cols-4 gap-2">
                     <StatDisplay label="Overs" value={`${liveScore.overs}.${liveScore.balls}`} color="text-green-400" />
                     {isFirstInnings ? (
-                       <StatDisplay label="Predicted" value={predictedScore > 0 ? `~${predictedScore}` : '-'} color="text-yellow-400" />
+                       <StatDisplay label="Projected" value={projectedScore > 0 ? `~${projectedScore}` : '-'} color="text-yellow-400" />
                     ) : (
                         <StatDisplay label="Target" value={match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'} color="text-yellow-400" />
                     )}
