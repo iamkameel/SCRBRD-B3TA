@@ -1,4 +1,5 @@
 
+
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -201,8 +202,8 @@ const competitions = [
 ];
 
 const matches = [
-    { matchId: 'match_1', teamAId: 'MHS_open_1xi', teamBId: 'HC_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed', winnerTeamId: 'MHS_open_1xi', result: 'Michaelhouse won by 7 runs' },
-    { matchId: 'match_2', teamAId: 'DHS_open_1xi', teamBId: 'WBHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed', winnerTeamId: 'DHS_open_1xi', result: 'DHS won by 25 runs' },
+    { matchId: 'match_1', teamAId: 'MHS_open_1xi', teamBId: 'HC_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed', winnerTeamId: 'MHS_open_1xi', result: 'Michaelhouse won by 7 runs', tossWinnerId: 'MHS_open_1xi', tossDecision: 'Bat' },
+    { matchId: 'match_2', teamAId: 'DHS_open_1xi', teamBId: 'WBHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed', winnerTeamId: 'DHS_open_1xi', result: 'DHS won by 25 runs', tossWinnerId: 'DHS_open_1xi', tossDecision: 'Bat' },
     { matchId: 'match_3', teamAId: 'MHS_open_1xi', teamBId: 'DHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: futureDate(7), status: 'scheduled' },
     { 
       matchId: 'match_live_test', 
@@ -212,6 +213,8 @@ const matches = [
       fieldId: 'field_4', 
       dateTime: new Date().toISOString(), 
       status: 'live',
+      tossWinnerId: 'WBHS_open_1xi',
+      tossDecision: 'Bat',
       liveScore: {
         runs: 24,
         wickets: 1,

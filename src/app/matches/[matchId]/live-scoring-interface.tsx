@@ -6,12 +6,12 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, Extras, BowlingAngle } from '@/lib/data';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind } from 'lucide-react';
+import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, Extras, BowlingAngle, MatchForecast } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
-import { generateLiveMatchUpdateAction } from '@/lib/actions/analysis';
+import { generateLiveMatchUpdateAction, getMatchForecastAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { WagonWheel } from '@/components/wagon-wheel';
@@ -112,6 +112,18 @@ function OverHistory({ balls }: { balls: string[] }) {
   );
 }
 
+function WeatherIcon({ condition, ...props }: { condition: string } & React.ComponentProps<typeof Sun>) {
+    switch (condition?.toLowerCase()) {
+        case "sunny": return <Sun {...props} />;
+        case "cloudy": return <Cloudy {...props} />;
+        case "rain":
+        case "showers":
+        case "storm":
+             return <CloudRain {...props} />;
+        default: return <Cloudy {...props} />;
+    }
+}
+
 export function LiveScoringInterface({
   teamARoster,
   teamBRoster,
@@ -128,6 +140,15 @@ export function LiveScoringInterface({
   const [liveUpdate, setLiveUpdate] = React.useState<LiveMatchUpdateOutput | null>(null);
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
+  const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
+
+  React.useEffect(() => {
+      getMatchForecastAction(match.matchId).then(data => {
+          if (!("error" in data)) {
+              setForecast(data);
+          }
+      });
+  }, [match.matchId]);
 
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
   const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle };
@@ -276,6 +297,7 @@ export function LiveScoringInterface({
   const onStrikeStats = liveScore.batsmanStats?.[onStrikeBatsmanId || ''] || { runs: 0, balls: 0 };
   const nonStrikerStats = liveScore.batsmanStats?.[nonStrikerBatsmanId || ''] || { runs: 0, balls: 0 };
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+  const tossWinner = match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName;
 
   return (
     <>
@@ -323,6 +345,16 @@ export function LiveScoringInterface({
                 <div className="text-center text-xs text-gray-300 h-4 mt-1">
                     <DynamicContextBar liveScore={liveScore} match={match} onStrikeBatsman={onStrikeBatsman} nonStriker={nonStriker} />
                 </div>
+            </div>
+            
+            <Separator className="bg-white/20"/>
+
+             {/* Context Bar */}
+            <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs text-gray-300">
+                <span><Clock className="inline mr-1.5 h-3 w-3" />{format(match.dateTime, 'p')}</span>
+                <span><MapPin className="inline mr-1.5 h-3 w-3" />{match.fieldName}</span>
+                 {forecast && <span><WeatherIcon condition={forecast.details.condition} className="inline mr-1.5 h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>}
+                 {match.tossWinnerId && <span><Medal className="inline mr-1.5 h-3 w-3" />{tossWinner} won the toss & chose to {match.tossDecision}</span>}
             </div>
 
             {/* Bottom Row: Rates */}
@@ -394,16 +426,24 @@ export function LiveScoringInterface({
                                       className="grid grid-cols-2 gap-4"
                                       disabled={isPending || isSimulating}
                                     >
-                                        <Label htmlFor="angle-over" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
-                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
-                                            <CornerUpRight className="mb-2 h-6 w-6"/>
-                                            Over the Wicket
-                                        </Label>
-                                        <Label htmlFor="angle-round" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
-                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
-                                            <CornerUpLeft className="mb-2 h-6 w-6"/>
-                                            Round the Wicket
-                                        </Label>
+                                        <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="Over the Wicket" id="angle-over" className="peer sr-only" />
+                                            </FormControl>
+                                            <Label htmlFor="angle-over" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
+                                                <CornerUpRight className="mb-2 h-6 w-6"/>
+                                                Over the Wicket
+                                            </Label>
+                                        </FormItem>
+                                        <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="Round the Wicket" id="angle-round" className="peer sr-only" />
+                                            </FormControl>
+                                            <Label htmlFor="angle-round" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
+                                                <CornerUpLeft className="mb-2 h-6 w-6"/>
+                                                Round the Wicket
+                                            </Label>
+                                        </FormItem>
                                     </RadioGroup>
                                 </div>
                                 <div className="flex justify-center pt-4">
@@ -483,6 +523,7 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
 
 

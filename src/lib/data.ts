@@ -254,6 +254,8 @@ export interface Match {
   availability?: { [personId: string]: { status: AvailabilityStatus; note?: string; } };
   lineupConfirmedByCaptainA: boolean;
   lineupConfirmedByCaptainB: boolean;
+  tossWinnerId?: string;
+  tossDecision?: 'Bat' | 'Bowl';
 }
 
 export interface Official {
