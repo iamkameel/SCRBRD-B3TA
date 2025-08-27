@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -25,6 +26,7 @@ import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOu
 import type { MatchForecast } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
+import { getTeam } from './teams';
 
 export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {
   const userId = await getUserId();
@@ -227,49 +229,32 @@ export async function autoSelectLineupAction(matchId: string, teamId: string): P
     }
 }
 
-export async function generateOppositionAnalysisAction(matchId: string, opponentTeamId: string) {
+export async function generateOppositionAnalysisAction(teamId: string): Promise<string> {
     const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
+    if (!userId) throw new Error("User not authenticated.");
 
-    const match = await getMatch(matchId);
-    if (!match) throw new Error("Match not found or permission denied.");
+    const team = await getTeam(teamId);
+    if (!team) throw new Error("Team not found or permission denied.");
     
-    if (match.status === 'completed') {
-        const analysisText = await generateOppositionAnalysis({ opponentTeamId });
-
+    try {
+        const analysisText = await generateOppositionAnalysis({ opponentTeamId: teamId });
+        
         if (!analysisText) {
             throw new Error("AI failed to generate an opposition analysis.");
         }
-
-        const teamRef = doc(db, 'teams', opponentTeamId);
+        
+        // Save the analysis report to the team's document
+        const teamRef = doc(db, 'teams', teamId);
         await updateDoc(teamRef, { analysisReport: analysisText });
+        revalidatePath(`/teams/${teamId}`);
+        
+        return analysisText;
 
-        revalidatePath(`/teams/${opponentTeamId}`);
-        return { success: true, message: "Team analysis generated successfully and saved to the team's profile." };
-    }
-
-
-    if (match.status !== 'scheduled') {
-        throw new Error("Opposition analysis can only be generated for scheduled matches.");
-    }
-    
-    const analysisText = await generateOppositionAnalysis({ opponentTeamId });
-
-    if (!analysisText) {
-        throw new Error("AI failed to generate an opposition analysis.");
-    }
-
-    try {
-        const matchRef = doc(db, 'matches', matchId);
-        const updateKey = `analysisReports.${opponentTeamId}`;
-        await updateDoc(matchRef, { [updateKey]: analysisText });
     } catch (error) {
-        console.error(`Error saving opposition analysis for match ${matchId}:`, error);
-        throw new Error("Could not save opposition analysis.");
+        console.error(`Error generating opposition analysis for team ${teamId}:`, error);
+        if (error instanceof Error) throw error;
+        throw new Error("Could not generate opposition analysis.");
     }
-
-    revalidatePath(`/matches/${matchId}`);
-    return { success: true, message: "Opposition analysis generated successfully!" };
 }
 
 export async function generateLiveMatchUpdateAction(matchId: string): Promise<LiveMatchUpdateOutput> {
