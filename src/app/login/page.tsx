@@ -8,13 +8,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 
 import { auth } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { sendPasswordResetEmailAction } from '@/lib/actions/auth';
 import { Logo } from '@/components/icons/logo';
@@ -22,6 +23,7 @@ import { Logo } from '@/components/icons/logo';
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
+  rememberMe: z.boolean().default(false).optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -34,12 +36,13 @@ export default function LoginPage() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: false },
   });
 
   const onSubmit = (data: LoginFormValues) => {
     startTransition(async () => {
       try {
+        await setPersistence(auth, data.rememberMe ? browserLocalPersistence : browserSessionPersistence);
         await signInWithEmailAndPassword(auth, data.email, data.password);
         toast({ title: "Login Successful", description: "Welcome back!" });
         router.push('/dashboard');
@@ -111,18 +114,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center">
-                      <FormLabel>Password</FormLabel>
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="ml-auto h-auto p-0 text-sm"
-                        onClick={handlePasswordReset}
-                        disabled={isResetting || isPending}
-                      >
-                        Forgot Password?
-                      </Button>
-                    </div>
+                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} disabled={isPending || isResetting} />
                     </FormControl>
@@ -130,6 +122,36 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
+               <div className="flex items-center justify-between">
+                <FormField
+                  control={form.control}
+                  name="rememberMe"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Remember me
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                 <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-sm"
+                    onClick={handlePasswordReset}
+                    disabled={isResetting || isPending}
+                  >
+                    Forgot Password?
+                  </Button>
+              </div>
               <Button type="submit" className="w-full" disabled={isPending || isResetting}>
                 {isPending ? "Signing in..." : "Sign In"}
               </Button>
