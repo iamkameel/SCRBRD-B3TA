@@ -50,35 +50,6 @@ function OverHistory({ balls }: { balls: string[] }) {
   );
 }
 
-function PlayerInActionCard({ title, person, stats, icon: Icon, isActive = false }: { title: string, person?: RosterMember, stats?: string, icon: React.ElementType, isActive?: boolean }) {
-    return (
-        <Card className={cn("flex-1 transition-all", isActive && "border-primary ring-2 ring-primary")}>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
-                    {title}
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                {person ? (
-                    <div className="flex items-center gap-3">
-                         <Avatar className="h-10 w-10">
-                            <AvatarImage src={(person as any).profileImageUrl} alt={person.personName} />
-                            <AvatarFallback>{person.personName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="font-semibold">{person.personName}</p>
-                            {stats && <p className="text-2xl font-bold">{stats}</p>}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="h-12 flex items-center text-sm text-muted-foreground">Select a player...</div>
-                )}
-            </CardContent>
-        </Card>
-    )
-}
-
 const StatDisplay = ({ label, value, color }: { label: string, value: string | number, color?: string }) => (
     <div className="text-center">
         <p className="text-xs uppercase opacity-70 tracking-wider">{label}</p>
@@ -243,10 +214,8 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-        { /* New Scoreboard Header */ }
         <div className="bg-gray-800 text-white rounded-lg p-3 space-y-2 font-sans shadow-lg">
             <div className="flex items-center justify-between">
-                {/* Batting Team Info */}
                 <div className="flex items-center gap-3 w-1/4">
                     <Avatar className="h-12 w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     <div>
@@ -255,16 +224,15 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                {/* Central Bar */}
                 <div className="flex-1 flex flex-col items-center">
                     <div className="flex items-center w-full max-w-lg bg-black/30 rounded-full h-10 px-1">
                         <div className="flex-1 flex items-center justify-between px-3">
                            <span className="font-bold text-sm uppercase">{nonStriker?.personName.split(' ').pop()}</span>
-                            <span className="font-bold text-sm">{nonStrikerStats.runs} <span className="opacity-70 font-normal">{nonStrikerStats.balls}</span></span>
+                            <span className="font-bold text-sm">{nonStrikerStats.runs} <span className="opacity-70 font-normal">({nonStrikerStats.balls})</span></span>
                         </div>
                         <div className="flex-1 flex items-center justify-between px-3 bg-green-500 rounded-full h-9 shadow-md">
                             <span className="font-bold text-sm uppercase flex items-center gap-1"><ChevronRight className="h-4 w-4" />{onStrikeBatsman?.personName.split(' ').pop()}</span>
-                            <span className="font-bold text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">{onStrikeStats.balls}</span></span>
+                            <span className="font-bold text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
                         </div>
                     </div>
                      <div className="flex items-center justify-center gap-6 text-xs mt-1 text-gray-300">
@@ -276,7 +244,6 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                 {/* Bowling Team Info */}
                 <div className="flex items-center justify-end gap-3 w-1/4">
                     <div className="text-right">
                         <p className="font-semibold text-sm">{bowlingTeam.name.toUpperCase()}</p>
@@ -288,13 +255,7 @@ export function LiveScoringInterface({
             </div>
         </div>
       
-        <div className="flex gap-4">
-            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats={`${onStrikeStats.runs} (${onStrikeStats.balls})`} icon={User} isActive={true} />
-            <PlayerInActionCard title="Non-Striker" person={nonStriker} stats={`${nonStrikerStats.runs} (${nonStrikerStats.balls})`} icon={User} />
-            <PlayerInActionCard title="Bowler" person={bowler} stats={`${bowlerStats.wickets}/${bowlerStats.runsConceded} (${bowlerStats.overs}.${bowlerStats.balls})`} icon={Play} />
-        </div>
-
-      {isAllOut ? (
+        {isAllOut ? (
         <Card className="p-8 text-center bg-muted">
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
             <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
