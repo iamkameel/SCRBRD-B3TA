@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -23,7 +24,7 @@ import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 
 import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput } from '@/ai/schemas';
-import type { MatchForecast } from '@/lib/data';
+import type { MatchForecast, Person } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 import { getTeam } from './teams';
@@ -66,12 +67,25 @@ export async function generateAndSaveScorecardAction(matchId: string) {
     
     const getPlayerNames = async (playerIds: string[]): Promise<string[]> => {
         const personPromises = playerIds.map(id => getPerson(id));
-        const people = await Promise.all(personPromises);
+        const people = (await Promise.all(personPromises)).filter((p): p is Person => p !== null);
+
+        if (people.length !== playerIds.length) {
+            throw new Error("One or more players in the lineup could not be found.");
+        }
+
+        const lastNameCounts = people.reduce((acc, p) => {
+            acc[p.lastName] = (acc[p.lastName] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
         return people.map(p => {
-            if (!p) throw new Error("A player in the lineup could not be found.");
+            if (lastNameCounts[p.lastName] > 1) {
+                return `${p.firstName.charAt(0)}. ${p.lastName}`;
+            }
             return `${p.firstName} ${p.lastName}`;
         });
     };
+
 
     const [teamAPlayerNames, teamBPlayerNames] = await Promise.all([
         getPlayerNames(teamALineup),
@@ -274,7 +288,7 @@ export async function generateLiveMatchUpdateAction(matchId: string): Promise<Li
             bowlingTeamName: bowlingTeamName,
             currentScore: match.liveScore.runs,
             wickets: match.liveScore.wickets,
-            overs: parseFloat(`${match.liveScore.overs}.${match.liveScore.balls}`),
+            overs: parseFloat(`${match.liveScore.overs}.${match.liveScore.balls || 0}`),
             targetScore: targetScore,
         });
         return result;
@@ -366,3 +380,4 @@ export async function generateHighlightReelAction(matchId: string): Promise<High
         throw new Error("The AI failed to generate highlights.");
     }
 }
+
