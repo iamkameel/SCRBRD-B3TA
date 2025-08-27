@@ -170,7 +170,7 @@ export async function addMatchAction(data: FixtureFormValues) {
     throw new Error("Invalid team or field reference.");
   }
   
-  const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+  const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
   const defaultLiveScore: LiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras };
 
   if (competitionId === 'friendly') {
@@ -649,7 +649,11 @@ export async function updateLivePlayersAction(matchId: string, updates: { onStri
     const liveScoreUpdate: { [key: string]: any } = {};
     if (updates.onStrikeBatsmanId) liveScoreUpdate['liveScore.onStrikeBatsmanId'] = updates.onStrikeBatsmanId;
     if (updates.nonStrikerBatsmanId) liveScoreUpdate['liveScore.nonStrikerBatsmanId'] = updates.nonStrikerBatsmanId;
-    if (updates.bowlerId) liveScoreUpdate['liveScore.bowlerId'] = updates.bowlerId;
+    if (updates.bowlerId) {
+        liveScoreUpdate['liveScore.bowlerId'] = updates.bowlerId;
+        // When a new bowler is selected, we can assume the over is resetting
+        liveScoreUpdate['liveScore.currentOver'] = [];
+    }
     
     await updateDoc(matchRef, liveScoreUpdate);
     revalidatePath(`/matches/${matchId}`);
@@ -667,14 +671,15 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const match = matchSnap.data() as Match;
     const liveScore: LiveScore = match.liveScore || {
-        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 }
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 }
     };
     
     // Initialize nested objects if they don't exist
     if (!liveScore.batsmanStats) liveScore.batsmanStats = {};
     if (!liveScore.bowlerStats) liveScore.bowlerStats = {};
     if (!liveScore.shots) liveScore.shots = [];
-    if (!liveScore.extras) liveScore.extras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+    if (!liveScore.extras) liveScore.extras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
+    if (!liveScore.batsmenOut) liveScore.batsmenOut = [];
 
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
@@ -703,6 +708,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         if (ball.event === 'leg_bye') liveScore.extras.legByes += runsScored;
     } else {
         liveScore.runs += runsScored;
+        liveScore.extras.partnership += runsScored;
     }
 
 
@@ -725,10 +731,10 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         if (liveScore.wickets < 10) {
             liveScore.wickets++;
             if (onStrikeId) {
-                if (!liveScore.batsmenOut) liveScore.batsmenOut = [];
                 liveScore.batsmenOut.push(onStrikeId);
             }
             liveScore.onStrikeBatsmanId = undefined;
+            liveScore.extras.partnership = 0; // Reset partnership on wicket
         }
     }
     
@@ -743,22 +749,25 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     // Update overs and balls count
     if (isLegalBall) {
-        liveScore.bowlerStats[bowlerId].balls++;
-        const endOfOver = liveScore.balls === 5;
+        liveScore.bowlerStats[bowlerId].balls = (liveScore.bowlerStats[bowlerId].balls || 0) + 1;
+        
+        liveScore.balls++;
+        const endOfOver = liveScore.balls >= 6;
+
         if (endOfOver) {
             liveScore.overs++;
             liveScore.balls = 0;
-            liveScore.currentOver = [];
-            liveScore.bowlerStats[bowlerId].overs++;
-            liveScore.bowlerStats[bowlerId].balls = 0;
-            // Check for maiden over
+            
+            // Check for maiden over before resetting currentOver
             const overRuns = liveScore.currentOver.reduce((sum, e) => {
                 const run = parseInt(e, 10);
                 return isNaN(run) ? sum : sum + run;
             }, 0);
             if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
-        } else {
-            liveScore.balls++;
+            
+            liveScore.currentOver = [];
+            liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
+            liveScore.bowlerStats[bowlerId].balls = 0;
         }
     }
     
@@ -850,7 +859,7 @@ export async function endInningsAction(matchId: string) {
         const newLiveScore: LiveScore = {
             runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2, shots: [],
             onStrikeBatsmanId: undefined, nonStrikerBatsmanId: undefined, bowlerId: undefined,
-            batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 }
+            batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 }
         };
         
         await updateDoc(matchRef, { 

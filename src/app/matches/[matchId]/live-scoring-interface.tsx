@@ -6,7 +6,7 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, Extras } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -74,7 +74,7 @@ export function LiveScoringInterface({
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
 
-  const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+  const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
   const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras };
 
   const [liveScore, setLiveScore] = React.useState<LiveScore>({
@@ -214,43 +214,46 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 space-y-2 font-sans shadow-lg">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 w-1/4">
-                    <Avatar className="h-12 w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
-                    <div>
-                        <p className="font-semibold text-sm">{battingTeam.name.toUpperCase()}</p>
-                        <p className="text-3xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
+        <div className="bg-gray-800 text-white rounded-lg p-2 md:p-3 space-y-2 font-sans shadow-lg">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div className="flex flex-col items-center w-full sm:w-1/4">
+                    <p className="font-semibold text-sm uppercase">{battingTeam.name}</p>
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                        <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
                     </div>
                 </div>
 
-                <div className="flex-1 flex flex-col items-center">
+                <div className="flex-1 flex flex-col items-center w-full">
                     <div className="flex items-center w-full max-w-lg bg-black/30 rounded-full h-10 px-1">
-                        <div className="flex-1 flex items-center justify-between px-3">
+                        <div className={cn("flex-1 flex items-center justify-between px-3 h-full rounded-full")}>
                            <span className="font-bold text-sm uppercase">{nonStriker?.personName.split(' ').pop()}</span>
                             <span className="font-bold text-sm">{nonStrikerStats.runs} <span className="opacity-70 font-normal">({nonStrikerStats.balls})</span></span>
                         </div>
-                        <div className="flex-1 flex items-center justify-between px-3 bg-green-500 rounded-full h-9 shadow-md">
+                        <div className={cn("flex-1 flex items-center justify-between px-3 bg-green-500 rounded-full h-9 shadow-md")}>
                             <span className="font-bold text-sm uppercase flex items-center gap-1"><ChevronRight className="h-4 w-4" />{onStrikeBatsman?.personName.split(' ').pop()}</span>
                             <span className="font-bold text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
                         </div>
                     </div>
-                     <div className="flex items-center justify-center gap-6 text-xs mt-1 text-gray-300">
+                    <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-6 text-xs mt-1 text-gray-300">
                         <span>OVERS: {liveScore.overs}.{liveScore.balls}</span>
                         { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
                         <span>CRR: {runRate.toFixed(2)}</span>
                         { !isFirstInnings && <span>RRR: {+requiredRunRate > 0 ? requiredRunRate : '-'}</span>}
                         { isFirstInnings && <span>PROJ: {projectedScore > 0 ? `~${projectedScore}` : '-'}</span>}
+                        <span className="flex items-center gap-1"><Handshake className="h-3 w-3" /> P'SHIP: {liveScore.extras.partnership}</span>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 w-1/4">
-                    <div className="text-right">
-                        <p className="font-semibold text-sm">{bowlingTeam.name.toUpperCase()}</p>
-                        <p className="text-xs">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
-                         <OverHistory balls={liveScore.currentOver} />
+                <div className="flex flex-col items-center w-full sm:w-1/4">
+                    <p className="font-semibold text-sm uppercase">{bowlingTeam.name}</p>
+                    <div className="flex items-center justify-end gap-3">
+                        <div className="text-right">
+                            <p className="text-xs">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
+                            <OverHistory balls={liveScore.currentOver} />
+                        </div>
+                        <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
-                    <Avatar className="h-12 w-12 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                 </div>
             </div>
         </div>

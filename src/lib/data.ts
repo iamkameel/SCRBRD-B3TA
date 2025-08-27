@@ -193,6 +193,7 @@ export interface Extras {
     noBalls: number;
     byes: number;
     legByes: number;
+    partnership: number;
 }
 
 export interface LiveScore {
