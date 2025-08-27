@@ -6,7 +6,7 @@ import * as React from "react";
 import Link from "next/link";
 import { format, isSameDay } from "date-fns";
 import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy, AlignLeft, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -71,6 +71,7 @@ function MatchListItem({ match }: { match: Match }) {
 
 export default function MatchesClient({ matches, teams, fields, competitions, isAdmin }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], isAdmin: boolean }) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [matchToDelete, setMatchToDelete] = React.useState<Match | null>(null);
@@ -84,7 +85,10 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   const ITEMS_PER_PAGE = view === 'list' ? 10 : 8;
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusTab, setStatusTab] = React.useState<MatchStatus | 'all' | 'other'>('scheduled');
+  
+  const statusParam = searchParams.get('status');
+  const [statusTab, setStatusTab] = React.useState<MatchStatus | 'all' | 'other'>(statusParam as MatchStatus || 'scheduled');
+  
   const [competitionFilter, setCompetitionFilter] = React.useState<string[]>([]);
   const [teamFilter, setTeamFilter] = React.useState<string[]>([]);
   
@@ -94,6 +98,22 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  React.useEffect(() => {
+    setStatusTab(statusParam as MatchStatus || 'scheduled');
+  }, [statusParam]);
+  
+  const handleTabChange = (value: string) => {
+    const newStatus = value as any;
+    setStatusTab(newStatus);
+    const params = new URLSearchParams(searchParams);
+    if (newStatus === 'scheduled') {
+        params.delete('status');
+    } else {
+        params.set('status', newStatus);
+    }
+    router.replace(`/matches?${params.toString()}`);
+  };
 
   const handleDelete = () => {
     if (!matchToDelete) return;
@@ -219,7 +239,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
           )}
         </header>
 
-        <Tabs defaultValue="scheduled" onValueChange={(value) => setStatusTab(value as any)}>
+        <Tabs defaultValue={statusTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
                 <TabsTrigger value="live">Live</TabsTrigger>
@@ -275,7 +295,8 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                         
                         <div className="grid grid-cols-3 items-center gap-4">
                             <Label>Filter by Competition</Label>
-                            <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{competitionFilter.length === 0 && "Select competitions..."}{competitionFilter.length === 1 && (competitions.find(c => c.competitionId === competitionFilter[0])?.name || "Friendly")}{competitionFilter.length > 1 && `${competitionFilter.length} comps selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="outline" className="col-span-2 h-8 justify-between font-normal"><span className="truncate">{competitionFilter.length === 0 && "Select competitions..."}{competitionFilter.length === 1 && (competitions.find(c => c.competitionId === competitionFilter[0])?.name || "Friendly")}{competitionFilter.length > 1 && `${competitionFilter.length} comps selected`}</span><ChevronDown className="h-4 w-4 opacity-50" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56"><DropdownMenuLabel>Filter by Competition</DropdownMenuLabel><DropdownMenuSeparator />
                                     <DropdownMenuCheckboxItem checked={competitionFilter.includes("friendly")} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...competitionFilter, "friendly"] : competitionFilter.filter(id => id !== "friendly"); setCompetitionFilter(newFilters); }}>Friendly</DropdownMenuCheckboxItem><DropdownMenuSeparator />
                                     {competitions.map(comp => (<DropdownMenuCheckboxItem key={comp.competitionId} checked={competitionFilter.includes(comp.competitionId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => { const newFilters = checked ? [...competitionFilter, comp.competitionId] : competitionFilter.filter(id => id !== comp.competitionId); setCompetitionFilter(newFilters); }}>{comp.name}</DropdownMenuCheckboxItem>))}

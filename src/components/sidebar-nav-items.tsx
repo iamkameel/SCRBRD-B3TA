@@ -16,7 +16,8 @@ import {
     BookOpen,
     FileClock,
     ListChecks,
-    FileText
+    FileText,
+    RadioTower
 } from 'lucide-react';
 
 const topLevelNavItems = [
@@ -40,6 +41,7 @@ const adminNavGroups = [
         icon: Swords,
         items: [
             { href: '/matches', label: 'Matches', icon: ClipboardList },
+            { href: '/matches?status=live', label: 'Live Scoring', icon: RadioTower },
             { href: '/strategic-calendar', label: 'Strategic Calendar', icon: CalendarRange, adminOnly: true },
             { href: '/scouting', label: 'Scouting Assistant', icon: UserSearch },
             { href: '/umpire-review', label: 'Umpire Review', icon: Camera },
@@ -182,6 +184,7 @@ const officialNavGroups = [
         icon: ClipboardList,
         items: [
             { href: '/matches', label: 'Matches', icon: ClipboardList },
+             { href: '/matches?status=live', label: 'Live Scoring', icon: RadioTower },
         ]
     },
     {
