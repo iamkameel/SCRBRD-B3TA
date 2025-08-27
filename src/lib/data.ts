@@ -187,6 +187,14 @@ export interface ShotData {
   distance: number; // as a ratio of radius (0 to 1)
 }
 
+export interface Extras {
+    total: number;
+    wides: number;
+    noBalls: number;
+    byes: number;
+    legByes: number;
+}
+
 export interface LiveScore {
     runs: number;
     wickets: number;
@@ -201,6 +209,7 @@ export interface LiveScore {
     shots?: ShotData[];
     batsmanStats: { [key: string]: { runs: number, balls: number } };
     bowlerStats: { [key: string]: { wickets: number, runsConceded: number, overs: number, balls: number, maidens: number } };
+    extras: Extras;
 }
 
 export interface Match {

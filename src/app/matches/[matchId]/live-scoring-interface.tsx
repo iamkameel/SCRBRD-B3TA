@@ -6,8 +6,8 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats } from '@/lib/data';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal } from 'lucide-react';
+import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, Extras } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { getPlayerStats } from '@/lib/actions/stats';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 // A simple display component for the current over
 function OverHistory({ balls }: { balls: string[] }) {
@@ -73,6 +74,20 @@ function PlayerInActionCard({ title, person, stats, icon: Icon }: { title: strin
     )
 }
 
+const StatDisplay = ({ label, value, color }: { label: string, value: string | number, color?: string }) => (
+    <div className="text-center">
+        <p className="text-xs uppercase opacity-70 tracking-wider">{label}</p>
+        <p className={cn("text-2xl font-bold", color)}>{value}</p>
+    </div>
+);
+
+const ExtrasDisplay = ({ label, value }: { label: string, value: string | number }) => (
+    <div className="text-center">
+        <p className="text-xs uppercase opacity-70 tracking-wider">{label}</p>
+        <p className="text-lg font-bold">{value}</p>
+    </div>
+);
+
 export function LiveScoringInterface({
   teamARoster,
   teamBRoster,
@@ -90,15 +105,17 @@ export function LiveScoringInterface({
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
 
-  const [liveScore, setLiveScore] = React.useState(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} });
+  const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+  const [liveScore, setLiveScore] = React.useState(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras });
 
   React.useEffect(() => {
-    setLiveScore(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} });
+    setLiveScore(match.liveScore || { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras });
   }, [match.liveScore]);
 
   const batsmenOut = liveScore.batsmenOut || [];
   
   const isFirstInnings = liveScore.liveInnings === 1;
+  const battingTeam = isFirstInnings ? { id: match.teamAId, name: match.teamAName, abbrev: match.teamAName.substring(0,4).toUpperCase(), logoUrl: match.teamALogoUrl } : { id: match.teamBId, name: match.teamBName, abbrev: match.teamBName.substring(0,4).toUpperCase(), logoUrl: match.teamBLogoUrl };
   const battingTeamRoster = isFirstInnings ? teamARoster : teamBRoster;
   const bowlingTeamRoster = isFirstInnings ? teamBRoster : teamARoster;
 
@@ -111,7 +128,9 @@ export function LiveScoringInterface({
   const bowler = bowlingTeamRoster.find(p => p.personId === bowlerId);
   
   const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
-  const runRate = liveScore.overs + liveScore.balls / 6 > 0 ? (liveScore.runs / (liveScore.overs + liveScore.balls / 6)).toFixed(2) : '0.00';
+  const oversDecimal = liveScore.overs + liveScore.balls / 6;
+  const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal).toFixed(2) : '0.00';
+  const requiredRunRate = !isFirstInnings && match.firstInningsTotal ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - oversDecimal)).toFixed(2) : '0.00';
 
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
@@ -207,27 +226,33 @@ export function LiveScoringInterface({
   return (
     <>
     <div className="space-y-4">
-        <Card className="bg-gradient-to-r from-gray-900 to-gray-800 text-white">
-            <CardContent className="p-4 flex items-center justify-between">
-                <div className="text-center">
-                    <p className="text-lg font-semibold">{isFirstInnings ? match.teamAName : match.teamBName}</p>
-                    <p className="text-5xl font-bold tracking-tighter">{liveScore.runs}-{liveScore.wickets}</p>
-                    <p className="text-sm opacity-80">({liveScore.overs}.{liveScore.balls} Overs)</p>
-                </div>
-                {!isFirstInnings && match.firstInningsTotal != null && (
-                     <div className="text-center border-l border-white/20 pl-6 ml-6">
-                        <p className="text-sm opacity-80">Target</p>
-                        <p className="text-3xl font-bold">{match.firstInningsTotal + 1}</p>
+        <Card className="bg-gray-800 text-white">
+            <CardContent className="p-4 grid grid-cols-12 items-center gap-4">
+                <div className="col-span-5 flex items-center gap-4">
+                    <Avatar className="h-16 w-16"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev}</AvatarFallback></Avatar>
+                    <div>
+                        <p className="text-2xl font-bold">{battingTeam.abbrev}</p>
+                        <p className="text-6xl font-bold tracking-tighter">{liveScore.runs}-{liveScore.wickets}</p>
                     </div>
-                )}
-                <div className="text-center">
-                    <p className="text-sm opacity-80">Run Rate</p>
-                    <p className="text-xl font-bold">{runRate}</p>
                 </div>
-                <div className="text-center">
-                    <p className="text-sm opacity-80">Projected</p>
-                    <p className="text-xl font-bold">{+runRate > 0 ? Math.round(+runRate * 20) : '--'}</p>
+                <div className="col-span-7 grid grid-cols-4 gap-2">
+                    <StatDisplay label="Overs" value={`${liveScore.overs}.${liveScore.balls}`} color="text-green-400" />
+                    {liveScore.liveInnings === 2 && match.firstInningsTotal !== undefined && (
+                        <StatDisplay label="Target" value={match.firstInningsTotal + 1} color="text-yellow-400" />
+                    )}
+                    <StatDisplay label="Current RR" value={runRate} color="text-blue-400" />
+                    {liveScore.liveInnings === 2 && (
+                         <StatDisplay label="Required RR" value={+requiredRunRate > 0 ? requiredRunRate : '-'} color="text-red-400" />
+                    )}
                 </div>
+            </CardContent>
+            <Separator className="bg-white/10" />
+            <CardContent className="p-4 grid grid-cols-5 gap-4">
+                <ExtrasDisplay label="Extras" value={liveScore.extras.total} />
+                <ExtrasDisplay label="Wides" value={liveScore.extras.wides} />
+                <ExtrasDisplay label="No Balls" value={liveScore.extras.noBalls} />
+                <ExtrasDisplay label="Byes" value={liveScore.extras.byes} />
+                <ExtrasDisplay label="Leg Byes" value={liveScore.extras.legByes} />
             </CardContent>
         </Card>
       
@@ -252,7 +277,7 @@ export function LiveScoringInterface({
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label>On Strike Batsman</Label>
-                    <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || needsNewBatsman}>
+                    <Select value={onStrikeBatsmanId || ''} onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating || liveScore.wickets > batsmenOut.length}>
                         <SelectTrigger><SelectValue placeholder="Select Batsman"/></SelectTrigger>
                         <SelectContent>{availableOnStrikeBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{p.personName} <Badge variant="outline" className="ml-2">Not Out</Badge></SelectItem>)}</SelectContent>
                     </Select>

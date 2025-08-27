@@ -169,6 +169,9 @@ export async function addMatchAction(data: FixtureFormValues) {
   if (!teamASnap.exists() || !teamBSnap.exists() || !fieldSnap.exists()) {
     throw new Error("Invalid team or field reference.");
   }
+  
+  const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+  const defaultLiveScore: LiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras };
 
   if (competitionId === 'friendly') {
     newMatchData = {
@@ -181,7 +184,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       dateTime: Timestamp.fromDate(dateTime),
       status: 'scheduled',
       competitionName: 'Friendly Match',
-      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} },
+      liveScore: defaultLiveScore,
       userId: userId,
       report: '',
       preview: '',
@@ -209,7 +212,7 @@ export async function addMatchAction(data: FixtureFormValues) {
       fieldName: fieldSnap.data().name,
       dateTime: Timestamp.fromDate(dateTime),
       status: 'scheduled',
-      liveScore: { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {} },
+      liveScore: defaultLiveScore,
       userId: userId,
       report: '',
       preview: '',
@@ -664,13 +667,15 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const match = matchSnap.data() as Match;
     const liveScore: LiveScore = match.liveScore || {
-        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}
+        runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 }
     };
-
-    // Initialize stats objects if they don't exist
+    
+    // Initialize nested objects if they don't exist
     if (!liveScore.batsmanStats) liveScore.batsmanStats = {};
     if (!liveScore.bowlerStats) liveScore.bowlerStats = {};
     if (!liveScore.shots) liveScore.shots = [];
+    if (!liveScore.extras) liveScore.extras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
         throw new Error("Live scoring players are not set up.");
@@ -682,18 +687,27 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     const bowlerId = liveScore.bowlerId;
 
     const isLegalBall = ball.event !== 'wd' && ball.event !== 'nb';
-    const isExtra = ['wd', 'nb', 'bye', 'leg_bye'].includes(ball.event);
     const isWicket = ball.event === 'W';
     const runsScored = ball.runs ?? 0;
     
     // Update live scores
-    liveScore.runs += runsScored;
     if (ball.event === 'wd' || ball.event === 'nb') {
         liveScore.runs++;
+        liveScore.extras.total++;
+        if (ball.event === 'wd') liveScore.extras.wides++;
+        if (ball.event === 'nb') liveScore.extras.noBalls++;
+    } else if (ball.event === 'bye' || ball.event === 'leg_bye') {
+        liveScore.runs += runsScored;
+        liveScore.extras.total += runsScored;
+        if (ball.event === 'bye') liveScore.extras.byes += runsScored;
+        if (ball.event === 'leg_bye') liveScore.extras.legByes += runsScored;
+    } else {
+        liveScore.runs += runsScored;
     }
 
+
     // Update batsman stats
-    if (onStrikeId && !isExtra) {
+    if (onStrikeId && !isWicket) {
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
         liveScore.batsmanStats[onStrikeId].runs += runsScored;
         if(isLegalBall) liveScore.batsmanStats[onStrikeId].balls++;
@@ -833,10 +847,10 @@ export async function endInningsAction(matchId: string) {
     }
 
     if (currentLiveScore.liveInnings === 1) {
-        const newLiveScore = {
+        const newLiveScore: LiveScore = {
             runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2, shots: [],
             onStrikeBatsmanId: undefined, nonStrikerBatsmanId: undefined, bowlerId: undefined,
-            batsmanStats: {}, bowlerStats: {},
+            batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0 }
         };
         
         await updateDoc(matchRef, { 
