@@ -33,7 +33,7 @@ function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { 
         // Priority 1: Macro-Narrative (The Chase)
         if (liveScore.liveInnings === 2 && match.firstInningsTotal) {
             const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
-            const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + liveScore.balls);
+            const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
             if (runsRequired > 0 && ballsRemaining > 0) {
                  setDisplayMessage(`${match.teamBName} requires ${runsRequired} runs from ${ballsRemaining} balls.`);
             } else if (runsRequired <= 0) {
@@ -48,7 +48,7 @@ function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { 
             if (partnership > 0 && onStrikeBatsman && nonStriker) {
                 setDisplayMessage(`Partnership: ${partnership} runs`);
             } else {
-                 setDisplayMessage(`CRR: ${(liveScore.runs / (liveScore.overs + (liveScore.balls/6) || 1)).toFixed(2)}`);
+                 setDisplayMessage(`CRR: ${(liveScore.runs / (liveScore.overs + ((liveScore.balls || 0)/6) || 1)).toFixed(2)}`);
             }
         }
         
@@ -70,7 +70,7 @@ function OverHistory({ balls }: { balls: string[] }) {
     displayBalls.push('');
   }
   return (
-    <div className="flex items-center gap-1 mt-1 justify-end">
+    <div className="flex items-center gap-1.5 mt-2 justify-end">
       {displayBalls.map((ball, index) => (
         <span
           key={index}
@@ -153,7 +153,7 @@ export function LiveScoringInterface({
   const bowler = bowlingTeamRoster.find(p => p.personId === bowlerId);
   
   const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
-  const oversDecimal = liveScore.overs + liveScore.balls / 6;
+  const oversDecimal = (liveScore.overs || 0) + (liveScore.balls || 0) / 6;
   const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
   const requiredRunRate = !isFirstInnings && match.firstInningsTotal && oversDecimal < 20 ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - oversDecimal)).toFixed(2) : '0.00';
   const projectedScore = isFirstInnings && runRate > 0 ? Math.round(liveScore.runs + ((20 - oversDecimal) * runRate)) : 0;
@@ -180,7 +180,9 @@ export function LiveScoringInterface({
         if (type === 'onStrike') updates.onStrikeBatsmanId = value;
         if (type === 'nonStriker') updates.nonStrikerBatsmanId = value;
         if (type === 'bowler') {
+            const currentLiveScore = match.liveScore || defaultLiveScore;
             updates.bowlerId = value;
+            updates.lastBowlerId = currentLiveScore.bowlerId || null;
             updates.currentOver = []; // Reset over history for new bowler
         }
         if (type === 'bowlingAngle') updates.bowlingAngle = value as BowlingAngle;
@@ -262,34 +264,34 @@ export function LiveScoringInterface({
     <div className="space-y-4">
         <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3">
             {/* Team Names & Score */}
-            <div className="grid grid-cols-3 items-center gap-2">
+            <div className="grid grid-cols-3 items-start gap-2">
                 <div className="text-left space-y-1">
                     <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center gap-2">{battingTeam.name}</p>
                     <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
                         <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
                     </div>
                 </div>
                 
                 <div className="text-center text-xs text-gray-300">
                     <p className="font-bold text-sm sm:text-base">OVERS</p>
-                    <p className="font-bold text-3xl sm:text-4xl">{liveScore.overs}.{liveScore.balls}</p>
+                    <p className="font-bold text-3xl sm:text-4xl">{liveScore.overs || 0}.{liveScore.balls || 0}</p>
                 </div>
                 
                 <div className="text-right space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
+                     <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
                             <p className="text-xs sm:text-sm font-semibold">{bowler?.personName.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
-                            <OverHistory balls={liveScore.currentOver} />
+                            <OverHistory balls={liveScore.currentOver || []} />
                         </div>
-                        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
                 </div>
             </div>
 
              {/* Batsmen Bar & Context */}
-             <div className="flex flex-col items-center gap-2 mt-4">
+             <div className="flex flex-col items-center gap-2 pt-2">
                 <div className="flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1">
                     <div className="flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full">
                        <span className="font-bold text-xs sm:text-sm uppercase truncate">{nonStriker?.personName.split(' ').pop()}</span>
@@ -327,7 +329,7 @@ export function LiveScoringInterface({
             <Card>
                 <CardHeader>
                     <CardTitle>Player Selection & Controls</CardTitle>
-                    <CardDescription>Select the current players and record the outcome of each ball.</CardDescription>
+                    <CardDescription>Select the next batsman or bowler when prompted.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {needsNewBatsman ? (
@@ -347,15 +349,9 @@ export function LiveScoringInterface({
                             </Select>
                         </div>
                     ) : (
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>On Strike</Label>
-                                <Input value={onStrikeBatsman?.personName || 'Not Set'} disabled />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Bowler</Label>
-                                <Input value={bowler?.personName || 'Not Set'} disabled />
-                            </div>
+                         <div className="text-center text-muted-foreground py-4">
+                            <p>Current Batsmen and Bowler are set.</p>
+                            <p className="text-xs">Use the scoring controls below to record the next ball.</p>
                         </div>
                     )}
                 </CardContent>
