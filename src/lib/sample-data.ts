@@ -120,9 +120,7 @@ const adminAndStaff = [
 const people = [...adminAndStaff, ...generatedPlayers];
 
 const finalTeams = generatedTeams.map(team => {
-    // Add a coach to each 1st XI team
     if (team.teamId === 'MHS_open_1xi') {
-        // Assign Kameel specifically to this team to demonstrate the assigned coach dashboard
         team.roster.push({
             personId: 'p_kameel',
             role: 'Coach',
@@ -205,6 +203,32 @@ const matches = [
     { matchId: 'match_1', teamAId: 'MHS_open_1xi', teamBId: 'HC_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: pastDate(14), status: 'completed', winnerTeamId: 'MHS_open_1xi', result: 'Michaelhouse won by 7 runs' },
     { matchId: 'match_2', teamAId: 'DHS_open_1xi', teamBId: 'WBHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed', winnerTeamId: 'DHS_open_1xi', result: 'DHS won by 25 runs' },
     { matchId: 'match_3', teamAId: 'MHS_open_1xi', teamBId: 'DHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: futureDate(7), status: 'scheduled' },
+    { 
+      matchId: 'match_live_test', 
+      teamAId: 'WBHS_open_1xi', 
+      teamBId: 'DHS_open_1xi', 
+      competitionId: 'comp_1', 
+      fieldId: 'field_4', 
+      dateTime: new Date().toISOString(), 
+      status: 'live',
+      liveScore: {
+        runs: 24,
+        wickets: 1,
+        overs: 3,
+        balls: 2,
+        currentOver: ['.', '1', 'W', '4', '1'],
+        batsmenOut: ['WBHS_open_1xi_01'],
+        onStrikeBatsmanId: 'WBHS_open_1xi_03',
+        nonStrikerBatsmanId: 'WBHS_open_1xi_02',
+        bowlerId: 'DHS_open_1xi_11',
+        liveInnings: 1,
+        shots: [
+            { angle: 90, runs: 1, distance: 0.5 },
+            { angle: 270, runs: 4, distance: 0.9 },
+            { angle: 45, runs: 1, distance: 0.6 }
+        ]
+      }
+    },
 ];
 
 const officials = [
@@ -220,6 +244,19 @@ export const sampleData = {
     matches,
     officials
 };
+
+export const sampleLineupData = {
+    "match_live_test": {
+        teamA: {
+            teamId: 'WBHS_open_1xi',
+            playerIds: Array.from({length: 11}, (_, i) => `WBHS_open_1xi_${(i + 1).toString().padStart(2, '0')}`)
+        },
+        teamB: {
+            teamId: 'DHS_open_1xi',
+            playerIds: Array.from({length: 11}, (_, i) => `DHS_open_1xi_${(i + 1).toString().padStart(2, '0')}`)
+        }
+    }
+}
 
 export const sampleScorecardData = {
   "match_1": {

@@ -5,7 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp, writeBatch, getDocs, doc, query, where, deleteDoc } from 'firebase/firestore';
-import { sampleData, sampleScorecardData } from '@/lib/sample-data';
+import { sampleData, sampleScorecardData, sampleLineupData } from '@/lib/sample-data';
 import { getPlayers, deletePlayerAction, getPersonByEmail } from './players';
 import { getTeams, deleteTeamAction } from './teams';
 import { getMatches, deleteMatchAction } from './matches';
@@ -206,7 +206,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             }
         }
         
-        // Process Fields (now that schools exist)
         for (const item of sampleData.fields) {
             const { fieldId: tempId, ...itemData } = item;
             const newFieldData: { [key: string]: any } = { ...itemData, userId };
@@ -220,18 +219,17 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
              if (!newFieldData.status) newFieldData.status = 'Available';
             const docRef = doc(collection(db, 'fields'));
             batch.set(docRef, newFieldData);
-            if (tempId) { // Check if tempId exists
+            if (tempId) { 
                 idMap.set(tempId, docRef.id);
             }
             itemCount++;
             await commitBatchIfNeeded();
         }
 
-        await batch.commit(); // Commit remaining items from first stage
+        await batch.commit(); 
         batch = writeBatch(db);
-        itemCount = 0; // Reset counter for new batch series
+        itemCount = 0; 
 
-        // --- Second Stage: Dependent collections ---
         if (sampleData.familyLinks) {
             for (const link of sampleData.familyLinks) {
                 const { linkId: tempId, ...linkData } = link;
@@ -279,13 +277,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 await commitBatchIfNeeded();
             }
         }
-
-        // Commit remaining items from second stage
+        
         await batch.commit();
         batch = writeBatch(db);
         itemCount = 0;
 
-        // --- Third Stage: Final dependent collections ---
         for (const competition of sampleData.competitions) {
             const { competitionId: tempCompId, ...compData } = competition;
             const winnerTeamId = compData.winnerTeamId ? idMap.get(compData.winnerTeamId) : undefined;
@@ -319,9 +315,13 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             if (!competition) continue;
 
             const scorecardData = sampleScorecardData[tempMatchId as keyof typeof sampleScorecardData];
+            const lineupData = sampleLineupData[tempMatchId as keyof typeof sampleLineupData];
+
+            const liveScoreData = matchData.status === 'live' ? (matchData as any).liveScore : { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] };
 
             const newMatchData: { [key: string]: any } = {
                 ...matchData,
+                liveScore: liveScoreData,
                 teamAId: idMap.get(matchData.teamAId),
                 teamBId: matchData.teamBId ? idMap.get(matchData.teamBId) : '',
                 competitionId: idMap.get(tempCompId),
@@ -363,6 +363,19 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 batch.set(innings2Ref, scorecardData.innings2);
                 itemCount++;
                 await commitBatchIfNeeded();
+            }
+            
+            if (lineupData) {
+                if (lineupData.teamA) {
+                    const lineupARef = doc(collection(db, matchDocRef.path, 'lineups'), idMap.get(lineupData.teamA.teamId));
+                    batch.set(lineupARef, { playerIds: lineupData.teamA.playerIds.map(id => idMap.get(id)) });
+                    itemCount++; await commitBatchIfNeeded();
+                }
+                if (lineupData.teamB) {
+                    const lineupBRef = doc(collection(db, matchDocRef.path, 'lineups'), idMap.get(lineupData.teamB.teamId));
+                    batch.set(lineupBRef, { playerIds: lineupData.teamB.playerIds.map(id => idMap.get(id)) });
+                    itemCount++; await commitBatchIfNeeded();
+                }
             }
         }
         
@@ -435,11 +448,9 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
             throw new Error(`Invalid subset name for deletion: ${subsetName}`);
         }
 
-        // @ts-ignore
-        const items = await getAction();
+        const items = await (getAction as () => Promise<any[]>)();
         for (const item of items) { 
-            // @ts-ignore
-            await deleteAction(item[idKey]);
+            await deleteAction(item[idKey!]);
         }
 
         await logAuditEvent({
