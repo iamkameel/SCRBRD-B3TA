@@ -45,9 +45,9 @@ function OverHistory({ balls }: { balls: string[] }) {
   );
 }
 
-function PlayerInActionCard({ title, person, stats, icon: Icon }: { title: string, person?: RosterMember, stats?: string, icon: React.ElementType }) {
+function PlayerInActionCard({ title, person, stats, icon: Icon, isActive = false }: { title: string, person?: RosterMember, stats?: string, icon: React.ElementType, isActive?: boolean }) {
     return (
-        <Card className="flex-1">
+        <Card className={cn("flex-1 transition-all", isActive && "border-primary ring-2 ring-primary")}>
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Icon className="h-4 w-4" />
@@ -151,7 +151,12 @@ export function LiveScoringInterface({
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
   const needsNewBatsman = isReadyToScore && liveScore.wickets > batsmenOut.length && !isAllOut;
-  const isEndOfOver = liveScore.balls === 0 && liveScore.overs > 0 && liveScore.currentOver.length === 0;
+  const isEndOfOver = isLegalBall(liveScore.currentOver[liveScore.currentOver.length - 1]) && liveScore.balls === 0 && liveScore.overs > 0;
+  
+  function isLegalBall(event?: string) {
+    if (!event) return false;
+    return !['wd', 'nb', 'bye', 'leg_bye'].includes(event);
+  }
 
   const canEndInnings = isAllOut || isOversFinished;
   const canUndo = !!match.previousLiveScore;
@@ -273,7 +278,7 @@ export function LiveScoringInterface({
         </Card>
       
         <div className="flex gap-4">
-            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats={`${onStrikeStats.runs} (${onStrikeStats.balls})`} icon={User} />
+            <PlayerInActionCard title="On Strike" person={onStrikeBatsman} stats={`${onStrikeStats.runs} (${onStrikeStats.balls})`} icon={User} isActive={true} />
             <PlayerInActionCard title="Non-Striker" person={nonStriker} stats={`${nonStrikerStats.runs} (${nonStrikerStats.balls})`} icon={User} />
             <PlayerInActionCard title="Bowler" person={bowler} stats={`${bowlerStats.wickets}/${bowlerStats.runsConceded} (${bowlerStats.overs}.${bowlerStats.balls})`} icon={Play} />
         </div>
@@ -426,3 +431,4 @@ export function LiveScoringInterface({
     </>
   );
 }
+
