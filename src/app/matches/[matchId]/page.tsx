@@ -34,7 +34,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
         return { 
             ...member, 
             stats, 
-            profileImageUrl: personDetails?.profileImageUrl 
+            profileImageUrl: personDetails?.profileImageUrl,
+            physicalAttributes: personDetails?.physicalAttributes,
         };
     }));
   };

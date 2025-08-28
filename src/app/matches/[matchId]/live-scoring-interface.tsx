@@ -231,7 +231,7 @@ function BowlingCard({ bowlerStats, roster }: { bowlerStats: LiveScore['bowlerSt
 
 function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMemberWithStats, liveScore: LiveScore, onSelect: () => void }) {
     const [statsView, setStatsView] = React.useState<'match' | 'career'>('match');
-    const matchStats = liveScore.bowlerStats[player.personId];
+    const matchStats = liveScore.bowlerStats[player.personId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0, economyRate: 0 };
     const careerStats = player.stats;
     const stats = statsView === 'match' ? matchStats : careerStats;
     const bowlingHand = player.physicalAttributes?.bowlingHand ? `${player.physicalAttributes.bowlingHand}-arm` : '';
@@ -251,11 +251,11 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
           </div>
         </div>
         <div className="grid grid-cols-5 gap-1 text-center mt-2 text-xs">
-          <p><strong>O</strong><br />{statsView === 'match' ? `${stats?.overs || 0}.${stats?.balls || 0}` : stats?.oversBowled.toFixed(1)}</p>
-          <p><strong>M</strong><br />{stats?.maidens || 0}</p>
-          <p><strong>R</strong><br />{stats?.runsConceded || 0}</p>
-          <p><strong>W</strong><br />{stats?.wicketsTaken || stats?.wickets || 0}</p>
-          <p><strong>Econ</strong><br />{(stats?.economyRate || 0).toFixed(2)}</p>
+          <div><strong>O</strong><br />{statsView === 'match' ? `${stats?.overs || 0}.${stats?.balls || 0}` : (stats?.oversBowled || 0).toFixed(1)}</div>
+          <div><strong>M</strong><br />{stats?.maidens || 0}</div>
+          <div><strong>R</strong><br />{stats?.runsConceded || 0}</div>
+          <div><strong>W</strong><br />{stats?.wicketsTaken || stats?.wickets || 0}</div>
+          <div><strong>Econ</strong><br />{(stats?.economyRate || 0).toFixed(2)}</div>
         </div>
       </div>
     );
@@ -712,5 +712,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
-
