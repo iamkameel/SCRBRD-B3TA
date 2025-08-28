@@ -288,11 +288,11 @@ export function LiveScoringInterface({
   
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
-  const needsNewBatsman = isReadyToScore && !liveScore.onStrikeBatsmanId && !isAllOut;
   
   const isLegalDelivery = (liveScore.balls || 0) < 6;
   
   const isEndOfOver = isLegalDelivery && liveScore.balls === 0 && liveScore.overs > 0 && (liveScore.overs !== (match.liveScore?.overs || 0));
+  const needsNewBatsman = isReadyToScore && !liveScore.onStrikeBatsmanId && !isAllOut;
   
   const canEndInnings = isAllOut || isOversFinished;
   const canUndo = !!match.previousLiveScore;
