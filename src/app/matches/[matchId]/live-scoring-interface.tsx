@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
+import { ConfettiBurst } from '@/components/confetti-burst';
 
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
@@ -266,6 +267,7 @@ export function LiveScoringInterface({
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
   const [wagonWheelView, setWagonWheelView] = React.useState<WagonWheelView>('team');
+  const [milestone, setMilestone] = React.useState<number | null>(null);
 
 
   React.useEffect(() => {
@@ -324,7 +326,7 @@ export function LiveScoringInterface({
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
   
-  const isEndOfOver = liveScore.balls === 6;
+  const isEndOfOver = liveScore.balls >= 6;
   const needsNewBatsman = !liveScore.onStrikeBatsmanId && !isAllOut;
   const needsNewBowler = isEndOfOver;
   const needsPlayerSelection = needsNewBatsman || needsNewBowler;
@@ -387,7 +389,11 @@ export function LiveScoringInterface({
   const handleRecordBall = (eventData: { event: string; runs?: number, dismissal?: { type: string; fielderIds?: string[] } }) => {
     startTransition(async () => {
         try {
-            await recordBallAction(match.matchId, { ...eventData, ...currentShot });
+            const result = await recordBallAction(match.matchId, { ...eventData, ...currentShot });
+            if (result?.milestone) {
+                setMilestone(result.milestone);
+                setTimeout(() => setMilestone(null), 4000);
+            }
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         } finally {
@@ -455,6 +461,7 @@ export function LiveScoringInterface({
 
   return (
     <>
+    <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
         <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3">
             {/* Team Names & Score */}

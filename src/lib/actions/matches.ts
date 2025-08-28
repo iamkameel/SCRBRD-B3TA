@@ -678,7 +678,7 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
     revalidatePath(`/matches/${matchId}`);
 }
 
-export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number, dismissal?: { type: string, fielderIds?: string[] } }) {
+export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number, dismissal?: { type: string, fielderIds?: string[] } }): Promise<{ liveScore: LiveScore, milestone?: number } | null> {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
@@ -721,6 +721,9 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const runsFromBall = ball.runs ?? 0;
     
+    const scoreBefore = liveScore.batsmanStats[onStrikeId]?.runs || 0;
+    let milestone: number | undefined = undefined;
+    
     if (isWide) {
         liveScore.runs += 1 + runsFromBall;
         liveScore.extras.total += 1 + runsFromBall;
@@ -742,6 +745,15 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         liveScore.extras.partnership += runsFromBall;
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
         liveScore.batsmanStats[onStrikeId].runs += runsFromBall;
+    }
+
+    const scoreAfter = liveScore.batsmanStats[onStrikeId]?.runs || 0;
+    const milestones = [50, 100, 150, 200, 250, 300];
+    for (const m of milestones) {
+        if (scoreBefore < m && scoreAfter >= m) {
+            milestone = m;
+            break;
+        }
     }
 
 
@@ -816,7 +828,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     await updateDoc(matchRef, { liveScore, previousLiveScore });
     revalidatePath(`/matches/${matchId}`);
-    return liveScore;
+    return { liveScore, milestone };
 }
 
 
