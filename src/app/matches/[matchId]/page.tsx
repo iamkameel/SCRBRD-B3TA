@@ -98,3 +98,4 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     isOfficialForMatch={isOfficialForMatch}
   />;
 }
+

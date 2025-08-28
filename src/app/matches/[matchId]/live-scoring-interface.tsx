@@ -45,7 +45,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     
     if (lastNameCount > 1) {
         const firstNameInitial = nameParts[0].charAt(0);
-        return `${firstNameInitial}. ${lastName}`;
+        return `${\'\'\'${firstNameInitial}. ${lastName}\'\'\'}`;
     }
     
     return player.personName;
@@ -61,37 +61,37 @@ function DynamicContextBar({ liveScore, match, bowler, bowlerStats, bowlingTeamR
     const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
     if(oversDecimal > 0) {
         const crr = (liveScore.runs / oversDecimal).toFixed(2);
-        messages.push(`Current Run Rate: ${crr}`);
+        messages.push(`Current Run Rate: ${\'\'\'${crr}\'\'\'}`);
     }
 
     if (!isFirstInnings && match.firstInningsTotal) {
         const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
         const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
         if (runsRequired > 0 && ballsRemaining > 0) {
-            messages.push(`${match.teamBName} requires ${runsRequired} runs from ${ballsRemaining} balls.`);
+            messages.push(`${\'\'\'${match.teamBName} requires ${runsRequired} runs from ${ballsRemaining} balls.\'\'\'}`);
             const rrr = (runsRequired / (ballsRemaining / 6)).toFixed(2);
-            messages.push(`Required Rate: ${rrr}`);
+            messages.push(`Required Rate: ${\'\'\'${rrr}\'\'\'}`);
         } else if (runsRequired <= 0) {
-            messages.push(`${match.teamBName} won the match.`);
+            messages.push(`${\'\'\'${match.teamBName} won the match.\'\'\'}`);
         } else {
-            messages.push(`${match.teamAName} won the match.`);
+            messages.push(`${\'\'\'${match.teamAName} won the match.\'\'\'}`);
         }
     }
     
     if (isFirstInnings && oversDecimal > 0) {
         const crr = (liveScore.runs / oversDecimal);
         const projected = Math.round(liveScore.runs + (20 - oversDecimal) * crr);
-        messages.push(`Projected Score: ~${projected}`);
+        messages.push(`Projected Score: ~${\'\'\'${projected}\'\'\'}`);
     }
 
     const partnership = liveScore.extras?.partnership;
     if (partnership && partnership > 0) {
-        messages.push(`Partnership: ${partnership} runs`);
+        messages.push(`Partnership: ${\'\'\'${partnership} runs\'\'\'}`);
     }
 
     if (bowler && bowlerStats) {
         const bowlerName = getDisplayName(bowler.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase();
-        messages.push(`${bowlerName}: ${bowlerStats.overs}-${bowlerStats.maidens}-${bowlerStats.runsConceded}-${bowlerStats.wickets}`);
+        messages.push(`${\'\'\'${bowlerName}: ${bowlerStats.overs}-${bowlerStats.maidens}-${bowlerStats.runsConceded}-${bowlerStats.wickets}\'\'\'}`);
     }
 
     const activeMessages = messages.filter(m => m !== null);
@@ -158,7 +158,7 @@ function RecentBalls({ history }: { history: string[] }) {
         <div className="flex items-center gap-1.5 flex-wrap">
             {history.map((ball, index) => {
                 if (ball === '|') {
-                    return <Separator key={`divider-${index}`} orientation="vertical" className="h-6 bg-muted-foreground" />;
+                    return <Separator key={`divider-${\'\'\'${index}\'\'\'}`} orientation="vertical" className="h-6 bg-muted-foreground" />;
                 }
                 return (
                     <span
@@ -233,8 +233,18 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
     const [statsView, setStatsView] = React.useState<'match' | 'career'>('match');
     const matchStats = liveScore.bowlerStats[player.personId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0, economyRate: 0 };
     const careerStats = player.stats;
-    const stats = statsView === 'match' ? matchStats : careerStats;
-    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${player.physicalAttributes.bowlingHand}-arm` : '';
+
+    // Correctly calculating overs for career view from decimal
+    const careerOversInt = Math.floor(careerStats.oversBowled);
+    const careerBalls = Math.round((careerStats.oversBowled - careerOversInt) * 10);
+    const careerOversDisplay = `${\'\'\'${careerOversInt}.${careerBalls}\'\'\'}`;
+
+    const stats = statsView === 'match' ? matchStats : {
+        ...careerStats,
+        oversDisplay: careerOversDisplay,
+    };
+    
+    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${\'\'\'${player.physicalAttributes.bowlingHand}-arm\'\'\'}` : '';
     const bowlingStyle = player.physicalAttributes?.bowlingStyles?.join(', ');
 
     return (
@@ -251,11 +261,11 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
           </div>
         </div>
         <div className="grid grid-cols-5 gap-1 text-center mt-2 text-xs">
-          <div><strong>O</strong><br />{statsView === 'match' ? `${stats?.overs || 0}.${stats?.balls || 0}` : (stats?.oversBowled || 0).toFixed(1)}</div>
-          <div><strong>M</strong><br />{stats?.maidens || 0}</div>
-          <div><strong>R</strong><br />{stats?.runsConceded || 0}</div>
-          <div><strong>W</strong><br />{stats?.wicketsTaken || stats?.wickets || 0}</div>
-          <div><strong>Econ</strong><br />{(stats?.economyRate || 0).toFixed(2)}</div>
+          <div><strong>O</strong><br />{statsView === 'match' ? `${\'\'\'${stats.overs || 0}.${stats.balls || 0}\'\'\'}` : stats.oversDisplay}</div>
+          <div><strong>M</strong><br />{stats.maidens || 0}</div>
+          <div><strong>R</strong><br />{stats.runsConceded || 0}</div>
+          <div><strong>W</strong><br />{stats.wicketsTaken || stats.wickets || 0}</div>
+          <div><strong>Econ</strong><br />{(stats.economyRate || 0).toFixed(2)}</div>
         </div>
       </div>
     );
@@ -611,10 +621,10 @@ export function LiveScoringInterface({
                                     <CardTitle>Scoring Controls</CardTitle>
                                     <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
                                 </div>
-                                 <div className="flex items-center rounded-md bg-muted p-1">
-                                    <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs gap-1.5"><Users className="h-4 w-4"/>Team</Button>
-                                    <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs gap-1.5"><User className="h-4 w-4"/>On-strike</Button>
-                                    <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs gap-1.5"><User className="h-4 w-4"/>Non-striker</Button>
+                                 <div className="flex items-center gap-1">
+                                    <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Team</Button>
+                                    <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">On-strike</Button>
+                                    <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Non-striker</Button>
                                 </div>
                             </div>
                         </CardHeader>
