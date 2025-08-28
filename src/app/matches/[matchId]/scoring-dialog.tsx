@@ -27,7 +27,7 @@ interface ScoringDialogProps {
 
 export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }: ScoringDialogProps) {
   const [view, setView] = React.useState<'runs' | 'wicket' | 'extras'>('runs');
-  const [extraType, setExtraType] = React.useState<'wd' | 'nb' | 'bye' | 'leg_bye' | null>(null);
+  const [extraType, setExtraType] = React.useState<'wd' | 'nb' | 'b' | 'lb' | null>(null);
   const [dismissalType, setDismissalType] = React.useState<DismissalType | null>(null);
   const [fielderId, setFielderId] = React.useState<string | undefined>(undefined);
   
@@ -55,7 +55,7 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
       }
   };
 
-  const handleExtraTypeSelect = (type: 'wd' | 'nb' | 'bye' | 'leg_bye') => {
+  const handleExtraTypeSelect = (type: 'wd' | 'nb' | 'b' | 'lb') => {
       setExtraType(type);
       setView('extras');
   }
@@ -113,8 +113,8 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
                 <div className="grid grid-cols-2 gap-2">
                     <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('wd')}>Wide</Button>
                     <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('nb')}>No Ball</Button>
-                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('bye')}>Byes</Button>
-                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('leg_bye')}>Leg Byes</Button>
+                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('b')}>Byes</Button>
+                    <Button variant="outline" className="bg-yellow-100 dark:bg-yellow-900/30 w-full" onClick={() => handleExtraTypeSelect('lb')}>Leg Byes</Button>
                 </div>
               </div>
                <Separator />

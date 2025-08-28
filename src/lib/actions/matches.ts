@@ -751,11 +751,11 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
         liveScore.batsmanStats[onStrikeId].runs += runsFromBall;
         liveScore.extras.partnership += runsFromBall;
-    } else if (ball.event === 'bye' || ball.event === 'leg_bye') {
+    } else if (ball.event === 'b' || ball.event === 'lb') {
         liveScore.runs += runsFromBall;
         liveScore.extras.total += runsFromBall;
-        if (ball.event === 'bye') liveScore.extras.byes += runsFromBall;
-        if (ball.event === 'leg_bye') liveScore.extras.legByes += runsFromBall;
+        if (ball.event === 'b') liveScore.extras.byes += runsFromBall;
+        if (ball.event === 'lb') liveScore.extras.legByes += runsFromBall;
     } else if (!isWicket) {
         liveScore.runs += runsFromBall;
         liveScore.extras.partnership += runsFromBall;
@@ -781,7 +781,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (bowlerId) {
         liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
         if (isNoBall || isWide) liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
-        else if(!isWicket && ball.event !== 'bye' && ball.event !== 'leg_bye') liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
+        else if(!isWicket && ball.event !== 'b' && ball.event !== 'lb') liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
         
         if (isWicket && ball.dismissal?.type !== 'Run Out') liveScore.bowlerStats[bowlerId].wickets++;
     }
@@ -1048,3 +1048,4 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
 }
 
     
+
