@@ -22,6 +22,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Form, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
     if (!playerId) return 'Select...';
@@ -42,43 +44,81 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
 };
 
 
-function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { liveScore: LiveScore, match: Match, onStrikeBatsman?: RosterMember, nonStriker?: RosterMember }) {
-    const [displayMessage, setDisplayMessage] = React.useState<string | null>(null);
+function DynamicContextBar({ liveScore, match, bowler, bowlerStats }: { liveScore: LiveScore, match: Match, bowler?: RosterMember, bowlerStats: any }) {
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+    const messages: (string | null)[] = [];
+
+    const isFirstInnings = liveScore.liveInnings === 1;
+
+    // Message 1: The Chase
+    if (!isFirstInnings && match.firstInningsTotal) {
+        const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
+        const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
+        if (runsRequired > 0 && ballsRemaining > 0) {
+            messages.push(`${match.teamBName} requires ${runsRequired} runs from ${ballsRemaining} balls.`);
+        } else if (runsRequired <= 0) {
+            messages.push(`${match.teamBName} won the match.`);
+        } else {
+            messages.push(`${match.teamAName} won the match.`);
+        }
+    }
+
+    // Message 2: Required Run Rate
+     if (!isFirstInnings && match.firstInningsTotal) {
+        const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
+        const oversRemaining = 20 - ((liveScore.overs || 0) + ((liveScore.balls || 0)/6) || 1);
+        if (runsRequired > 0 && oversRemaining > 0) {
+            const rrr = (runsRequired / oversRemaining).toFixed(2);
+            messages.push(`Required Run Rate: ${rrr}`);
+        }
+    }
+    
+    // Message 3: Current Run Rate
+    const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
+    if (oversDecimal > 0) {
+        const crr = (liveScore.runs / oversDecimal).toFixed(2);
+        messages.push(`Current Run Rate: ${crr}`);
+    }
+
+    // Message 4: Projected Score
+    if (isFirstInnings && oversDecimal > 0) {
+        const crr = (liveScore.runs / oversDecimal);
+        const projected = Math.round(liveScore.runs + (20 - oversDecimal) * crr);
+        messages.push(`Projected Score: ~${projected}`);
+    }
+
+    // Message 5: Partnership
+    const partnership = liveScore.extras?.partnership;
+    if (partnership && partnership > 0) {
+        messages.push(`Partnership: ${partnership} runs`);
+    }
+
+    // Message 6: Bowler's Spell
+    if (bowler && bowlerStats) {
+        messages.push(`${getDisplayName(bowler.personId, [])?.split(' ').pop()?.toUpperCase()}: ${bowlerStats.overs || 0}.${bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`);
+    }
+
+    const activeMessages = messages.filter(m => m !== null);
 
     React.useEffect(() => {
-        let timeoutId: NodeJS.Timeout;
-        // Priority 1: Macro-Narrative (The Chase)
-        if (liveScore.liveInnings === 2 && match.firstInningsTotal) {
-            const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
-            const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
-            if (runsRequired > 0 && ballsRemaining > 0) {
-                 setDisplayMessage(`${match.teamBName} requires ${runsRequired} runs from ${ballsRemaining} balls.`);
-            } else if (runsRequired <= 0) {
-                 setDisplayMessage(`${match.teamBName} won the match.`);
-            } else {
-                 setDisplayMessage(`${match.teamAName} won the match.`);
-            }
-        } 
-        // Priority 2: Micro-Narrative (The Partnership)
-        else {
-            const partnership = liveScore.extras.partnership;
-            if (partnership > 0 && onStrikeBatsman && nonStriker) {
-                setDisplayMessage(`Partnership: ${partnership} runs`);
-            } else {
-                 const runRate = (liveScore.runs / ((liveScore.overs || 0) + ((liveScore.balls || 0)/6) || 1)).toFixed(2);
-                 setDisplayMessage(`Current Run Rate: ${runRate}`);
-            }
+        if (activeMessages.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentIndex((prevIndex) => (prevIndex + 1) % activeMessages.length);
+            }, 10000); // Rotate every 10 seconds
+
+            return () => clearInterval(interval);
         }
-        
-        return () => clearTimeout(timeoutId);
+    }, [activeMessages.length]);
 
-    }, [liveScore, match, onStrikeBatsman, nonStriker]);
-
+    if (activeMessages.length === 0) {
+        return <span className="truncate">First ball of the match.</span>
+    }
 
     return (
-        <span className="truncate">{displayMessage}</span>
+        <span className="truncate">{activeMessages[currentIndex]}</span>
     );
 }
+
 
 
 // A simple display component for the current over
@@ -414,7 +454,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
                 <div className="text-center text-xs text-gray-300 h-4 mt-1">
-                    <DynamicContextBar liveScore={liveScore} match={match} onStrikeBatsman={onStrikeBatsman} nonStriker={nonStriker} />
+                    <DynamicContextBar liveScore={liveScore} match={match} bowler={bowler} bowlerStats={bowlerStats} />
                 </div>
             </div>
             
