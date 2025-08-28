@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -42,7 +43,7 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
         if (runs === 4) return "#3B82F6"; // Blue
         if (runs === 3) return "#FBBF24"; // Amber
         if (runs === 2) return "#A3E635"; // Lime
-        if (runs === 1) return "#FFFFFF"; // White
+        if (runs === 1) return "#EC4899"; // Pink for 1 run
         return "hsl(var(--muted-foreground))"; // Dot ball
     }
 
@@ -51,7 +52,7 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
         { label: '4', color: '#3B82F6' },
         { label: '3', color: '#FBBF24' },
         { label: '2', color: '#A3E635' },
-        { label: '1', color: '#FFFFFF' },
+        { label: '1', color: '#EC4899' },
         { label: '0', color: 'hsl(var(--muted-foreground))' },
     ];
 

@@ -185,6 +185,7 @@ export interface ShotData {
   runs: number;
   angle: number; // in degrees
   distance: number; // as a ratio of radius (0 to 1)
+  batsmanId: string;
 }
 
 export interface Extras {
@@ -631,4 +632,3 @@ export interface LiveMatchUpdateOutput {
     summary: string;
     tacticalSuggestions?: string[];
 }
-

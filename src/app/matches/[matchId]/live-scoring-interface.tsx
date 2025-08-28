@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, Team, PersonIcon } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -23,7 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { FormItem, FormControl } from '@/components/ui/form';
+import { FormControl } from '@/components/ui/form';
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
     if (!playerId) return 'Select...';
@@ -100,7 +100,7 @@ function OverHistory({ balls }: { balls: string[] }) {
             ball.includes('W') && 'bg-destructive text-destructive-foreground',
             ball.includes('4') && 'bg-blue-500 text-white',
             ball.includes('6') && 'bg-purple-600 text-white',
-            ball === '1' && 'bg-white/80 text-black',
+            ball === '1' && 'bg-pink-500 text-white',
             ball === '2' && 'bg-lime-300 text-black',
             ball === '3' && 'bg-amber-300 text-black',
             ball === '.' && 'bg-gray-500 text-white',
@@ -137,7 +137,7 @@ function RecentBalls({ history }: { history: string[] }) {
                         ball.includes('W') && 'bg-destructive text-destructive-foreground',
                         ball.includes('4') && 'bg-blue-500 text-white',
                         ball.includes('6') && 'bg-purple-600 text-white',
-                        ball === '1' && 'bg-gray-200 text-black',
+                        ball === '1' && 'bg-pink-500 text-white',
                         ball === '2' && 'bg-lime-300 text-black',
                         ball === '3' && 'bg-amber-300 text-black',
                         ball === '.' && 'bg-gray-500 text-white',
@@ -164,6 +164,8 @@ function WeatherIcon({ condition, ...props }: { condition: string } & React.Comp
     }
 }
 
+type WagonWheelView = 'team' | 'on-strike' | 'non-striker';
+
 export function LiveScoringInterface({
   teamARoster,
   teamBRoster,
@@ -183,6 +185,8 @@ export function LiveScoringInterface({
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
+  const [wagonWheelView, setWagonWheelView] = React.useState<WagonWheelView>('team');
+
 
   React.useEffect(() => {
       getMatchForecastAction(match.matchId).then(data => {
@@ -255,6 +259,21 @@ export function LiveScoringInterface({
 
   const availableBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId && p.personId !== onStrikeBatsmanId);
   const availableBowlers = bowlingTeamRoster.filter(p => p.personId !== liveScore.lastBowlerId);
+
+  const wagonWheelShots = React.useMemo(() => {
+    const allShots = liveScore.shots || [];
+    if (wagonWheelView === 'team') {
+      return allShots;
+    }
+    if (wagonWheelView === 'on-strike') {
+      return allShots.filter(shot => shot.batsmanId === onStrikeBatsmanId);
+    }
+    if (wagonWheelView === 'non-striker') {
+      return allShots.filter(shot => shot.batsmanId === nonStrikerBatsmanId);
+    }
+    return [];
+  }, [wagonWheelView, liveScore.shots, onStrikeBatsmanId, nonStrikerBatsmanId]);
+
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler' | 'bowlingAngle', value: string) => {
     startTransition(async () => {
@@ -409,11 +428,7 @@ export function LiveScoringInterface({
                 <span><MapPin className="inline mr-1.5 h-3 w-3" />{match.fieldName}</span>
                  {forecast && <span><WeatherIcon condition={forecast.details.condition} className="inline mr-1.5 h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>}
                  {match.tossWinnerId && <span><Medal className="inline mr-1.5 h-3 w-3" />{tossWinner} won the toss & chose to {match.tossDecision}</span>}
-            </div>
-             <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs mt-2 text-gray-300">
-                { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
-                { !isFirstInnings && <span>RRR: {+requiredRunRate > 0 ? requiredRunRate : '-'}</span>}
-                { isFirstInnings && <span>PROJECTED: {projectedScore > 0 ? `~${projectedScore}` : '-'}</span>}
+                 { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
             </div>
         </div>
 
@@ -464,34 +479,35 @@ export function LiveScoringInterface({
                 <div className="lg:col-span-2 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Scoring Controls</CardTitle>
-                            <CardDescription>Select the bowling angle, then tap the wagon-wheel where the ball was hit.</CardDescription>
+                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div>
+                                    <CardTitle>Scoring Controls</CardTitle>
+                                    <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
+                                </div>
+                                <div className="p-1 bg-muted rounded-md flex items-center">
+                                    <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="gap-1.5"><Team className="h-4 w-4"/>Team</Button>
+                                    <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="gap-1.5"><PersonIcon className="h-4 w-4"/>On-strike</Button>
+                                    <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="gap-1.5"><PersonIcon className="h-4 w-4"/>Non-striker</Button>
+                                </div>
+                             </div>
                         </CardHeader>
                         <CardContent>
                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label className="text-center block mb-2">Bowling Angle</Label>
-                                    <RadioGroup 
-                                      onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} 
-                                      value={liveScore.bowlingAngle} 
-                                      className="flex items-center justify-center gap-2"
-                                      disabled={isPending || isSimulating}
-                                    >
-                                        <Label htmlFor="angle-over" className={cn("flex items-center gap-2 rounded-md border-2 p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                            <RadioGroupItem value="Over the Wicket" id="angle-over" />
-                                            <CornerUpRight className="h-4 w-4"/> Over the Wicket
-                                        </Label>
-                                        <Label htmlFor="angle-round" className={cn("flex items-center gap-2 rounded-md border-2 p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                            <RadioGroupItem value="Round the Wicket" id="angle-round" />
-                                            <CornerUpLeft className="h-4 w-4"/> Round the Wicket
-                                        </Label>
-                                    </RadioGroup>
-                                </div>
+                                <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex items-center justify-center gap-2" disabled={isPending || isSimulating}>
+                                    <Label htmlFor="angle-over" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                        <FormControl><RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" /></FormControl>
+                                        <CornerUpRight className="h-4 w-4"/> Over the Wicket
+                                    </Label>
+                                    <Label htmlFor="angle-round" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                        <FormControl><RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" /></FormControl>
+                                        <CornerUpLeft className="h-4 w-4"/> Round the Wicket
+                                    </Label>
+                                </RadioGroup>
                                 <div className="flex justify-center pt-4">
                                     <WagonWheel
                                         onShotSelect={handleShotSelect}
                                         disabled={isPending || isSimulating || needsNewBatsman}
-                                        shots={liveScore.shots || []}
+                                        shots={wagonWheelShots}
                                     />
                                 </div>
                                 <div className="pt-4 border-t">
@@ -568,6 +584,7 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
 
 
