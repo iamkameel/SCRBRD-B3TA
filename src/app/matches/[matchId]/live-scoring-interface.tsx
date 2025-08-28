@@ -102,7 +102,7 @@ function DynamicContextBar({ liveScore, match, bowler, bowlerStats, bowlingTeamR
     // Message 6: Bowler's Spell
     if (bowler && bowlerStats) {
         const bowlerName = getDisplayName(bowler.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase();
-        messages.push(`${bowlerName}: ${bowlerStats.overs || 0}.${bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`);
+        messages.push(`${bowlerName}: ${bowlerStats.overs || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`);
     }
 
     const activeMessages = messages.filter(m => m !== null);
@@ -285,15 +285,11 @@ export function LiveScoringInterface({
   const bowler = bowlingTeamRoster.find(p => p.personId === bowlerId);
   
   const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
-  const oversDecimal = (liveScore.overs || 0) + (liveScore.balls || 0) / 6;
-  const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
   
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
   
-  const isLegalDelivery = (liveScore.balls || 0) < 6;
-  
-  const isEndOfOver = isLegalDelivery && liveScore.balls === 0 && liveScore.overs > 0 && liveScore.overs !== match.liveScore?.overs;
+  const isEndOfOver = liveScore.balls === 0 && liveScore.overs > 0 && liveScore.overs !== match.liveScore?.overs;
   const needsNewBatsman = !liveScore.onStrikeBatsmanId && !isAllOut;
   const needsNewBowler = isEndOfOver;
   const needsPlayerSelection = needsNewBatsman || needsNewBowler;
@@ -319,9 +315,9 @@ export function LiveScoringInterface({
     return [];
   }, [wagonWheelView, liveScore.shots, onStrikeBatsmanId, nonStrikerBatsmanId]);
 
-  const [firstBatsman, secondBatsman] = liveScore.onStrikeBatsmanId === nonStrikerBatsmanId 
-        ? [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] 
-        : [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+  const [firstBatsman, secondBatsman] = (liveScore.onStrikeBatsmanId === onStrikeBatsman?.personId)
+    ? [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] 
+    : [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
 
   const firstBatsmanStats = liveScore.batsmanStats?.[firstBatsman || ''] || { runs: 0, balls: 0 };
   const secondBatsmanStats = liveScore.batsmanStats?.[secondBatsman || ''] || { runs: 0, balls: 0 };
@@ -456,7 +452,7 @@ export function LiveScoringInterface({
              {/* Batsmen Bar & Context */}
              <div className="flex flex-col items-center gap-2 pt-2">
                 <div className="flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1">
-                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full", onStrikeBatsmanId === firstBatsman && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                         {firstBatsman ? (
                              <>
                                 <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(firstBatsman, battingTeamRoster).split(' ').pop()}</span>
@@ -464,7 +460,7 @@ export function LiveScoringInterface({
                             </>
                         ) : (<span className="font-bold text-xs sm:text-sm uppercase truncate w-full text-center">SELECT...</span>)}
                     </div>
-                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full", onStrikeBatsmanId === secondBatsman && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                         {secondBatsman ? (
                             <>
                                 <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(secondBatsman, battingTeamRoster).split(' ').pop()}</span>
@@ -639,3 +635,4 @@ export function LiveScoringInterface({
     </>
   );
 }
+
