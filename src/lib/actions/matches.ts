@@ -721,7 +721,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     const onStrikeId = liveScore.onStrikeBatsmanId;
     const bowlerId = liveScore.bowlerId;
-
+    
     const bowlerCurrentStats = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
     if (bowlerCurrentStats.overs >= 4) {
         throw new Error("This bowler has already bowled their maximum of 4 overs.");
@@ -792,7 +792,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             if (onStrikeId) {
                 liveScore.batsmenOut.push(onStrikeId);
             }
-            liveScore.onStrikeBatsmanId = null;
+            liveScore.onStrikeBatsmanId = undefined;
             liveScore.extras.partnership = 0;
             liveScore.newBatsmanRequired = true; // Flag for UI
         }
@@ -1048,4 +1048,3 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
 }
 
     
-
