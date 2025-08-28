@@ -1,4 +1,5 @@
 
+
       
 'use server';
 
@@ -814,37 +815,43 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     if (isLegalDelivery) {
         liveScore.balls++;
-
-        if (liveScore.balls >= 6) {
-            liveScore.overs++;
-            liveScore.balls = 0;
-            const overRuns = liveScore.currentOver.reduce((sum, e) => {
-                const run = parseInt(e, 10);
-                if (!isNaN(run) && e !== 'nb') return sum + run;
-                if (e.includes('wd') || e.includes('nb')) return sum + 1 + (run || 0);
-                return sum;
-            }, 0);
-            
-            if(liveScore.bowlerStats[bowlerId]) {
-                liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
-                liveScore.bowlerStats[bowlerId].balls = 0;
-                if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
-            }
-            
-            liveScore.currentOver = [];
-            liveScore.endOfOver = true; // Flag for UI
-            liveScore.lastBowlerId = bowlerId; // Use the correct ID
-            liveScore.bowlerId = undefined;
-
-            [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
-        }
     }
     
-    const runsThatRotateStrike = ball.event !== 'wd' && ball.event !== 'nb' ? runsFromBall : 0;
-    const isOddRun = runsThatRotateStrike % 2 !== 0;
+    const endOfOver = liveScore.balls >= 6 && isLegalDelivery;
 
-    if (isLegalDelivery && isOddRun) {
-        [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+    if (endOfOver) {
+        liveScore.overs++;
+        liveScore.balls = 0;
+        const overRuns = liveScore.currentOver.reduce((sum, e) => {
+            const run = parseInt(e, 10);
+            if (!isNaN(run) && e !== 'nb') return sum + run;
+            if (e.includes('wd') || e.includes('nb')) return sum + 1 + (run || 0);
+            return sum;
+        }, 0);
+        
+        if(liveScore.bowlerStats[bowlerId]) {
+            liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
+            liveScore.bowlerStats[bowlerId].balls = 0;
+            if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
+        }
+        
+        liveScore.currentOver = [];
+        liveScore.endOfOver = true; // Flag for UI
+        liveScore.lastBowlerId = bowlerId; // Use the correct ID
+        
+        // Don't swap if a wicket fell on the last ball and it's not a run-out of the non-striker
+        const lastBallWicket = isWicket && liveScore.balls === 0;
+        if (!lastBallWicket) {
+             [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+        }
+    } else {
+        liveScore.endOfOver = false;
+        const runsThatRotateStrike = (ball.event === 'wd' || ball.event === 'nb') ? (runsFromBall) : isLegalDelivery ? runsFromBall : 0;
+        const isOddRun = runsThatRotateStrike % 2 !== 0;
+
+        if (isOddRun) {
+            [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+        }
     }
     
 
