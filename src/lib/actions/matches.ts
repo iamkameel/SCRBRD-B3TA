@@ -1,5 +1,5 @@
 
-
+      
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -813,15 +813,11 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
 
     if (isLegalDelivery) {
-        if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = (liveScore.bowlerStats[bowlerId].balls || 0) + 1;
         liveScore.balls++;
 
         if (liveScore.balls >= 6) {
             liveScore.overs++;
             liveScore.balls = 0;
-            if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].overs++;
-            if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = 0;
-            
             const overRuns = liveScore.currentOver.reduce((sum, e) => {
                 const run = parseInt(e, 10);
                 if (!isNaN(run) && e !== 'nb') return sum + run;
@@ -829,8 +825,12 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                 return sum;
             }, 0);
             
-            if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
-
+            if(liveScore.bowlerStats[bowlerId]) {
+                liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
+                liveScore.bowlerStats[bowlerId].balls = 0;
+                if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
+            }
+            
             liveScore.currentOver = [];
             liveScore.endOfOver = true; // Flag for UI
             liveScore.lastBowlerId = bowlerId; // Use the correct ID
@@ -1046,5 +1046,5 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
     throw new Error("Could not update availability.");
   }
 }
-
+      
     
