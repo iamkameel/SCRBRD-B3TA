@@ -833,7 +833,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
             liveScore.currentOver = [];
             liveScore.endOfOver = true; // Flag for UI
-            liveScore.lastBowlerId = liveScore.bowlerId;
+            liveScore.lastBowlerId = bowlerId; // Use the correct ID
             liveScore.bowlerId = undefined;
 
             [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
