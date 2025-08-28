@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
@@ -209,6 +210,40 @@ function WeatherIcon({ condition, ...props }: { condition: string } & React.Comp
     }
 }
 
+function BowlingCard({ bowlerStats, roster }: { bowlerStats: LiveScore['bowlerStats'], roster: RosterMemberWithStats[] }) {
+    const bowlers = Object.entries(bowlerStats).map(([personId, stats]) => {
+        const player = roster.find(p => p.personId === personId);
+        return {
+            name: getDisplayName(personId, roster),
+            ...stats,
+        };
+    }).filter(b => b.name !== 'Unknown');
+
+    return (
+        <Card>
+            <CardHeader><CardTitle>Bowling Figures</CardTitle></CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader><TableRow><TableHead>Bowler</TableHead><TableHead className="text-right">O</TableHead><TableHead className="text-right">M</TableHead><TableHead className="text-right">R</TableHead><TableHead className="text-right">W</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                        {bowlers.length > 0 ? bowlers.map(b => (
+                            <TableRow key={b.name}>
+                                <TableCell className="font-medium">{b.name}</TableCell>
+                                <TableCell className="text-right">{b.overs}</TableCell>
+                                <TableCell className="text-right">{b.maidens}</TableCell>
+                                <TableCell className="text-right">{b.runsConceded}</TableCell>
+                                <TableCell className="text-right">{b.wickets}</TableCell>
+                            </TableRow>
+                        )) : (
+                             <TableRow><TableCell colSpan={5} className="text-center h-24">No bowlers yet.</TableCell></TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    )
+}
+
 type WagonWheelView = 'team' | 'on-strike' | 'non-striker';
 
 export function LiveScoringInterface({
@@ -289,7 +324,7 @@ export function LiveScoringInterface({
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
   
-  const isEndOfOver = liveScore.balls === 0 && liveScore.overs > 0 && liveScore.overs !== match.liveScore?.overs;
+  const isEndOfOver = liveScore.balls === 6;
   const needsNewBatsman = !liveScore.onStrikeBatsmanId && !isAllOut;
   const needsNewBowler = isEndOfOver;
   const needsPlayerSelection = needsNewBatsman || needsNewBowler;
@@ -315,7 +350,7 @@ export function LiveScoringInterface({
     return [];
   }, [wagonWheelView, liveScore.shots, onStrikeBatsmanId, nonStrikerBatsmanId]);
 
-  const [firstBatsman, secondBatsman] = (liveScore.onStrikeBatsmanId === onStrikeBatsman?.personId)
+  const [firstBatsman, secondBatsman] = liveScore.onStrikeBatsmanId === onStrikeBatsman?.personId
     ? [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] 
     : [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
 
@@ -441,7 +476,7 @@ export function LiveScoringInterface({
                      <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
-                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
+                             <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -486,8 +521,34 @@ export function LiveScoringInterface({
             </div>
         </div>
 
-        {isAllOut ? (
-            <Card className="p-8 text-center bg-muted">
+        {needsPlayerSelection ? (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Player Selection Required</CardTitle>
+                    <CardDescription>Select the next batsman or bowler to continue.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {needsNewBatsman ? (
+                        <div className="space-y-2">
+                            <Label className="text-destructive font-bold">WICKET! Select Incoming Batsman</Label>
+                            <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                                <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
+                                <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, battingTeamRoster)}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                    ) : needsNewBowler ? (
+                        <div className="space-y-2">
+                            <Label className="text-primary font-bold">End of Over! Select Next Bowler</Label>
+                            <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
+                                <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
+                                <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, bowlingTeamRoster)}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                    ) : null}
+                </CardContent>
+            </Card>
+        ) : isAllOut ? (
+             <Card className="p-8 text-center bg-muted">
                 <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
                 <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
                 <p className="mt-1 text-sm text-muted-foreground">All 10 wickets have fallen.</p>
@@ -496,134 +557,107 @@ export function LiveScoringInterface({
                 </Button>
             </Card>
         ) : (
-            needsPlayerSelection && (
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Player Selection & Controls</CardTitle>
-                        <CardDescription>Select the next batsman or bowler when prompted.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {needsNewBatsman ? (
-                            <div className="space-y-2">
-                                <Label className="text-destructive font-bold">WICKET! Select Incoming Batsman</Label>
-                                <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
-                                    <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
-                                    <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, battingTeamRoster)}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                        ) : needsNewBowler ? (
-                            <div className="space-y-2">
-                                <Label className="text-primary font-bold">End of Over! Select Next Bowler</Label>
-                                <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
-                                    <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
-                                    <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, bowlingTeamRoster)}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                        ) : null}
-                    </CardContent>
-                </Card>
-            )
-        )}
-
-        {isReadyToScore && !needsPlayerSelection && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 space-y-4">
-                    <Card>
-                        <CardHeader>
-                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div>
-                                    <CardTitle>Scoring Controls</CardTitle>
-                                    <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
-                                </div>
-                                <div className="p-1 bg-muted rounded-md flex items-center">
-                                    <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="gap-1.5"><Users className="h-4 w-4"/>Team</Button>
-                                    <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="gap-1.5"><User className="h-4 w-4"/>On-strike</Button>
-                                    <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="gap-1.5"><User className="h-4 w-4"/>Non-striker</Button>
-                                </div>
-                             </div>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="space-y-4">
-                                <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex items-center justify-center gap-2" disabled={isPending || isSimulating}>
-                                    <Label htmlFor="angle-over" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                        <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
-                                        <CornerUpRight className="h-4 w-4"/> Over the Wicket
-                                    </Label>
-                                    <Label htmlFor="angle-round" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                        <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
-                                        <CornerUpLeft className="h-4 w-4"/> Round the Wicket
-                                    </Label>
-                                </RadioGroup>
-                                <div className="flex justify-center pt-4">
-                                    <WagonWheel
-                                        onShotSelect={handleShotSelect}
-                                        disabled={isPending || isSimulating || needsNewBatsman}
-                                        shots={wagonWheelShots}
-                                    />
-                                </div>
-                                <div className="pt-4 border-t">
-                                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Recent Balls</h4>
-                                  <RecentBalls history={liveScore.ballHistory || []} />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-                <div className="lg:col-span-1 space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle>Win Probability</CardTitle>
-                                <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate || isSimulating}>
-                                    <Wand2 className={cn('mr-2 h-4 w-4', isGeneratingUpdate && 'animate-spin')} />
-                                    Analyze
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="min-h-[10rem] flex flex-col justify-center">
-                            {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
-                            {!isGeneratingUpdate && liveUpdate && (
-                                <div className="space-y-2">
-                                    <div className="flex justify-between font-bold text-lg">
-                                        <span>{isFirstInnings ? match.teamAName : match.teamBName}</span>
-                                        <span>{liveUpdate.winProbability}%</span>
+            isReadyToScore && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                    <div>
+                                        <CardTitle>Scoring Controls</CardTitle>
+                                        <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
                                     </div>
-                                    <Progress value={liveUpdate.winProbability} />
-                                    <p className="text-xs text-muted-foreground text-center">{liveUpdate.summary}</p>
-                                    {liveUpdate.tacticalSuggestions && liveUpdate.tacticalSuggestions.length > 0 && (
-                                        <div className="pt-4">
-                                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Lightbulb className="text-yellow-400" /> AI Suggestions</h4>
-                                            <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
-                                                {liveUpdate.tacticalSuggestions.map((suggestion, index) => (
-                                                    <li key={index}>{suggestion}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
+                                    <div className="p-1 bg-muted rounded-md flex items-center">
+                                        <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="gap-1.5"><Users className="h-4 w-4"/>Team</Button>
+                                        <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="gap-1.5"><User className="h-4 w-4"/>On-strike</Button>
+                                        <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="gap-1.5"><User className="h-4 w-4"/>Non-striker</Button>
+                                    </div>
                                 </div>
-                            )}
-                            {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Click "Analyze" for a win probability prediction.</p>}
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
-                        <CardContent className="flex flex-col gap-2">
-                             <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
-                                <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
-                                Simulate Ball
-                            </Button>
-                            <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
-                                <Undo className="mr-2 h-4 w-4" />
-                                Undo Last Ball
-                            </Button>
-                             <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending || isSimulating}>
-                                {isFirstInnings ? "End Innings" : "End Match"}
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </CardContent>
-                    </Card>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex items-center justify-center gap-2" disabled={isPending || isSimulating}>
+                                        <Label htmlFor="angle-over" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
+                                            <CornerUpRight className="h-4 w-4"/> Over the Wicket
+                                        </Label>
+                                        <Label htmlFor="angle-round" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
+                                            <CornerUpLeft className="h-4 w-4"/> Round the Wicket
+                                        </Label>
+                                    </RadioGroup>
+                                    <div className="flex justify-center pt-4">
+                                        <WagonWheel
+                                            onShotSelect={handleShotSelect}
+                                            disabled={isPending || isSimulating || needsNewBatsman}
+                                            shots={wagonWheelShots}
+                                        />
+                                    </div>
+                                    <div className="pt-4 border-t">
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Recent Balls</h4>
+                                    <RecentBalls history={liveScore.ballHistory || []} />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="lg:col-span-1 space-y-4">
+                        <BowlingCard bowlerStats={liveScore.bowlerStats} roster={bowlingTeamRoster} />
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle>Win Probability</CardTitle>
+                                    <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate || isSimulating}>
+                                        <Wand2 className={cn('mr-2 h-4 w-4', isGeneratingUpdate && 'animate-spin')} />
+                                        Analyze
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="min-h-[10rem] flex flex-col justify-center">
+                                {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
+                                {!isGeneratingUpdate && liveUpdate && (
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between font-bold text-lg">
+                                            <span>{isFirstInnings ? match.teamAName : match.teamBName}</span>
+                                            <span>{liveUpdate.winProbability}%</span>
+                                        </div>
+                                        <Progress value={liveUpdate.winProbability} />
+                                        <p className="text-xs text-muted-foreground text-center">{liveUpdate.summary}</p>
+                                        {liveUpdate.tacticalSuggestions && liveUpdate.tacticalSuggestions.length > 0 && (
+                                            <div className="pt-4">
+                                                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Lightbulb className="text-yellow-400" /> AI Suggestions</h4>
+                                                <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
+                                                    {liveUpdate.tacticalSuggestions.map((suggestion, index) => (
+                                                        <li key={index}>{suggestion}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Click "Analyze" for a win probability prediction.</p>}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
+                            <CardContent className="flex flex-col gap-2">
+                                <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
+                                    <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
+                                    Simulate Ball
+                                </Button>
+                                <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
+                                    <Undo className="mr-2 h-4 w-4" />
+                                    Undo Last Ball
+                                </Button>
+                                <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending || isSimulating}>
+                                    {isFirstInnings ? "End Innings" : "End Match"}
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
-            </div>
+            )
         )}
     </div>
     <ScoringDialog 
@@ -635,4 +669,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
