@@ -22,7 +22,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
@@ -31,12 +30,18 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     const player = roster.find(p => p.personId === playerId);
     if (!player) return 'Unknown';
     
-    const lastNameCount = roster.filter(p => p.personName.split(' ').pop() === player.personName.split(' ').pop()).length;
+    const nameParts = player.personName.split(' ');
+    if (nameParts.length < 2) return player.personName; // Handle single names
+
+    const lastName = nameParts[nameParts.length - 1];
+    
+    const lastNameCount = roster.filter(p => {
+        const pNameParts = p.personName.split(' ');
+        return pNameParts.length > 1 && pNameParts[pNameParts.length - 1] === lastName;
+    }).length;
     
     if (lastNameCount > 1) {
-        const nameParts = player.personName.split(' ');
         const firstNameInitial = nameParts[0].charAt(0);
-        const lastName = nameParts.pop();
         return `${firstNameInitial}. ${lastName}`;
     }
     
@@ -280,10 +285,7 @@ export function LiveScoringInterface({
   const isReadyToScore = onStrikeBatsmanId && nonStrikerBatsmanId && bowlerId;
   const oversDecimal = (liveScore.overs || 0) + (liveScore.balls || 0) / 6;
   const runRate = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
-  const requiredRunRate = !isFirstInnings && match.firstInningsTotal && oversDecimal < 20 ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - oversDecimal)).toFixed(2) : '0.00';
-  const projectedScore = isFirstInnings && runRate > 0 ? Math.round(liveScore.runs + ((20 - oversDecimal) * runRate)) : 0;
-
-
+  
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
   const needsNewBatsman = isReadyToScore && !liveScore.onStrikeBatsmanId && !isAllOut;
@@ -480,36 +482,33 @@ export function LiveScoringInterface({
                 </Button>
             </Card>
         ) : (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Player Selection & Controls</CardTitle>
-                    <CardDescription>Select the next batsman or bowler when prompted.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {needsNewBatsman ? (
-                        <div className="space-y-2">
-                            <Label className="text-destructive font-bold">WICKET! Select Incoming Batsman</Label>
-                            <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
-                                <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
-                                <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, battingTeamRoster)}</SelectItem>)}</SelectContent>
-                            </Select>
-                        </div>
-                    ) : isEndOfOver ? (
-                        <div className="space-y-2">
-                            <Label className="text-primary font-bold">End of Over! Select Next Bowler</Label>
-                            <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
-                                <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
-                                <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, bowlingTeamRoster)}</SelectItem>)}</SelectContent>
-                            </Select>
-                        </div>
-                    ) : (
-                         <div className="text-center text-muted-foreground py-4">
-                            <p>Current Batsmen and Bowler are set.</p>
-                            <p className="text-xs">Use the scoring controls below to record the next ball.</p>
-                        </div>
-                    )}
-                </CardContent>
-             </Card>
+            (needsNewBatsman || isEndOfOver) && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Player Selection & Controls</CardTitle>
+                        <CardDescription>Select the next batsman or bowler when prompted.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {needsNewBatsman ? (
+                            <div className="space-y-2">
+                                <Label className="text-destructive font-bold">WICKET! Select Incoming Batsman</Label>
+                                <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                                    <SelectTrigger><SelectValue placeholder="Select next batsman"/></SelectTrigger>
+                                    <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, battingTeamRoster)}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                        ) : isEndOfOver ? (
+                            <div className="space-y-2">
+                                <Label className="text-primary font-bold">End of Over! Select Next Bowler</Label>
+                                <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
+                                    <SelectTrigger><SelectValue placeholder="Select next bowler"/></SelectTrigger>
+                                    <SelectContent>{availableBowlers.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, bowlingTeamRoster)}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                        ) : null}
+                    </CardContent>
+                </Card>
+            )
         )}
 
         {isReadyToScore && !needsNewBatsman && !isEndOfOver && (
