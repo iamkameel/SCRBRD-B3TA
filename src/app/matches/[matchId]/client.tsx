@@ -263,6 +263,7 @@ export default function MatchDetailsClient({
   const [isDeleteTransportDialogOpen, setIsDeleteTransportDialogOpen] = React.useState(false);
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
   const [isGeneratingAnalysis, startAnalysisGeneration] = React.useTransition();
+  const [analysisResult, setAnalysisResult] = React.useState<string | null>(null);
   const [analyzedTeamId, setAnalyzedTeamId] = React.useState<string | null>(null);
   const [isGeneratingHighlights, startHighlightsGeneration] = React.useTransition();
   const [highlightReel, setHighlightReel] = React.useState<HighlightReelOutput | null>(null);
@@ -752,7 +753,7 @@ export default function MatchDetailsClient({
                                 <CardDescription>Generate an AI-powered summary of the team's tactical profile based on their season performance.</CardDescription>
                             </CardHeader>
                              <CardContent className="space-y-4">
-                                <Button onClick={handleGenerateAnalysis} disabled={isGeneratingAnalysis}>
+                                <Button onClick={() => handleGenerateAnalysis(team.teamId)} disabled={isGeneratingAnalysis}>
                                     <BrainCircuit className={`mr-2 h-4 w-4 ${isGeneratingAnalysis ? 'animate-spin' : ''}`} />
                                     {isGeneratingAnalysis ? 'Analyzing...' : (analysisResult ? 'Regenerate Analysis' : 'Generate Analysis')}
                                 </Button>
