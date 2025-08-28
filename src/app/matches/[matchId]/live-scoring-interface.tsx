@@ -67,7 +67,8 @@ function DynamicContextBar({ liveScore, match, onStrikeBatsman, nonStriker }: { 
             if (partnership > 0 && onStrikeBatsman && nonStriker) {
                 setDisplayMessage(`Partnership: ${partnership} runs`);
             } else {
-                 setDisplayMessage(`CRR: ${(liveScore.runs / (liveScore.overs + ((liveScore.balls || 0)/6) || 1)).toFixed(2)}`);
+                 const runRate = (liveScore.runs / ((liveScore.overs || 0) + ((liveScore.balls || 0)/6) || 1)).toFixed(2);
+                 setDisplayMessage(`Current Run Rate: ${runRate}`);
             }
         }
         
@@ -409,10 +410,7 @@ export function LiveScoringInterface({
                  {forecast && <span><WeatherIcon condition={forecast.details.condition} className="inline mr-1.5 h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>}
                  {match.tossWinnerId && <span><Medal className="inline mr-1.5 h-3 w-3" />{tossWinner} won the toss & chose to {match.tossDecision}</span>}
             </div>
-
-            {/* Bottom Row: Rates */}
              <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs mt-2 text-gray-300">
-                <span>CRR: {runRate.toFixed(2)}</span>
                 { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
                 { !isFirstInnings && <span>RRR: {+requiredRunRate > 0 ? requiredRunRate : '-'}</span>}
                 { isFirstInnings && <span>PROJECTED: {projectedScore > 0 ? `~${projectedScore}` : '-'}</span>}
@@ -479,12 +477,12 @@ export function LiveScoringInterface({
                                       className="flex items-center justify-center gap-2"
                                       disabled={isPending || isSimulating}
                                     >
-                                        <RadioGroupItem value="Over the Wicket" id="angle-over" className="peer sr-only" />
-                                        <Label htmlFor="angle-over" className={cn("flex items-center gap-2 rounded-md border-2 border-muted bg-popover p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
+                                        <Label htmlFor="angle-over" className={cn("flex items-center gap-2 rounded-md border-2 p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                            <RadioGroupItem value="Over the Wicket" id="angle-over" />
                                             <CornerUpRight className="h-4 w-4"/> Over the Wicket
                                         </Label>
-                                        <RadioGroupItem value="Round the Wicket" id="angle-round" className="peer sr-only" />
-                                        <Label htmlFor="angle-round" className={cn("flex items-center gap-2 rounded-md border-2 border-muted bg-popover p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
+                                        <Label htmlFor="angle-round" className={cn("flex items-center gap-2 rounded-md border-2 p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                            <RadioGroupItem value="Round the Wicket" id="angle-round" />
                                             <CornerUpLeft className="h-4 w-4"/> Round the Wicket
                                         </Label>
                                     </RadioGroup>
@@ -570,6 +568,7 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
 
 

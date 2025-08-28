@@ -631,3 +631,4 @@ export interface LiveMatchUpdateOutput {
     summary: string;
     tacticalSuggestions?: string[];
 }
+
