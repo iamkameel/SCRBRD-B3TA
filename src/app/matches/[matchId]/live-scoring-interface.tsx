@@ -49,7 +49,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
 };
 
 
-function DynamicContextBar({ liveScore, match, bowler, bowlerStats }: { liveScore: LiveScore, match: Match, bowler?: RosterMember, bowlerStats: any }) {
+function DynamicContextBar({ liveScore, match, bowler, bowlerStats, bowlingTeamRoster }: { liveScore: LiveScore, match: Match, bowler?: RosterMember, bowlerStats: any, bowlingTeamRoster: RosterMemberWithStats[] }) {
     const [currentIndex, setCurrentIndex] = React.useState(0);
     const messages: (string | null)[] = [];
 
@@ -100,7 +100,8 @@ function DynamicContextBar({ liveScore, match, bowler, bowlerStats }: { liveScor
 
     // Message 6: Bowler's Spell
     if (bowler && bowlerStats) {
-        messages.push(`${getDisplayName(bowler.personId, [])?.split(' ').pop()?.toUpperCase()}: ${bowlerStats.overs || 0}.${bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`);
+        const bowlerName = getDisplayName(bowler.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase();
+        messages.push(`${bowlerName}: ${bowlerStats.overs || 0}.${bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`);
     }
 
     const activeMessages = messages.filter(m => m !== null);
@@ -435,7 +436,7 @@ export function LiveScoringInterface({
                      <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
-                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster).split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
+                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.wickets}-{bowlerStats.runsConceded}</p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -451,12 +452,18 @@ export function LiveScoringInterface({
                         <span className="font-bold text-xs sm:text-sm">{nonStrikerStats.runs} <span className="opacity-70 font-normal">({nonStrikerStats.balls})</span></span>
                     </div>
                     <div className="flex-1 flex items-center justify-between px-2 sm:px-3 bg-green-500 rounded-full h-[calc(100%-8px)] shadow-md">
-                        <span className="font-bold text-xs sm:text-sm uppercase flex items-center gap-1 truncate"><ChevronRight className="h-4 w-4 flex-shrink-0" />{getDisplayName(onStrikeBatsman?.personId, battingTeamRoster).split(' ').pop()}</span>
-                        <span className="font-bold text-xs sm:text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
+                        {onStrikeBatsmanId ? (
+                            <>
+                                <span className="font-bold text-xs sm:text-sm uppercase flex items-center gap-1 truncate"><ChevronRight className="h-4 w-4 flex-shrink-0" />{getDisplayName(onStrikeBatsman?.personId, battingTeamRoster).split(' ').pop()}</span>
+                                <span className="font-bold text-xs sm:text-sm">{onStrikeStats.runs} <span className="opacity-70 font-normal">({onStrikeStats.balls})</span></span>
+                            </>
+                        ) : (
+                            <span className="font-bold text-xs sm:text-sm uppercase truncate w-full text-center">SELECT...</span>
+                        )}
                     </div>
                 </div>
                 <div className="text-center text-xs text-gray-300 h-4 mt-1">
-                    <DynamicContextBar liveScore={liveScore} match={match} bowler={bowler} bowlerStats={bowlerStats} />
+                    <DynamicContextBar liveScore={liveScore} match={match} bowler={bowler} bowlerStats={bowlerStats} bowlingTeamRoster={bowlingTeamRoster} />
                 </div>
             </div>
             
@@ -622,4 +629,3 @@ export function LiveScoringInterface({
   );
 }
 
-    
