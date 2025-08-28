@@ -668,9 +668,7 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
     if (updates.nonStrikerBatsmanId) liveScoreUpdate['liveScore.nonStrikerBatsmanId'] = updates.nonStrikerBatsmanId;
     if (updates.bowlerId) {
         liveScoreUpdate['liveScore.bowlerId'] = updates.bowlerId;
-        liveScoreUpdate['liveScore.lastBowlerId'] = matchSnap.data()?.liveScore?.bowlerId || null;
-        liveScoreUpdate['liveScore.currentOver'] = [];
-        liveScoreUpdate['liveScore.balls'] = 0; // Reset balls for new over
+        // Don't reset anything here, just set the new bowler
     }
     if (updates.bowlingAngle) liveScoreUpdate['liveScore.bowlingAngle'] = updates.bowlingAngle;
     
@@ -713,6 +711,14 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     const onStrikeId = liveScore.onStrikeBatsmanId;
     const bowlerId = liveScore.bowlerId;
+
+    const bowlerCurrentStats = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+    if (bowlerCurrentStats.overs >= 4) {
+        throw new Error("This bowler has already bowled their maximum of 4 overs.");
+    }
+    if (bowlerId === liveScore.lastBowlerId) {
+        throw new Error("A bowler cannot bowl consecutive overs.");
+    }
 
     const isWicket = ball.event === 'W';
     const isNoBall = ball.event === 'nb';
@@ -797,32 +803,42 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     if (isLegalDelivery) {
         if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = (liveScore.bowlerStats[bowlerId].balls || 0) + 1;
-        
         liveScore.balls++;
-        const endOfOver = liveScore.balls >= 6;
 
+        const endOfOver = liveScore.balls >= 6;
         if (endOfOver) {
             liveScore.overs++;
             
             const overRuns = liveScore.currentOver.reduce((sum, e) => {
                 const run = parseInt(e, 10);
-                return isNaN(run) ? sum : sum + run;
+                if (!isNaN(run)) return sum + run;
+                if (e.includes('wd') || e.includes('nb')) return sum + 1;
+                return sum;
             }, 0);
+
             if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
             
-            if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
+            if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].overs++;
             if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = 0;
-            // Note: We don't reset liveScore.balls to 0 here. The UI will prompt for a new bowler,
-            // and selecting a new bowler will trigger the reset.
+            
+            liveScore.currentOver = [];
+            liveScore.balls = 0;
+            liveScore.lastBowlerId = liveScore.bowlerId;
+            liveScore.bowlerId = undefined; // Force selection of a new bowler
+
+            // Swap batsmen at end of over
+            [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+
         }
     }
     
-    const runsThatRotateStrike = runsFromBall + (ball.event === 'bye' || ball.event === 'leg_bye' ? runsFromBall : 0);
+    const runsThatRotateStrike = ball.event !== 'wd' && ball.event !== 'nb' ? runsFromBall : 0;
     const isOddRun = runsThatRotateStrike % 2 !== 0;
-    const isEndOfOver = isLegalDelivery && liveScore.balls >= 6;
-    if ((isLegalDelivery && isOddRun && !isEndOfOver) || (isLegalDelivery && !isOddRun && isEndOfOver)) {
+
+    if (isLegalDelivery && isOddRun) {
         [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
     }
+    
 
     await updateDoc(matchRef, { liveScore, previousLiveScore });
     revalidatePath(`/matches/${matchId}`);
