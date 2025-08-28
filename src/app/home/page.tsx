@@ -28,9 +28,9 @@ import { cn } from '@/lib/utils';
 const features = [
   {
     icon: Wand2,
-    title: 'AI Scorecard Generation',
-    description: 'Instantly create realistic T20 scorecards from just lineups, perfect for demos or filling in missing data.',
-    image: 'https://picsum.photos/600/500',
+    title: 'Scorecard Generation',
+    description: 'Record and Track Scorecards & in-depth match analysis .',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/08/Gemini_Generated_Image_ru4rkzru4rkzru4r.png',
     imageAlt: 'Digital representation of a cricket scorecard on a screen.',
     dataAiHint: 'digital scorecard',
   },
@@ -38,7 +38,7 @@ const features = [
     icon: BarChart2,
     title: 'Advanced Match Visuals',
     description: 'Analyze games with interactive Manhattan, Worm, and Wagon Wheel charts for a deeper understanding of match flow.',
-    image: 'https://picsum.photos/600/500',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/08/scrbd-analysis.png',
     imageAlt: 'A vibrant chart showing sports analytics.',
     dataAiHint: 'analytics chart',
   },
@@ -46,7 +46,7 @@ const features = [
     icon: Target,
     title: 'Player Performance Tracker',
     description: 'Monitor long-term player development with performance graphs, skill ratings, and detailed training logs.',
-    image: 'https://picsum.photos/600/500',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/08/Gemini_Generated_Image_ko0p1mko0p1mko0p.png',
     imageAlt: 'A focused cricketer in the nets, with data overlays showing performance metrics.',
     dataAiHint: 'cricket training',
   },
@@ -79,21 +79,21 @@ const testimonials = [
   {
     name: 'Priya Sharmma',
     role: 'Head of Sport',
-    avatar: 'https://picsum.photos/100/100',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg',
     dataAiHint: 'woman smiling',
     testimonial: 'SCRBRD has revolutionized how we manage our cricket program. The strategic calendar and AI analysis give us an unprecedented edge in planning and execution. It\'s an indispensable tool.',
   },
   {
     name: 'Jonah Miller',
     role: '1st XI Coach',
-    avatar: 'https://picsum.photos/100/100',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg',
     dataAiHint: 'man portrait',
     testimonial: 'The player development tracker is a game-changer. I can visualize a player\'s progress over the season and have data-backed conversations about their performance. The AI insights are incredibly accurate.',
   },
   {
     name: 'Nkosi Sipamla',
     role: 'Parent & Spectator',
-    avatar: 'https://picsum.photos/100/100',
+    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg',
     dataAiHint: 'father portrait',
     testimonial: 'As a parent, staying updated with my son\'s schedule and performance has never been easier. The app is intuitive and provides all the information I need right at my fingertips. Truly fantastic!',
   },
@@ -109,7 +109,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section
           className="relative w-full py-20 md:py-32 lg:py-40 bg-cover bg-center bg-fixed"
-          style={{ backgroundImage: "url('https://picsum.photos/1600/900')" }}
+          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg')" }}
           data-ai-hint="cricket stadium floodlights"
         >
           <div className="absolute inset-0 bg-black/60" />
@@ -132,7 +132,7 @@ export default function LandingPage() {
             </div>
             <div className="hidden lg:block">
               <Image
-                src="https://picsum.photos/600/600"
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3628912.jpg"
                 width={600}
                 height={600}
                 alt="A cricket player at the stumps"
@@ -185,21 +185,24 @@ export default function LandingPage() {
         {/* For Every Role Section */}
         <section
           id="user-experience"
-          className="relative w-full py-12 md:py-24 lg:py-32 bg-muted/50"
+          className="relative w-full py-12 md:py-24 lg:py-32 bg-cover bg-center bg-fixed"
+           style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/08/Gemini_Generated_Image_mbyo0zmbyo0zmbyo.jpeg')" }}
+           data-ai-hint="cricket fans celebrating"
         >
+          <div className="absolute inset-0 bg-black/70" />
           <div className="container relative z-10">
               <div className="mx-auto max-w-2xl lg:text-center">
                   <h2 className="text-base font-semibold leading-7 text-primary">Built for the whole team</h2>
-                  <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  <p className="mt-2 text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
                       A dedicated experience for every role
                   </p>
-                   <p className="mt-6 text-lg leading-8 text-muted-foreground">
+                   <p className="mt-6 text-lg leading-8 text-gray-300">
                       Whether you're managing a league, coaching a team, or following the action, SCRBRD provides the tools you need to succeed.
                   </p>
               </div>
               <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                   {forEveryRole.map((role) => (
-                      <Card key={role.role} className="bg-background text-center shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+                      <Card key={role.role} className="bg-background/90 text-center shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
                           <CardHeader className="items-center">
                               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
                                 <role.icon className="h-7 w-7" aria-hidden="true" />
@@ -254,7 +257,7 @@ export default function LandingPage() {
         {/* Final CTA Section */}
         <section
           className="relative w-full py-24 md:py-32 overflow-hidden bg-cover bg-center bg-fixed"
-          style={{ backgroundImage: "url('https://picsum.photos/1600/900')" }}
+          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/cricket-stadium_1.png')" }}
           data-ai-hint="cricket stadium sunset"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40" />
