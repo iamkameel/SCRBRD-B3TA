@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -380,4 +379,3 @@ export async function generateHighlightReelAction(matchId: string): Promise<High
         throw new Error("The AI failed to generate highlights.");
     }
 }
-
