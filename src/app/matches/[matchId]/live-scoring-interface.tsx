@@ -81,30 +81,24 @@ function DynamicContextBar({ liveScore, match, bowler, bowlerStats, bowlingTeamR
         }
     }
     
-    // Message 3: Current Run Rate
+    // Message 3: Projected Score
     const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
-    if (oversDecimal > 0) {
-        const crr = (liveScore.runs / oversDecimal).toFixed(2);
-        messages.push(`Current Run Rate: ${crr}`);
-    }
-
-    // Message 4: Projected Score
     if (isFirstInnings && oversDecimal > 0) {
         const crr = (liveScore.runs / oversDecimal);
         const projected = Math.round(liveScore.runs + (20 - oversDecimal) * crr);
         messages.push(`Projected Score: ~${projected}`);
     }
 
-    // Message 5: Partnership
+    // Message 4: Partnership
     const partnership = liveScore.extras?.partnership;
     if (partnership && partnership > 0) {
         messages.push(`Partnership: ${partnership} runs`);
     }
 
-    // Message 6: Bowler's Spell
+    // Message 5: Bowler's Spell
     if (bowler && bowlerStats) {
         const bowlerName = getDisplayName(bowler.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase();
-        messages.push(`${bowlerName}: ${bowlerStats.overs || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`);
+        messages.push(`${bowlerName}: ${bowlerStats.overs}.${bowlerStats.balls}-${bowlerStats.maidens}-${bowlerStats.runsConceded}-${bowlerStats.wickets}`);
     }
 
     const activeMessages = messages.filter(m => m !== null);
@@ -230,7 +224,7 @@ function BowlingCard({ bowlerStats, roster }: { bowlerStats: LiveScore['bowlerSt
                         {bowlers.length > 0 ? bowlers.map(b => (
                             <TableRow key={b.name}>
                                 <TableCell className="font-medium">{b.name}</TableCell>
-                                <TableCell className="text-right">{b.overs}</TableCell>
+                                <TableCell className="text-right">{b.overs}.{b.balls}</TableCell>
                                 <TableCell className="text-right">{b.maidens}</TableCell>
                                 <TableCell className="text-right">{b.runsConceded}</TableCell>
                                 <TableCell className="text-right">{b.wickets}</TableCell>
@@ -326,7 +320,7 @@ export function LiveScoringInterface({
   const isAllOut = liveScore.wickets >= 10;
   const isOversFinished = liveScore.overs >= 20;
   
-  const isEndOfOver = liveScore.balls >= 6;
+  const isEndOfOver = liveScore.balls === 6;
   const needsNewBatsman = !liveScore.onStrikeBatsmanId && !isAllOut;
   const needsNewBowler = isEndOfOver;
   const needsPlayerSelection = needsNewBatsman || needsNewBowler;
@@ -352,9 +346,11 @@ export function LiveScoringInterface({
     return [];
   }, [wagonWheelView, liveScore.shots, onStrikeBatsmanId, nonStrikerBatsmanId]);
 
-  const [firstBatsman, secondBatsman] = liveScore.onStrikeBatsmanId === onStrikeBatsman?.personId
-    ? [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] 
-    : [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
+  const [firstBatsman, secondBatsman] = liveScore.onStrikeBatsmanId === liveScore.nonStrikerBatsmanId 
+    ? [liveScore.onStrikeBatsmanId, null] 
+    : (onStrikeBatsmanId === onStrikeBatsman?.personId)
+        ? [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] 
+        : [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
 
   const firstBatsmanStats = liveScore.batsmanStats?.[firstBatsman || ''] || { runs: 0, balls: 0 };
   const secondBatsmanStats = liveScore.batsmanStats?.[secondBatsman || ''] || { runs: 0, balls: 0 };
@@ -520,15 +516,19 @@ export function LiveScoringInterface({
 
              {/* Context Bar */}
             <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs text-gray-300">
-                <span><Clock className="inline mr-1.5 h-3 w-3" />{format(match.dateTime, 'p')}</span>
-                <span><MapPin className="inline mr-1.5 h-3 w-3" />{match.fieldName}</span>
-                 {forecast && <span><WeatherIcon condition={forecast.details.condition} className="inline mr-1.5 h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>}
-                 {match.tossWinnerId && <span><Medal className="inline mr-1.5 h-3 w-3" />{tossWinner} won the toss & chose to {match.tossDecision}</span>}
-                 { !isFirstInnings && <span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span> }
+                 {isFirstInnings && <span>1st Innings</span>}
+                { !isFirstInnings && <span>2nd Innings</span> }
+                <Separator orientation="vertical" className="h-4 bg-white/20"/>
+                <span>{format(match.dateTime, 'p')}</span>
+                <Separator orientation="vertical" className="h-4 bg-white/20"/>
+                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
+                 {forecast && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span></>}
+                 {match.tossWinnerId && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span className="flex items-center gap-1.5"><Medal className="h-3 w-3" />{tossWinner} won the toss & chose to {match.tossDecision}</span></>}
+                 { !isFirstInnings && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span></> }
             </div>
         </div>
 
-        {needsPlayerSelection ? (
+        {needsPlayerSelection && (
              <Card>
                 <CardHeader>
                     <CardTitle>Player Selection Required</CardTitle>
@@ -554,7 +554,8 @@ export function LiveScoringInterface({
                     ) : null}
                 </CardContent>
             </Card>
-        ) : isAllOut ? (
+        )}
+        {isAllOut && (
              <Card className="p-8 text-center bg-muted">
                 <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
                 <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
@@ -563,108 +564,107 @@ export function LiveScoringInterface({
                     {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
                 </Button>
             </Card>
-        ) : (
-            isReadyToScore && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div className="lg:col-span-2 space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                    <div>
-                                        <CardTitle>Scoring Controls</CardTitle>
-                                        <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
-                                    </div>
-                                    <div className="p-1 bg-muted rounded-md flex items-center">
-                                        <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="gap-1.5"><Users className="h-4 w-4"/>Team</Button>
-                                        <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="gap-1.5"><User className="h-4 w-4"/>On-strike</Button>
-                                        <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="gap-1.5"><User className="h-4 w-4"/>Non-striker</Button>
-                                    </div>
+        )}
+        {!needsPlayerSelection && !isAllOut && isReadyToScore && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2 space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div>
+                                    <CardTitle>Scoring Controls</CardTitle>
+                                    <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex items-center justify-center gap-2" disabled={isPending || isSimulating}>
-                                        <Label htmlFor="angle-over" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
-                                            <CornerUpRight className="h-4 w-4"/> Over the Wicket
-                                        </Label>
-                                        <Label htmlFor="angle-round" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
-                                            <CornerUpLeft className="h-4 w-4"/> Round the Wicket
-                                        </Label>
-                                    </RadioGroup>
-                                    <div className="flex justify-center pt-4">
-                                        <WagonWheel
-                                            onShotSelect={handleShotSelect}
-                                            disabled={isPending || isSimulating || needsNewBatsman}
-                                            shots={wagonWheelShots}
-                                        />
-                                    </div>
-                                    <div className="pt-4 border-t">
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Recent Balls</h4>
-                                    <RecentBalls history={liveScore.ballHistory || []} />
-                                    </div>
+                                 <div className="p-1 bg-muted rounded-md flex items-center gap-1">
+                                    <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7">Team</Button>
+                                    <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7">On-strike</Button>
+                                    <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7">Non-striker</Button>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                    <div className="lg:col-span-1 space-y-4">
-                        <BowlingCard bowlerStats={liveScore.bowlerStats} roster={bowlingTeamRoster} />
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle>Win Probability</CardTitle>
-                                    <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate || isSimulating}>
-                                        <Wand2 className={cn('mr-2 h-4 w-4', isGeneratingUpdate && 'animate-spin')} />
-                                        Analyze
-                                    </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex items-center justify-center gap-2" disabled={isPending || isSimulating}>
+                                    <Label htmlFor="angle-over" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                        <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
+                                        <CornerUpRight className="h-4 w-4"/> Over the Wicket
+                                    </Label>
+                                    <Label htmlFor="angle-round" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
+                                        <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
+                                        <CornerUpLeft className="h-4 w-4"/> Round the Wicket
+                                    </Label>
+                                </RadioGroup>
+                                <div className="flex justify-center pt-4">
+                                    <WagonWheel
+                                        onShotSelect={handleShotSelect}
+                                        disabled={isPending || isSimulating || needsNewBatsman}
+                                        shots={wagonWheelShots}
+                                    />
                                 </div>
-                            </CardHeader>
-                            <CardContent className="min-h-[10rem] flex flex-col justify-center">
-                                {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
-                                {!isGeneratingUpdate && liveUpdate && (
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between font-bold text-lg">
-                                            <span>{isFirstInnings ? match.teamAName : match.teamBName}</span>
-                                            <span>{liveUpdate.winProbability}%</span>
-                                        </div>
-                                        <Progress value={liveUpdate.winProbability} />
-                                        <p className="text-xs text-muted-foreground text-center">{liveUpdate.summary}</p>
-                                        {liveUpdate.tacticalSuggestions && liveUpdate.tacticalSuggestions.length > 0 && (
-                                            <div className="pt-4">
-                                                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Lightbulb className="text-yellow-400" /> AI Suggestions</h4>
-                                                <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
-                                                    {liveUpdate.tacticalSuggestions.map((suggestion, index) => (
-                                                        <li key={index}>{suggestion}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                                {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Click "Analyze" for a win probability prediction.</p>}
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
-                            <CardContent className="flex flex-col gap-2">
-                                <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
-                                    <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
-                                    Simulate Ball
-                                </Button>
-                                <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
-                                    <Undo className="mr-2 h-4 w-4" />
-                                    Undo Last Ball
-                                </Button>
-                                <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending || isSimulating}>
-                                    {isFirstInnings ? "End Innings" : "End Match"}
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
+                                <div className="pt-4 border-t">
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2">Recent Balls</h4>
+                                <RecentBalls history={liveScore.ballHistory || []} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
-            )
+                <div className="lg:col-span-1 space-y-4">
+                    <BowlingCard bowlerStats={liveScore.bowlerStats} roster={bowlingTeamRoster} />
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle>Win Probability</CardTitle>
+                                <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate || isSimulating}>
+                                    <Wand2 className={cn('mr-2 h-4 w-4', isGeneratingUpdate && 'animate-spin')} />
+                                    Analyze
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="min-h-[10rem] flex flex-col justify-center">
+                            {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
+                            {!isGeneratingUpdate && liveUpdate && (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between font-bold text-lg">
+                                        <span>{isFirstInnings ? match.teamAName : match.teamBName}</span>
+                                        <span>{liveUpdate.winProbability}%</span>
+                                    </div>
+                                    <Progress value={liveUpdate.winProbability} />
+                                    <p className="text-xs text-muted-foreground text-center">{liveUpdate.summary}</p>
+                                    {liveUpdate.tacticalSuggestions && liveUpdate.tacticalSuggestions.length > 0 && (
+                                        <div className="pt-4">
+                                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Lightbulb className="text-yellow-400" /> AI Suggestions</h4>
+                                            <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
+                                                {liveUpdate.tacticalSuggestions.map((suggestion, index) => (
+                                                    <li key={index}>{suggestion}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Click "Analyze" for a win probability prediction.</p>}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
+                        <CardContent className="flex flex-col gap-2">
+                            <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
+                                <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
+                                Simulate Ball
+                            </Button>
+                            <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
+                                <Undo className="mr-2 h-4 w-4" />
+                                Undo Last Ball
+                            </Button>
+                            <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending || isSimulating}>
+                                {isFirstInnings ? "End Innings" : "End Match"}
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         )}
     </div>
     <ScoringDialog 
