@@ -18,6 +18,8 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
     const center = size / 2;
     const infieldRadius = center * 0.55;
 
+    const [visibleRuns, setVisibleRuns] = React.useState<Set<number>>(new Set([0, 1, 2, 3, 4, 6]));
+
     const handleClick = (event: React.MouseEvent<SVGSVGElement>) => {
         if (disabled || !svgRef.current) return;
 
@@ -48,13 +50,25 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
     }
 
     const legendItems = [
-        { label: '6', color: '#EF4444' },
-        { label: '4', color: '#3B82F6' },
-        { label: '3', color: '#FBBF24' },
-        { label: '2', color: '#A3E635' },
-        { label: '1', color: '#EC4899' },
-        { label: '0', color: 'hsl(var(--muted-foreground))' },
+        { label: '6', runs: 6, color: '#EF4444' },
+        { label: '4', runs: 4, color: '#3B82F6' },
+        { label: '3', runs: 3, color: '#FBBF24' },
+        { label: '2', runs: 2, color: '#A3E635' },
+        { label: '1', runs: 1, color: '#EC4899' },
+        { label: '0', runs: 0, color: 'hsl(var(--muted-foreground))' },
     ];
+    
+    const toggleRunVisibility = (run: number) => {
+        setVisibleRuns(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(run)) {
+                newSet.delete(run);
+            } else {
+                newSet.add(run);
+            }
+            return newSet;
+        });
+    };
 
     return (
         <div className="flex flex-col items-center">
@@ -112,7 +126,7 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
 
                 
                 {/* Rendered Shots */}
-                {shots.map((shot, index) => {
+                {shots.filter(shot => visibleRuns.has(shot.runs)).map((shot, index) => {
                     const angleRad = shot.angle * (Math.PI / 180);
                     // Start from the stumps area
                     const startX = center; 
@@ -141,10 +155,17 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
             </svg>
             <div className="flex items-center justify-center gap-4 mt-4">
                 {legendItems.map(item => (
-                    <div key={item.label} className="flex items-center gap-1.5">
+                    <button
+                        key={item.label}
+                        onClick={() => toggleRunVisibility(item.runs)}
+                        className={cn(
+                            "flex items-center gap-1.5 transition-opacity",
+                            !visibleRuns.has(item.runs) && "opacity-40"
+                        )}
+                    >
                         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
                         <span className="text-xs text-muted-foreground">{item.label}</span>
-                    </div>
+                    </button>
                 ))}
             </div>
             <p className="text-sm text-muted-foreground mt-2">Tap on the field to record a shot</p>
