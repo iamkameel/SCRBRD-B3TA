@@ -637,9 +637,26 @@ export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]>
 });
 
 // LIVE SCORING ACTIONS
+async function checkScoringPermission(matchId: string, userId: string): Promise<boolean> {
+    const user = await getPerson(userId);
+    if (!user) return false;
+    if (user.roles.includes('Admin') || user.roles.includes('Sportsmaster')) {
+        return true;
+    }
+    const officials = await getMatchOfficials(matchId);
+    const isOfficial = officials.some(o => o.personId === userId && o.confirmed);
+    return isOfficial;
+}
+
+
 export async function updateLivePlayersAction(matchId: string, updates: Partial<LiveScore>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
+    
+    if (!(await checkScoringPermission(matchId, userId))) {
+        throw new Error("You do not have permission to score this match.");
+    }
+    
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
     if (!matchSnap.exists()) {
@@ -665,6 +682,10 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
+    if (!(await checkScoringPermission(matchId, userId))) {
+        throw new Error("You do not have permission to score this match.");
+    }
+
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
     if (!matchSnap.exists()) {
@@ -676,7 +697,6 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 }, bowlingAngle: 'Over the Wicket'
     };
     
-    // Initialize nested objects if they don't exist
     if (!liveScore.batsmanStats) liveScore.batsmanStats = {};
     if (!liveScore.bowlerStats) liveScore.bowlerStats = {};
     if (!liveScore.shots) liveScore.shots = [];
@@ -701,16 +721,14 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const runsFromBall = ball.runs ?? 0;
     
-    // Update live scores
     if (isWide) {
-        liveScore.runs += 1 + runsFromBall; // 1 for the wide penalty, plus any runs taken
+        liveScore.runs += 1 + runsFromBall;
         liveScore.extras.total += 1 + runsFromBall;
         liveScore.extras.wides += 1 + runsFromBall;
     } else if (isNoBall) {
-        liveScore.runs += 1 + runsFromBall; // 1 for the no-ball penalty
+        liveScore.runs += 1 + runsFromBall;
         liveScore.extras.total++;
         liveScore.extras.noBalls++;
-        // Runs from the bat on a no-ball are credited to the batsman
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
         liveScore.batsmanStats[onStrikeId].runs += runsFromBall;
         liveScore.extras.partnership += runsFromBall;
@@ -719,7 +737,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         liveScore.extras.total += runsFromBall;
         if (ball.event === 'bye') liveScore.extras.byes += runsFromBall;
         if (ball.event === 'leg_bye') liveScore.extras.legByes += runsFromBall;
-    } else if (!isWicket) { // Normal runs from the bat
+    } else if (!isWicket) {
         liveScore.runs += runsFromBall;
         liveScore.extras.partnership += runsFromBall;
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
@@ -727,44 +745,37 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
 
 
-    // Update batsman balls faced
     if (onStrikeId && isLegalDelivery) {
         liveScore.batsmanStats[onStrikeId] = liveScore.batsmanStats[onStrikeId] || { runs: 0, balls: 0 };
         liveScore.batsmanStats[onStrikeId].balls++;
     }
     
-    // Update bowler stats
     if (bowlerId) {
         liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-        // No-balls and wides are credited against the bowler
         if (isNoBall || isWide) liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
         else if(!isWicket && ball.event !== 'bye' && ball.event !== 'leg_bye') liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
         
         if (isWicket && ball.dismissal?.type !== 'Run Out') liveScore.bowlerStats[bowlerId].wickets++;
     }
 
-    // Handle wickets
     if (isWicket) {
         if (liveScore.wickets < 10) {
             liveScore.wickets++;
             if (onStrikeId) {
                 liveScore.batsmenOut.push(onStrikeId);
             }
-            liveScore.onStrikeBatsmanId = null; // Clear the on-strike batsman
-            liveScore.extras.partnership = 0; // Reset partnership on wicket
+            liveScore.onStrikeBatsmanId = null;
+            liveScore.extras.partnership = 0;
         }
     }
     
-    // Update shots
     if (ball.angle !== undefined && ball.distance !== undefined) {
         if (!liveScore.shots) liveScore.shots = [];
         liveScore.shots.push({ runs: runsFromBall, angle: ball.angle, distance: ball.distance });
     }
     
-    // Update current over display
     liveScore.currentOver.push(ball.event);
     
-    // Update ball history
     if (liveScore.ballHistory) {
       liveScore.ballHistory.push(ball.event);
       if (liveScore.ballHistory.length > 18) {
@@ -772,7 +783,6 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
       }
     }
 
-    // Update overs and balls count
     if (isLegalDelivery) {
         if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = (liveScore.bowlerStats[bowlerId].balls || 0) + 1;
         
@@ -783,7 +793,6 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             liveScore.overs++;
             liveScore.balls = 0;
             
-            // Check for maiden over before resetting currentOver
             const overRuns = liveScore.currentOver.reduce((sum, e) => {
                 const run = parseInt(e, 10);
                 return isNaN(run) ? sum : sum + run;
@@ -792,13 +801,12 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             
             liveScore.currentOver = [];
             if(liveScore.ballHistory) liveScore.ballHistory.push('|');
-            liveScore.lastBowlerId = bowlerId; // Store the last bowler
+            liveScore.lastBowlerId = bowlerId;
             if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
             if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = 0;
         }
     }
     
-     // Rotate strike
     const runsThatRotateStrike = runsFromBall + (ball.event === 'bye' || ball.event === 'leg_bye' ? runsFromBall : 0);
     const isOddRun = runsThatRotateStrike % 2 !== 0;
     const isEndOfOver = isLegalDelivery && liveScore.balls === 0;
@@ -815,6 +823,9 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 export async function simulateBallAction(matchId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
+    if (!(await checkScoringPermission(matchId, userId))) {
+        throw new Error("You do not have permission to score this match.");
+    }
 
     const outcomes = [
         { event: '.', runs: 0, probability: 0.4 },
@@ -848,6 +859,10 @@ export async function simulateBallAction(matchId: string) {
 export async function undoLastBallAction(matchId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
+    if (!(await checkScoringPermission(matchId, userId))) {
+        throw new Error("You do not have permission to score this match.");
+    }
+    
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
     if (!matchSnap.exists()) {
@@ -870,6 +885,10 @@ export async function undoLastBallAction(matchId: string) {
 export async function endInningsAction(matchId: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
+    if (!(await checkScoringPermission(matchId, userId))) {
+        throw new Error("You do not have permission to score this match.");
+    }
+    
     const matchRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchRef);
     if (!matchSnap.exists()) {

@@ -274,6 +274,7 @@ export default function MatchDetailsClient({
   const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
   
   const isPlayerInMatch = teamALineup.includes(person?.personId || '') || teamBLineup.includes(person?.personId || '');
+  const canLiveScore = isAdmin || isOfficialForMatch;
 
   React.useEffect(() => {
     setIsClient(true);
@@ -410,7 +411,8 @@ export default function MatchDetailsClient({
     startAnalysisGeneration(async () => {
         try {
             const result = await generateOppositionAnalysisAction(teamToAnalyzeId);
-            toast({ title: "Success", description: "Analysis has been generated and saved to the team's profile." });
+            setAnalysisResult(result);
+            toast({ title: "Analysis Complete", description: "The team's strengths and weaknesses have been analyzed." });
         } catch (error) {
              toast({ title: "Error", description: error instanceof Error ? error.message : "Could not generate analysis.", variant: "destructive" });
         } finally {
@@ -570,6 +572,7 @@ export default function MatchDetailsClient({
                                 teamARoster={teamARosterWithStats}
                                 teamBRoster={teamBRosterWithStats}
                                 match={match}
+                                canLiveScore={canLiveScore}
                             />
                         ) : (
                             (innings1 && innings2) ? (
@@ -745,50 +748,23 @@ export default function MatchDetailsClient({
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle>Opposition Analysis</CardTitle>
-                                <CardDescription>Generate a strategic scouting report on either team.</CardDescription>
+                                <CardTitle>Team Strengths & Weaknesses</CardTitle>
+                                <CardDescription>Generate an AI-powered summary of the team's tactical profile based on their season performance.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                {(match.status === 'scheduled' && match.teamBId) &&
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Button 
-                                            onClick={() => handleGenerateAnalysis(match.teamBId)} 
-                                            disabled={isGeneratingAnalysis}
-                                            variant="outline"
-                                        >
-                                            {(isGeneratingAnalysis && analyzedTeamId === match.teamBId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                            Analyze {match.teamBName}
-                                        </Button>
-                                        <Button 
-                                            onClick={() => handleGenerateAnalysis(match.teamAId)} 
-                                            disabled={isGeneratingAnalysis}
-                                            variant="outline"
-                                        >
-                                            {(isGeneratingAnalysis && analyzedTeamId === match.teamAId) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                            Analyze {match.teamAName}
-                                        </Button>
+                             <CardContent className="space-y-4">
+                                <Button onClick={handleGenerateAnalysis} disabled={isGeneratingAnalysis}>
+                                    <BrainCircuit className={`mr-2 h-4 w-4 ${isGeneratingAnalysis ? 'animate-spin' : ''}`} />
+                                    {isGeneratingAnalysis ? 'Analyzing...' : (analysisResult ? 'Regenerate Analysis' : 'Generate Analysis')}
+                                </Button>
+                                {isGeneratingAnalysis && (
+                                    <div className="flex items-center justify-center h-24 text-muted-foreground">
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Analyzing team performance...
                                     </div>
-                                }
-                                <div className="space-y-4">
-                                    {match.analysisReports?.[match.teamAId] && (
-                                        <div className="border p-4 rounded-md bg-muted/50">
-                                            <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamAName}</h3>
-                                            <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamAId]}</p>
-                                        </div>
-                                    )}
-                                    {match.analysisReports?.[match.teamBId] && (
-                                        <div className="border p-4 rounded-md bg-muted/50">
-                                            <h3 className="font-semibold text-lg mb-2">Scouting Report: {match.teamBName}</h3>
-                                            <p className="text-sm text-foreground/80 whitespace-pre-wrap">{match.analysisReports[match.teamBId]}</p>
-                                        </div>
-                                    )}
-                                    {Object.keys(match.analysisReports || {}).length === 0 && (
-                                        <div className="text-center text-muted-foreground py-8">
-                                            <p>No analysis has been generated yet.</p>
-                                            {match.status === 'scheduled' && match.teamBId && <p className="text-xs">Click a button above to generate a scouting report.</p>}
-                                        </div>
-                                    )}
-                                </div>
+                                )}
+                                {analysisResult && !isGeneratingAnalysis && (
+                                    <div className="prose dark:prose-invert max-w-none text-sm pt-4 whitespace-pre-wrap">{analysisResult}</div>
+                                )}
                             </CardContent>
                         </Card>
                         <Card>

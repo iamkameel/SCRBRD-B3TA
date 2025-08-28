@@ -6,8 +6,9 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, Extras, BowlingAngle, MatchForecast } from '@/lib/data';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock } from 'lucide-react';
+import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
@@ -22,7 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { FormItem, FormControl } from '@/components/ui/form';
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
     if (!playerId) return 'Select...';
@@ -166,10 +166,12 @@ export function LiveScoringInterface({
   teamARoster,
   teamBRoster,
   match,
+  canLiveScore
 }: {
   teamARoster: RosterMemberWithStats[];
   teamBRoster: RosterMemberWithStats[];
   match: Match;
+  canLiveScore: boolean;
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
@@ -339,6 +341,16 @@ export function LiveScoringInterface({
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   const tossWinner = match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName;
 
+  if (!canLiveScore) {
+      return (
+          <Alert variant="warning">
+              <Lock className="h-4 w-4" />
+              <AlertTitle>Permission Denied</AlertTitle>
+              <AlertDescription>You do not have the required permissions (Admin, Sportsmaster, or confirmed Match Official) to use the live scoring controls for this match.</AlertDescription>
+          </Alert>
+      );
+  }
+
   return (
     <>
     <div className="space-y-4">
@@ -466,20 +478,16 @@ export function LiveScoringInterface({
                                       className="grid grid-cols-2 gap-4"
                                       disabled={isPending || isSimulating}
                                     >
-                                        <div>
-                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="peer sr-only" />
-                                            <Label htmlFor="angle-over" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
-                                                <CornerUpRight className="mb-2 h-6 w-6"/>
-                                                Over the Wicket
-                                            </Label>
-                                        </div>
-                                        <div>
-                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="peer sr-only" />
-                                            <Label htmlFor="angle-round" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
-                                                <CornerUpLeft className="mb-2 h-6 w-6"/>
-                                                Round the Wicket
-                                            </Label>
-                                        </div>
+                                        <Label htmlFor="angle-over" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
+                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
+                                            <CornerUpRight className="mb-2 h-6 w-6"/>
+                                            Over the Wicket
+                                        </Label>
+                                         <Label htmlFor="angle-round" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
+                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
+                                            <CornerUpLeft className="mb-2 h-6 w-6"/>
+                                            Round the Wicket
+                                        </Label>
                                     </RadioGroup>
                                 </div>
                                 <div className="flex justify-center pt-4">
@@ -563,6 +571,7 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
 
 
