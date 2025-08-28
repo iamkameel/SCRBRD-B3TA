@@ -30,7 +30,7 @@ const features = [
     icon: Wand2,
     title: 'AI Scorecard Generation',
     description: 'Instantly create realistic T20 scorecards from just lineups, perfect for demos or filling in missing data.',
-    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2151240375-1.jpg',
+    image: 'https://picsum.photos/600/500',
     imageAlt: 'Digital representation of a cricket scorecard on a screen.',
     dataAiHint: 'digital scorecard',
   },
@@ -38,7 +38,7 @@ const features = [
     icon: BarChart2,
     title: 'Advanced Match Visuals',
     description: 'Analyze games with interactive Manhattan, Worm, and Wagon Wheel charts for a deeper understanding of match flow.',
-    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2151004124.jpg',
+    image: 'https://picsum.photos/600/500',
     imageAlt: 'A vibrant chart showing sports analytics.',
     dataAiHint: 'analytics chart',
   },
@@ -46,7 +46,7 @@ const features = [
     icon: Target,
     title: 'Player Performance Tracker',
     description: 'Monitor long-term player development with performance graphs, skill ratings, and detailed training logs.',
-    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/40090.jpg',
+    image: 'https://picsum.photos/600/500',
     imageAlt: 'A focused cricketer in the nets, with data overlays showing performance metrics.',
     dataAiHint: 'cricket training',
   },
@@ -79,21 +79,21 @@ const testimonials = [
   {
     name: 'Priya Sharmma',
     role: 'Head of Sport',
-    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150757143.jpg',
+    avatar: 'https://picsum.photos/100/100',
     dataAiHint: 'woman smiling',
     testimonial: 'SCRBRD has revolutionized how we manage our cricket program. The strategic calendar and AI analysis give us an unprecedented edge in planning and execution. It\'s an indispensable tool.',
   },
   {
     name: 'Jonah Miller',
     role: '1st XI Coach',
-    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2150007196.jpg',
+    avatar: 'https://picsum.photos/100/100',
     dataAiHint: 'man portrait',
     testimonial: 'The player development tracker is a game-changer. I can visualize a player\'s progress over the season and have data-backed conversations about their performance. The AI insights are incredibly accurate.',
   },
   {
     name: 'Nkosi Sipamla',
     role: 'Parent & Spectator',
-    avatar: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/16419.jpg',
+    avatar: 'https://picsum.photos/100/100',
     dataAiHint: 'father portrait',
     testimonial: 'As a parent, staying updated with my son\'s schedule and performance has never been easier. The app is intuitive and provides all the information I need right at my fingertips. Truly fantastic!',
   },
@@ -109,7 +109,8 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section
           className="relative w-full py-20 md:py-32 lg:py-40 bg-cover bg-center bg-fixed"
-          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/stadium-with-stadium-with-lights-word-welcome-side.jpg')" }}
+          style={{ backgroundImage: "url('https://picsum.photos/1600/900')" }}
+          data-ai-hint="cricket stadium floodlights"
         >
           <div className="absolute inset-0 bg-black/60" />
           <div className="container relative z-10 grid lg:grid-cols-2 gap-8 items-center">
@@ -131,7 +132,7 @@ export default function LandingPage() {
             </div>
             <div className="hidden lg:block">
               <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3800541.jpg"
+                src="https://picsum.photos/600/600"
                 width={600}
                 height={600}
                 alt="A cricket player at the stumps"
@@ -253,7 +254,8 @@ export default function LandingPage() {
         {/* Final CTA Section */}
         <section
           className="relative w-full py-24 md:py-32 overflow-hidden bg-cover bg-center bg-fixed"
-          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/green-grass-soccer-stadium.jpg')" }}
+          style={{ backgroundImage: "url('https://picsum.photos/1600/900')" }}
+          data-ai-hint="cricket stadium sunset"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40" />
           <div className="container relative z-10 text-center">
