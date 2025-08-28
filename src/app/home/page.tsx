@@ -30,31 +30,25 @@ const features = [
     icon: Wand2,
     title: 'AI Scorecard Generation',
     description: 'Instantly create realistic T20 scorecards from just lineups, perfect for demos or filling in missing data.',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2151240375-1.jpg',
+    imageAlt: 'Digital representation of a cricket scorecard on a screen.',
+    dataAiHint: 'digital scorecard',
   },
   {
     icon: BarChart2,
     title: 'Advanced Match Visuals',
     description: 'Analyze games with interactive Manhattan, Worm, and Wagon Wheel charts for a deeper understanding of match flow.',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/2151004124.jpg',
+    imageAlt: 'A vibrant chart showing sports analytics.',
+    dataAiHint: 'analytics chart',
   },
   {
     icon: Target,
     title: 'Player Performance Tracker',
     description: 'Monitor long-term player development with performance graphs, skill ratings, and detailed training logs.',
-  },
-  {
-    icon: BookOpen,
-    title: 'AI-Powered Analysis',
-    description: 'Generate journalistic match summaries, tactical previews, and AI-driven Player of the Match selections.',
-  },
-  {
-    icon: ClipboardList,
-    title: 'Comprehensive Management',
-    description: 'Full CRUD control over schools, divisions, seasons, teams, and personnel, all in one place.',
-  },
-  {
-    icon: Bus,
-    title: 'Logistics & Transport Hub',
-    description: 'Effortlessly manage your vehicle fleet, assign drivers, and coordinate transport for all fixtures.',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/07/40090.jpg',
+    imageAlt: 'A focused cricketer in the nets, with data overlays showing performance metrics.',
+    dataAiHint: 'cricket training',
   },
 ];
 
@@ -107,8 +101,6 @@ const testimonials = [
 
 
 export default function LandingPage() {
-  const [activeIndex, setActiveIndex] = React.useState(1);
-  const activeTestimonial = testimonials[activeIndex];
   
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -151,40 +143,49 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background via-green-50 dark:via-green-900/10 to-background">
-          <div className="container">
-            <div className="mx-auto max-w-2xl lg:text-center">
-              <h2 className="text-base font-semibold leading-7 text-primary">Everything You Need</h2>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                A toolkit for the modern game
-              </p>
-              <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                SCRBRD combines powerful management tools with cutting-edge AI to provide unparalleled insights and control.
-              </p>
-            </div>
-            <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-              <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
-                {features.map((feature) => (
-                  <div key={feature.title} className="flex flex-col items-start">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                      <feature.icon className="h-6 w-6" aria-hidden="true" />
+        <section id="features" className="py-12 md:py-24 lg:py-32">
+            <div className="container">
+                <div className="mx-auto max-w-2xl lg:text-center">
+                    <h2 className="text-base font-semibold leading-7 text-primary">Everything You Need</h2>
+                    <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                        A toolkit for the modern game
+                    </p>
+                    <p className="mt-6 text-lg leading-8 text-muted-foreground">
+                        SCRBRD combines powerful management tools with cutting-edge AI to provide unparalleled insights and control.
+                    </p>
+                </div>
+
+                {features.map((feature, index) => (
+                    <div key={feature.title} className="mt-16 grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+                        <div className={cn("flex flex-col justify-center", index % 2 === 1 && 'lg:order-last')}>
+                            <h3 className="text-2xl font-bold tracking-tight text-foreground">{feature.title}</h3>
+                            <p className="mt-4 text-muted-foreground">{feature.description}</p>
+                            <ul className="mt-6 space-y-4 text-sm">
+                                <li className="flex items-center gap-2"><ClipboardList className="h-5 w-5 text-primary" /> Comprehensive Management</li>
+                                <li className="flex items-center gap-2"><Bus className="h-5 w-5 text-primary" /> Logistics & Transport Hub</li>
+                                <li className="flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary" /> AI-Powered Analysis</li>
+                            </ul>
+                        </div>
+                        <div className="overflow-hidden rounded-lg">
+                             <Image
+                                src={feature.image}
+                                alt={feature.imageAlt}
+                                width={500}
+                                height={500}
+                                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                data-ai-hint={feature.dataAiHint}
+                            />
+                        </div>
                     </div>
-                    <h3 className="mt-4 font-semibold text-foreground">{feature.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{feature.description}</p>
-                  </div>
                 ))}
-              </div>
             </div>
-          </div>
         </section>
         
         {/* For Every Role Section */}
         <section
           id="user-experience"
-          className="relative w-full py-12 md:py-24 lg:py-32 bg-cover bg-center bg-fixed"
-          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/07/huuddle-700.jpg')" }}
+          className="relative w-full py-12 md:py-24 lg:py-32 bg-muted/50"
         >
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
           <div className="container relative z-10">
               <div className="mx-auto max-w-2xl lg:text-center">
                   <h2 className="text-base font-semibold leading-7 text-primary">Built for the whole team</h2>
@@ -197,10 +198,10 @@ export default function LandingPage() {
               </div>
               <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                   {forEveryRole.map((role) => (
-                      <Card key={role.role} className="bg-card/80 backdrop-blur-sm">
-                          <CardHeader>
-                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground mb-4">
-                                <role.icon className="h-6 w-6" aria-hidden="true" />
+                      <Card key={role.role} className="bg-background text-center shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+                          <CardHeader className="items-center">
+                              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                                <role.icon className="h-7 w-7" aria-hidden="true" />
                               </div>
                               <CardTitle>{role.role}</CardTitle>
                           </CardHeader>
@@ -215,7 +216,7 @@ export default function LandingPage() {
 
 
         {/* Testimonials Section */}
-        <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 bg-muted/50 overflow-hidden">
+        <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 bg-background">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -226,47 +227,24 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="relative mt-16 max-w-3xl mx-auto">
-              {/* Testimonial Bubble */}
-              <div className="relative rounded-lg bg-background p-8 shadow-lg">
-                <Quote className="absolute -top-3 -left-3 h-10 w-10 text-primary/10" strokeWidth={1} />
-                <blockquote className="relative text-center text-lg font-medium leading-relaxed text-foreground">
-                  <p>"{activeTestimonial.testimonial}"</p>
-                </blockquote>
-              </div>
-              {/* Pointer */}
-              <div className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-2 w-4 h-4 bg-background rotate-45" />
-            </div>
-
-            <div className="mt-12 text-center">
-              {/* Avatar Selectors */}
-              <div className="flex justify-center items-center gap-4">
-                {testimonials.map((testimonial, index) => (
-                  <button 
-                    key={index} 
-                    onClick={() => setActiveIndex(index)} 
-                    className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-muted/50"
-                  >
-                    <Avatar
-                      className={cn(
-                        "h-14 w-14 cursor-pointer transition-all duration-300 ease-in-out",
-                        activeIndex === index
-                          ? "scale-110 ring-2 ring-primary ring-offset-4 ring-offset-background"
-                          : "scale-90 opacity-60 hover:scale-100 hover:opacity-100"
-                      )}
-                    >
-                      <AvatarImage src={testimonial.avatar} data-ai-hint={testimonial.dataAiHint} />
-                      <AvatarFallback>{testimonial.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                  </button>
-                ))}
-              </div>
-
-              {/* Active Testimonial Info */}
-              <div className="mt-6 transition-opacity duration-300">
-                <p className="text-lg font-semibold text-foreground">{activeTestimonial.name}</p>
-                <p className="text-muted-foreground">{activeTestimonial.role}</p>
-              </div>
+            <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {testimonials.map((testimonial) => (
+                  <Card key={testimonial.name} className="flex flex-col">
+                      <CardContent className="flex-1 pt-6">
+                           <blockquote className="text-muted-foreground">"{testimonial.testimonial}"</blockquote>
+                      </CardContent>
+                      <CardHeader className="flex-row items-center gap-4 pt-4">
+                          <Avatar>
+                              <AvatarImage src={testimonial.avatar} data-ai-hint={testimonial.dataAiHint} />
+                              <AvatarFallback>{testimonial.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                              <CardTitle className="text-base">{testimonial.name}</CardTitle>
+                              <CardDescription>{testimonial.role}</CardDescription>
+                          </div>
+                      </CardHeader>
+                  </Card>
+              ))}
             </div>
           </div>
         </section>
