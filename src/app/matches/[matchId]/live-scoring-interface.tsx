@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { FormItem, FormControl } from '@/components/ui/form';
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
     if (!playerId) return 'Select...';
@@ -471,22 +472,20 @@ export function LiveScoringInterface({
                         <CardContent>
                              <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label className="text-center block">Bowling Angle</Label>
+                                    <Label className="text-center block mb-2">Bowling Angle</Label>
                                     <RadioGroup 
                                       onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} 
                                       value={liveScore.bowlingAngle} 
-                                      className="grid grid-cols-2 gap-4"
+                                      className="flex items-center justify-center gap-2"
                                       disabled={isPending || isSimulating}
                                     >
-                                        <Label htmlFor="angle-over" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
-                                            <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
-                                            <CornerUpRight className="mb-2 h-6 w-6"/>
-                                            Over the Wicket
+                                        <RadioGroupItem value="Over the Wicket" id="angle-over" className="peer sr-only" />
+                                        <Label htmlFor="angle-over" className={cn("flex items-center gap-2 rounded-md border-2 border-muted bg-popover p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' && 'border-primary')}>
+                                            <CornerUpRight className="h-4 w-4"/> Over the Wicket
                                         </Label>
-                                         <Label htmlFor="angle-round" className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
-                                            <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
-                                            <CornerUpLeft className="mb-2 h-6 w-6"/>
-                                            Round the Wicket
+                                        <RadioGroupItem value="Round the Wicket" id="angle-round" className="peer sr-only" />
+                                        <Label htmlFor="angle-round" className={cn("flex items-center gap-2 rounded-md border-2 border-muted bg-popover p-2 px-3 hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' && 'border-primary')}>
+                                            <CornerUpLeft className="h-4 w-4"/> Round the Wicket
                                         </Label>
                                     </RadioGroup>
                                 </div>
@@ -571,6 +570,7 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
 
 
