@@ -32,12 +32,28 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
   const [fielderId, setFielderId] = React.useState<string | undefined>(undefined);
   
   React.useEffect(() => {
-      // Reset state when dialog is re-opened
+    if (view === 'wicket') {
+      document.documentElement.classList.add('theme-howzat');
+    } else {
+      document.documentElement.classList.remove('theme-howzat');
+    }
+  }, [view]);
+  
+  React.useEffect(() => {
+      // Reset state when dialog is re-opened or closed
       if (open) {
           setView('runs');
           setDismissalType(null);
           setFielderId(undefined);
           setExtraType(null);
+      } else {
+         // Cleanup effect when dialog closes
+         document.documentElement.classList.remove('theme-howzat');
+      }
+
+      // Return a cleanup function for when the component unmounts
+      return () => {
+          document.documentElement.classList.remove('theme-howzat');
       }
   }, [open]);
 
@@ -85,7 +101,7 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
         <DialogHeader>
           <DialogTitle>
              {view === 'runs' && 'Record Delivery'}
-             {view === 'wicket' && 'Record Wicket'}
+             {view === 'wicket' && 'Howzat!'}
              {view === 'extras' && `Record ${extraType?.replace('_', ' ')}`}
           </DialogTitle>
           <DialogDescription>
