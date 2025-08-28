@@ -667,10 +667,10 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
     if (updates.onStrikeBatsmanId) liveScoreUpdate['liveScore.onStrikeBatsmanId'] = updates.onStrikeBatsmanId;
     if (updates.nonStrikerBatsmanId) liveScoreUpdate['liveScore.nonStrikerBatsmanId'] = updates.nonStrikerBatsmanId;
     if (updates.bowlerId) {
-        const currentLiveScore = matchSnap.data()?.liveScore;
         liveScoreUpdate['liveScore.bowlerId'] = updates.bowlerId;
-        liveScoreUpdate['liveScore.lastBowlerId'] = currentLiveScore?.bowlerId || null;
+        liveScoreUpdate['liveScore.lastBowlerId'] = matchSnap.data()?.liveScore?.bowlerId || null;
         liveScoreUpdate['liveScore.currentOver'] = [];
+        liveScoreUpdate['liveScore.balls'] = 0; // Reset balls for new over
     }
     if (updates.bowlingAngle) liveScoreUpdate['liveScore.bowlingAngle'] = updates.bowlingAngle;
     
@@ -803,7 +803,6 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
         if (endOfOver) {
             liveScore.overs++;
-            liveScore.balls = 0;
             
             const overRuns = liveScore.currentOver.reduce((sum, e) => {
                 const run = parseInt(e, 10);
@@ -811,17 +810,16 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             }, 0);
             if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
             
-            liveScore.currentOver = [];
-            if(liveScore.ballHistory) liveScore.ballHistory.push('|');
-            liveScore.lastBowlerId = bowlerId;
             if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
             if(liveScore.bowlerStats[bowlerId]) liveScore.bowlerStats[bowlerId].balls = 0;
+            // Note: We don't reset liveScore.balls to 0 here. The UI will prompt for a new bowler,
+            // and selecting a new bowler will trigger the reset.
         }
     }
     
     const runsThatRotateStrike = runsFromBall + (ball.event === 'bye' || ball.event === 'leg_bye' ? runsFromBall : 0);
     const isOddRun = runsThatRotateStrike % 2 !== 0;
-    const isEndOfOver = isLegalDelivery && liveScore.balls === 0;
+    const isEndOfOver = isLegalDelivery && liveScore.balls >= 6;
     if ((isLegalDelivery && isOddRun && !isEndOfOver) || (isLegalDelivery && !isOddRun && isEndOfOver)) {
         [liveScore.onStrikeBatsmanId, liveScore.nonStrikerBatsmanId] = [liveScore.nonStrikerBatsmanId, liveScore.onStrikeBatsmanId];
     }

@@ -330,7 +330,7 @@ export function LiveScoringInterface({
   const canUndo = !!match.previousLiveScore;
 
   const availableBatsmen = battingTeamRoster.filter(p => !batsmenOut.includes(p.personId) && p.personId !== nonStrikerBatsmanId && p.personId !== onStrikeBatsmanId);
-  const availableBowlers = bowlingTeamRoster.filter(p => p.personId !== liveScore.lastBowlerId);
+  const availableBowlers = bowlingTeamRoster.filter(p => p.personId !== liveScore.bowlerId);
 
   const wagonWheelShots = React.useMemo(() => {
     const allShots = liveScore.shots || [];
@@ -363,10 +363,10 @@ export function LiveScoringInterface({
         if (type === 'onStrike') updates.onStrikeBatsmanId = value;
         if (type === 'nonStriker') updates.nonStrikerBatsmanId = value;
         if (type === 'bowler') {
-            const currentLiveScore = match.liveScore || defaultLiveScore;
             updates.bowlerId = value;
-            updates.lastBowlerId = currentLiveScore.bowlerId || null;
+            updates.lastBowlerId = liveScore.bowlerId || null;
             updates.currentOver = []; // Reset over history for new bowler
+            updates.balls = 0; // Reset balls for new over
         }
         if (type === 'bowlingAngle') updates.bowlingAngle = value as BowlingAngle;
 
@@ -576,9 +576,9 @@ export function LiveScoringInterface({
                                     <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
                                 </div>
                                  <div className="p-1 bg-muted rounded-md flex items-center gap-1">
-                                    <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7">Team</Button>
-                                    <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7">On-strike</Button>
-                                    <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7">Non-striker</Button>
+                                    <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7 gap-1.5"><Users className="h-4 w-4"/>Team</Button>
+                                    <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7 gap-1.5"><User className="h-4 w-4"/>On-strike</Button>
+                                    <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="text-xs px-2 h-7 gap-1.5"><User className="h-4 w-4"/>Non-striker</Button>
                                 </div>
                             </div>
                         </CardHeader>
