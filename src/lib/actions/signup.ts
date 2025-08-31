@@ -70,7 +70,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
         userId: user.uid, // Add the Firebase Auth UID to the profile
     };
 
-    if (data.role === 'Player' || data.role === 'Coach') {
+    if ((data.role === 'Player' || data.role === 'Coach') && data.schoolId) {
         profileData.assignedSchools = [data.schoolId];
     }
     

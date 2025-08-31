@@ -30,7 +30,7 @@ const features = [
     icon: Wand2,
     title: 'Scorecard Generation',
     description: 'Record and Track Scorecards & in-depth match analysis .',
-    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/08/Gemini_Generated_Image_ru4rkzru4rkzru4r.png',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/08/boy-cricket-body-injury-sports-field-with-glowing-red-ai-generated-effect-from-batting-action-kid-child-batting-athlete-with-stress-graph-hologram-muscle-pain-from-wicket-mistake-1.webp',
     imageAlt: 'Digital representation of a cricket scorecard on a screen.',
     dataAiHint: 'digital scorecard',
   },
@@ -38,7 +38,7 @@ const features = [
     icon: BarChart2,
     title: 'Advanced Match Visuals',
     description: 'Analyze games with interactive Manhattan, Worm, and Wagon Wheel charts for a deeper understanding of match flow.',
-    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/08/scrbd-analysis.png',
+    image: 'https://maverickdesign.co.za/wp-content/uploads/2025/08/cricket-bowling-man-field-grass-with-overlay-science-mechanics-speed-sport-technique-contest-indian-guy-mathematics-vision-holographic-analytics-balance-game.webp',
     imageAlt: 'A vibrant chart showing sports analytics.',
     dataAiHint: 'analytics chart',
   },
@@ -132,11 +132,11 @@ export default function LandingPage() {
             </div>
             <div className="hidden lg:block">
               <Image
-                src="https://maverickdesign.co.za/wp-content/uploads/2025/07/pexels-case-originals-3628912.jpg"
-                width={600}
-                height={600}
+                src="https://maverickdesign.co.za/wp-content/uploads/2025/08/ipad-dashboard.png"
+                width={1200}
+                height={1200}
                 alt="A cricket player at the stumps"
-                className="rounded-lg shadow-2xl"
+                className="rounded-lg"
                 data-ai-hint="cricket action"
               />
             </div>
@@ -184,10 +184,9 @@ export default function LandingPage() {
         
         {/* For Every Role Section */}
         <section
-          id="user-experience"
-          className="relative w-full py-12 md:py-24 lg:py-32 bg-cover bg-center bg-fixed"
-           style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/08/Gemini_Generated_Image_mbyo0zmbyo0zmbyo.jpeg')" }}
-           data-ai-hint="cricket fans celebrating"
+          className="relative w-full py-24 md:py-32 overflow-hidden bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: "url('https://maverickdesign.co.za/wp-content/uploads/2025/08/vintage-scoreboard.png)" }}
+          data-ai-hint="cricket stadium sunset"
         >
           <div className="absolute inset-0 bg-black/70" />
           <div className="container relative z-10">
