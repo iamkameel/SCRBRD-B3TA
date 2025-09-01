@@ -5,8 +5,8 @@ import * as React from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from "date-fns";
-import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star } from 'lucide-react';
-import type { Field, Match } from '@/lib/data';
+import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star, Edit } from 'lucide-react';
+import type { Field, Match, School, Person } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,10 +20,18 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { Button } from "@/components/ui/button";
+import { FieldDialog } from "../field-dialog";
+import { useAuth } from "@/lib/auth-context";
 
-export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
+
+export default function FieldDetailsClient({ field, matches, schools, groundskeepers }: { field: Field, matches: Match[], schools: School[], groundskeepers: Person[] }) {
+    const { person: currentUser } = useAuth();
+    const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const upcomingMatches = matches.filter(m => m.status === 'scheduled');
     const pastMatches = matches.filter(m => m.status === 'completed');
+
+    const canManage = currentUser?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
 
     const DetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value?: string }) => (
         <div>
@@ -50,6 +58,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
     };
 
     return (
+        <>
         <div className="flex flex-col gap-8">
              <header>
                 <Link href="/fields" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -67,7 +76,15 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                             )}
                         </p>
                     </div>
-                     <Badge variant={field.status === 'Available' ? 'default' : (field.status === 'Maintenance' ? 'outline' : 'destructive')} className="capitalize h-fit">{field.status}</Badge>
+                    <div className="flex items-center gap-2">
+                        <Badge variant={field.status === 'Available' ? 'default' : (field.status === 'Maintenance' ? 'outline' : 'destructive')} className="capitalize h-fit">{field.status}</Badge>
+                        {canManage && (
+                            <Button onClick={() => setIsEditDialogOpen(true)}>
+                                <Edit className="mr-2 h-4 w-4"/>
+                                Edit Field
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -265,5 +282,7 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
                 </div>
             </div>
         </div>
+        {canManage && <FieldDialog mode="edit" field={field} schools={schools} groundskeepers={groundkeepers} open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />}
+        </>
     )
 }
