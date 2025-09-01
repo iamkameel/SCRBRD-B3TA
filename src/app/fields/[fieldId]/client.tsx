@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import Link from 'next/link';
+import Image from 'next/image';
 import { format } from "date-fns";
 import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star } from 'lucide-react';
 import type { Field, Match } from '@/lib/data';
@@ -12,6 +13,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 export default function FieldDetailsClient({ field, matches }: { field: Field, matches: Match[] }) {
     const upcomingMatches = matches.filter(m => m.status === 'scheduled');
@@ -66,6 +74,30 @@ export default function FieldDetailsClient({ field, matches }: { field: Field, m
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                      <Card>
+                        <CardHeader><CardTitle>Venue Gallery</CardTitle></CardHeader>
+                        <CardContent>
+                            {field.imageUrls && field.imageUrls.length > 0 ? (
+                                <Carousel className="w-full">
+                                    <CarouselContent>
+                                        {field.imageUrls.map((url, index) => (
+                                            <CarouselItem key={index}>
+                                                <div className="aspect-video relative">
+                                                    <Image src={url} alt={`Venue image ${index + 1}`} fill className="rounded-lg object-cover" />
+                                                </div>
+                                            </CarouselItem>
+                                        ))}
+                                    </CarouselContent>
+                                    <CarouselPrevious />
+                                    <CarouselNext />
+                                </Carousel>
+                            ) : (
+                                <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                                    <p>No images have been uploaded for this venue yet.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Field Details</CardTitle>
                         </CardHeader>

@@ -134,6 +134,7 @@ export interface Field {
     lat: number;
     lon: number;
   };
+  imageUrls?: string[];
 }
 
 export interface Team {

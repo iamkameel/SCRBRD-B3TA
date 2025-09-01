@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from "react";
+import Image from 'next/image';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Trash2 } from "lucide-react";
 
 const fieldActionSchema = z.object({
   name: z.string().min(1, { message: "Field name is required." }),
@@ -41,6 +44,8 @@ const fieldActionSchema = z.object({
       lat: z.coerce.number().min(-90).max(90).optional(),
       lon: z.coerce.number().min(-180).max(180).optional(),
   }).optional(),
+  imageUrls: z.array(z.string()).optional(), // Keep existing image URLs
+  imageDataUris: z.array(z.string()).optional(), // For new image uploads
 });
 
 
@@ -66,13 +71,17 @@ const AMENITIES = [
 export function FieldDialog({ mode, field, schools, groundskeepers, open, onOpenChange }: { mode: 'add' | 'edit', field?: Field, schools: School[], groundskeepers: Person[], open: boolean, onOpenChange: (open: boolean) => void; }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
+  const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
+  const [existingImageUrls, setExistingImageUrls] = React.useState<string[]>([]);
+
 
   const form = useForm<FieldFormValues>({
     resolver: zodResolver(fieldActionSchema),
     defaultValues: {
       name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [],
       contactPerson: "", contactPhone: "", notes: "", location: "", size: "",
-      surfaceCondition: { rating: 3, details: {} }
+      surfaceCondition: { rating: 3, details: {} },
+      imageUrls: [], imageDataUris: [],
     }
   });
   
@@ -83,30 +92,63 @@ export function FieldDialog({ mode, field, schools, groundskeepers, open, onOpen
     if (open) {
       if (mode === 'edit' && field) {
         form.reset({
-          name: field.name,
-          alias: field.alias || '',
+          ...field,
           schoolId: field.schoolId || ' ',
-          status: field.status,
-          pitchType: field.pitchType || 'Natural Turf',
-          facilities: field.facilities || [],
           assignments: field.assignments?.map(a => a.personId) || [],
-          location: field.location || '',
-          size: field.size || '',
-          amenities: field.amenities || [],
-          contactPerson: field.contactPerson || '',
-          contactPhone: field.contactPhone || '',
-          notes: field.notes || '',
           surfaceCondition: field.surfaceCondition || { rating: 3, details: {} },
-          coordinates: {
-              lat: field.coordinates?.lat,
-              lon: field.coordinates?.lon
-          },
+          imageUrls: field.imageUrls || [],
+          imageDataUris: [],
         });
+        setImagePreviews(field.imageUrls || []);
+        setExistingImageUrls(field.imageUrls || []);
       } else {
-        form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "", location: "", size: "", coordinates: { lat: undefined, lon: undefined }, surfaceCondition: { rating: 3, details: {} } });
+        form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "", location: "", size: "", coordinates: { lat: undefined, lon: undefined }, surfaceCondition: { rating: 3, details: {} }, imageUrls: [], imageDataUris: [] });
+        setImagePreviews([]);
+        setExistingImageUrls([]);
       }
     }
   }, [field, mode, open, form]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        const files = Array.from(e.target.files);
+        const newImageDataUris: string[] = [];
+        const newImagePreviews: string[] = [];
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const dataUri = reader.result as string;
+                newImageDataUris.push(dataUri);
+                newImagePreviews.push(dataUri);
+                if (newImageDataUris.length === files.length) {
+                    const currentUris = form.getValues('imageDataUris') || [];
+                    form.setValue('imageDataUris', [...currentUris, ...newImageDataUris]);
+                    setImagePreviews(prev => [...prev, ...newImagePreviews]);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    const newPreviews = imagePreviews.filter((_, i) => i !== indexToRemove);
+    setImagePreviews(newPreviews);
+    
+    const uriCount = form.getValues('imageDataUris')?.length || 0;
+
+    if (indexToRemove < existingImageUrls.length) {
+      const urlToRemove = existingImageUrls[indexToRemove];
+      const newExistingUrls = existingImageUrls.filter(url => url !== urlToRemove);
+      setExistingImageUrls(newExistingUrls);
+      form.setValue('imageUrls', newExistingUrls);
+    } else {
+      const newUris = form.getValues('imageDataUris') || [];
+      newUris.splice(indexToRemove - existingImageUrls.length, 1);
+      form.setValue('imageDataUris', newUris);
+    }
+  };
 
   function onSubmit(data: FieldFormValues) {
     startTransition(async () => {
@@ -132,27 +174,28 @@ export function FieldDialog({ mode, field, schools, groundskeepers, open, onOpen
         <DialogHeader><DialogTitle>{mode === 'edit' ? 'Edit Field' : 'Add New Field'}</DialogTitle><DialogDescription>Enter the details for the field or venue.</DialogDescription></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-                <h3 className="text-base font-semibold text-foreground">Field Details</h3>
+            <Tabs defaultValue="details">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="surface">Surface</TabsTrigger>
+                <TabsTrigger value="images">Venue Images</TabsTrigger>
+                <TabsTrigger value="staffing">Staffing</TabsTrigger>
+              </TabsList>
+              <TabsContent value="details" className="space-y-4 pt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input placeholder="e.g. Main Oval" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="alias" render={({ field }) => (<FormItem><FormLabel>Alias (Optional)</FormLabel><FormControl><Input placeholder="e.g. The Oval" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
                 <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                
-                <h3 className="text-sm font-medium text-muted-foreground pt-2">Location</h3>
                 <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="coordinates.lat" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-29.318" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="coordinates.lon" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="29.96" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            </div>
-            <Separator />
-             <div className="space-y-4">
-                 <h3 className="text-base font-semibold text-foreground">Surface &amp; Condition</h3>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              </TabsContent>
+              <TabsContent value="surface" className="space-y-4 pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="pitchType" render={({ field }) => (<FormItem><FormLabel>Pitch Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{PITCH_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="size" render={({ field }) => (<FormItem><FormLabel>Field Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger></FormControl><SelectContent>{FIELD_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                  </div>
@@ -174,29 +217,27 @@ export function FieldDialog({ mode, field, schools, groundskeepers, open, onOpen
                     </div>
                  )}
                   <FormField control={form.control} name="notes" render={({ field }) => (<FormItem><FormLabel>General Notes</FormLabel><FormControl><Textarea placeholder="e.g. Excellent drainage, pitch plays fast." {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-
-             </div>
-            <Separator />
-            <div className="space-y-4">
-                 <h3 className="text-base font-semibold text-foreground">Facilities &amp; Amenities</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                    <FormField control={form.control} name="facilities" render={() => (
-                        <FormItem><FormLabel>Facilities</FormLabel><div className="space-y-2 rounded-lg border p-4">
-                        {FACILITIES.map((item) => (<FormField key={item.id} control={form.control} name="facilities" render={({ field }) => { return (<FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))}} disabled={isPending}/></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)}}/>))}
-                        </div><FormMessage />
-                        </FormItem>
-                    )}/>
-                     <FormField control={form.control} name="amenities" render={() => (
-                        <FormItem><FormLabel>Amenities</FormLabel><div className="space-y-2 rounded-lg border p-4">
-                        {AMENITIES.map((item) => (<FormField key={item.id} control={form.control} name="amenities" render={({ field }) => { return (<FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))}} disabled={isPending}/></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)}}/>))}
-                        </div><FormMessage />
-                        </FormItem>
-                    )}/>
-                </div>
-            </div>
-            <Separator />
-             <div className="space-y-4">
-                <h3 className="text-base font-semibold text-foreground">Contact &amp; Staffing</h3>
+              </TabsContent>
+              <TabsContent value="images" className="space-y-4 pt-4">
+                  <FormItem>
+                      <FormLabel>Upload Images</FormLabel>
+                      <FormControl><Input type="file" accept="image/*" multiple onChange={handleFileChange} /></FormControl>
+                      <FormMessage />
+                  </FormItem>
+                  {imagePreviews.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                          {imagePreviews.map((src, index) => (
+                              <div key={index} className="relative aspect-video group">
+                                  <Image src={src} alt={`preview ${index}`} fill className="object-cover rounded-md" />
+                                  <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveImage(index)}>
+                                      <Trash2 className="h-4 w-4"/>
+                                  </Button>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+              </TabsContent>
+              <TabsContent value="staffing" className="space-y-4 pt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="contactPerson" render={({ field }) => (<FormItem><FormLabel>Contact Person</FormLabel><FormControl><Input placeholder="e.g. John Smith" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="contactPhone" render={({ field }) => (<FormItem><FormLabel>Contact Phone</FormLabel><FormControl><Input placeholder="e.g. 555-1234" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
@@ -208,7 +249,7 @@ export function FieldDialog({ mode, field, schools, groundskeepers, open, onOpen
                         <ScrollArea className="h-40 w-full rounded-lg border p-4">
                         {groundskeepers.length > 0 ? (
                             groundskeepers.map((person) => (
-                                <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value || [], person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
+                                <FormField key={person.personId} control={form.control} name="assignments" render={({ field }) => { return (<FormItem key={person.personId} className="flex flex-row items-start space-x-3 space-y-0 mb-4"><FormControl><Checkbox checked={field.value?.includes(person.personId)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), person.personId]) : field.onChange(field.value?.filter((id) => id !== person.personId))}} /></FormControl><FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel></FormItem>)}}/>
                             ))
                         ) : (
                             <p className="text-sm text-center text-muted-foreground pt-4">No grounds-keepers available. Add them on the People page.</p>
@@ -217,7 +258,8 @@ export function FieldDialog({ mode, field, schools, groundskeepers, open, onOpen
                         <FormMessage />
                     </FormItem>
                 )}/>
-            </div>
+              </TabsContent>
+            </Tabs>
             <DialogFooter><Button type="submit" disabled={isPending}>{isPending ? "Saving..." : "Save Field"}</Button></DialogFooter>
           </form>
         </Form>
