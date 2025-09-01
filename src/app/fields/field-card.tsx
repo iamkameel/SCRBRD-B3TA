@@ -52,7 +52,10 @@ export function FieldCard({ field, onEdit, onDelete }: FieldCardProps) {
             </CardHeader>
             <CardContent className="space-y-4 flex-grow flex flex-col justify-end">
                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><strong>Status:</strong> <Badge variant={field.status === 'Available' ? 'secondary' : (field.status === 'Maintenance' ? 'outline' : 'destructive')} className="capitalize text-xs">{field.status}</Badge></p>
+                    <div className="flex items-center gap-2">
+                        <strong>Status:</strong>
+                        <Badge variant={field.status === 'Available' ? 'secondary' : (field.status === 'Maintenance' ? 'outline' : 'destructive')} className="capitalize text-xs">{field.status}</Badge>
+                    </div>
                     <p><strong>Staff:</strong> {field.assignments?.length || 0} assigned</p>
                 </div>
             </CardContent>
