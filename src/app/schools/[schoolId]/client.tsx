@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { SchoolDialog } from "../school-dialog";
 import { useAuth } from "@/lib/auth-context";
+import { AssignSchoolDialog } from "@/app/people/assign-school-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { updateSchoolStaffAssignmentsAction } from '@/lib/actions/schools';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card>
@@ -50,6 +53,8 @@ const HighlightCard = ({ title, description }: { title: string, description: str
 
 export default function SchoolDetailsClient({ school, teams, staff, players, allStaff, matches }: { school: School; teams: Team[]; staff: Person[]; players: Person[]; allStaff: Person[]; matches: Match[] }) {
     const { person: currentUser } = useAuth();
+    const { toast } = useToast();
+    const [isPending, startTransition] = React.useTransition();
     const [isAssignStaffDialogOpen, setIsAssignStaffDialogOpen] = React.useState(false);
     const [isSchoolDialogOpen, setIsSchoolDialogOpen] = React.useState(false);
     
@@ -57,6 +62,20 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
     
     const socialLinks = school.socialMedia ? Object.entries(school.socialMedia).filter(([, link]) => link) : [];
     
+    const [selectedStaffIds, setSelectedStaffIds] = React.useState<string[]>(staff.map(s => s.personId));
+
+    const handleSaveStaffAssignments = () => {
+        startTransition(async () => {
+            try {
+                await updateSchoolStaffAssignmentsAction(school.schoolId, selectedStaffIds);
+                toast({ title: 'Staff Assignments Updated' });
+                setIsAssignStaffDialogOpen(false);
+            } catch (error) {
+                toast({ title: 'Error', description: error instanceof Error ? error.message : "Could not update staff assignments.", variant: 'destructive' });
+            }
+        });
+    }
+
     const schoolWithStaff = { ...school, staff };
     
     const upcomingMatches = matches.filter(m => m.status === 'scheduled' || m.status === 'live').sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
@@ -140,9 +159,12 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                         </TabsContent>
                          <TabsContent value="staff" className="mt-4">
                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Assigned Staff</CardTitle>
-                                    <CardDescription>All staff members assigned to {school.name}.</CardDescription>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Assigned Staff</CardTitle>
+                                        <CardDescription>All staff members assigned to {school.name}.</CardDescription>
+                                    </div>
+                                    {canManage && <Button onClick={() => setIsAssignStaffDialogOpen(true)}><PlusCircle className="mr-2" />Assign Staff</Button>}
                                 </CardHeader>
                                 <CardContent>
                                     <Table>
@@ -217,23 +239,6 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                                {school.socialMedia?.youtube && <Link href={school.socialMedia.youtube} target="_blank" className="text-muted-foreground hover:text-foreground"><Youtube/></Link>}
                              </div>
                            )}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Recent News</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-1">
-                                <p className="text-xs text-primary font-semibold">June 28, 2025</p>
-                                <h4 className="font-bold">Outstanding Matric Results 2024</h4>
-                                <p className="text-sm text-muted-foreground">Westville Boys' achieves 98% pass rate with 85% Bachelor passes, ranking among the top schools in KwaZulu-Natal.</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs text-primary font-semibold">June 25, 2025</p>
-                                <h4 className="font-bold">Rugby Team Advances to Provincial Finals</h4>
-                                <p className="text-sm text-muted-foreground">Our 1st XV rugby team secures their place in the KZN Schools Rugby Championships after defeating Hilton College 24-18.</p>
-                            </div>
                         </CardContent>
                     </Card>
                     <Card>

@@ -197,6 +197,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
     }
 
     revalidatePath('/schools');
+    revalidatePath(`/schools/${schoolId}`);
     revalidatePath('/teams');
 }
 
@@ -232,7 +233,7 @@ export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
   if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
-    const q = query(peopleCollection, where("userId", "==", userId), where("assignedSchools", "array-contains", schoolId));
+    const q = query(peopleCollection, where("assignedSchools", "array-contains", schoolId));
     const staffSnapshot = await getDocs(q);
     const staffList = staffSnapshot.docs.map(doc => ({
       personId: doc.id,
@@ -281,6 +282,8 @@ export async function getSchoolPlayers(schoolId: string): Promise<Person[]> {
 export async function updateSchoolStaffAssignmentsAction(schoolId: string, staffIdsToAssign: string[]) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
+
+    await checkManagementPermission(userId);
 
     const batch = writeBatch(db);
     const peopleCollection = collection(db, 'people');
