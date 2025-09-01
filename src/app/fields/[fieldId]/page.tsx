@@ -1,6 +1,7 @@
 
+
 import { notFound } from 'next/navigation';
-import { getField, getFields } from '@/lib/actions/fields';
+import { getField } from '@/lib/actions/fields';
 import { getMatchesByField } from '@/lib/actions/matches';
 import FieldDetailsClient from './client';
 import { getSchools } from '@/lib/actions/schools';
