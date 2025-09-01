@@ -87,11 +87,11 @@ export default function LoginPage() {
           className="object-cover -z-10"
         />
        <div className="absolute inset-0 bg-black/60 -z-10" />
-      <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md bg-black/20 backdrop-blur-lg border border-white/20 text-white">
         <CardHeader className="text-center items-center">
           <Logo />
           <CardTitle className="text-2xl pt-4">Welcome Back!</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardDescription className="text-gray-300">Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -103,7 +103,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="m@example.com" {...field} disabled={isPending || isResetting} />
+                      <Input type="email" placeholder="m@example.com" {...field} disabled={isPending || isResetting} className="bg-white/10 border-white/20 placeholder:text-gray-400" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,7 +116,7 @@ export default function LoginPage() {
                   <FormItem>
                      <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isPending || isResetting} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isPending || isResetting} className="bg-white/10 border-white/20 placeholder:text-gray-400" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -132,6 +132,7 @@ export default function LoginPage() {
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="border-white/50"
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
@@ -145,7 +146,7 @@ export default function LoginPage() {
                  <Button
                     type="button"
                     variant="link"
-                    className="h-auto p-0 text-sm"
+                    className="h-auto p-0 text-sm text-primary-foreground hover:text-primary-foreground/80"
                     onClick={handlePasswordReset}
                     disabled={isResetting || isPending}
                   >
@@ -157,9 +158,9 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-sm text-gray-300">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
+            <Link href="/signup" className="underline hover:text-white">
               Sign up
             </Link>
           </div>
