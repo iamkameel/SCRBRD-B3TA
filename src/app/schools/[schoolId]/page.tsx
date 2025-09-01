@@ -1,5 +1,4 @@
 
-
 import { notFound } from 'next/navigation';
 import { getSchool, getSchoolStaff, getSchoolPlayers, getMatchesBySchool } from '@/lib/actions/schools';
 import { getTeamsBySchool } from '@/lib/actions/teams';

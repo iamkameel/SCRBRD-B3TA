@@ -1,13 +1,9 @@
 
-
 'use client';
 
 import * as React from "react";
 import Link from 'next/link';
-import { useForm, useFieldArray } from "react-hook-form";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube, ClipboardList, PlusCircle, Search, Trophy, BarChartHorizontal } from 'lucide-react';
+import { ArrowLeft, Building, Globe, Phone, Users, User, Palette, Calendar, Facebook, Twitter, Instagram, Youtube, ClipboardList, PlusCircle, Search, Trophy, BarChartHorizontal, Edit } from 'lucide-react';
 import type { School, Team, Person, Match } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,14 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { updateSchoolStaffAssignmentsAction } from "@/lib/actions/schools";
-import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { SchoolDialog } from "../school-dialog";
+import { useAuth } from "@/lib/auth-context";
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card>
@@ -50,91 +41,6 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
     );
 };
 
-const assignStaffSchema = z.object({
-  staff: z.array(z.object({
-    id: z.string(),
-    assigned: z.boolean(),
-  }))
-});
-
-function AssignStaffDialog({ school, allStaff, open, onOpenChange }: { school: School, allStaff: Person[], open: boolean, onOpenChange: (open: boolean) => void }) {
-    const { toast } = useToast();
-    const [searchTerm, setSearchTerm] = React.useState("");
-    const [isPending, startTransition] = React.useTransition();
-    
-    const currentlyAssignedIds = new Set(school.staff.map(s => s.personId));
-
-    const form = useForm<z.infer<typeof assignStaffSchema>>({
-        resolver: zodResolver(assignStaffSchema),
-        defaultValues: {
-            staff: allStaff.map(s => ({ id: s.personId, assigned: currentlyAssignedIds.has(s.personId) }))
-        },
-    });
-    
-    const { fields } = useFieldArray({ control: form.control, name: "staff" });
-    
-    const filteredStaff = React.useMemo(() => {
-        return allStaff.filter(person => 
-            `${person.firstName} ${person.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [allStaff, searchTerm]);
-    
-    const fieldMap = React.useMemo(() => new Map(fields.map((f, i) => [f.id, i])), [fields]);
-
-    function onSubmit(data: z.infer<typeof assignStaffSchema>) {
-        startTransition(async () => {
-            const assignedStaffIds = data.staff.filter(s => s.assigned).map(s => s.id);
-            try {
-                await updateSchoolStaffAssignmentsAction(school.schoolId, assignedStaffIds);
-                toast({ title: "Staff Updated", description: "School staff assignments have been saved." });
-                onOpenChange(false);
-            } catch (error) {
-                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not update staff.", variant: "destructive" });
-            }
-        });
-    }
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Manage Staff for {school.name}</DialogTitle>
-                    <DialogDescription>Select the staff members assigned to this school.</DialogDescription>
-                </DialogHeader>
-                 <Input placeholder="Search staff..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <ScrollArea className="h-72">
-                            <div className="space-y-2 p-1">
-                                {filteredStaff.map((person) => {
-                                    const fieldIndex = fieldMap.get(person.personId);
-                                    if (fieldIndex === undefined) return null;
-                                    return (
-                                        <FormField
-                                            key={person.personId}
-                                            control={form.control}
-                                            name={`staff.${fieldIndex}.assigned`}
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                                    <FormLabel className="font-normal">{person.firstName} {person.lastName}</FormLabel>
-                                                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </ScrollArea>
-                        <Button type="submit" className="w-full" disabled={isPending}>
-                            {isPending ? "Saving..." : "Save Assignments"}
-                        </Button>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
 const HighlightCard = ({ title, description }: { title: string, description: string }) => (
   <div className="bg-muted/50 p-4 rounded-lg">
     <p className="font-bold text-primary">{title}</p>
@@ -143,7 +49,11 @@ const HighlightCard = ({ title, description }: { title: string, description: str
 );
 
 export default function SchoolDetailsClient({ school, teams, staff, players, allStaff, matches }: { school: School; teams: Team[]; staff: Person[]; players: Person[]; allStaff: Person[]; matches: Match[] }) {
+    const { person: currentUser } = useAuth();
     const [isAssignStaffDialogOpen, setIsAssignStaffDialogOpen] = React.useState(false);
+    const [isSchoolDialogOpen, setIsSchoolDialogOpen] = React.useState(false);
+    
+    const canManage = currentUser?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
     
     const socialLinks = school.socialMedia ? Object.entries(school.socialMedia).filter(([, link]) => link) : [];
     
@@ -158,15 +68,23 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                 <Link href="/schools" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />Back to Schools
                 </Link>
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20 border">
-                        <AvatarImage src={school.logoUrl} alt={school.name} />
-                        <AvatarFallback className="text-3xl">{school.abbreviation || school.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">{school.name}</h1>
-                        {school.abbreviation && <p className="text-lg text-muted-foreground">{school.abbreviation}</p>}
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20 border">
+                            <AvatarImage src={school.logoUrl} alt={school.name} />
+                            <AvatarFallback className="text-3xl">{school.abbreviation || school.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight text-foreground">{school.name}</h1>
+                            {school.abbreviation && <p className="text-lg text-muted-foreground">{school.abbreviation}</p>}
+                        </div>
                     </div>
+                    {canManage && (
+                        <Button onClick={() => setIsSchoolDialogOpen(true)}>
+                            <Edit className="mr-2" />
+                            Edit School
+                        </Button>
+                    )}
                 </div>
             </header>
 
@@ -222,12 +140,9 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                         </TabsContent>
                          <TabsContent value="staff" className="mt-4">
                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <div>
-                                        <CardTitle>Assigned Staff</CardTitle>
-                                        <CardDescription>All staff members assigned to {school.name}.</CardDescription>
-                                    </div>
-                                    <Button size="sm" onClick={() => setIsAssignStaffDialogOpen(true)}><PlusCircle className="mr-2" />Manage Staff</Button>
+                                <CardHeader>
+                                    <CardTitle>Assigned Staff</CardTitle>
+                                    <CardDescription>All staff members assigned to {school.name}.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <Table>
@@ -332,7 +247,7 @@ export default function SchoolDetailsClient({ school, teams, staff, players, all
                 </div>
             </div>
         </div>
-        <AssignStaffDialog school={schoolWithStaff} allStaff={allStaff} open={isAssignStaffDialogOpen} onOpenChange={setIsAssignStaffDialogOpen} />
+        {canManage && <SchoolDialog mode="edit" school={school} open={isSchoolDialogOpen} onOpenChange={setIsSchoolDialogOpen} />}
         </>
     );
 }
