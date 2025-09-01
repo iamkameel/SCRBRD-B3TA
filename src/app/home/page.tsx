@@ -119,13 +119,13 @@ export default function LandingPage() {
                 The Future of Cricket Management is Here.
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-300">
-                From AI-powered analytics to seamless logistics, SCRBRD is the all-in-one platform to elevate your team, league, or school.
+                From Ai-powered analytics to seamless logistics, SCRBRD is the all-in-one platform to elevate your team, league, or school.
               </p>
               <div className="mt-10 flex items-center gap-x-6">
                 <Button asChild size="lg">
                   <Link href="/signup">Get Started For Free</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="text-white border-white hover:bg-white/10">
+                <Button asChild variant="outline" size="lg" className="text-foreground border-foreground dark:text-white dark:border-white hover:bg-white/10">
                   <Link href="#features">Learn More <span aria-hidden="true">→</span></Link>
                 </Button>
               </div>
