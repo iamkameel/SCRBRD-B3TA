@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format, isSameDay } from "date-fns";
-import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy, AlignLeft, Search } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, CalendarDays, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, PlusCircle, ChevronDown, Trophy, AlignLeft, Search, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -36,8 +36,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { Match, Team, Competition, Field, MatchStatus } from "@/lib/data";
-import { deleteMatchAction } from '@/lib/actions/matches';
+import type { Match, Team, Competition, Field, MatchStatus, Person } from "@/lib/data";
+import { deleteMatchAction, assignOfficialToMatchAction } from '@/lib/actions/matches';
 import { MatchCard } from "./match-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EditMatchDialog } from "./edit-match-dialog";
@@ -45,6 +45,93 @@ import { StrategicCalendarView, competitionTypeColors } from '../strategic-calen
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+
+const assignmentSchema = z.object({
+  personId: z.string({ required_error: "Please select a person." }),
+  role: z.literal('Scorer'),
+});
+
+type AssignmentFormValues = z.infer<typeof assignmentSchema>;
+
+function AssignScorerDialog({ match, scorers, open, onOpenChange }: { match: Match; scorers: Person[]; open: boolean; onOpenChange: (open: boolean) => void; }) {
+  const { toast } = useToast();
+  const [isPending, startTransition] = React.useTransition();
+
+  const form = useForm<AssignmentFormValues>({
+    resolver: zodResolver(assignmentSchema),
+    defaultValues: { role: "Scorer" },
+  });
+
+  function onSubmit(data: AssignmentFormValues) {
+    startTransition(async () => {
+      try {
+        await assignOfficialToMatchAction(match.matchId, data);
+        toast({
+          title: "Scorer Assigned",
+          description: `A scorer has been assigned to the match.`,
+        });
+        onOpenChange(false);
+        form.reset();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Could not assign scorer.",
+          variant: "destructive",
+        });
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign Scorer to Match</DialogTitle>
+          <CardDescription>Select a person with the Scorer role.</CardDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="personId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Person</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select a scorer" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {scorers.map(p => <SelectItem key={p.personId} value={p.personId}>{p.firstName} {p.lastName}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Assigning..." : "Assign to Match"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 
 function MatchListItem({ match }: { match: Match }) {
@@ -69,7 +156,7 @@ function MatchListItem({ match }: { match: Match }) {
   );
 }
 
-export default function MatchesClient({ matches, teams, fields, competitions, isAdmin }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], isAdmin: boolean }) {
+export default function MatchesClient({ matches, teams, fields, competitions, isAdmin, scorers, canAssignScorer }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], isAdmin: boolean, scorers: Person[], canAssignScorer: boolean }) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -78,6 +165,8 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
   const [matchToEdit, setMatchToEdit] = React.useState<Match | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isAssignScorerDialogOpen, setIsAssignScorerDialogOpen] = React.useState(false);
+  const [matchToAssignScorer, setMatchToAssignScorer] = React.useState<Match | null>(null);
 
   const [isClient, setIsClient] = React.useState(false);
   const [view, setView] = React.useState<'list' | 'card' | 'calendar'>('list');
@@ -362,14 +451,26 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                                     </div>
                                     <span className="text-muted-foreground text-xs">vs</span>
                                     <div className="flex items-center gap-2">
-                                        <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
+                                        <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
                                         <span>{match.teamBName}</span>
                                     </div>
                                 </Link>
                             </TableCell>
                             <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
-                            <TableCell>{match.competitionName || 'Friendly'}</TableCell>
-                            <TableCell>{match.fieldName}</TableCell>
+                            <TableCell>
+                                {match.competitionId ? (
+                                    <Link href={`/competitions/${match.competitionId}`} className="hover:underline">
+                                        {match.competitionName || 'Competition'}
+                                    </Link>
+                                ) : (
+                                    'Friendly'
+                                )}
+                            </TableCell>
+                            <TableCell>
+                                <Link href={`/fields/${match.fieldId}`} className="hover:underline">
+                                    {match.fieldName}
+                                </Link>
+                            </TableCell>
                             <TableCell>
                               <Badge
                                 variant={
@@ -387,6 +488,11 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    {canAssignScorer && (
+                                        <DropdownMenuItem onSelect={() => { setMatchToAssignScorer(match); setIsAssignScorerDialogOpen(true); }}>
+                                            <User className="mr-2 h-4 w-4" /> Assign Scorer
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem onSelect={() => { setMatchToEdit(match); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => { setMatchToDelete(match); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -409,7 +515,9 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                                 match={match} 
                                 onEdit={() => { setMatchToEdit(match); setIsEditDialogOpen(true); }}
                                 onDelete={() => { setMatchToDelete(match); setIsDeleteDialogOpen(true); }}
-                                isAdmin={isAdmin}
+                                onAssignScorer={() => { setMatchToAssignScorer(match); setIsAssignScorerDialogOpen(true); }}
+                                canManage={isAdmin}
+                                canAssignScorer={canAssignScorer}
                             />
                         ))
                     ) : (
@@ -485,6 +593,15 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
             fields={fields} 
             open={isEditDialogOpen} 
             onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setMatchToEdit(null); }}
+        />
+      )}
+
+      {canAssignScorer && matchToAssignScorer && (
+        <AssignScorerDialog
+            match={matchToAssignScorer}
+            scorers={scorers}
+            open={isAssignScorerDialogOpen}
+            onOpenChange={(open) => { setIsAssignScorerDialogOpen(open); if (!open) setMatchToAssignScorer(null); }}
         />
       )}
 

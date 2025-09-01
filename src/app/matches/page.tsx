@@ -5,7 +5,7 @@ import MatchesClient from './client';
 import { getTeams } from '@/lib/actions/teams';
 import { getFields } from '@/lib/actions/fields';
 import { getCompetitions } from '@/lib/actions/competitions';
-import { getPerson } from '@/lib/actions/players';
+import { getPerson, getPeopleByRole } from '@/lib/actions/players';
 import { getUserId } from '@/lib/auth';
 
 export default async function MatchesPage() {
@@ -19,6 +19,9 @@ export default async function MatchesPage() {
   
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
+  const canAssignScorer = user?.roles.some(r => ['Admin', 'Sportsmaster', 'Coach', 'Umpire', 'Scorer'].includes(r)) ?? false;
+
+  const allScorers = await getPeopleByRole('Scorer');
   
-  return <MatchesClient matches={matches} teams={teams} fields={fields} competitions={competitions} isAdmin={isAdmin} />;
+  return <MatchesClient matches={matches} teams={teams} fields={fields} competitions={competitions} isAdmin={isAdmin} scorers={allScorers} canAssignScorer={canAssignScorer} />;
 }

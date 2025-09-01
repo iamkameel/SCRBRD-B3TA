@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { MoreHorizontal, Trash2, Edit, Calendar, Clock } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Calendar, Clock, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,10 +23,12 @@ interface MatchCardProps {
     match: Match;
     onEdit: () => void;
     onDelete: () => void;
+    onAssignScorer: () => void;
     isAdmin: boolean;
+    canAssignScorer: boolean;
 }
 
-export function MatchCard({ match, onEdit, onDelete, isAdmin }: MatchCardProps) {
+export function MatchCard({ match, onEdit, onDelete, onAssignScorer, isAdmin, canAssignScorer }: MatchCardProps) {
     const [isClient, setIsClient] = React.useState(false);
     
     React.useEffect(() => {
@@ -47,21 +49,20 @@ export function MatchCard({ match, onEdit, onDelete, isAdmin }: MatchCardProps) 
                                 </div>
                                 <div className="text-xs text-muted-foreground font-normal pl-8 my-0.5">vs</div>
                                 <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
+                                    <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
                                     <span className="truncate">{match.teamBName}</span>
                                 </div>
                              </Link>
                         </CardTitle>
                     </div>
-                    {isAdmin && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="-mt-2 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {canAssignScorer && <DropdownMenuItem onSelect={onAssignScorer}><User className="mr-2 h-4 w-4" /> Assign Scorer</DropdownMenuItem>}
+                            {isAdmin && <DropdownMenuItem onSelect={onEdit}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>}
+                            {isAdmin && <DropdownMenuItem onSelect={onDelete} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </CardHeader>
             <CardContent>
