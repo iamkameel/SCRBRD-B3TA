@@ -200,7 +200,7 @@ export default function FieldsClient({ fields, schools, groundskeepers }: { fiel
                       <TableRow key={field.fieldId}>
                         <TableCell className="font-medium"><Link href={`/fields/${field.fieldId}`} className="hover:underline">{field.name}</Link></TableCell>
                         <TableCell>{field.schoolName || <span className="text-muted-foreground">Independent</span>}</TableCell>
-                        <TableCell><Badge variant={field.status === 'Available' ? 'secondary' : (field.status === 'Maintenance' ? 'outline' : 'destructive')}>{field.status}</Badge></TableCell>
+                        <TableCell><div className="flex items-center gap-2"><Badge variant={field.status === 'Available' ? 'secondary' : (field.status === 'Maintenance' ? 'outline' : 'destructive')} className="capitalize">{field.status}</Badge></div></TableCell>
                         <TableCell>{field.assignments?.length || 0}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
