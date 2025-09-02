@@ -8,7 +8,7 @@ import { getSchools } from '@/lib/actions/schools';
 import { getPeopleByRole } from '@/lib/actions/players';
 
 export default async function FieldDetailsPage({ params }: { params: { fieldId: string } }) {
-  const [field, matches, schools, groundskeepers] = await Promise.all([
+  const [field, matches, schools, groundkeepers] = await Promise.all([
     getField(params.fieldId),
     getMatchesByField(params.fieldId),
     getSchools(),
@@ -19,5 +19,5 @@ export default async function FieldDetailsPage({ params }: { params: { fieldId: 
     notFound();
   }
 
-  return <FieldDetailsClient field={field} matches={matches} schools={schools} groundskeepers={groundkeepers} />;
+  return <FieldDetailsClient field={field} matches={matches} schools={schools} groundkeepers={groundkeepers} />;
 }

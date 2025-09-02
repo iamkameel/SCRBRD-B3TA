@@ -1,5 +1,4 @@
 
-
 import { getFields } from '@/lib/actions/fields';
 import { getSchools } from '@/lib/actions/schools';
 import { getPeopleByRole } from '@/lib/actions/players';

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -25,7 +26,7 @@ import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
 
 
-export default function FieldDetailsClient({ field, matches, schools, groundskeepers }: { field: Field, matches: Match[], schools: School[], groundskeepers: Person[] }) {
+export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {
     const { person: currentUser } = useAuth();
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const upcomingMatches = matches.filter(m => m.status === 'scheduled');
@@ -125,7 +126,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundskee
                                     <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Facilities</h4>
                                     {field.facilities && field.facilities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`} itemKey={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`} itemKey={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No facilities listed.</p>)}
                                 </div>
@@ -133,7 +134,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundskee
                                      <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Amenities</h4>
                                     {field.amenities && field.amenities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.amenities.map((a, i) => <ListItem key={`${a}-${i}`} itemKey={`${a}-${i}`}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.amenities.map((a, i) => <ListItem key={`${a}-${i}`} itemKey={`${a}-${i}`}>{a.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No amenities listed.</p>)}
                                 </div>
@@ -282,7 +283,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundskee
                 </div>
             </div>
         </div>
-        {canManage && <FieldDialog mode="edit" field={field} schools={schools} groundskeepers={groundkeepers} open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />}
+        {canManage && <FieldDialog mode="edit" field={field} schools={schools} groundkeepers={groundkeepers} open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />}
         </>
     )
 }

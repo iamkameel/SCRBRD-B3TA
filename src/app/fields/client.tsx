@@ -39,7 +39,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 
-export default function FieldsClient({ fields, schools, groundskeepers }: { fields: Field[], schools: School[], groundskeepers: Person[] }) {
+export default function FieldsClient({ fields, schools, groundkeepers }: { fields: Field[], schools: School[], groundkeepers: Person[] }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedField, setSelectedField] = React.useState<Field | null>(null);
@@ -248,7 +248,7 @@ export default function FieldsClient({ fields, schools, groundskeepers }: { fiel
         </Card>
       </div>
 
-      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundskeepers={groundkeepers} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
+      {isFieldDialogOpen && <FieldDialog mode={dialogMode} field={selectedField ?? undefined} schools={schools} groundkeepers={groundkeepers} open={isFieldDialogOpen} onOpenChange={setIsFieldDialogOpen} />}
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
