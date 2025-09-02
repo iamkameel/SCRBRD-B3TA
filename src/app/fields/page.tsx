@@ -6,11 +6,11 @@ import { getPeopleByRole } from '@/lib/actions/players';
 import FieldsClient from './client';
 
 export default async function FieldsPage() {
-  const [fields, schools, groundskeepers] = await Promise.all([
+  const [fields, schools, groundkeepers] = await Promise.all([
     getFields(),
     getSchools(),
     getPeopleByRole('Grounds-Keeper'),
   ]);
   
-  return <FieldsClient fields={fields} schools={schools} groundskeepers={groundkeepers} />;
+  return <FieldsClient fields={fields} schools={schools} groundkeepers={groundkeepers} />;
 }
