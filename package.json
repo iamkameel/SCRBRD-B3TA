@@ -72,6 +72,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/react-leaflet": "^3.0.0",
     "@types/wav": "^1.0.2",
     "eslint": "^9.29.0",
     "genkit-cli": "^1.13.0",

@@ -3,10 +3,11 @@
 'use client';
 
 import * as React from "react";
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from "date-fns";
-import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star, Edit } from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star, Edit, Map } from 'lucide-react';
 import type { Field, Match, School, Person } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,10 @@ import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
 
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
 export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {
     const { person: currentUser } = useAuth();
@@ -45,19 +50,23 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
         <li key={itemKey} className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {children}</li>
     );
     
-    const InfoBlock = ({ label, value, icon: Icon }: { label: string, value?: string | number, icon: React.ElementType }) => {
+    const InfoBlock = ({ label, value, icon: Icon, href }: { label: string, value?: string | number, icon: React.ElementType, href?: string }) => {
         if (!value) return null;
         return (
             <div className="flex items-start gap-3">
                 <Icon className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
                 <div>
                     <p className="font-semibold">{label}</p>
-                    <p className="text-sm text-muted-foreground">{value}</p>
+                    <p className="text-sm text-muted-foreground">
+                        {href ? <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{value}</a> : value}
+                    </p>
                 </div>
             </div>
         );
     };
 
+    const hasCoordinates = field.coordinates && field.coordinates.lat && field.coordinates.lon;
+    
     return (
         <>
         <div className="flex flex-col gap-8">
@@ -116,9 +125,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Field Details</CardTitle>
-                        </CardHeader>
+                        <CardHeader><CardTitle>Field Details</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <DetailItem icon={MapPin} label="Location" value={field.location} />
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,78 +188,48 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                     </Card>
 
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Upcoming Matches</CardTitle>
-                            <CardDescription>Matches scheduled to be played at this venue.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Match</TableHead>
-                                        <TableHead>Competition</TableHead>
-                                        <TableHead className="text-right">Date</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {upcomingMatches.length > 0 ? (
-                                        upcomingMatches.map(match => (
-                                            <TableRow key={match.matchId}>
-                                                <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
-                                                <TableCell>{match.competitionName}</TableCell>
-                                                <TableCell className="text-right">{format(match.dateTime, 'PPP')}</TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={3} className="h-24 text-center">No upcoming matches at this venue.</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
+                        <CardHeader><CardTitle>Upcoming Matches</CardTitle><CardDescription>Matches scheduled to be played at this venue.</CardDescription></CardHeader>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Competition</TableHead><TableHead className="text-right">Date</TableHead></TableRow></TableHeader><TableBody>{upcomingMatches.length > 0 ? (upcomingMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.competitionName}</TableCell><TableCell className="text-right">{format(match.dateTime, 'PPP')}</TableCell></TableRow>))) : (<TableRow><TableCell colSpan={3} className="h-24 text-center">No upcoming matches at this venue.</TableCell></TableRow>)}</TableBody></Table></CardContent>
                     </Card>
                      <Card>
-                        <CardHeader>
-                            <CardTitle>Past Matches</CardTitle>
-                            <CardDescription>Recently completed matches played at this venue.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                           <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Match</TableHead>
-                                        <TableHead>Result</TableHead>
-                                        <TableHead className="text-right">Date</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                     {pastMatches.length > 0 ? (
-                                        pastMatches.map(match => (
-                                            <TableRow key={match.matchId}>
-                                                <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
-                                                <TableCell>{match.result || 'Result N/A'}</TableCell>
-                                                <TableCell className="text-right">{format(match.dateTime, 'PPP')}</TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={3} className="h-24 text-center">No past matches found for this venue.</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
+                        <CardHeader><CardTitle>Past Matches</CardTitle><CardDescription>Recently completed matches played at this venue.</CardDescription></CardHeader>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Match</TableHead><TableHead>Result</TableHead><TableHead className="text-right">Date</TableHead></TableRow></TableHeader><TableBody>{pastMatches.length > 0 ? (pastMatches.map(match => (<TableRow key={match.matchId}><TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell><TableCell>{match.result || 'Result N/A'}</TableCell><TableCell className="text-right">{format(match.dateTime, 'PPP')}</TableCell></TableRow>))) : (<TableRow><TableCell colSpan={3} className="h-24 text-center">No past matches found for this venue.</TableCell></TableRow>)}</TableBody></Table></CardContent>
                     </Card>
                 </div>
                 <div className="lg:col-span-1 space-y-8">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Venue Operations</CardTitle>
-                        </CardHeader>
+                        <CardHeader><CardTitle>Location</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                            {hasCoordinates ? (
+                                <div className="h-64 w-full rounded-lg overflow-hidden border">
+                                <MapContainer center={[field.coordinates!.lat, field.coordinates!.lon]} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+                                    <TileLayer
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
+                                    <Marker position={[field.coordinates!.lat, field.coordinates!.lon]}>
+                                        <Popup>{field.name}</Popup>
+                                    </Marker>
+                                </MapContainer>
+                                </div>
+                            ) : (
+                                <div className="h-64 w-full rounded-lg border-2 border-dashed flex items-center justify-center text-muted-foreground text-center p-4">
+                                <p>No coordinates have been set for this venue.</p>
+                                </div>
+                            )}
+                             <Button asChild className="w-full" disabled={!hasCoordinates}>
+                                <a href={`https://www.google.com/maps?q=${field.coordinates?.lat},${field.coordinates?.lon}`} target="_blank" rel="noopener noreferrer">
+                                    <Map className="mr-2"/>
+                                    View on Google Maps
+                                </a>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Venue Operations</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                            <InfoBlock label="Contact Person" value={field.contactPerson} icon={User} />
-                           <InfoBlock label="Contact Phone" value={field.contactPhone} icon={Phone} />
+                           <InfoBlock label="Contact Phone" value={field.contactPhone} icon={Phone} href={`tel:${field.contactPhone}`} />
                            
                              {!(field.contactPerson || field.contactPhone) && (
                                 <p className="text-sm text-muted-foreground text-center py-4">No contact information available.</p>
@@ -260,25 +237,8 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Assigned Grounds-Keepers</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {field.assignments && field.assignments.length > 0 ? (
-                                <ul className="space-y-3">
-                                    {field.assignments.map(a => (
-                                        <li key={a.assignmentId} className="flex items-center gap-3">
-                                             <Avatar className="h-9 w-9">
-                                                <AvatarFallback>{a.personName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium">{a.personName}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">No grounds-keepers assigned.</p>
-                            )}
-                        </CardContent>
+                        <CardHeader><CardTitle>Assigned Grounds-Keepers</CardTitle></CardHeader>
+                        <CardContent>{field.assignments && field.assignments.length > 0 ? (<ul className="space-y-3">{field.assignments.map(a => (<li key={a.assignmentId} className="flex items-center gap-3"><Avatar className="h-9 w-9"><AvatarFallback>{a.personName.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar><span className="font-medium">{a.personName}</span></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-4">No grounds-keepers assigned.</p>)}</CardContent>
                     </Card>
                 </div>
             </div>
