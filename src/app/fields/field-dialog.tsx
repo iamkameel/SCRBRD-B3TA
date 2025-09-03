@@ -74,6 +74,7 @@ export function FieldDialog({ mode, field, schools, groundkeepers, open, onOpenC
   const [isPending, startTransition] = React.useTransition();
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
   const [existingImageUrls, setExistingImageUrls] = React.useState<string[]>([]);
+  const [coordinatesString, setCoordinatesString] = React.useState('');
 
 
   const form = useForm<FieldFormValues>({
@@ -100,15 +101,43 @@ export function FieldDialog({ mode, field, schools, groundkeepers, open, onOpenC
           imageUrls: field.imageUrls || [],
           imageDataUris: [],
         });
+        if (field.coordinates?.lat && field.coordinates?.lon) {
+            setCoordinatesString(`${field.coordinates.lat}, ${field.coordinates.lon}`);
+        } else {
+            setCoordinatesString('');
+        }
         setImagePreviews(field.imageUrls || []);
         setExistingImageUrls(field.imageUrls || []);
       } else {
         form.reset({ name: "", alias: "", schoolId: ' ', status: "Available", pitchType: 'Natural Turf', facilities: [], amenities: [], assignments: [], contactPerson: "", contactPhone: "", notes: "", location: "", size: "", coordinates: { lat: undefined, lon: undefined }, surfaceCondition: { rating: 3, details: {} }, imageUrls: [], imageDataUris: [] });
+        setCoordinatesString('');
         setImagePreviews([]);
         setExistingImageUrls([]);
       }
     }
   }, [field, mode, open, form]);
+
+  const handleCoordinateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setCoordinatesString(value);
+    
+    const parts = value.split(',').map(s => s.trim());
+    if (parts.length === 2) {
+        const lat = parseFloat(parts[0]);
+        const lon = parseFloat(parts[1]);
+
+        if (!isNaN(lat) && !isNaN(lon)) {
+            form.setValue('coordinates.lat', lat);
+            form.setValue('coordinates.lon', lon);
+        } else {
+             form.setValue('coordinates.lat', undefined);
+             form.setValue('coordinates.lon', undefined);
+        }
+    } else {
+        form.setValue('coordinates.lat', undefined);
+        form.setValue('coordinates.lon', undefined);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -189,9 +218,10 @@ export function FieldDialog({ mode, field, schools, groundkeepers, open, onOpenC
                 </div>
                 <FormField control={form.control} name="schoolId" render={({ field }) => (<FormItem><FormLabel>Owning School (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a school (if applicable)" /></SelectTrigger></FormControl><SelectContent><SelectItem value=" ">-- None (Independent Field) --</SelectItem>{schools.map((s) => (<SelectItem key={s.schoolId} value={s.schoolId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g. 123 Cricket Lane, Sportsville" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="coordinates.lat" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-29.318" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="coordinates.lon" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="29.96" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="space-y-2">
+                    <FormLabel htmlFor="coordinates">Coordinates</FormLabel>
+                    <Input id="coordinates" placeholder="-29.318, 29.96" value={coordinatesString} onChange={handleCoordinateChange} disabled={isPending} />
+                    <FormDescription>Paste comma-separated latitude and longitude.</FormDescription>
                 </div>
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} defaultValue="Available" disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{FIELD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
               </TabsContent>
