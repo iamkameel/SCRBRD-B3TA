@@ -131,7 +131,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                                     <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Facilities</h4>
                                     {field.facilities && field.facilities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`} itemKey={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.facilities.map((f, i) => <ListItem key={`${f}-${i}`} itemKey={`${f}-${i}`}>{f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No facilities listed.</p>)}
                                 </div>
@@ -139,7 +139,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                                      <h4 className="font-semibold flex items-center gap-2 mb-2"><Check className="h-4 w-4 text-muted-foreground" /> Amenities</h4>
                                     {field.amenities && field.amenities.length > 0 ? (
                                         <ul className="space-y-1 text-sm text-muted-foreground ml-6">
-                                            {field.amenities.map((a, i) => <ListItem key={`${a}-${i}`} itemKey={`${a}-${i}`}>{a.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</ListItem>)}
+                                            {field.amenities.map((a, i) => <ListItem key={`${a}-${i}`} itemKey={`${a}-${i}`}>{a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</ListItem>)}
                                         </ul>
                                     ) : (<p className="text-sm text-muted-foreground ml-6">No amenities listed.</p>)}
                                 </div>
