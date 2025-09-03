@@ -23,13 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
-import dynamic from 'next/dynamic';
-
-const FieldMap = dynamic(() => import('./map'), { 
-    ssr: false,
-    loading: () => <div className="h-64 w-full bg-muted animate-pulse rounded-lg" /> 
-});
-
+import FieldMap from './map';
 
 export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {
     const { person: currentUser } = useAuth();
