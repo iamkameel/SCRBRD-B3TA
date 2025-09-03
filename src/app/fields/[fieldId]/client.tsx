@@ -39,6 +39,7 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
     );
 };
 
+
 export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {
     const { person: currentUser } = useAuth();
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);

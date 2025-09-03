@@ -5,7 +5,6 @@ import * as React from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { LatLngExpression } from 'leaflet';
 import L from 'leaflet';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 
 // Leaflet's icon URLs don't work well with bundlers, so we manually fix them.
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -40,16 +39,25 @@ export default function FieldMap({ center, popupText }: FieldMapProps) {
     if (!isMounted) {
         return <div className="h-full w-full bg-muted animate-pulse rounded-lg" />;
     }
+
+    // Must dynamically import react-leaflet components only on the client
+    const MapContainer = React.lazy(() => import('react-leaflet').then(module => ({ default: module.MapContainer })));
+    const TileLayer = React.lazy(() => import('react-leaflet').then(module => ({ default: module.TileLayer })));
+    const Marker = React.lazy(() => import('react-leaflet').then(module => ({ default: module.Marker })));
+    const Popup = React.lazy(() => import('react-leaflet').then(module => ({ default: module.Popup })));
+
     
     return (
-        <MapContainer center={center} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={center}>
-                <Popup>{popupText}</Popup>
-            </Marker>
-        </MapContainer>
+        <React.Suspense fallback={<div className="h-full w-full bg-muted animate-pulse rounded-lg" />}>
+            <MapContainer center={center} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={center}>
+                    <Popup>{popupText}</Popup>
+                </Marker>
+            </MapContainer>
+        </React.Suspense>
     );
 }
