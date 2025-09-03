@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -95,7 +94,14 @@ export function FieldDialog({ mode, field, schools, groundkeepers, open, onOpenC
       if (mode === 'edit' && field) {
         form.reset({
           ...field,
+          alias: field.alias || '',
+          contactPerson: field.contactPerson || '',
+          contactPhone: field.contactPhone || '',
+          location: field.location || '',
+          notes: field.notes || '',
+          pitchType: field.pitchType || '',
           schoolId: field.schoolId || ' ',
+          size: field.size || '',
           assignments: field.assignments?.map(a => a.personId) || [],
           surfaceCondition: field.surfaceCondition || { rating: 3, details: {} },
           imageUrls: field.imageUrls || [],
@@ -227,15 +233,15 @@ export function FieldDialog({ mode, field, schools, groundkeepers, open, onOpenC
               </TabsContent>
               <TabsContent value="surface" className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="pitchType" render={({ field }) => (<FormItem><FormLabel>Pitch Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{PITCH_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="size" render={({ field }) => (<FormItem><FormLabel>Field Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger></FormControl><SelectContent>{FIELD_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="pitchType" render={({ field }) => (<FormItem><FormLabel>Pitch Type</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select pitch type"/></SelectTrigger></FormControl><SelectContent>{PITCH_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="size" render={({ field }) => (<FormItem><FormLabel>Field Size</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger></FormControl><SelectContent>{FIELD_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                  </div>
                  <FormField control={form.control} name="surfaceCondition.rating" render={({ field }) => (<FormItem><FormLabel>Overall Condition Rating: {ratingValue}/5</FormLabel><FormControl><Slider onValueChange={(value) => field.onChange(value[0])} value={[field.value ?? 3]} min={1} max={5} step={1} disabled={isPending} /></FormControl></FormItem>)} />
                  
                  {pitchType === 'Natural Turf' && (
                     <div className="space-y-4 rounded-md border p-4 bg-muted/50">
                         <h4 className="font-medium text-sm">Natural Turf Details</h4>
-                        <FormField control={form.control} name="surfaceCondition.details.grassCover" render={({ field }) => (<FormItem><FormLabel>Grass Cover (%)</FormLabel><FormControl><Input type="number" placeholder="90" {...field} /></FormControl></FormItem>)} />
+                        <FormField control={form.control} name="surfaceCondition.details.grassCover" render={({ field }) => (<FormItem><FormLabel>Grass Cover (%)</FormLabel><FormControl><Input type="number" placeholder="90" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
                         <FormField control={form.control} name="surfaceCondition.details.moisture" render={({ field }) => (<FormItem><FormLabel>Moisture Level</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select moisture level"/></SelectTrigger></FormControl><SelectContent><SelectItem value="Dry">Dry</SelectItem><SelectItem value="Ideal">Ideal</SelectItem><SelectItem value="Wet">Wet</SelectItem></SelectContent></Select></FormItem>)} />
                         <FormField control={form.control} name="surfaceCondition.details.firmness" render={({ field }) => (<FormItem><FormLabel>Firmness</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select firmness"/></SelectTrigger></FormControl><SelectContent><SelectItem value="Soft">Soft</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="Firm">Firm</SelectItem></SelectContent></Select></FormItem>)} />
                     </div>
@@ -243,8 +249,8 @@ export function FieldDialog({ mode, field, schools, groundkeepers, open, onOpenC
                  {pitchType === 'Artificial Astro-Turf' && (
                      <div className="space-y-4 rounded-md border p-4 bg-muted/50">
                         <h4 className="font-medium text-sm">Artificial Astro-Turf Details</h4>
-                        <FormField control={form.control} name="surfaceCondition.details.pileHeight" render={({ field }) => (<FormItem><FormLabel>Pile Height (mm)</FormLabel><FormControl><Input type="number" placeholder="12" {...field} /></FormControl></FormItem>)} />
-                        <FormField control={form.control} name="surfaceCondition.details.infillDepth" render={({ field }) => (<FormItem><FormLabel>Infill Depth (mm)</FormLabel><FormControl><Input type="number" placeholder="8" {...field} /></FormControl></FormItem>)} />
+                        <FormField control={form.control} name="surfaceCondition.details.pileHeight" render={({ field }) => (<FormItem><FormLabel>Pile Height (mm)</FormLabel><FormControl><Input type="number" placeholder="12" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                        <FormField control={form.control} name="surfaceCondition.details.infillDepth" render={({ field }) => (<FormItem><FormLabel>Infill Depth (mm)</FormLabel><FormControl><Input type="number" placeholder="8" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
                     </div>
                  )}
                   <FormField control={form.control} name="notes" render={({ field }) => (<FormItem><FormLabel>General Notes</FormLabel><FormControl><Textarea placeholder="e.g. Excellent drainage, pitch plays fast." {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
