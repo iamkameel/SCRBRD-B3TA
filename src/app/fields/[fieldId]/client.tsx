@@ -50,7 +50,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
         <li key={itemKey} className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {children}</li>
     );
     
-    const InfoBlock = ({ label, value, icon: Icon, href }: { label: string, value?: string | number, icon: React.ElementType, href?: string }) => {
+    const InfoItem = ({ label, value, icon: Icon, href }: { label: string, value?: string | number, icon: React.ElementType, href?: string }) => {
         if (!value) return null;
         return (
             <div className="flex items-start gap-3">
@@ -179,7 +179,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                                             </ul>
                                         </div>
                                     )}
-                                    {field.notes && <InfoBlock label="Groundskeeper Notes" value={field.notes} icon={FileText} />}
+                                    {field.notes && <InfoItem label="Groundskeeper Notes" value={field.notes} icon={FileText} />}
                                 </div>
                             ) : (
                                 <p className="text-sm text-muted-foreground text-center py-4">No surface condition data available.</p>
