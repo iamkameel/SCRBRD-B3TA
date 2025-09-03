@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from "react";
@@ -25,8 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
-
-const FieldMap = dynamic(() => import('./map'), { ssr: false });
+import FieldMap from './map';
 
 
 export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -37,8 +36,9 @@ export default function FieldMap({ center, popupText }: FieldMapProps) {
         setIsMounted(true);
     }, []);
 
+    // Return a placeholder or null until the component is mounted on the client
     if (!isMounted) {
-        return null; // Or a loading spinner
+        return null;
     }
     
     return (
