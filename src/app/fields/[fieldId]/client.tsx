@@ -26,10 +26,8 @@ import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
 
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+const FieldMap = dynamic(() => import('./map'), { ssr: false });
+
 
 export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {
     const { person: currentUser } = useAuth();
@@ -202,15 +200,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                         <CardContent className="space-y-4">
                             {hasCoordinates ? (
                                 <div className="h-64 w-full rounded-lg overflow-hidden border">
-                                <MapContainer center={[field.coordinates!.lat, field.coordinates!.lon]} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-                                    <TileLayer
-                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                    />
-                                    <Marker position={[field.coordinates!.lat, field.coordinates!.lon]}>
-                                        <Popup>{field.name}</Popup>
-                                    </Marker>
-                                </MapContainer>
+                                    <FieldMap center={[field.coordinates!.lat, field.coordinates!.lon]} popupText={field.name} />
                                 </div>
                             ) : (
                                 <div className="h-64 w-full rounded-lg border-2 border-dashed flex items-center justify-center text-muted-foreground text-center p-4">
