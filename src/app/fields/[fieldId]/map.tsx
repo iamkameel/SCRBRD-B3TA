@@ -1,5 +1,7 @@
+
 'use client';
 
+import * as React from 'react';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -29,6 +31,16 @@ interface FieldMapProps {
 }
 
 export default function FieldMap({ center, popupText }: FieldMapProps) {
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return null; // Or a loading spinner
+    }
+    
     return (
         <MapContainer center={center} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
             <TileLayer
