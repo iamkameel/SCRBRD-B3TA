@@ -24,6 +24,9 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// We need to dynamically import react-leaflet components to ensure they are only loaded on the client side.
+const { MapContainer, TileLayer, Marker, Popup } = require('react-leaflet');
+
 interface FieldMapProps {
     center: LatLngExpression;
     popupText: string;
@@ -39,9 +42,6 @@ export default function FieldMap({ center, popupText }: FieldMapProps) {
     if (!isMounted) {
         return <div className="h-full w-full bg-muted animate-pulse rounded-lg" />;
     }
-
-    // These must be imported only on the client, after the component has mounted.
-    const { MapContainer, TileLayer, Marker, Popup } = require('react-leaflet');
 
     return (
         <MapContainer center={center} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
