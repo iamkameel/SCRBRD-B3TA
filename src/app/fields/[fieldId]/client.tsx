@@ -24,12 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
-
-const FieldMap = dynamic(() => import('./map'), {
-    ssr: false,
-    loading: () => <div className="h-full w-full bg-muted animate-pulse rounded-lg" />,
-});
-
+import FieldMap from './map';
 
 const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | number, href?: string }) => {
     if (!value) return null;
