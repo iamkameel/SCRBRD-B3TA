@@ -4,6 +4,7 @@
 import * as React from "react";
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { format } from "date-fns";
 import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star, Edit, Map } from 'lucide-react';
 import type { Field, Match, School, Person } from '@/lib/data';
@@ -23,7 +24,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
-import FieldMap from './map';
+
+const FieldMap = dynamic(() => import('./map'), {
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-muted animate-pulse rounded-lg" />,
+});
+
 
 const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | number, href?: string }) => {
     if (!value) return null;
