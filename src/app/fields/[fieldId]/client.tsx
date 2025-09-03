@@ -4,7 +4,6 @@
 import * as React from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 import { format } from "date-fns";
 import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star, Edit, Map } from 'lucide-react';
 import type { Field, Match, School, Person } from '@/lib/data';
@@ -24,12 +23,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
+import FieldMap from './map';
 
-const FieldMap = dynamic(() => import('./map'), { 
-    ssr: false,
-    loading: () => <div className="h-full w-full bg-muted animate-pulse rounded-lg" />,
-});
-
+const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | number, href?: string }) => {
+    if (!value) return null;
+    const content = href ? <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{value}</a> : <span>{value}</span>;
+    return (
+        <div className="flex items-start gap-3">
+            <Icon className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
+            <div>
+                <p className="font-semibold">{label}</p>
+                <p className="text-sm text-muted-foreground">{content}</p>
+            </div>
+        </div>
+    );
+};
 
 export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {
     const { person: currentUser } = useAuth();
@@ -50,21 +58,6 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
         <li key={itemKey} className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> {children}</li>
     );
     
-    const InfoItem = ({ label, value, icon: Icon, href }: { label: string, value?: string | number, icon: React.ElementType, href?: string }) => {
-        if (!value) return null;
-        return (
-            <div className="flex items-start gap-3">
-                <Icon className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
-                <div>
-                    <p className="font-semibold">{label}</p>
-                    <p className="text-sm text-muted-foreground">
-                        {href ? <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{value}</a> : value}
-                    </p>
-                </div>
-            </div>
-        );
-    };
-
     const hasCoordinates = field.coordinates && field.coordinates.lat && field.coordinates.lon;
     
     return (
@@ -179,7 +172,7 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                                             </ul>
                                         </div>
                                     )}
-                                    {field.notes && <InfoItem label="Groundskeeper Notes" value={field.notes} icon={FileText} />}
+                                    {field.notes && <InfoItem icon={FileText} label="Groundskeeper Notes" value={field.notes} />}
                                 </div>
                             ) : (
                                 <p className="text-sm text-muted-foreground text-center py-4">No surface condition data available.</p>
