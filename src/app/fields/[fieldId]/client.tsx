@@ -4,7 +4,6 @@
 import * as React from "react";
 import Link from 'next/link';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 import { format } from "date-fns";
 import { ArrowLeft, Building, MapPin, Check, User, Phone, FileText, Wind, Maximize, Star, Edit, Map } from 'lucide-react';
 import type { Field, Match, School, Person } from '@/lib/data';

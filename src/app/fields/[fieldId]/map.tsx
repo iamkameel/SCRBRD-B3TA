@@ -4,9 +4,10 @@
 import * as React from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { LatLngExpression } from 'leaflet';
-import L from 'leaflet';
 
 // Leaflet's icon URLs don't work well with bundlers, so we manually fix them.
+// This must be done BEFORE react-leaflet components are imported.
+import L from 'leaflet';
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
@@ -30,17 +31,18 @@ interface FieldMapProps {
 
 export default function FieldMap({ center, popupText }: FieldMapProps) {
     const [isMounted, setIsMounted] = React.useState(false);
-    const { MapContainer, TileLayer, Marker, Popup } = require('react-leaflet');
 
     React.useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    // Return a placeholder or null until the component is mounted on the client
     if (!isMounted) {
         return <div className="h-full w-full bg-muted animate-pulse rounded-lg" />;
     }
-    
+
+    // These must be imported only on the client, after the component has mounted.
+    const { MapContainer, TileLayer, Marker, Popup } = require('react-leaflet');
+
     return (
         <MapContainer center={center} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
             <TileLayer
