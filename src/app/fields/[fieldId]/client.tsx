@@ -23,7 +23,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { FieldDialog } from "../field-dialog";
 import { useAuth } from "@/lib/auth-context";
-import FieldMap from './map';
+import dynamic from 'next/dynamic';
+
+const FieldMap = dynamic(() => import('./map'), { 
+    ssr: false,
+    loading: () => <div className="h-64 w-full bg-muted animate-pulse rounded-lg" /> 
+});
 
 
 export default function FieldDetailsClient({ field, matches, schools, groundkeepers }: { field: Field, matches: Match[], schools: School[], groundkeepers: Person[] }) {
@@ -215,8 +220,8 @@ export default function FieldDetailsClient({ field, matches, schools, groundkeep
                     <Card>
                         <CardHeader><CardTitle>Venue Operations</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                           <InfoBlock label="Contact Person" value={field.contactPerson} icon={User} />
-                           <InfoBlock label="Contact Phone" value={field.contactPhone} icon={Phone} href={`tel:${field.contactPhone}`} />
+                           <InfoItem icon={User} label="Contact Person" value={field.contactPerson} />
+                           <InfoItem icon={Phone} label="Contact Phone" value={field.contactPhone} href={`tel:${field.contactPhone}`} />
                            
                              {!(field.contactPerson || field.contactPhone) && (
                                 <p className="text-sm text-muted-foreground text-center py-4">No contact information available.</p>

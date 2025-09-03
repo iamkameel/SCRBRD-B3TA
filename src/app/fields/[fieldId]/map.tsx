@@ -3,9 +3,8 @@
 
 import * as React from 'react';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
+import L from 'leaflet';
 
 // Leaflet's icon URLs don't work well with bundlers, so we manually fix them.
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -24,6 +23,11 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// We dynamically import leaflet components to ensure they only run on the client
+const MapContainer = React.lazy(() => import('react-leaflet').then(m => ({ default: m.MapContainer })));
+const TileLayer = React.lazy(() => import('react-leaflet').then(m => ({ default: m.TileLayer })));
+const Marker = React.lazy(() => import('react-leaflet').then(m => ({ default: m.Marker })));
+const Popup = React.lazy(() => import('react-leaflet').then(m => ({ default: m.Popup })));
 
 interface FieldMapProps {
     center: LatLngExpression;
@@ -39,18 +43,20 @@ export default function FieldMap({ center, popupText }: FieldMapProps) {
 
     // Return a placeholder or null until the component is mounted on the client
     if (!isMounted) {
-        return null;
+        return <div className="h-full w-full bg-muted animate-pulse rounded-lg" />;
     }
     
     return (
-        <MapContainer center={center} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={center}>
-                <Popup>{popupText}</Popup>
-            </Marker>
-        </MapContainer>
+        <React.Suspense fallback={<div className="h-full w-full bg-muted animate-pulse rounded-lg" />}>
+            <MapContainer center={center} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={center}>
+                    <Popup>{popupText}</Popup>
+                </Marker>
+            </MapContainer>
+        </React.Suspense>
     );
 }
