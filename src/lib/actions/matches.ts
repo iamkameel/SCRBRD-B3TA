@@ -730,6 +730,10 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
         throw new Error("Live scoring players are not set up.");
     }
+
+    if (liveScore.overs >= 20) {
+        throw new Error("The innings is complete. No more balls can be bowled.");
+    }
     
     const previousLiveScore = JSON.parse(JSON.stringify(liveScore));
 
@@ -806,6 +810,15 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
             if (onStrikeId) {
                 liveScore.batsmenOut.push(onStrikeId);
                 liveScore.batsmanStats[onStrikeId].timeOut = new Date();
+                 const onStrikeBatsman = await getPerson(onStrikeId);
+                if (liveScore.fallOfWickets && onStrikeBatsman) {
+                    liveScore.fallOfWickets.push({
+                        wicketNumber: liveScore.wickets,
+                        runs: liveScore.runs,
+                        batsmanName: `${onStrikeBatsman.firstName} ${onStrikeBatsman.lastName}`,
+                        timestamp: new Date(),
+                    });
+                }
             }
             liveScore.onStrikeBatsmanId = null; 
             liveScore.extras.partnership = 0;
@@ -1160,4 +1173,3 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
 }
       
     
-

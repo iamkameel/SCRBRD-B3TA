@@ -704,17 +704,17 @@ export function LiveScoringInterface({
                 </CardContent>
             </Card>
         )}
-        {isAllOut && (
+        {(isAllOut || isOversFinished) && (
              <Card className="p-8 text-center bg-muted">
                 <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
                 <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
-                <p className="mt-1 text-sm text-muted-foreground">All 10 wickets have fallen.</p>
+                <p className="mt-1 text-sm text-muted-foreground">{isAllOut ? 'All 10 wickets have fallen.' : 'The 20 overs have been completed.'}</p>
                  <Button onClick={handleEndInnings} className="mt-4" disabled={isPending || isSimulating}>
                     {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
                 </Button>
             </Card>
         )}
-        {!needsPlayerSelection && !isAllOut && isReadyToScore && (
+        {!needsPlayerSelection && !isAllOut && !isOversFinished && isReadyToScore && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 space-y-4">
                     <Card>
@@ -826,4 +826,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
