@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -385,9 +384,10 @@ function LiveBattingCard({ batsmanStats, roster, batsmenOut }: { batsmanStats: L
     const battingLineup = roster.map(player => {
         const stats = batsmanStats[player.personId];
         const sr = (stats && stats.balls > 0) ? (stats.runs / stats.balls) * 100 : 0;
+        const status = batsmenOut.includes(player.personId) ? (stats?.status || 'Out') : (stats ? 'Not Out' : 'Did not bat');
         return {
             name: player.personName,
-            status: batsmenOut.includes(player.personId) ? 'Out' : (stats ? 'Not Out' : 'Did not bat'),
+            status,
             runs: stats?.runs ?? 0,
             balls: stats?.balls ?? 0,
             strikeRate: sr.toFixed(2),
@@ -545,7 +545,7 @@ export function LiveScoringInterface({
   
   const needsNewBowler = endOfOver && !isAllOut && !isOversFinished;
   
-  const needsPlayerSelection = !liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId || needsNewBatsman || needsNewBowler;
+  const needsPlayerSelection = !liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId || needsNewBatsman || needsNewBowler || (liveScore.overs === 0 && liveScore.balls === 0 && liveScore.liveInnings === 2);
   const isReadyToScore = !needsPlayerSelection;
 
   
@@ -964,7 +964,7 @@ export function LiveScoringInterface({
                               </CardContent>
                           </Card>
                           <Card>
-                              <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
+                              <CardHeader><CardTitle>Actions</CardHeader></CardHeader>
                               <CardContent className="flex flex-col gap-2">
                                   <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
                                       <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
