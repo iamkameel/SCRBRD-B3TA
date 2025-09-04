@@ -199,6 +199,13 @@ export interface Extras {
     partnershipStartTime?: Date;
 }
 
+export interface LiveFallOfWicket {
+  wicketNumber: number;
+  runs: number;
+  batsmanName: string;
+  timestamp: Date;
+}
+
 export type BowlingAngle = 'Over the Wicket' | 'Round the Wicket';
 
 export interface LiveScore {
@@ -221,6 +228,7 @@ export interface LiveScore {
     bowlingAngle: BowlingAngle;
     newBatsmanRequired?: boolean;
     endOfOver?: boolean;
+    fallOfWickets?: LiveFallOfWicket[];
 }
 
 export interface Match {
@@ -343,7 +351,7 @@ export interface TeamStats {
     matchesPlayed: number;
     matchesWon: number;
     matchesLost: number;
-    matchesDrawn: number;
+    matchesDrawn: 0;
     totalRunsScored: number;
     totalWicketsTaken: number;
     netRunRate: number;

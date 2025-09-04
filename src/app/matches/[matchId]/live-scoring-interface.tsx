@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast } from '@/lib/data';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown } from 'lucide-react';
+import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
@@ -253,6 +253,37 @@ function WeatherIcon({ condition, ...props }: { condition: string } & React.Comp
     }
 }
 
+function FallOfWicketCard({ fow }: { fow: LiveFallOfWicket[] | undefined }) {
+  if (!fow || fow.length === 0) {
+    return (
+      <Card>
+        <CardHeader><CardTitle>Fall of Wickets</CardTitle></CardHeader>
+        <CardContent className="h-48 flex items-center justify-center text-muted-foreground">
+          No wickets have fallen yet.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader><CardTitle>Fall of Wickets</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        {fow.map((wicket, index) => (
+          <div key={index} className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+                <span className="font-bold">{wicket.wicketNumber}</span>
+                <p>{wicket.batsmanName}</p>
+            </div>
+            <p className="font-semibold">{wicket.runs}</p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+
 function BowlingCard({ bowlerStats, roster }: { bowlerStats: LiveScore['bowlerStats'], roster: RosterMemberWithStats[] }) {
     const bowlers = Object.entries(bowlerStats).map(([personId, stats]) => {
         const player = roster.find(p => p.personId === personId);
@@ -272,10 +303,10 @@ function BowlingCard({ bowlerStats, roster }: { bowlerStats: LiveScore['bowlerSt
                         {bowlers.length > 0 ? bowlers.map(b => (
                             <TableRow key={b.name}>
                                 <TableCell className="font-medium">{b.name}</TableCell>
-                                <TableCell className="text-right">{b.overs}.{b.balls}</TableCell>
-                                <TableCell className="text-right">{b.maidens}</TableCell>
-                                <TableCell className="text-right">{b.runsConceded}</TableCell>
-                                <TableCell className="text-right">{b.wickets}</TableCell>
+                                <TableCell className="text-right">{b.overs || 0}.{b.balls || 0}</TableCell>
+                                <TableCell className="text-right">{b.maidens || 0}</TableCell>
+                                <TableCell className="text-right">{b.runsConceded || 0}</TableCell>
+                                <TableCell className="text-right">{b.wickets || 0}</TableCell>
                             </TableRow>
                         )) : (
                              <TableRow><TableCell colSpan={5} className="text-center h-24">No bowlers yet.</TableCell></TableRow>
@@ -365,7 +396,7 @@ export function LiveScoringInterface({
   }, [match.matchId]);
 
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
-  const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle, ballHistory: [] };
+  const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle, ballHistory: [], fallOfWickets: [] };
 
   const [liveScore, setLiveScore] = React.useState<LiveScore>({
       ...defaultLiveScore,
@@ -376,6 +407,7 @@ export function LiveScoringInterface({
       },
       bowlingAngle: match.liveScore?.bowlingAngle || 'Over the Wicket',
       ballHistory: match.liveScore?.ballHistory || [],
+      fallOfWickets: match.liveScore?.fallOfWickets || [],
   });
 
   React.useEffect(() => {
@@ -388,6 +420,7 @@ export function LiveScoringInterface({
         },
         bowlingAngle: match.liveScore?.bowlingAngle || 'Over the Wicket',
         ballHistory: match.liveScore?.ballHistory || [],
+        fallOfWickets: match.liveScore?.fallOfWickets || [],
     });
   }, [match.liveScore]);
 
@@ -724,6 +757,7 @@ export function LiveScoringInterface({
                             </div>
                         </CardContent>
                     </Card>
+                    <FallOfWicketCard fow={liveScore.fallOfWickets} />
                 </div>
                 <div className="lg:col-span-1 space-y-4">
                     <BowlingCard bowlerStats={liveScore.bowlerStats} roster={bowlingTeamRoster} />
