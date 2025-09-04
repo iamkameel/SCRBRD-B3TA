@@ -53,7 +53,7 @@ export const getMatches = cache(async (): Promise<Match[]> => {
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
         teamAColor: teamA?.teamColors?.primary,
-        teamBColor: teamB?.teamColors?.primary,
+        teamBColor: teamB?.teamColors?.secondary,
         teamALogoUrl: teamA?.logoUrl,
         teamBLogoUrl: teamB?.logoUrl,
       } as Match;
@@ -806,7 +806,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                 liveScore.batsmenOut.push(onStrikeId);
                 liveScore.batsmanStats[onStrikeId].timeOut = new Date();
             }
-            liveScore.onStrikeBatsmanId = undefined;
+            liveScore.onStrikeBatsmanId = null; // Changed from undefined to null
             liveScore.extras.partnership = 0;
             liveScore.extras.partnershipStartTime = new Date();
             liveScore.newBatsmanRequired = true; // Flag for UI
