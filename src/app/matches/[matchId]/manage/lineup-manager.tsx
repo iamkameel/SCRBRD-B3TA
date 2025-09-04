@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { GripVertical, Save, Wand2, Loader2, User, Users, Swords, ShieldHalf, ShieldCheck, UserCheck, Search, Plus, X, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Match, RosterMemberWithStats, PlayerStats } from '@/lib/data';
+import type { Match, RosterMemberWithStats, PlayerStats, Lineup } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,15 +33,16 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { SortablePlayerCard, PlayerCard, getPrimaryRole } from './player-card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 
 const ROLE_FILTERS = ['All', 'BAT', 'BOWL', 'AR', 'WK'];
 
-function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, canManage, isConfirmed, teamName }: {
+function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canManage, isConfirmed, teamName }: {
   teamId: string;
   match: Match;
   rosterWithStats: RosterMemberWithStats[];
-  initialLineupIds: string[];
+  initialLineup: Lineup;
   canManage: boolean;
   isConfirmed: boolean;
   teamName: string;
@@ -57,7 +58,8 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
   const [allPlayers, setAllPlayers] = React.useState<RosterMemberWithStats[]>([]);
   const [view, setView] = React.useState<'selection' | 'ordering'>('selection');
 
-  const [selectedIds, setSelectedIds] = React.useState<string[]>(initialLineupIds);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>(initialLineup.playingXI);
+  const [twelfthManId, setTwelfthManId] = React.useState<string | null>(initialLineup.twelfthMan);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState('All');
 
@@ -69,23 +71,37 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
   );
 
   React.useEffect(() => {
-    // Combine roster and ensure lineup players come first if they exist
-    const lineupSet = new Set(initialLineupIds);
-    const lineupPlayers = initialLineupIds.map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
+    const combinedIds = [...initialLineup.playingXI, ...(initialLineup.twelfthMan ? [initialLineup.twelfthMan] : [])];
+    const lineupSet = new Set(combinedIds);
+    const lineupPlayers = combinedIds.map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
     const squadPlayers = rosterWithStats.filter(p => !lineupSet.has(p.personId));
+    
     setAllPlayers([...lineupPlayers, ...squadPlayers]);
-    setSelectedIds(initialLineupIds);
-  }, [initialLineupIds, rosterWithStats]);
+    setSelectedIds(initialLineup.playingXI);
+    setTwelfthManId(initialLineup.twelfthMan);
+  }, [initialLineup, rosterWithStats]);
 
   const handlePlayerSelect = (playerId: string, isSelected: boolean) => {
-    setSelectedIds(prev => {
-        const newSelected = isSelected ? [...prev, playerId] : prev.filter(id => id !== playerId);
-        if (newSelected.length > 11) {
-            toast({ title: 'Lineup Full', description: 'You can only select 11 players.', variant: 'destructive' });
-            return prev;
-        }
-        return newSelected;
-    });
+    const isCurrentlySelected = selectedIds.includes(playerId);
+    const isCurrentlyTwelfthMan = twelfthManId === playerId;
+    
+    if (isSelected) {
+      if (isCurrentlySelected || isCurrentlyTwelfthMan) return;
+
+      if (selectedIds.length < 11) {
+        setSelectedIds(prev => [...prev, playerId]);
+      } else if (!twelfthManId) {
+        setTwelfthManId(playerId);
+      } else {
+        toast({ title: 'Lineup Full', description: 'You can only select 11 players and one 12th man.', variant: 'destructive' });
+      }
+    } else {
+      if (isCurrentlySelected) {
+        setSelectedIds(prev => prev.filter(id => id !== playerId));
+      } else if (isCurrentlyTwelfthMan) {
+        setTwelfthManId(null);
+      }
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -118,8 +134,12 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
   const handleSaveLineup = () => {
     startTransition(async () => {
         try {
-            const orderedIds = allPlayers.filter(p => selectedIds.includes(p.personId)).map(p => p.personId);
-            await saveMatchLineupAction(match.matchId, teamId, orderedIds);
+            const orderedPlayingXI = allPlayers.filter(p => selectedIds.includes(p.personId)).map(p => p.personId);
+            const finalLineup: Lineup = {
+                playingXI: orderedPlayingXI,
+                twelfthMan: twelfthManId
+            };
+            await saveMatchLineupAction(match.matchId, teamId, finalLineup);
             toast({ title: "Lineup Saved", description: `The lineup for ${teamName} has been updated.`});
         } catch (error) {
             toast({ title: "Error Saving Lineup", description: error instanceof Error ? error.message : "An unexpected error occurred.", variant: "destructive"});
@@ -132,6 +152,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
       try {
         const { playerIds, justification } = await autoSelectLineupAction(match.matchId, teamId);
         setSelectedIds(playerIds);
+        setTwelfthManId(null); // AI selection doesn't pick a 12th man for now
         const lineupSet = new Set(playerIds);
         const newLineup = playerIds.map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
         const newSquad = rosterWithStats.filter(p => !lineupSet.has(p.personId));
@@ -151,7 +172,9 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
     }
     startTransition(async () => {
         try {
-            await saveMatchLineupAction(match.matchId, teamId, allPlayers.filter(p => selectedIds.includes(p.personId)).map(p => p.personId));
+            const orderedPlayingXI = allPlayers.filter(p => selectedIds.includes(p.personId)).map(p => p.personId);
+            const finalLineup: Lineup = { playingXI: orderedPlayingXI, twelfthMan: twelfthManId };
+            await saveMatchLineupAction(match.matchId, teamId, finalLineup);
             await confirmLineupAction(match.matchId, teamId);
             toast({ title: "Lineup Confirmed", description: "You have confirmed the lineup for this match." });
         } catch (error) {
@@ -180,6 +203,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
       );
   }
 
+  const selectedCount = selectedIds.length + (twelfthManId ? 1 : 0);
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={e => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
@@ -187,7 +211,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Manage Lineup: {teamName}</CardTitle>
-                    <Badge variant={selectedIds.length === 11 ? 'default' : 'outline'}>{selectedIds.length} / 11 Players Selected</Badge>
+                    <Badge variant={selectedIds.length === 11 ? 'default' : 'outline'}>{selectedIds.length} / 11 Playing (+{twelfthManId ? 1 : 0} Sub)</Badge>
                 </div>
                  <div className="flex justify-between items-center pt-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -225,7 +249,8 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
                                       key={player.personId}
                                       player={player}
                                       availability={match.availability?.[player.personId]}
-                                      isSelected={selectedIds.includes(player.personId)}
+                                      isSelected={selectedIds.includes(player.personId) || twelfthManId === player.personId}
+                                      isTwelfthMan={twelfthManId === player.personId}
                                       onSelect={(checked) => handlePlayerSelect(player.personId, checked)}
                                     />
                                 ))}
@@ -235,30 +260,49 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
                     </div>
                 )}
                 {view === 'ordering' && (
-                     <SortableContext items={selectedPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
-                        <ScrollArea className="h-[600px] pr-2">
-                            <div className="space-y-2">
-                                {selectedPlayers.map((player, index) => (
-                                    <SortablePlayerCard 
-                                      key={player.personId} 
-                                      player={player} 
-                                      index={index + 1} 
-                                      availability={match.availability?.[player.personId]}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                             <h3 className="font-semibold mb-2">Playing XI (Batting Order)</h3>
+                             <SortableContext items={selectedPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-2 min-h-[300px] border rounded-lg p-2 bg-muted/30">
+                                    {selectedPlayers.map((player, index) => (
+                                        <SortablePlayerCard 
+                                          key={player.personId} 
+                                          player={player} 
+                                          index={index + 1} 
+                                          availability={match.availability?.[player.personId]}
+                                          isSelected={true}
+                                          onSelect={() => {}} // Selection is disabled in ordering view
+                                        />
+                                    ))}
+                                    {selectedPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">Select players to set the batting order.</p>}
+                                </div>
+                            </SortableContext>
+                        </div>
+                         <div>
+                            <h3 className="font-semibold mb-2">12th Man (Substitute)</h3>
+                             <div className="space-y-2 min-h-[100px] border rounded-lg p-2 bg-muted/30">
+                                {twelfthManId && rosterWithStats.find(p => p.personId === twelfthManId) ? (
+                                     <PlayerCard
+                                      player={rosterWithStats.find(p => p.personId === twelfthManId)!}
+                                      availability={match.availability?.[twelfthManId]}
                                       isSelected={true}
-                                      onSelect={() => {}} // Selection is disabled in ordering view
+                                      isTwelfthMan={true}
+                                      onSelect={() => {}}
                                     />
-                                ))}
-                                {selectedPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">Select players to set the batting order.</p>}
-                            </div>
-                        </ScrollArea>
-                    </SortableContext>
+                                ) : (
+                                    <p className="text-center text-muted-foreground pt-10">No 12th man selected.</p>
+                                )}
+                             </div>
+                        </div>
+                    </div>
                 )}
             </CardContent>
         </Card>
         <div className="lg:col-span-2 flex items-center justify-between mt-6 p-4 border rounded-lg bg-background sticky bottom-4 z-10 shadow-lg">
             <div className="flex items-center gap-2 text-sm">
                 <UserCheck className="h-5 w-5 text-primary" />
-                <span className="font-semibold">{selectedIds.length} / 11 Selected</span>
+                <span className="font-semibold">{selectedIds.length} Playing XI, {twelfthManId ? 1 : 0} Substitute</span>
             </div>
             <div className="flex items-center gap-2">
                 <TooltipProvider>
@@ -279,7 +323,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineupIds, c
             </div>
         </div>
          <DragOverlay>
-            {activePlayer ? <PlayerCard player={activePlayer} availability={match.availability?.[activePlayer.personId]} isDragging isSelected={selectedIds.includes(activePlayer.personId)} onSelect={() => {}} /> : null}
+            {activePlayer ? <PlayerCard player={activePlayer} availability={match.availability?.[activePlayer.personId]} isDragging isSelected={selectedIds.includes(activePlayer.personId) || twelfthManId === activePlayer.personId} isTwelfthMan={twelfthManId === activePlayer.personId} onSelect={() => {}} /> : null}
         </DragOverlay>
     </DndContext>
   );
@@ -289,8 +333,8 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
     match: Match,
     teamARoster: RosterMemberWithStats[],
     teamBRoster: RosterMemberWithStats[],
-    teamALineup: string[],
-    teamBLineup: string[],
+    teamALineup: Lineup,
+    teamBLineup: Lineup,
     canManageA: boolean,
     canManageB: boolean
 }) {
@@ -307,7 +351,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamAName}
                     match={match}
                     rosterWithStats={teamARoster}
-                    initialLineupIds={teamALineup}
+                    initialLineup={teamALineup}
                     canManage={canManageA}
                     isConfirmed={match.lineupConfirmedByCaptainA}
                 />
@@ -319,7 +363,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamBName}
                     match={match}
                     rosterWithStats={teamBRoster}
-                    initialLineupIds={teamBLineup}
+                    initialLineup={teamBLineup}
                     canManage={canManageB}
                     isConfirmed={match.lineupConfirmedByCaptainB}
                 />

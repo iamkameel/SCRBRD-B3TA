@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -40,7 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { assignOfficialToMatchAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
 import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, generateOppositionAnalysisAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
-import type { Match, Person, Official, Innings, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput, RosterMemberWithStats } from "@/lib/data";
+import type { Match, Person, Official, Innings, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput, RosterMemberWithStats, Lineup } from "@/lib/data";
 import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
@@ -229,8 +230,8 @@ interface MatchDetailsClientProps {
   people: Person[];
   teamARosterWithStats: RosterMemberWithStats[];
   teamBRosterWithStats: RosterMemberWithStats[];
-  teamALineup: string[];
-  teamBLineup: string[];
+  teamALineup: Lineup;
+  teamBLineup: Lineup;
   scorecard: { innings1: Innings, innings2: Innings } | null;
   transportAssignments: TransportAssignment[];
   vehicles: Vehicle[];
@@ -274,7 +275,7 @@ export default function MatchDetailsClient({
   
   const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
   
-  const isPlayerInMatch = teamALineup.includes(person?.personId || '') || teamBLineup.includes(person?.personId || '');
+  const isPlayerInMatch = [...teamALineup.playingXI, teamALineup.twelfthMan, ...teamBLineup.playingXI, teamBLineup.twelfthMan].includes(person?.personId || '');
   const canLiveScore = isAdmin || isOfficialForMatch;
 
   React.useEffect(() => {
@@ -284,12 +285,12 @@ export default function MatchDetailsClient({
   const playersInMatch = React.useMemo(() => {
     const allPlayers = new Map<string, { name: string; teamName: string }>();
     teamARosterWithStats.forEach(p => {
-        if (teamALineup.includes(p.personId)) {
+        if (teamALineup.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamAName });
         }
     });
     teamBRosterWithStats.forEach(p => {
-        if (teamBLineup.includes(p.personId)) {
+        if (teamBLineup.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamBName });
         }
     });
@@ -452,7 +453,7 @@ export default function MatchDetailsClient({
 
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
-  const canGenerateScorecard = teamALineup.length === 11 && teamBLineup.length === 11;
+  const canGenerateScorecard = teamALineup.playingXI.length === 11 && teamBLineup.playingXI.length === 11;
 
 
   return (

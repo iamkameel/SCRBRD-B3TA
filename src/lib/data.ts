@@ -215,10 +215,10 @@ export interface LiveScore {
     balls: number;
     currentOver: string[];
     ballHistory?: string[];
-    onStrikeBatsmanId?: string;
-    nonStrikerBatsmanId?: string;
-    bowlerId?: string;
-    lastBowlerId?: string;
+    onStrikeBatsmanId?: string | null;
+    nonStrikerBatsmanId?: string | null;
+    bowlerId?: string | null;
+    lastBowlerId?: string | null;
     batsmenOut?: string[];
     liveInnings?: 1 | 2;
     shots?: ShotData[];
@@ -229,6 +229,11 @@ export interface LiveScore {
     newBatsmanRequired?: boolean;
     endOfOver?: boolean;
     fallOfWickets?: LiveFallOfWicket[];
+}
+
+export interface Lineup {
+  playingXI: string[];
+  twelfthMan: string | null;
 }
 
 export interface Match {
@@ -264,6 +269,7 @@ export interface Match {
   firstInningsTotal?: number;
   liveScore?: LiveScore;
   previousLiveScore?: LiveScore;
+  firstInningsLiveScore?: LiveScore;
   userId?: string;
   availability?: { [personId: string]: { status: AvailabilityStatus; note?: string; } };
   lineupConfirmedByCaptainA: boolean;

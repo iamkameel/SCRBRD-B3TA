@@ -9,7 +9,7 @@ import { getPlayers, getPerson, getPeopleByRole } from '@/lib/actions/players';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import { Button } from '@/components/ui/button';
-import type { RosterMember, PlayerStats, RosterMemberWithStats } from '@/lib/data';
+import type { RosterMember, PlayerStats, RosterMemberWithStats, Lineup } from '@/lib/data';
 import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import { getUserId } from '@/lib/auth';
 
@@ -60,7 +60,7 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getTeamRoster(match.teamAId),
     match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
     getMatchLineup(match.matchId, match.teamAId),
-    match.teamBId ? getMatchLineup(match.matchId, match.teamBId) : Promise.resolve([]),
+    match.teamBId ? getMatchLineup(match.matchId, match.teamBId) : Promise.resolve({ playingXI: [], twelfthMan: null }),
     getScorecard(matchId),
     getMatchTransportAssignments(matchId),
     getVehicles(),
