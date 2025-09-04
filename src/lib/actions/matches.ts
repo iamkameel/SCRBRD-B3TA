@@ -684,7 +684,7 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
     if (updates.onStrikeBatsmanId !== undefined) {
         liveScoreUpdate['liveScore.onStrikeBatsmanId'] = updates.onStrikeBatsmanId;
         const batsmanStatsKey = `liveScore.batsmanStats.${updates.onStrikeBatsmanId}`;
-        if (!currentLiveScore.batsmanStats?.[updates.onStrikeBatsmanId]) {
+        if (!currentLiveScore.batsmanStats?.[updates.onStrikeBatsmanId!]) {
             liveScoreUpdate[batsmanStatsKey] = { runs: 0, balls: 0, timeIn: Timestamp.now() };
             liveScoreUpdate['liveScore.extras.partnership'] = 0;
             liveScoreUpdate['liveScore.extras.partnershipStartTime'] = Timestamp.now();
@@ -693,18 +693,16 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
      if (updates.nonStrikerBatsmanId !== undefined) {
         liveScoreUpdate['liveScore.nonStrikerBatsmanId'] = updates.nonStrikerBatsmanId;
         const batsmanStatsKey = `liveScore.batsmanStats.${updates.nonStrikerBatsmanId}`;
-        if (!currentLiveScore.batsmanStats?.[updates.nonStrikerBatsmanId]) {
+        if (!currentLiveScore.batsmanStats?.[updates.nonStrikerBatsmanId!]) {
             liveScoreUpdate[batsmanStatsKey] = { runs: 0, balls: 0, timeIn: Timestamp.now() };
             if(!liveScoreUpdate['liveScore.extras.partnershipStartTime']) {
                 liveScoreUpdate['liveScore.extras.partnershipStartTime'] = Timestamp.now();
             }
         }
     }
-    if (updates.bowlerId) {
+    if (updates.bowlerId !== undefined) {
         liveScoreUpdate['liveScore.bowlerId'] = updates.bowlerId;
         liveScoreUpdate['liveScore.endOfOver'] = false;
-        // Logic to not allow consecutive overs is handled on the front-end display,
-        // but a server-side check before saving might be a good addition.
     }
     if (updates.bowlingAngle) liveScoreUpdate['liveScore.bowlingAngle'] = updates.bowlingAngle;
     if (updates.newBatsmanRequired !== undefined) liveScoreUpdate['liveScore.newBatsmanRequired'] = updates.newBatsmanRequired;
@@ -743,6 +741,14 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
         throw new Error("Live scoring players are not set up.");
     }
+    
+    const bowlerCurrentStats = liveScore.bowlerStats[liveScore.bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0, consecutiveWickets: 0 };
+    if (liveScore.balls === 0 && liveScore.bowlerId === liveScore.lastBowlerId) {
+        throw new Error("A bowler cannot bowl consecutive overs.");
+    }
+    if (bowlerCurrentStats.overs >= 4) {
+        throw new Error("This bowler has already bowled their maximum of 4 overs.");
+    }
 
     if (liveScore.overs >= 20) {
         throw new Error("The innings is complete. No more balls can be bowled.");
@@ -753,14 +759,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     const onStrikeId = liveScore.onStrikeBatsmanId;
     const bowlerId = liveScore.bowlerId;
     
-    const bowlerCurrentStats = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0, consecutiveWickets: 0 };
-    if (bowlerCurrentStats.overs >= 4) {
-        throw new Error("This bowler has already bowled their maximum of 4 overs.");
-    }
-    if (bowlerId === liveScore.lastBowlerId) {
-        throw new Error("A bowler cannot bowl consecutive overs.");
-    }
-
+    
     const isWicket = ball.event === 'W';
     const isNoBall = ball.event === 'nb';
     const isWide = ball.event === 'wd';

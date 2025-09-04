@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -690,6 +690,16 @@ export function LiveScoringInterface({
     });
   };
   
+  const handleChangeBowler = () => {
+    startTransition(async () => {
+        try {
+            await updateLivePlayersAction(match.matchId, { bowlerId: null });
+        } catch(error) {
+            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not change bowler.", variant: "destructive" });
+        }
+    });
+  }
+
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   const tossWinner = match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName;
 
@@ -897,6 +907,9 @@ export function LiveScoringInterface({
                                               <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
                                               <CornerUpLeft className="h-4 w-4"/> Round the Wicket
                                           </Label>
+                                           <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleChangeBowler} disabled={isPending || isSimulating}>
+                                              <Repeat className="mr-1 h-3 w-3" /> Change Bowler
+                                          </Button>
                                       </RadioGroup>
                                       <div className="flex justify-center pt-4">
                                           <WagonWheel
