@@ -14,6 +14,7 @@ import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
+import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-match-flow';
 
 export const getMatches = cache(async (): Promise<Match[]> => {
   const userId = await getUserId();
@@ -806,10 +807,10 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                 liveScore.batsmenOut.push(onStrikeId);
                 liveScore.batsmanStats[onStrikeId].timeOut = new Date();
             }
-            liveScore.onStrikeBatsmanId = null; // Changed from undefined to null
+            liveScore.onStrikeBatsmanId = null; 
             liveScore.extras.partnership = 0;
             liveScore.extras.partnershipStartTime = new Date();
-            liveScore.newBatsmanRequired = true; // Flag for UI
+            liveScore.newBatsmanRequired = true; 
         }
     }
     
@@ -852,6 +853,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         liveScore.currentOver = [];
         liveScore.endOfOver = true; // Flag for UI
         liveScore.lastBowlerId = bowlerId; // Use the correct ID
+        liveScore.bowlerId = null; // Clear bowler for next over selection
         
         const lastBallWicket = isWicket && liveScore.balls === 0;
         if (!lastBallWicket) {
@@ -958,10 +960,10 @@ export async function endInningsAction(matchId: string) {
 
     if (currentLiveScore.liveInnings === 1) {
         // Record timeOut for not-out batsmen
-        if (currentLiveScore.onStrikeBatsmanId) {
+        if (currentLiveScore.onStrikeBatsmanId && currentLiveScore.batsmanStats?.[currentLiveScore.onStrikeBatsmanId]) {
             currentLiveScore.batsmanStats[currentLiveScore.onStrikeBatsmanId].timeOut = new Date();
         }
-        if (currentLiveScore.nonStrikerBatsmanId) {
+        if (currentLiveScore.nonStrikerBatsmanId && currentLiveScore.batsmanStats?.[currentLiveScore.nonStrikerBatsmanId]) {
             currentLiveScore.batsmanStats[currentLiveScore.nonStrikerBatsmanId].timeOut = new Date();
         }
         
@@ -980,10 +982,10 @@ export async function endInningsAction(matchId: string) {
         return { message: "First innings ended. Second innings is ready." };
 
     } else if (currentLiveScore.liveInnings === 2) {
-         if (currentLiveScore.onStrikeBatsmanId) {
+         if (currentLiveScore.onStrikeBatsmanId && currentLiveScore.batsmanStats?.[currentLiveScore.onStrikeBatsmanId]) {
             currentLiveScore.batsmanStats[currentLiveScore.onStrikeBatsmanId].timeOut = new Date();
         }
-        if (currentLiveScore.nonStrikerBatsmanId) {
+        if (currentLiveScore.nonStrikerBatsmanId && currentLiveScore.batsmanStats?.[currentLiveScore.nonStrikerBatsmanId]) {
             currentLiveScore.batsmanStats[currentLiveScore.nonStrikerBatsmanId].timeOut = new Date();
         }
         
@@ -1030,8 +1032,10 @@ async function createScorecardFromLive(matchId: string) {
     const match = await getMatch(matchId);
     if (!match || !match.firstInningsLiveScore || !match.liveScore) return null;
 
-    const createInningsData = async (liveScore: LiveScore, roster: RosterMember[], opponentRoster: RosterMember[]): Promise<Innings> => {
-        const team = (await getTeam(roster[0].teamId))!;
+    const createInningsData = async (liveScore: LiveScore, teamId: string): Promise<Innings> => {
+        const team = (await getTeam(teamId))!;
+        const roster = await getTeamRoster(teamId);
+        const opponentRoster = await getTeamRoster(teamId === match.teamAId ? match.teamBId : match.teamAId);
         
         const battingCard: BatsmanStats[] = roster.map(player => {
             const stats = liveScore.batsmanStats[player.personId];
@@ -1055,21 +1059,27 @@ async function createScorecardFromLive(matchId: string) {
 
         const bowlingCard = Object.entries(liveScore.bowlerStats).map(([bowlerId, stats]) => {
             const bowler = opponentRoster.find(p => p.personId === bowlerId);
+            const oversWhole = Math.floor(stats.overs || 0);
+            const ballsFraction = ((stats.overs || 0) - oversWhole) * 10;
+            const totalBalls = (oversWhole * 6) + ballsFraction;
+            const economy = totalBalls > 0 ? ((stats.runsConceded || 0) / totalBalls) * 6 : 0;
             return {
                 name: bowler?.personName || 'Unknown Bowler',
-                overs: stats.overs + (stats.balls / 10),
+                overs: stats.overs,
                 maidens: stats.maidens,
                 runs: stats.runsConceded,
                 wickets: stats.wickets,
-                economy: stats.overs > 0 ? stats.runsConceded / stats.overs : 0,
+                economy: economy,
             };
         });
+
+        const oversDecimal = liveScore.overs + (liveScore.balls / 6);
 
         return {
             teamName: team.name,
             totalRuns: liveScore.runs,
             wickets: liveScore.wickets,
-            overs: liveScore.overs + (liveScore.balls / 10),
+            overs: parseFloat(oversDecimal.toFixed(1)),
             battingCard,
             bowlingCard,
             fallOfWickets: [], // Not tracked yet
@@ -1077,18 +1087,8 @@ async function createScorecardFromLive(matchId: string) {
         };
     };
     
-    const [teamARoster, teamBRoster] = await Promise.all([getTeamRoster(match.teamAId), getTeamRoster(match.teamBId)]);
-
-    const innings1 = match.firstInningsLiveScore.liveInnings === 1 ? match.firstInningsLiveScore : match.liveScore;
-    const innings2 = match.firstInningsLiveScore.liveInnings === 2 ? match.firstInningsLiveScore : match.liveScore;
-    
-    const innings1Roster = innings1.teamName === match.teamAName ? teamARoster : teamBRoster;
-    const innings1OpponentRoster = innings1.teamName === match.teamAName ? teamBRoster : teamARoster;
-    const innings2Roster = innings2.teamName === match.teamAName ? teamARoster : teamBRoster;
-    const innings2OpponentRoster = innings2.teamName === match.teamAName ? teamBRoster : teamARoster;
-
-    const innings1Data = await createInningsData(innings1, innings1Roster, innings1OpponentRoster);
-    const innings2Data = await createInningsData(innings2, innings2Roster, innings2OpponentRoster);
+    const innings1Data = await createInningsData(match.firstInningsLiveScore, match.teamAId);
+    const innings2Data = await createInningsData(match.liveScore, match.teamBId);
 
     const potmData = await generatePlayerOfTheMatch({ innings1: innings1Data, innings2: innings2Data });
 
@@ -1160,3 +1160,4 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
 }
       
     
+
