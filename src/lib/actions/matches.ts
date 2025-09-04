@@ -813,8 +813,13 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     if (bowlerId) {
         liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0, consecutiveWickets: 0 };
-        if (isNoBall || isWide) liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
-        else if(!isWicket && ball.event !== 'b' && ball.event !== 'lb') liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
+        if (isWide) {
+            liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
+        } else if (isNoBall) {
+             liveScore.bowlerStats[bowlerId].runsConceded += 1;
+        } else if(!isWicket && ball.event !== 'b' && ball.event !== 'lb') {
+            liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
+        }
         
         if (isWicket && ball.dismissal?.type !== 'Run Out') liveScore.bowlerStats[bowlerId].wickets++;
 
@@ -911,7 +916,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         }
     } else {
         liveScore.endOfOver = false;
-        const runsThatRotateStrike = (ball.event === 'wd' || ball.event === 'nb') ? (runsFromBall) : isLegalDelivery ? runsFromBall : 0;
+        const runsThatRotateStrike = (isWide || isNoBall) ? runsFromBall : (isLegalDelivery ? runsFromBall : 0);
         const isOddRun = runsThatRotateStrike % 2 !== 0;
 
         if (isOddRun) {

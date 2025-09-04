@@ -107,7 +107,7 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
           <DialogDescription>
             {view === 'runs' && "Select the outcome of the ball after tapping the field location."}
             {view === 'wicket' && `How was the batsman dismissed?`}
-            {view === 'extras' && `How many ${extraType?.replace('_', ' ')} runs were taken?`}
+            {view === 'extras' && `How many runs were completed in addition to the extra?`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -169,7 +169,7 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
           {view === 'extras' && (
               <div className="space-y-4">
                   <div className="grid grid-cols-4 gap-2">
-                      {[1, 2, 3, 4, 5].map((run) => (
+                      {[0, 1, 2, 3, 4, 5].map((run) => (
                           <Button key={run} variant="outline" size="lg" onClick={() => handleExtraRunSelect(run)}>
                               {run}
                           </Button>
