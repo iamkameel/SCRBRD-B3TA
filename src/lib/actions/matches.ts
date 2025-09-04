@@ -1,5 +1,4 @@
 
-
       
 'use server';
 
@@ -8,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle, BatsmanStats } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle, BatsmanStats, Lineup } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
@@ -433,23 +432,33 @@ export async function acceptAssignmentAction(matchId: string, assignmentId: stri
     return { success: true };
 }
 
-export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<string[]> => {
+export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup> => {
   const match = await getMatch(matchId);
-  if (!match) return [];
+  if (!match) return { playingXI: [], twelfthMan: null };
   
   try {
     const lineupDocRef = doc(db, 'matches', matchId, 'lineups', teamId);
     const lineupSnap = await getDoc(lineupDocRef);
-    return lineupSnap.exists() ? lineupSnap.data().playerIds || [] : [];
+    if (lineupSnap.exists()) {
+        const data = lineupSnap.data();
+        return {
+            playingXI: data.playingXI || [],
+            twelfthMan: data.twelfthMan || null,
+        }
+    }
+    return { playingXI: [], twelfthMan: null };
   } catch (error) {
     console.error(`Error fetching lineup for match ${matchId}, team ${teamId}:`, error);
-    return [];
+    return { playingXI: [], twelfthMan: null };
   }
 });
 
-const lineupSchema = z.object({ playerIds: z.array(z.string()) });
+const lineupSchema = z.object({
+  playingXI: z.array(z.string()).length(11, "Playing XI must have 11 players."),
+  twelfthMan: z.string().nullable(),
+});
 
-export async function saveMatchLineupAction(matchId: string, teamId: string, playerIds: string[]) {
+export async function saveMatchLineupAction(matchId: string, teamId: string, lineup: Lineup) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   
@@ -458,9 +467,12 @@ export async function saveMatchLineupAction(matchId: string, teamId: string, pla
     throw new Error("You do not have permission to edit this team's lineup.");
   }
 
-  if (!lineupSchema.safeParse({ playerIds }).success) throw new Error('Invalid lineup data.');
+  if (!lineupSchema.safeParse(lineup).success) {
+      throw new Error('Invalid lineup data.');
+  }
+
   try {
-    await setDoc(doc(db, 'matches', matchId, 'lineups', teamId), { playerIds });
+    await setDoc(doc(db, 'matches', matchId, 'lineups', teamId), lineup);
   } catch (error) {
     console.error("Error saving lineup: ", error);
     throw new Error("Could not save lineup.");
