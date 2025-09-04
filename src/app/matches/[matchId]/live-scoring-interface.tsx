@@ -34,7 +34,7 @@ const BoundaryAnimation = ({ runs }: { runs: number }) => {
   const bgClass = runs === 4 ? "bg-blue-900/80" : "bg-purple-900/80";
 
   return (
-    <div className={cn("absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 overflow-hidden z-20 pointer-events-none", bgClass)}>
+    <div className={cn("absolute inset-0 h-full overflow-hidden z-20 pointer-events-none", bgClass)}>
       <motion.div
         className="flex items-center h-full"
         initial={{ x: "100%" }}
@@ -43,7 +43,7 @@ const BoundaryAnimation = ({ runs }: { runs: number }) => {
       >
         <div className="flex shrink-0 items-center">
             {Array(20).fill(0).map((_, i) => (
-              <span key={i} className={cn("text-4xl font-black mx-4", textClass)}>
+              <span key={i} className={cn("text-2xl font-black mx-4", textClass)}>
                 {text}
               </span>
             ))}
@@ -61,7 +61,7 @@ const WicketAnimation = () => {
     const textClass2 = "text-white";
 
     return (
-        <div className={cn("absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 overflow-hidden z-20 pointer-events-none", bgClass)}>
+        <div className={cn("absolute inset-0 h-full overflow-hidden z-20 pointer-events-none", bgClass)}>
             <motion.div
                 className="flex items-center h-full"
                 initial={{ x: "100%" }}
@@ -71,10 +71,10 @@ const WicketAnimation = () => {
                 <div className="flex shrink-0 items-center">
                     {Array(20).fill(0).map((_, i) => (
                         <React.Fragment key={i}>
-                            <span className={cn("text-4xl font-black mx-4", textClass1)}>
+                            <span className={cn("text-2xl font-black mx-4", textClass1)}>
                                 {text1}
                             </span>
-                             <span className={cn("text-4xl font-black mx-4", textClass2)}>
+                             <span className={cn("text-2xl font-black mx-4", textClass2)}>
                                 {text2}
                             </span>
                         </React.Fragment>
@@ -597,9 +597,7 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3 relative overflow-hidden">
-            {boundary && <BoundaryAnimation runs={boundary} />}
-            {wicketEvent && <WicketAnimation />}
+        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3">
             {/* Team Names & Score */}
             <div className="grid grid-cols-3 items-start gap-2">
                 <div className="text-left space-y-1">
@@ -629,8 +627,10 @@ export function LiveScoringInterface({
 
              {/* Batsmen Bar & Context */}
              <div className="flex flex-col items-center gap-2 pt-2">
-                <div className="flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1">
-                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                <div className="relative flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1 overflow-hidden">
+                    {boundary && <BoundaryAnimation runs={boundary} />}
+                    {wicketEvent && <WicketAnimation />}
+                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                         {firstBatsman && firstBatsmanStats ? (
                              <>
                                 <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(firstBatsman, battingTeamRoster).split(' ').pop()}</span>
@@ -638,7 +638,7 @@ export function LiveScoringInterface({
                             </>
                         ) : (<span className="font-bold text-xs sm:text-sm uppercase truncate w-full text-center">SELECT...</span>)}
                     </div>
-                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                    <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                         {secondBatsman && secondBatsmanStats ? (
                             <>
                                 <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(secondBatsman, battingTeamRoster).split(' ').pop()}</span>
@@ -826,3 +826,4 @@ export function LiveScoringInterface({
     </>
   );
 }
+
