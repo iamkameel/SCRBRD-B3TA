@@ -86,6 +86,45 @@ const WicketAnimation = () => {
     );
 };
 
+const HatTrickAnimation = () => (
+    <div className="absolute inset-0 h-full overflow-hidden z-20 pointer-events-none bg-black/50">
+        <motion.div
+            className="flex items-center h-full"
+            initial={{ x: '100%' }}
+            animate={{ x: '-100%' }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        >
+            <div className="flex shrink-0 items-center">
+                {Array(10).fill(0).map((_, i) => (
+                    <span key={i} className="text-3xl font-black mx-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+                        HAT-TRICK!
+                    </span>
+                ))}
+            </div>
+        </motion.div>
+    </div>
+);
+
+const DuckAnimation = () => (
+    <div className="absolute inset-0 h-full overflow-hidden z-20 pointer-events-none bg-black/50">
+        <motion.div
+            className="flex items-center h-full"
+            initial={{ x: '100%' }}
+            animate={{ x: '-100%' }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+        >
+            <div className="flex shrink-0 items-center">
+                {Array(20).fill(0).map((_, i) => (
+                    <span key={i} className="text-3xl font-black mx-4 text-yellow-300">
+                        DUCK! 🦆
+                    </span>
+                ))}
+            </div>
+        </motion.div>
+    </div>
+);
+
+
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
     if (!playerId) return 'Select...';
     
@@ -422,6 +461,8 @@ export function LiveScoringInterface({
   const [milestone, setMilestone] = React.useState<number | null>(null);
   const [boundary, setBoundary] = React.useState<number | null>(null);
   const [wicketEvent, setWicketEvent] = React.useState<boolean>(false);
+  const [isDuck, setIsDuck] = React.useState(false);
+  const [isHatTrick, setIsHatTrick] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -485,7 +526,7 @@ export function LiveScoringInterface({
   
   const needsNewBowler = endOfOver && !isAllOut && !isOversFinished;
   
-  const needsPlayerSelection = needsNewBatsman || needsNewBowler || !liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId;
+  const needsPlayerSelection = !liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId || needsNewBatsman || needsNewBowler;
   const isReadyToScore = !needsPlayerSelection;
 
   
@@ -565,6 +606,14 @@ export function LiveScoringInterface({
             if (eventData.event === 'W') {
                 setWicketEvent(true);
                 setTimeout(() => setWicketEvent(false), 4000);
+            }
+            if (result?.isHatTrick) {
+                setIsHatTrick(true);
+                setTimeout(() => setIsHatTrick(false), 5000);
+            }
+            if (result?.isDuck) {
+                setIsDuck(true);
+                setTimeout(() => setIsDuck(false), 5000);
             }
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
@@ -669,6 +718,8 @@ export function LiveScoringInterface({
                     <div className="relative h-full w-full flex items-center">
                         {boundary && <BoundaryAnimation runs={boundary} />}
                         {wicketEvent && <WicketAnimation />}
+                        {isHatTrick && <HatTrickAnimation />}
+                        {isDuck && <DuckAnimation />}
                         <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                             {firstBatsman && firstBatsmanStats ? (
                                 <>

@@ -1,4 +1,5 @@
 
+
       
 'use server';
 
@@ -434,7 +435,7 @@ export async function acceptAssignmentAction(matchId: string, assignmentId: stri
 
 export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup> => {
   const match = await getMatch(matchId);
-  if (!match) return { playingXI: [], twelfthMan: null };
+  if (!match || !teamId) return { playingXI: [], twelfthMan: null };
   
   try {
     const lineupDocRef = doc(db, 'matches', matchId, 'lineups', teamId);
@@ -712,7 +713,7 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
     revalidatePath(`/matches/${matchId}`);
 }
 
-export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number, dismissal?: { type: string, fielderIds?: string[] } }): Promise<{ liveScore: LiveScore, milestone?: number } | null> {
+export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number, dismissal?: { type: string, fielderIds?: string[] } }): Promise<{ liveScore: LiveScore, milestone?: number, isHatTrick?: boolean, isDuck?: boolean } | null> {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
@@ -752,7 +753,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     const onStrikeId = liveScore.onStrikeBatsmanId;
     const bowlerId = liveScore.bowlerId;
     
-    const bowlerCurrentStats = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+    const bowlerCurrentStats = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0, consecutiveWickets: 0 };
     if (bowlerCurrentStats.overs >= 4) {
         throw new Error("This bowler has already bowled their maximum of 4 overs.");
     }
@@ -769,6 +770,8 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     
     const scoreBefore = liveScore.batsmanStats[onStrikeId]?.runs || 0;
     let milestone: number | undefined = undefined;
+    let isHatTrick = false;
+    let isDuck = false;
     
     if (isWide) {
         liveScore.runs += 1 + runsFromBall;
@@ -809,17 +812,32 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     }
     
     if (bowlerId) {
-        liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+        liveScore.bowlerStats[bowlerId] = liveScore.bowlerStats[bowlerId] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0, consecutiveWickets: 0 };
         if (isNoBall || isWide) liveScore.bowlerStats[bowlerId].runsConceded += 1 + runsFromBall;
         else if(!isWicket && ball.event !== 'b' && ball.event !== 'lb') liveScore.bowlerStats[bowlerId].runsConceded += runsFromBall;
         
         if (isWicket && ball.dismissal?.type !== 'Run Out') liveScore.bowlerStats[bowlerId].wickets++;
+
+        if (isLegalDelivery) {
+            if (isWicket) {
+                liveScore.bowlerStats[bowlerId].consecutiveWickets = (liveScore.bowlerStats[bowlerId].consecutiveWickets || 0) + 1;
+                if (liveScore.bowlerStats[bowlerId].consecutiveWickets === 3) {
+                    isHatTrick = true;
+                }
+            } else if (runsFromBall > 0) {
+                liveScore.bowlerStats[bowlerId].consecutiveWickets = 0;
+            }
+        }
     }
 
     if (isWicket) {
         if (liveScore.wickets < 10) {
             liveScore.wickets++;
             if (onStrikeId) {
+                const batsmanCurrentScore = liveScore.batsmanStats[onStrikeId]?.runs || 0;
+                if (batsmanCurrentScore === 0 && liveScore.batsmanStats[onStrikeId].balls === 1) {
+                    isDuck = true;
+                }
                 liveScore.batsmenOut.push(onStrikeId);
                 liveScore.batsmanStats[onStrikeId].timeOut = new Date();
                  const onStrikeBatsman = await getPerson(onStrikeId);
@@ -897,7 +915,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     await updateDoc(matchRef, { liveScore, previousLiveScore });
     revalidatePath(`/matches/${matchId}`);
-    return { liveScore, milestone };
+    return { liveScore, milestone, isHatTrick, isDuck };
 }
 
 
