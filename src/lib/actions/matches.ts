@@ -455,7 +455,7 @@ export const getMatchLineup = cache(async (matchId: string, teamId: string): Pro
 });
 
 const lineupSchema = z.object({
-  playingXI: z.array(z.string()).length(11, "Playing XI must have 11 players."),
+  playingXI: z.array(z.string()).min(0).max(11, "Playing XI can have at most 11 players."),
   twelfthMan: z.string().nullable(),
 });
 
@@ -713,7 +713,7 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
     revalidatePath(`/matches/${matchId}`);
 }
 
-export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number, dismissal?: { type: string, fielderIds?: string[] } }): Promise<{ liveScore: LiveScore, milestone?: number, isHatTrick?: boolean, isDuck?: boolean } | null> {
+export async function recordBallAction(matchId: string, ball: { runs?: number, event: string, angle?: number, distance?: number, dismissal?: { type: string, fielderIds?: string[] } }): Promise<{ liveScore: LiveScore, milestone?: number, isHatTrick?: boolean, isDuck?: boolean, isMaidenOver?: boolean } | null> {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
@@ -772,6 +772,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     let milestone: number | undefined = undefined;
     let isHatTrick = false;
     let isDuck = false;
+    let isMaidenOver = false;
     
     if (isWide) {
         liveScore.runs += 1 + runsFromBall;
@@ -881,16 +882,23 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         liveScore.overs++;
         liveScore.balls = 0;
         const overRuns = liveScore.currentOver.reduce((sum, e) => {
-            const run = parseInt(e, 10);
-            if (!isNaN(run) && e !== 'nb') return sum + run;
-            if (e.includes('wd') || e.includes('nb')) return sum + 1 + (run || 0);
+            if (e.includes('wd') || e.includes('nb')) {
+                const extraRun = parseInt(e.replace(/[^0-9]/g, '')) || 0;
+                return sum + 1 + extraRun;
+            }
+            if (!isNaN(parseInt(e, 10))) {
+                return sum + parseInt(e, 10);
+            }
             return sum;
         }, 0);
         
         if(liveScore.bowlerStats[bowlerId]) {
             liveScore.bowlerStats[bowlerId].overs = (liveScore.bowlerStats[bowlerId].overs || 0) + 1;
             liveScore.bowlerStats[bowlerId].balls = 0;
-            if(overRuns === 0) liveScore.bowlerStats[bowlerId].maidens++;
+            if(overRuns === 0) {
+                liveScore.bowlerStats[bowlerId].maidens++;
+                isMaidenOver = true;
+            }
         }
         
         liveScore.currentOver = [];
@@ -915,7 +923,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
 
     await updateDoc(matchRef, { liveScore, previousLiveScore });
     revalidatePath(`/matches/${matchId}`);
-    return { liveScore, milestone, isHatTrick, isDuck };
+    return { liveScore, milestone, isHatTrick, isDuck, isMaidenOver };
 }
 
 

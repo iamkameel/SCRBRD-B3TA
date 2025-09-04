@@ -124,6 +124,24 @@ const DuckAnimation = () => (
     </div>
 );
 
+const MaidenOverAnimation = () => (
+    <div className="absolute inset-0 h-full overflow-hidden z-20 pointer-events-none bg-black/50">
+        <motion.div
+            className="flex items-center h-full"
+            initial={{ x: '100%' }}
+            animate={{ x: '-100%' }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+        >
+            <div className="flex shrink-0 items-center">
+                {Array(20).fill(0).map((_, i) => (
+                    <span key={i} className="text-3xl font-black mx-4 text-cyan-300">
+                        MAIDEN OVER
+                    </span>
+                ))}
+            </div>
+        </motion.div>
+    </div>
+);
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
     if (!playerId) return 'Select...';
@@ -463,6 +481,7 @@ export function LiveScoringInterface({
   const [wicketEvent, setWicketEvent] = React.useState<boolean>(false);
   const [isDuck, setIsDuck] = React.useState(false);
   const [isHatTrick, setIsHatTrick] = React.useState(false);
+  const [isMaidenOver, setIsMaidenOver] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -615,6 +634,10 @@ export function LiveScoringInterface({
                 setIsDuck(true);
                 setTimeout(() => setIsDuck(false), 5000);
             }
+            if (result?.isMaidenOver) {
+                setIsMaidenOver(true);
+                setTimeout(() => setIsMaidenOver(false), 5000);
+            }
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         } finally {
@@ -720,6 +743,7 @@ export function LiveScoringInterface({
                         {wicketEvent && <WicketAnimation />}
                         {isHatTrick && <HatTrickAnimation />}
                         {isDuck && <DuckAnimation />}
+                        {isMaidenOver && <MaidenOverAnimation />}
                         <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                             {firstBatsman && firstBatsmanStats ? (
                                 <>
