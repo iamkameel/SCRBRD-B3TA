@@ -1,4 +1,5 @@
 
+
       
 'use server';
 
@@ -14,6 +15,7 @@ import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-match-flow';
+import { logAuditEvent } from './audit';
 
 export const getMatches = cache(async (): Promise<Match[]> => {
   const userId = await getUserId();
@@ -976,7 +978,7 @@ export async function simulateBallAction(matchId: string) {
     await recordBallAction(matchId, { ...selectedOutcome, angle, distance });
 }
 
-export async function undoLastBallAction(matchId: string) {
+export async function undoLastBallAction(matchId: string, reason: string) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
     if (!(await checkScoringPermission(matchId, userId))) {
@@ -997,6 +999,12 @@ export async function undoLastBallAction(matchId: string) {
     await updateDoc(matchRef, {
         liveScore: match.previousLiveScore,
         previousLiveScore: null,
+    });
+    
+    await logAuditEvent({
+        action: 'match.live_score.undo',
+        target: { type: 'Match', id: matchId, name: `${match.teamAName} vs ${match.teamBName}` },
+        details: { reason }
     });
 
     revalidatePath(`/matches/${matchId}`);
@@ -1226,3 +1234,4 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
 }
       
     
+

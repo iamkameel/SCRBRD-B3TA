@@ -27,6 +27,8 @@ import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@
 import { ConfettiBurst } from '@/components/confetti-burst';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DialogContent } from '@radix-ui/react-dialog';
 
 
 const BoundaryAnimation = ({ runs }: { runs: number }) => {
@@ -457,6 +459,49 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
 
 type WagonWheelView = 'team' | 'on-strike' | 'non-striker';
 
+const UNDO_REASONS = [
+    'Scoring error',
+    'Wrong batsman selected',
+    'Incorrect dismissal type',
+    'Wrong bowler selected',
+    'Technical issue',
+    'Other (specify)',
+];
+
+function UndoDialog({ open, onOpenChange, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; onConfirm: (reason: string) => void }) {
+    const [reason, setReason] = React.useState('');
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirm Undo Last Ball</DialogTitle>
+                    <DialogDescription>
+                        Please select a reason for this action. This will be recorded in the audit log.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <RadioGroup onValueChange={setReason} value={reason}>
+                        {UNDO_REASONS.map((r) => (
+                            <div key={r} className="flex items-center space-x-2">
+                                <RadioGroupItem value={r} id={r} />
+                                <Label htmlFor={r} className="font-normal">{r}</Label>
+                            </div>
+                        ))}
+                    </RadioGroup>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={() => onConfirm(reason)} disabled={!reason}>
+                        <Undo className="mr-2" />
+                        Confirm Undo
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export function LiveScoringInterface({
   teamARoster,
   teamBRoster,
@@ -474,6 +519,7 @@ export function LiveScoringInterface({
   const [isGeneratingUpdate, startUpdateGeneration] = React.useTransition();
   const [liveUpdate, setLiveUpdate] = React.useState<LiveMatchUpdateOutput | null>(null);
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
+  const [isUndoDialogOpen, setIsUndoDialogOpen] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
   const [wagonWheelView, setWagonWheelView] = React.useState<WagonWheelView>('team');
@@ -680,13 +726,15 @@ export function LiveScoringInterface({
     });
   }
 
-  const handleUndo = () => {
+  const handleUndo = (reason: string) => {
     startTransition(async () => {
         try {
-            await undoLastBallAction(match.matchId);
+            await undoLastBallAction(match.matchId, reason);
             toast({ title: "Action Undone", description: "The last recorded ball has been removed."});
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not undo action.", variant: "destructive" });
+        } finally {
+            setIsUndoDialogOpen(false);
         }
     });
   };
@@ -971,7 +1019,7 @@ export function LiveScoringInterface({
                                       <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
                                       Simulate Ball
                                   </Button>
-                                  <Button onClick={handleUndo} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
+                                  <Button onClick={() => setIsUndoDialogOpen(true)} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
                                       <Undo className="mr-2 h-4 w-4" />
                                       Undo Last Ball
                                   </Button>
@@ -1029,6 +1077,11 @@ export function LiveScoringInterface({
         onOpenChange={setIsScoringDialogOpen}
         onScore={handleRecordBall}
         bowlingTeamRoster={bowlingTeamRoster}
+    />
+    <UndoDialog
+        open={isUndoDialogOpen}
+        onOpenChange={setIsUndoDialogOpen}
+        onConfirm={handleUndo}
     />
     </>
   );
