@@ -1117,7 +1117,7 @@ async function createScorecardFromLive(matchId: string) {
         const bowlingCard = Object.entries(liveScore.bowlerStats).map(([bowlerId, stats]) => {
             const bowler = opponentRoster.find(p => p.personId === bowlerId);
             const oversWhole = Math.floor(stats.overs || 0);
-            const ballsFraction = ((stats.overs || 0) - oversWhole) * 10;
+            const ballsFraction = stats.balls || 0;
             const totalBalls = (oversWhole * 6) + ballsFraction;
             const economy = totalBalls > 0 ? ((stats.runsConceded || 0) / totalBalls) * 6 : 0;
             return {
@@ -1217,3 +1217,4 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
 }
       
     
+
