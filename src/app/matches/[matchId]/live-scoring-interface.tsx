@@ -291,7 +291,7 @@ function LiveBowlingCard({ bowlerStats, roster }: { bowlerStats: LiveScore['bowl
         const overs = stats.overs || 0;
         const balls = stats.balls || 0;
         const oversDecimal = overs + (balls/6);
-        const economy = oversDecimal > 0 ? (stats.runsConceded || 0) / oversDecimal : 0;
+        const economy = oversDecimal > 0 ? ((stats.runsConceded || 0) / oversDecimal) : 0;
         return {
             name: getDisplayName(personId, roster),
             overs: overs,
@@ -871,7 +871,7 @@ export function LiveScoringInterface({
                     </TabsList>
                     <TabsContent value="innings1" className="mt-4">
                         <Card>
-                            <CardHeader><CardTitle>Innings 1</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Innings 1 Scorecard</CardTitle></CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
                                     <h3 className="font-semibold">{isFirstInnings ? battingTeam.name : bowlingTeam.name} Batting</h3>
@@ -885,7 +885,7 @@ export function LiveScoringInterface({
                     </TabsContent>
                     <TabsContent value="innings2" className="mt-4">
                         <Card>
-                            <CardHeader><CardTitle>Innings 2</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Innings 2 Scorecard</CardTitle></CardHeader>
                             <CardContent>
                                <div className="space-y-4">
                                     <h3 className="font-semibold">{battingTeam.name} Batting</h3>

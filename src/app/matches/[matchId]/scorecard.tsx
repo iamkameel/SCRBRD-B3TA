@@ -23,8 +23,6 @@ export function Scorecard({ innings }: { innings: Innings }) {
               <TableHead>Status</TableHead>
               <TableHead className="text-right">R</TableHead>
               <TableHead className="text-right">B</TableHead>
-              <TableHead className="text-right">4s</TableHead>
-              <TableHead className="text-right">6s</TableHead>
               <TableHead className="text-right">SR</TableHead>
               <TableHead className="text-right">Time</TableHead>
             </TableRow>
@@ -36,20 +34,18 @@ export function Scorecard({ innings }: { innings: Innings }) {
                 <TableCell>{batsman.status}</TableCell>
                 <TableCell className="text-right">{batsman.runs}</TableCell>
                 <TableCell className="text-right">{batsman.balls}</TableCell>
-                <TableCell className="text-right">{batsman.fours}</TableCell>
-                <TableCell className="text-right">{batsman.sixes}</TableCell>
                 <TableCell className="text-right">{batsman.strikeRate.toFixed(2)}</TableCell>
                 <TableCell className="text-right">{batsman.timeAtCrease ? `${batsman.timeAtCrease}m` : '-'}</TableCell>
               </TableRow>
             ))}
              <TableRow>
                 <TableCell className="font-medium">Extras</TableCell>
-                <TableCell colSpan={6}>{innings.extras.details}</TableCell>
+                <TableCell colSpan={4}>{innings.extras.details}</TableCell>
                 <TableCell className="text-right font-bold">{innings.extras.total}</TableCell>
             </TableRow>
             <TableRow>
                 <TableCell className="font-bold">Total</TableCell>
-                <TableCell colSpan={6}>({innings.wickets} wkts; {innings.overs} overs)</TableCell>
+                <TableCell colSpan={4}>({innings.wickets} wkts; {innings.overs} overs)</TableCell>
                 <TableCell className="text-right font-bold">{innings.totalRuns}</TableCell>
             </TableRow>
           </TableBody>
