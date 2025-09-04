@@ -96,20 +96,21 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
                 <circle cx={center} cy={center} r={infieldRadius} fill="url(#checkered)" />
 
                 {/* Sector Lines */}
-                {Array.from({ length: 4 }).map((_, i) => (
-                     <line
-                        key={`sector-${i}`}
-                        x1={center + center * Math.cos(i * Math.PI / 4 + Math.PI / 8)}
-                        y1={center + center * Math.sin(i * Math.PI / 4 + Math.PI / 8)}
-                        x2={center - center * Math.cos(i * Math.PI / 4 + Math.PI / 8)}
-                        y2={center - center * Math.sin(i * Math.PI / 4 + Math.PI / 8)}
-                        stroke="white"
-                        strokeWidth="1.5"
-                        strokeOpacity="0.8"
-                    />
-                ))}
-                 <line x1={center} y1={0} x2={center} y2={size} stroke="white" strokeWidth="1.5" strokeOpacity="0.8" />
-                 <line x1={0} y1={center} x2={size} y2={center} stroke="white" strokeWidth="1.5" strokeOpacity="0.8" />
+                {Array.from({ length: 4 }).map((_, i) => {
+                    const angle = i * 45;
+                    return (
+                        <line
+                            key={`sector-${i}`}
+                            x1={center}
+                            y1={center}
+                            x2={center + center * Math.cos(angle * Math.PI / 180)}
+                            y2={center + center * Math.sin(angle * Math.PI / 180)}
+                            stroke="white"
+                            strokeWidth="1.5"
+                            strokeOpacity="0.5"
+                        />
+                    );
+                })}
 
 
                 {/* Pitch */}
