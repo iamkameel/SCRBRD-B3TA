@@ -654,7 +654,7 @@ export function LiveScoringInterface({
                      <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
-                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}</p>
+                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}</p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -708,10 +708,9 @@ export function LiveScoringInterface({
         </div>
         
         <Tabs defaultValue="live">
-          <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="live">Live</TabsTrigger>
-              <TabsTrigger value="batting">Batting Card</TabsTrigger>
-              <TabsTrigger value="bowling">Bowling Card</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="live">Live Scoring</TabsTrigger>
+              <TabsTrigger value="scorecard">Full Scorecard</TabsTrigger>
           </TabsList>
           
           <TabsContent value="live" className="mt-4">
@@ -864,27 +863,41 @@ export function LiveScoringInterface({
               )}
             </TabsContent>
             
-            <TabsContent value="batting" className="mt-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{battingTeam.name} - Batting</CardTitle>
-                        <CardDescription>Live batting scorecard for the current innings.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <LiveBattingCard batsmanStats={liveScore.batsmanStats} roster={battingTeamRoster} batsmenOut={batsmenOut} />
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="bowling" className="mt-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{bowlingTeam.name} - Bowling</CardTitle>
-                        <CardDescription>Live bowling figures for the current innings.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <LiveBowlingCard bowlerStats={liveScore.bowlerStats} roster={bowlingTeamRoster} />
-                    </CardContent>
-                </Card>
+            <TabsContent value="scorecard" className="mt-4">
+                 <Tabs defaultValue="innings1">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="innings1">{isFirstInnings ? battingTeam.name : bowlingTeam.name} Innings</TabsTrigger>
+                        <TabsTrigger value="innings2" disabled={isFirstInnings}>{isFirstInnings ? bowlingTeam.name : battingTeam.name} Innings</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="innings1" className="mt-4">
+                        <Card>
+                            <CardHeader><CardTitle>Innings 1</CardTitle></CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold">{isFirstInnings ? battingTeam.name : bowlingTeam.name} Batting</h3>
+                                    <LiveBattingCard batsmanStats={isFirstInnings ? liveScore.batsmanStats : (match.firstInningsLiveScore?.batsmanStats || {})} roster={isFirstInnings ? battingTeamRoster : bowlingTeamRoster} batsmenOut={isFirstInnings ? batsmenOut : (match.firstInningsLiveScore?.batsmenOut || [])} />
+                                     <Separator />
+                                     <h3 className="font-semibold">{isFirstInnings ? bowlingTeam.name : battingTeam.name} Bowling</h3>
+                                    <LiveBowlingCard bowlerStats={isFirstInnings ? liveScore.bowlerStats : (match.firstInningsLiveScore?.bowlerStats || {})} roster={isFirstInnings ? bowlingTeamRoster : battingTeamRoster} />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="innings2" className="mt-4">
+                        <Card>
+                            <CardHeader><CardTitle>Innings 2</CardTitle></CardHeader>
+                            <CardContent>
+                               <div className="space-y-4">
+                                    <h3 className="font-semibold">{battingTeam.name} Batting</h3>
+                                    <LiveBattingCard batsmanStats={liveScore.batsmanStats} roster={battingTeamRoster} batsmenOut={batsmenOut} />
+                                     <Separator />
+                                     <h3 className="font-semibold">{bowlingTeam.name} Bowling</h3>
+                                    <LiveBowlingCard bowlerStats={liveScore.bowlerStats} roster={bowlingTeamRoster} />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </TabsContent>
         </Tabs>
     </div>
