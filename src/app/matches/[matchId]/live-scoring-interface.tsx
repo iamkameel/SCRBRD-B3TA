@@ -737,7 +737,7 @@ export function LiveScoringInterface({
                      <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
-                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}</p>
+                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-{bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}</p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -1032,3 +1032,4 @@ export function LiveScoringInterface({
     </>
   );
 }
+
