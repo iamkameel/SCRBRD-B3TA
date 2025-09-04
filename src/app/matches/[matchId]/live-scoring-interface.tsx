@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -754,7 +755,7 @@ export function LiveScoringInterface({
                         {isHatTrick && <HatTrickAnimation />}
                         {isDuck && <DuckAnimation />}
                         {isMaidenOver && <MaidenOverAnimation />}
-                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                             {firstBatsman && firstBatsmanStats ? (
                                 <>
                                     <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(firstBatsman, battingTeamRoster).split(' ').pop()}</span>
@@ -762,7 +763,7 @@ export function LiveScoringInterface({
                                 </>
                             ) : (<span className="font-bold text-xs sm:text-sm uppercase truncate w-full text-center">SELECT...</span>)}
                         </div>
-                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
                             {secondBatsman && secondBatsmanStats ? (
                                 <>
                                     <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(secondBatsman, battingTeamRoster).split(' ').pop()}</span>
