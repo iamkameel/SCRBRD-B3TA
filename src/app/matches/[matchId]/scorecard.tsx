@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -26,6 +27,7 @@ export function Scorecard({ innings }: { innings: Innings }) {
               <TableHead className="text-right">4s</TableHead>
               <TableHead className="text-right">6s</TableHead>
               <TableHead className="text-right">SR</TableHead>
+              <TableHead className="text-right">Time</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -38,16 +40,17 @@ export function Scorecard({ innings }: { innings: Innings }) {
                 <TableCell className="text-right">{batsman.fours}</TableCell>
                 <TableCell className="text-right">{batsman.sixes}</TableCell>
                 <TableCell className="text-right">{batsman.strikeRate.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{batsman.timeAtCrease ? `${batsman.timeAtCrease}m` : '-'}</TableCell>
               </TableRow>
             ))}
              <TableRow>
                 <TableCell className="font-medium">Extras</TableCell>
-                <TableCell colSpan={5}>{innings.extras.details}</TableCell>
+                <TableCell colSpan={6}>{innings.extras.details}</TableCell>
                 <TableCell className="text-right font-bold">{innings.extras.total}</TableCell>
             </TableRow>
             <TableRow>
                 <TableCell className="font-bold">Total</TableCell>
-                <TableCell colSpan={5}>({innings.wickets} wkts; {innings.overs} overs)</TableCell>
+                <TableCell colSpan={6}>({innings.wickets} wkts; {innings.overs} overs)</TableCell>
                 <TableCell className="text-right font-bold">{innings.totalRuns}</TableCell>
             </TableRow>
           </TableBody>

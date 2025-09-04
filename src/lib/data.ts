@@ -196,6 +196,7 @@ export interface Extras {
     byes: number;
     legByes: number;
     partnership: number;
+    partnershipStartTime?: Date;
 }
 
 export type BowlingAngle = 'Over the Wicket' | 'Round the Wicket';
@@ -214,10 +215,12 @@ export interface LiveScore {
     batsmenOut?: string[];
     liveInnings?: 1 | 2;
     shots?: ShotData[];
-    batsmanStats: { [key: string]: { runs: number, balls: number } };
+    batsmanStats: { [key: string]: { runs: number, balls: number, timeIn: Date | null, timeOut?: Date | null } };
     bowlerStats: { [key: string]: { wickets: number, runsConceded: number, overs: number, balls: number, maidens: number } };
     extras: Extras;
     bowlingAngle: BowlingAngle;
+    newBatsmanRequired?: boolean;
+    endOfOver?: boolean;
 }
 
 export interface Match {
@@ -278,6 +281,7 @@ export interface BatsmanStats {
   fours: number;
   sixes: number;
   strikeRate: number;
+  timeAtCrease?: number; // in minutes
 }
 
 export interface BowlerStats {
