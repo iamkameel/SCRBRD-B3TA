@@ -982,7 +982,9 @@ export async function endInningsAction(matchId: string) {
         
         const newLiveScore: LiveScore = {
             runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 2, shots: [],
-            onStrikeBatsmanId: undefined, nonStrikerBatsmanId: undefined, bowlerId: undefined,
+            onStrikeBatsmanId: null,
+            nonStrikerBatsmanId: null,
+            bowlerId: null,
             batsmanStats: {}, bowlerStats: {}, extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0, partnershipStartTime: new Date() }, bowlingAngle: 'Over the Wicket'
         };
         
