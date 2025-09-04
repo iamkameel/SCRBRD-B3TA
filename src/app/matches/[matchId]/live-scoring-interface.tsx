@@ -53,6 +53,38 @@ const BoundaryAnimation = ({ runs }: { runs: number }) => {
   );
 };
 
+const WicketAnimation = () => {
+    const text1 = "WICKET";
+    const text2 = "OUT";
+    const bgClass = "bg-red-900/80";
+    const textClass1 = "text-red-400";
+    const textClass2 = "text-white";
+
+    return (
+        <div className={cn("absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 overflow-hidden z-20 pointer-events-none", bgClass)}>
+            <motion.div
+                className="flex items-center h-full"
+                initial={{ x: "100%" }}
+                animate={{ x: "-100%" }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            >
+                <div className="flex shrink-0 items-center">
+                    {Array(20).fill(0).map((_, i) => (
+                        <React.Fragment key={i}>
+                            <span className={cn("text-4xl font-black mx-4", textClass1)}>
+                                {text1}
+                            </span>
+                             <span className={cn("text-4xl font-black mx-4", textClass2)}>
+                                {text2}
+                            </span>
+                        </React.Fragment>
+                    ))}
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
     if (!playerId) return 'Select...';
     
@@ -321,6 +353,7 @@ export function LiveScoringInterface({
   const [wagonWheelView, setWagonWheelView] = React.useState<WagonWheelView>('team');
   const [milestone, setMilestone] = React.useState<number | null>(null);
   const [boundary, setBoundary] = React.useState<number | null>(null);
+  const [wicketEvent, setWicketEvent] = React.useState<boolean>(false);
 
 
   React.useEffect(() => {
@@ -458,6 +491,10 @@ export function LiveScoringInterface({
                 setBoundary(eventData.runs);
                 setTimeout(() => setBoundary(null), 4000);
             }
+            if (eventData.event === 'W') {
+                setWicketEvent(true);
+                setTimeout(() => setWicketEvent(false), 4000);
+            }
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         } finally {
@@ -529,6 +566,7 @@ export function LiveScoringInterface({
     <div className="space-y-4">
         <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
+            {wicketEvent && <WicketAnimation />}
             {/* Team Names & Score */}
             <div className="grid grid-cols-3 items-start gap-2">
                 <div className="text-left space-y-1">
