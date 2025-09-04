@@ -735,10 +735,12 @@ export function LiveScoringInterface({
                 </div>
                 
                 <div className="text-right space-y-1">
-                     <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
+                    <p className="font-semibold text-sm sm:text-base uppercase flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
-                         <div>
-                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}</p>
+                        <div>
+                            <p className="text-xs sm:text-sm font-semibold">
+                                {getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}
+                            </p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -755,7 +757,7 @@ export function LiveScoringInterface({
                         {isHatTrick && <HatTrickAnimation />}
                         {isDuck && <DuckAnimation />}
                         {isMaidenOver && <MaidenOverAnimation />}
-                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-full shadow-md")}>
                             {firstBatsman && firstBatsmanStats ? (
                                 <>
                                     <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(firstBatsman, battingTeamRoster).split(' ').pop()}</span>
@@ -763,7 +765,7 @@ export function LiveScoringInterface({
                                 </>
                             ) : (<span className="font-bold text-xs sm:text-sm uppercase truncate w-full text-center">SELECT...</span>)}
                         </div>
-                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-[calc(100%-8px)] shadow-md")}>
+                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-full shadow-md")}>
                             {secondBatsman && secondBatsmanStats ? (
                                 <>
                                     <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(secondBatsman, battingTeamRoster).split(' ').pop()}</span>
