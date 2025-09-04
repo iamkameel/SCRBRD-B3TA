@@ -98,13 +98,18 @@ export function WagonWheel({ onShotSelect, shots = [], disabled }: WagonWheelPro
                 {/* Sector Lines */}
                 {Array.from({ length: 4 }).map((_, i) => {
                     const angle = i * 45;
+                    const endX = center + center * Math.cos(angle * Math.PI / 180);
+                    const endY = center + center * Math.sin(angle * Math.PI / 180);
+                    const startX = center - center * Math.cos(angle * Math.PI / 180);
+                    const startY = center - center * Math.sin(angle * Math.PI / 180);
+
                     return (
                         <line
                             key={`sector-${i}`}
-                            x1={center}
-                            y1={center}
-                            x2={center + center * Math.cos(angle * Math.PI / 180)}
-                            y2={center + center * Math.sin(angle * Math.PI / 180)}
+                            x1={startX}
+                            y1={startY}
+                            x2={endX}
+                            y2={endY}
                             stroke="white"
                             strokeWidth="1.5"
                             strokeOpacity="0.5"
