@@ -698,7 +698,7 @@ export function LiveScoringInterface({
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not change bowler.", variant: "destructive" });
         }
     });
-  }
+  };
 
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   const tossWinner = match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName;
@@ -712,7 +712,7 @@ export function LiveScoringInterface({
           </Alert>
       );
   }
-
+  
   return (
     <>
     <ConfettiBurst isActive={!!milestone} />
@@ -737,7 +737,7 @@ export function LiveScoringInterface({
                      <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
-                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-{bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}</p>
+                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}</p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -800,7 +800,7 @@ export function LiveScoringInterface({
           </TabsList>
           
           <TabsContent value="live" className="mt-4">
-              {needsPlayerSelection && (
+              {needsPlayerSelection ? (
                   <Card>
                       <CardHeader>
                           <CardTitle>Player Selection Required</CardTitle>
@@ -868,8 +868,7 @@ export function LiveScoringInterface({
                           )}
                       </CardContent>
                   </Card>
-              )}
-              {(isAllOut || isOversFinished) && (
+              ) : (isAllOut || isOversFinished) ? (
                   <Card className="p-8 text-center bg-muted">
                       <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
                       <h3 className="mt-4 text-xl font-bold">Innings Over</h3>
@@ -878,8 +877,7 @@ export function LiveScoringInterface({
                           {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
                       </Button>
                   </Card>
-              )}
-              {isReadyToScore && !isAllOut && !isOversFinished && (
+              ) : (isReadyToScore && !isAllOut && !isOversFinished && (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="lg:col-span-2 space-y-4">
                           <Card>
@@ -964,7 +962,7 @@ export function LiveScoringInterface({
                               </CardContent>
                           </Card>
                           <Card>
-                              <CardHeader><CardTitle>Actions</CardHeader></CardHeader>
+                              <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
                               <CardContent className="flex flex-col gap-2">
                                   <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
                                       <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
@@ -982,7 +980,7 @@ export function LiveScoringInterface({
                           </Card>
                       </div>
                   </div>
-              )}
+              ))}
             </TabsContent>
             
             <TabsContent value="scorecard" className="mt-4">
@@ -1032,4 +1030,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
