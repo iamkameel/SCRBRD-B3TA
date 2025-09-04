@@ -482,10 +482,11 @@ export function LiveScoringInterface({
 
   const endOfOver = liveScore.endOfOver === true;
   const needsNewBatsman = liveScore.newBatsmanRequired === true && !isAllOut;
-  const needsNewBowler = endOfOver && !isAllOut && !isOversFinished;
-  const isReadyToScore = liveScore.onStrikeBatsmanId && liveScore.nonStrikerBatsmanId && liveScore.bowlerId && !needsNewBowler;
   
-  const needsPlayerSelection = (needsNewBatsman || needsNewBowler) && !isAllOut && !isOversFinished;
+  const needsNewBowler = endOfOver && !isAllOut && !isOversFinished;
+  
+  const needsPlayerSelection = needsNewBatsman || needsNewBowler || !liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId;
+  const isReadyToScore = !needsPlayerSelection;
 
   
   const canEndInnings = isAllOut || isOversFinished;
@@ -654,7 +655,7 @@ export function LiveScoringInterface({
                      <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
                          <div>
-                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}</p>
+                            <p className="text-xs sm:text-sm font-semibold">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}</p>
                             <OverHistory balls={liveScore.currentOver || []} />
                         </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -746,7 +747,40 @@ export function LiveScoringInterface({
                                       </SelectContent>
                                   </Select>
                               </div>
-                          ) : null}
+                          ) : (
+                               <div className="grid grid-cols-2 gap-4">
+                                   <div className="space-y-2">
+                                      <Label>On-Strike Batsman</Label>
+                                      <Select onValueChange={(val) => handlePlayerSelection('onStrike', val)} disabled={isPending || isSimulating}>
+                                          <SelectTrigger><SelectValue placeholder="Select on-strike batsman"/></SelectTrigger>
+                                          <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, battingTeamRoster)}</SelectItem>)}</SelectContent>
+                                      </Select>
+                                    </div>
+                                     <div className="space-y-2">
+                                      <Label>Non-Striker</Label>
+                                       <Select onValueChange={(val) => handlePlayerSelection('nonStriker', val)} disabled={isPending || isSimulating}>
+                                          <SelectTrigger><SelectValue placeholder="Select non-striker"/></SelectTrigger>
+                                          <SelectContent>{availableBatsmen.map(p => <SelectItem key={p.personId} value={p.personId}>{getDisplayName(p.personId, battingTeamRoster)}</SelectItem>)}</SelectContent>
+                                      </Select>
+                                    </div>
+                                     <div className="space-y-2">
+                                      <Label>Opening Bowler</Label>
+                                      <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
+                                        <SelectTrigger><SelectValue placeholder="Select opening bowler"/></SelectTrigger>
+                                        <SelectContent className="max-h-96">
+                                            {availableBowlers.map(p => (
+                                                <BowlerSelectionItem
+                                                    key={p.personId}
+                                                    player={p}
+                                                    liveScore={liveScore}
+                                                    onSelect={() => handlePlayerSelection('bowler', p.personId)}
+                                                />
+                                            ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                               </div>
+                          )}
                       </CardContent>
                   </Card>
               )}
@@ -760,7 +794,7 @@ export function LiveScoringInterface({
                       </Button>
                   </Card>
               )}
-              {!needsPlayerSelection && !isAllOut && !isOversFinished && isReadyToScore && (
+              {isReadyToScore && !isAllOut && !isOversFinished && (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="lg:col-span-2 space-y-4">
                           <Card>
