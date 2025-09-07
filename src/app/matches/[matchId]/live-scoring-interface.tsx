@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -174,10 +175,19 @@ function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: 
     
     const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
 
+    const partnership = liveScore.extras?.partnership || 0;
+    
+    // We'll rotate between these messages.
+    const messages = [];
+
+    if (partnership > 0 && liveScore.onStrikeBatsmanId && liveScore.nonStrikerBatsmanId) {
+        messages.push(<span>Partnership: <strong>{partnership}</strong></span>);
+    }
+    
     if (isFirstInnings) {
         const crr = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
         const projectedScore = liveScore.runs + (20 - oversDecimal) * crr;
-        return <span>CRR: {crr.toFixed(2)} &bull; Projected Score: ~{Math.round(projectedScore)}</span>;
+        messages.push(<span>CRR: <strong>{crr.toFixed(2)}</strong> &bull; Projected Score: <strong>~{Math.round(projectedScore)}</strong></span>);
     }
 
     if (!isFirstInnings && match.firstInningsTotal != null) {
@@ -194,11 +204,25 @@ function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: 
             const margin = runsRequired - 1;
             return <span className="font-bold text-green-400">{match.teamAName} won by {margin} runs.</span>;
         }
-
-        return <span>{battingTeamName} needs {runsRequired} runs in {ballsRemaining} balls.</span>;
+        
+        const rrr = ballsRemaining > 0 ? (runsRequired / ballsRemaining) * 6 : 0;
+        messages.push(<span>{battingTeamName} needs <strong>{runsRequired}</strong> runs in <strong>{ballsRemaining}</strong> balls.</span>);
+        messages.push(<span>Required Rate: <strong>{rrr.toFixed(2)}</strong></span>);
     }
+    
+    if (messages.length === 0) {
+        return <span>First ball of the match.</span>;
+    }
+    
+    const [index, setIndex] = React.useState(0);
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            setIndex((prevIndex) => (prevIndex + 1) % messages.length);
+        }, 3000); // Change message every 3 seconds
+        return () => clearInterval(interval);
+    }, [messages.length]);
 
-    return <span>First ball of the match.</span>
+    return messages[index];
 }
 
 function RecentBalls({ history }: { history: string[] }) {
@@ -702,7 +726,7 @@ export function LiveScoringInterface({
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   const bowlerOvers = `${bowlerStats.overs || 0}.${bowlerStats.balls || 0}`;
-  const bowlerFigures = `${bowlerStats.wickets || 0}/${bowlerStats.runsConceded || 0}`;
+  const bowlerFigures = `${bowlerStats.runsConceded || 0}/${bowlerStats.wickets || 0}`;
 
   if (!canLiveScore) {
       return (
@@ -760,7 +784,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
 
-            <div className="flex justify-center w-full">
+             <div className="flex justify-center w-full">
                 <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
                     <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center", onStrikeBatsmanId && "bg-green-500")}>
                         <span className="font-bold truncate">{onStrikePlayer.name}</span>
@@ -773,12 +797,10 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-             <div className="text-center text-sm space-y-1 pb-2">
-                <div className="font-semibold flex items-center justify-center gap-4">
-                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
-                    <div className="flex items-center justify-center">
-                        <RecentBalls history={liveScore.currentOver || []} />
-                    </div>
+            <div className="text-center text-sm font-sans flex items-center justify-center gap-4">
+                 <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
+                <div className="flex items-center justify-center">
+                    <RecentBalls history={liveScore.currentOver || []} />
                 </div>
             </div>
             
@@ -804,7 +826,7 @@ export function LiveScoringInterface({
                         <span className="font-bold">TARGET: {match.firstInningsTotal + 1}</span>
                     </>
                  )}
-                  {match.tossWinnerId && (
+                 {match.tossWinnerId && (
                      <>
                         <Separator orientation="vertical" className="h-4 bg-gray-600" />
                         <span className="text-xs">Toss: {match.teamAId === match.tossWinnerId ? match.teamAName : match.teamBName} chose to {match.tossDecision}</span>
