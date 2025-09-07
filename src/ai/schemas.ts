@@ -223,7 +223,7 @@ export const LiveMatchUpdateInputSchema = z.object({
     currentScore: z.number(),
     wickets: z.number(),
     overs: z.number(),
-    balls: z.number(),
+    balls: z.number().optional(),
     targetScore: z.number().optional().describe("The target score to win. Only applicable in the second innings."),
 });
 export type LiveMatchUpdateInput = z.infer<typeof LiveMatchUpdateInputSchema>;
@@ -296,4 +296,5 @@ export const PlayerPerformanceForecastPromptInputSchema = z.object({
   weatherForecast: GetMatchForecastOutputSchema,
   opponentTeamStats: z.any().describe("JSON string of the opponent team's overall season stats."),
 });
+
 
