@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -503,7 +502,7 @@ export default function MatchDetailsClient({
             <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="scorecard"><ClipboardList className="mr-2 h-4 w-4" />Scorecard</TabsTrigger>
                 <TabsTrigger value="lineups"><Users className="mr-2 h-4 w-4" />Lineups</TabsTrigger>
-                <TabsTrigger value="visuals" disabled={match.status !== 'completed'}><BarChartHorizontal className="mr-2 h-4 w-4"/>Visuals</TabsTrigger>
+                <TabsTrigger value="visuals"><BarChartHorizontal className="mr-2 h-4 w-4"/>Visuals</TabsTrigger>
                 <TabsTrigger value="analysis"><BarChart className="mr-2 h-4 w-4"/>Analysis</TabsTrigger>
                 <TabsTrigger value="highlights"><Film className="mr-2 h-4 w-4"/>Highlights</TabsTrigger>
                 <TabsTrigger value="logistics"><Bus className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
@@ -612,9 +611,9 @@ export default function MatchDetailsClient({
             
             <TabsContent value="visuals" className="mt-4">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <ManhattanChart />
-                    {scorecard && <WormChart scorecard={scorecard} teamAName={match.teamAName} teamBName={match.teamBName} />}
-                    <WagonWheelSummary />
+                    <ManhattanChart liveScore={match.liveScore} />
+                    <WormChart scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                    <WagonWheelSummary liveScore={match.liveScore}/>
                 </div>
             </TabsContent>
 
