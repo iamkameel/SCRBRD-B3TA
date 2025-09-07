@@ -1,15 +1,16 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, getDocs, query } from 'firebase/firestore';
 import { getUserId } from '@/lib/auth';
 import { getPerson } from './players';
 import type { Person, AuditLog } from '../data';
 import { revalidatePath } from 'next/cache';
 
 interface LogAuditEventParams {
-    actorId: string;
+    actorId?: string;
     action: string;
     target: {
         type: string;
@@ -19,8 +20,8 @@ interface LogAuditEventParams {
     details?: Record<string, any>;
 }
 
-export async function logAuditEvent(params: Omit<LogAuditEventParams, 'actorId'>) {
-    const actorId = await getUserId();
+export async function logAuditEvent(params: LogAuditEventParams) {
+    const actorId = params.actorId || await getUserId();
     if (!actorId) {
         console.warn("Audit event triggered by unauthenticated user. Skipping log.");
         return;
@@ -61,7 +62,7 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
     }
 
     try {
-        const snapshot = await getDocs(collection(db, 'auditLogs'));
+        const snapshot = await getDocs(query(collection(db, 'auditLogs')));
         const logs = snapshot.docs.map(doc => ({
             logId: doc.id,
             ...doc.data(),

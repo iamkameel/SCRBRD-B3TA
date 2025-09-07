@@ -152,7 +152,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     if (!player) return 'Unknown';
     
     const nameParts = player.personName.split(' ');
-    if (nameParts.length < 2) return player.personName; // Handle single names
+    if (nameParts.length < 2) return player.personName;
 
     const lastName = nameParts[nameParts.length - 1];
     
@@ -469,6 +469,7 @@ export function LiveScoringInterface({
   const [liveUpdate, setLiveUpdate] = React.useState<LiveMatchUpdateOutput | null>(null);
   const [isScoringDialogOpen, setIsScoringDialogOpen] = React.useState(false);
   const [isUndoDialogOpen, setIsUndoDialogOpen] = React.useState(false);
+  const [isChangingBowler, setIsChangingBowler] = React.useState(false);
   const [currentShot, setCurrentShot] = React.useState<{ angle: number; distance: number } | null>(null);
   const [forecast, setForecast] = React.useState<MatchForecast | null>(null);
   const [wagonWheelView, setWagonWheelView] = React.useState<WagonWheelView>('team');
@@ -542,7 +543,7 @@ export function LiveScoringInterface({
   const needsNewBowler = endOfOver && !isAllOut && !isOversFinished;
   
   const needsPlayerSelection = !liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId || needsNewBatsman || needsNewBowler || (liveScore.overs === 0 && liveScore.balls === 0 && liveScore.liveInnings === 2);
-  const isReadyToScore = !needsPlayerSelection;
+  const isReadyToScore = !needsPlayerSelection && !isChangingBowler;
 
   
   const canEndInnings = isAllOut || isOversFinished;
@@ -576,7 +577,12 @@ export function LiveScoringInterface({
     
     const stats = liveScore.batsmanStats?.[personId] || { runs: 0, balls: 0 };
     
-    return { name: getDisplayName(personId, battingTeamRoster), score: `${stats.runs} (${stats.balls})` };
+    const isNotOut = !liveScore.batsmenOut?.includes(personId);
+
+    return { 
+        name: player.personName.toUpperCase(), 
+        score: `${stats.runs}${isNotOut ? '' : ''} (${stats.balls})` 
+    };
   };
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler' | 'bowlingAngle', value: string) => {
@@ -595,6 +601,7 @@ export function LiveScoringInterface({
         if (type === 'bowlingAngle') updates.bowlingAngle = value as BowlingAngle;
 
         await updateLivePlayersAction(match.matchId, updates);
+        if (isChangingBowler) setIsChangingBowler(false);
       } catch (error) {
         toast({ title: "Error", description: error instanceof Error ? error.message : "Could not update player selection.", variant: "destructive" });
       }
@@ -689,19 +696,14 @@ export function LiveScoringInterface({
   };
   
   const handleChangeBowler = () => {
-    startTransition(async () => {
-        try {
-            await updateLivePlayersAction(match.matchId, { bowlerId: null });
-        } catch(error) {
-            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not change bowler.", variant: "destructive" });
-        }
-    });
+    setIsChangingBowler(true);
   };
 
-  const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
-  
+  const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+  const bowlerOversDisplay = `${bowlerStats.overs || 0}.${bowlerStats.balls || 0}`;
+
   if (!canLiveScore) {
       return (
           <Alert variant="warning">
@@ -716,58 +718,51 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3 relative overflow-hidden">
+        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 space-y-3 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-
-            {/* Scoreboard Header */}
-            <div className="grid grid-cols-3 items-start gap-2">
+            <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-left space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase">{battingTeam.name}</p>
-                    <p className="text-3xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
+                    <p className="font-bold text-lg leading-tight">{battingTeam.name}</p>
+                    {!isFirstInnings && match.firstInningsTotal != null && (
+                        <p className="text-xs text-gray-400">Target: {match.firstInningsTotal + 1}</p>
+                    )}
                 </div>
                 <div className="text-center">
-                    <p className="text-xs text-gray-300">OVERS</p>
-                    <p className="text-3xl font-bold tracking-tighter">{liveScore.overs}.{liveScore.balls || 0}</p>
+                    <p className="font-bold text-4xl tracking-tighter">{liveScore.runs}-{liveScore.wickets}</p>
                 </div>
-                <div className="text-right space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase">{bowlingTeam.name}</p>
-                    { !isFirstInnings && match.firstInningsLiveScore && (
-                        <p className="text-xs text-gray-400">1st Inns: {match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets}</p>
-                    )}
+                <div className="text-right">
+                    <p className="font-semibold text-lg">{liveScore.overs}.{liveScore.balls || 0}</p>
+                    <p className="text-xs text-gray-400">Overs</p>
                 </div>
             </div>
 
-            {/* Batsman Bar */}
             <div className="flex justify-center">
                 <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
-                    <div className={cn("px-4 py-1 rounded-full flex-1 text-left flex justify-between items-center", onStrikeBatsmanId && 'bg-primary')}>
-                        <span className="font-bold">{onStrikePlayer.name}</span>
-                        <span className="font-mono text-xs">{onStrikePlayer.score}</span>
+                    <div className={cn("px-4 py-1.5 rounded-full flex-1 text-left flex justify-between items-center", onStrikeBatsmanId && 'bg-primary')}>
+                        <span className="font-bold truncate">{onStrikePlayer.name}</span>
+                        <span className="font-mono text-sm ml-2">{onStrikePlayer.score}</span>
                     </div>
-                    <div className={cn("px-4 py-1 rounded-full flex-1 text-right flex justify-between items-center")}>
-                        <span className="font-bold">{nonStrikerPlayer.name}</span>
-                        <span className="font-mono text-xs">{nonStrikerPlayer.score}</span>
+                    <div className={cn("px-4 py-1.5 rounded-full flex-1 text-right flex justify-between items-center")}>
+                        <span className="font-bold truncate">{nonStrikerPlayer.name}</span>
+                        <span className="font-mono text-sm ml-2">{nonStrikerPlayer.score}</span>
                     </div>
                 </div>
             </div>
             
-             {/* Bowler & Over Bar */}
-             <div className="text-center text-sm px-2">
+            <div className="text-center text-sm">
                 <div className="font-semibold">
-                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: </span>
-                    <span className="ml-2">{bowlerStats.wickets}/{bowlerStats.runsConceded || 0} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
+                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerStats.wickets}/{bowlerStats.runsConceded || 0} ({bowlerOversDisplay})</span>
                 </div>
                  <div className="flex items-center justify-center pt-2">
                     <RecentBalls history={liveScore.currentOver || []} />
                 </div>
             </div>
 
-            {/* Context Bars */}
-             <div className="text-center text-sm text-green-400 font-semibold h-4 pt-2">
+            <div className="text-center text-sm text-green-400 font-semibold h-4 pt-2">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
             <div className="text-center text-xs text-gray-400 h-4 pt-2 flex items-center justify-center gap-x-4">
@@ -780,10 +775,6 @@ export function LiveScoringInterface({
                     <Separator orientation="vertical" className="h-4 bg-gray-600" />
                     <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /> {forecast.details.condition}, {forecast.details.temperature}°C</span>
                 </>}
-                 {!isFirstInnings && match.firstInningsTotal && <>
-                     <Separator orientation="vertical" className="h-4 bg-gray-600" />
-                    <span className="flex items-center gap-1.5"><Target className="h-3 w-3" /> TARGET: {match.firstInningsTotal + 1}</span>
-                </>}
             </div>
         </div>
         
@@ -794,7 +785,30 @@ export function LiveScoringInterface({
           </TabsList>
           
           <TabsContent value="live" className="mt-4">
-              {needsPlayerSelection ? (
+              {isChangingBowler ? (
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Change Bowler (Mid-over)</CardTitle>
+                          <CardDescription>Select a new bowler to complete the over. The batsmen's positions will not change.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                          <Select onValueChange={(val) => handlePlayerSelection('bowler', val)} disabled={isPending || isSimulating}>
+                              <SelectTrigger><SelectValue placeholder="Select new bowler" /></SelectTrigger>
+                              <SelectContent className="max-h-96">
+                                  {availableBowlers.map(p => (
+                                      <BowlerSelectionItem
+                                          key={p.personId}
+                                          player={p}
+                                          liveScore={liveScore}
+                                          onSelect={() => handlePlayerSelection('bowler', p.personId)}
+                                      />
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                          <Button variant="outline" onClick={() => setIsChangingBowler(false)}>Cancel</Button>
+                      </CardContent>
+                  </Card>
+              ) : needsPlayerSelection ? (
                   <Card>
                       <CardHeader>
                           <CardTitle>Player Selection Required</CardTitle>
