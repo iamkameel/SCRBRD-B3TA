@@ -227,7 +227,7 @@ function RecentBalls({ history }: { history: string[] }) {
                     ball === '2' ? 'bg-lime-500 text-black' :
                     ball === '1' ? 'bg-pink-300 text-black' :
                     ball === '.' ? 'bg-gray-500 text-white' :
-                    (ball.toLowerCase().includes('wd') || ball.toLowerCase().includes('nb')) ? 'bg-yellow-500 text-black' :
+                    (ball.toLowerCase().includes('wd') || ball.toLowerCase().includes('nb')) ? 'bg-purple-500 text-white' :
                     'bg-gray-300 text-black';
 
                 return (
@@ -699,8 +699,8 @@ export function LiveScoringInterface({
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-  const bowlerOvers = bowlerStats.overs + (bowlerStats.balls / 10);
-  const bowlerFigures = `${bowlerStats.runsConceded}/${bowlerStats.wickets} (${bowlerOvers.toFixed(1)})`;
+  const bowlerOvers = (bowlerStats.overs || 0) + ((bowlerStats.balls || 0) / 10);
+  const bowlerFigures = `${bowlerStats.runsConceded || 0}/${bowlerStats.wickets || 0} (${bowlerOvers.toFixed(1)})`;
 
   if (!canLiveScore) {
       return (
@@ -773,7 +773,7 @@ export function LiveScoringInterface({
             
             <div className="text-center text-sm space-y-1">
                 <div className="font-semibold flex items-center justify-center gap-4">
-                    <span className="font-sans">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures}</span>
+                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures}</span>
                     <div className="flex items-center justify-center">
                         <RecentBalls history={liveScore.currentOver || []} />
                     </div>
@@ -1074,4 +1074,5 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
