@@ -11,7 +11,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import type { Innings, LiveScore } from '@/lib/data';
+import type { Innings, LiveScore, Match } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { WagonWheel } from '@/components/wagon-wheel';
@@ -110,6 +110,7 @@ interface WormChartProps {
     liveScore?: LiveScore | null;
     teamAName: string;
     teamBName: string;
+    match: Match;
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -190,7 +191,7 @@ const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
     return data;
 };
 
-export function WormChart({ scorecard, liveScore, teamAName, teamBName }: WormChartProps) {
+export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }: WormChartProps) {
     
     const innings1Data = scorecard?.innings1 || (liveScore?.liveInnings === 1 ? liveScore : (liveScore?.liveInnings === 2 ? match.firstInningsLiveScore : null));
     const innings2Data = scorecard?.innings2 || (liveScore?.liveInnings === 2 ? liveScore : null);

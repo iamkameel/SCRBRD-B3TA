@@ -623,14 +623,14 @@ export default function MatchDetailsClient({
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             <ManhattanChart data={firstInningsData} />
                             <WagonWheelSummary data={firstInningsData} />
-                            <WormChart scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                            <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
                         </div>
                     </TabsContent>
                      <TabsContent value="innings2" className="mt-4">
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             <ManhattanChart data={secondInningsData} />
                             <WagonWheelSummary data={secondInningsData} />
-                            <WormChart scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                            <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
                         </div>
                     </TabsContent>
                 </Tabs>
@@ -772,7 +772,7 @@ export default function MatchDetailsClient({
                                 <CardDescription>Generate an AI-powered summary of the team's tactical profile based on their season performance.</CardDescription>
                             </CardHeader>
                              <CardContent className="space-y-4">
-                                <Button onClick={() => handleGenerateAnalysis(team.teamId)} disabled={isGeneratingAnalysis}>
+                                <Button onClick={() => handleGenerateAnalysis(match.teamAId)} disabled={isGeneratingAnalysis}>
                                     <BrainCircuit className={`mr-2 h-4 w-4 ${isGeneratingAnalysis ? 'animate-spin' : ''}`} />
                                     {isGeneratingAnalysis ? 'Analyzing...' : (analysisResult ? 'Regenerate Analysis' : 'Generate Analysis')}
                                 </Button>
