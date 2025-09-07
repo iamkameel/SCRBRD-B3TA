@@ -239,6 +239,10 @@ function RecentBalls({ history }: { history: string[] }) {
             const runs = parseInt(ballEvent.replace(/[^0-9]/g, ''));
             return isNaN(runs) || runs === 0 ? 'WD' : `${runs}WD`;
         }
+         if (ballEvent.toLowerCase().includes('nb')) {
+            const runs = parseInt(ballEvent.replace(/[^0-9]/g, ''));
+            return isNaN(runs) || runs === 0 ? 'NB' : `${runs}NB`;
+        }
         return ballEvent.toUpperCase();
     }
 
@@ -249,7 +253,7 @@ function RecentBalls({ history }: { history: string[] }) {
                     return <Separator key={`divider-${index}`} orientation="vertical" className="h-6 bg-muted-foreground" />;
                 }
                 const colorClass = 
-                    ball === 'W' ? 'bg-pink-500 text-white' :
+                    ball === 'W' ? 'bg-red-500 text-white' :
                     ball === '6' ? 'bg-red-500 text-white' :
                     ball === '4' ? 'bg-blue-500 text-white' :
                     ball === '3' ? 'bg-yellow-500 text-black' :
@@ -672,7 +676,6 @@ export function LiveScoringInterface({
                 setIsMaidenOver(true);
                 setTimeout(() => setIsMaidenOver(false), 5000);
             }
-            // Trigger win probability update after a successful ball recording
             updateWinProbability();
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
@@ -686,7 +689,7 @@ export function LiveScoringInterface({
     startSimulation(async () => {
         try {
             await simulateBallAction(match.matchId);
-            updateWinProbability(); // Also update after simulation
+            updateWinProbability();
         } catch(error) {
             toast({ title: "Simulation Error", description: error instanceof Error ? error.message : "Could not simulate ball.", variant: "destructive" });
         }
@@ -709,7 +712,7 @@ export function LiveScoringInterface({
         try {
             await undoLastBallAction(match.matchId, reason);
             toast({ title: "Action Undone", description: "The last recorded ball has been removed."});
-            updateWinProbability(); // Update after undo
+            updateWinProbability();
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not undo action.", variant: "destructive" });
         } finally {
@@ -726,7 +729,7 @@ export function LiveScoringInterface({
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   const bowlerOvers = `${bowlerStats.overs || 0}.${bowlerStats.balls || 0}`;
-  const bowlerFigures = `${bowlerStats.runsConceded || 0}/${bowlerStats.wickets || 0}`;
+  const bowlerFigures = `${bowlerStats.wickets || 0}/${bowlerStats.runsConceded || 0}`;
 
   if (!canLiveScore) {
       return (

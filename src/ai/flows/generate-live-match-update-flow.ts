@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview An AI flow to generate a live win probability for a cricket match.
@@ -35,7 +36,7 @@ Analyze the situation considering the runs scored, wickets lost, and overs remai
 
 Based on your analysis, provide 2-3 brief, actionable tactical suggestions. These could be for the batting team (e.g., "Look to accelerate the scoring rate against the spinner") or the bowling team (e.g., "Consider bringing on an off-spin bowler to target the left-handed batsman").
 
-Your output must be in the specified JSON format. The 'winProbability' should be for the **batting team**. The 'summary' should be a concise, single sentence justifying your calculation. The 'tacticalSuggestions' should be an array of strings.`,
+Your output must be in the specified JSON format. The 'winProbability' should be for the **batting team**. The 'summary' should be a concise, single sentence justifying your calculation.`,
 });
 
 const generateLiveMatchUpdateFlow = ai.defineFlow(
