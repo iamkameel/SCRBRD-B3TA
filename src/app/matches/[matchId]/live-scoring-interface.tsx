@@ -169,14 +169,15 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     return lastName.toUpperCase();
 };
 
-function DynamicContextBar({ liveScore, match, teamAName, teamBName }: { liveScore: LiveScore, match: Match, teamAName: string, teamBName: string }) {
+function DynamicContextBar({ liveScore, match, teamBName }: { liveScore: LiveScore, match: Match, teamBName: string }) {
     const isFirstInnings = liveScore.liveInnings === 1;
     
     const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
 
     if (isFirstInnings) {
         const crr = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
-        return <span>CRR: {crr.toFixed(2)} &bull; Projected Score: ~{Math.round(liveScore.runs + (20 - oversDecimal) * crr)}</span>;
+        const projectedScore = liveScore.runs + (20 - oversDecimal) * crr;
+        return <span>CRR: {crr.toFixed(2)} &bull; Projected Score: ~{Math.round(projectedScore)}</span>;
     }
 
     if (!isFirstInnings && match.firstInningsTotal != null) {
@@ -188,13 +189,12 @@ function DynamicContextBar({ liveScore, match, teamAName, teamBName }: { liveSco
         } else if (runsRequired <= 0) {
             return <span className="font-bold text-green-400">{teamBName} won the match.</span>;
         } else {
-            return <span className="font-bold text-green-400">{teamAName} won the match.</span>;
+            return <span className="font-bold text-green-400">{match.teamAName} won the match.</span>;
         }
     }
 
     return <span>First ball of the match.</span>
 }
-
 
 function RecentBalls({ history }: { history: string[] }) {
     if (!history || history.length === 0) {
@@ -221,11 +221,11 @@ function RecentBalls({ history }: { history: string[] }) {
                 }
                 const colorClass = 
                     ball === 'W' ? 'bg-pink-500 text-white' :
-                    ball === '6' ? 'bg-green-500 text-white' :
+                    ball === '6' ? 'bg-red-500 text-white' :
                     ball === '4' ? 'bg-blue-500 text-white' :
-                    ball === '1' ? 'bg-gray-300 text-black' :
-                    ball === '2' ? 'bg-gray-300 text-black' :
-                    ball === '3' ? 'bg-gray-300 text-black' :
+                    ball === '3' ? 'bg-yellow-500 text-black' :
+                    ball === '2' ? 'bg-lime-500 text-black' :
+                    ball === '1' ? 'bg-pink-300 text-black' :
                     ball === '.' ? 'bg-gray-500 text-white' :
                     (ball.toLowerCase().includes('wd') || ball.toLowerCase().includes('nb')) ? 'bg-yellow-500 text-black' :
                     'bg-gray-300 text-black';
@@ -759,7 +759,7 @@ export function LiveScoringInterface({
             </div>
 
             <div className="flex justify-center w-full">
-                 <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
+                <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
                     <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center", onStrikeBatsmanId && "bg-green-500")}>
                         <span className="font-bold truncate">{onStrikePlayer.name}</span>
                         <span className="font-mono text-sm ml-2">{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
@@ -773,17 +773,16 @@ export function LiveScoringInterface({
             
             <div className="text-center text-sm space-y-1">
                 <div className="font-semibold flex items-center justify-center gap-4">
-                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures}</span>
+                    <span className="font-sans">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures}</span>
                     <div className="flex items-center justify-center">
                         <RecentBalls history={liveScore.currentOver || []} />
                     </div>
                 </div>
             </div>
             
-             <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-4">
-                <DynamicContextBar liveScore={liveScore} match={match} teamAName={battingTeam.name} teamBName={bowlingTeam.name} />
+            <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-1">
+                <DynamicContextBar liveScore={liveScore} match={match} teamBName={bowlingTeam.name} />
             </div>
-
 
             <Separator className="bg-white/10 my-1" />
 
@@ -1075,3 +1074,4 @@ export function LiveScoringInterface({
     </>
   );
 }
+
