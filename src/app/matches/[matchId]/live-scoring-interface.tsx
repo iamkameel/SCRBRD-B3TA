@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -189,8 +189,11 @@ function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: 
     
     if (isFirstInnings && oversDecimal > 0) {
         const crr = (liveScore.runs / oversDecimal);
-        const projected = Math.round(liveScore.runs + (20 - oversDecimal) * crr);
-        return <span>Projected Score: ~{projected}</span>;
+        return <span>CRR: {crr.toFixed(2)} &bull; Projected Score: ~{Math.round(liveScore.runs + (20 - oversDecimal) * crr)}</span>;
+    }
+
+    if (match.tossWinnerId && match.tossDecision) {
+      return <span>{match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName} chose to {match.tossDecision}.</span>;
     }
 
     return <span>First ball of the match.</span>
@@ -350,7 +353,7 @@ function LiveBattingCard({ batsmanStats, roster, batsmenOut }: { batsmanStats: L
     const battingLineup = roster.map(player => {
         const stats = batsmanStats[player.personId];
         const sr = (stats && stats.balls > 0) ? (stats.runs / stats.balls) * 100 : 0;
-        const status = batsmenOut.includes(player.personId) ? (stats?.status || 'Out') : (stats ? 'Not Out' : 'Did not bat');
+        const status = batsmenOut.includes(player.personId) ? (stats?.status || 'Out') : (stats ? 'not out' : 'Did not bat');
         return {
             name: player.personName,
             status,
@@ -583,15 +586,16 @@ export function LiveScoringInterface({
     return [];
   }, [wagonWheelView, liveScore.shots, onStrikeBatsmanId, nonStrikerBatsmanId]);
 
-  const [firstBatsman, secondBatsman] = onStrikeBatsmanId === nonStrikerBatsmanId
-    ? [onStrikeBatsmanId, null] 
-    : onStrikeBatsmanId
-        ? [onStrikeBatsmanId, nonStrikerBatsmanId] 
-        : [nonStrikerBatsmanId, onStrikeBatsmanId];
-
-  const firstBatsmanStats = firstBatsman ? (liveScore.batsmanStats?.[firstBatsman] || { runs: 0, balls: 0 }) : null;
-  const secondBatsmanStats = secondBatsman ? (liveScore.batsmanStats?.[secondBatsman] || { runs: 0, balls: 0 }) : null;
-
+  const getBatsmanDisplay = (personId: string | undefined | null) => {
+    if (!personId) return 'SELECT...';
+    const player = battingTeamRoster.find(p => p.personId === personId);
+    if (!player) return 'Unknown';
+    
+    const stats = liveScore.batsmanStats?.[personId] || { runs: 0, balls: 0 };
+    const isOut = batsmenOut.includes(personId);
+    
+    return `${getDisplayName(personId, battingTeamRoster)}: ${stats.runs}${!isOut ? '*' : ''} (${stats.balls})`;
+  };
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler' | 'bowlingAngle', value: string) => {
     startTransition(async () => {
@@ -724,7 +728,7 @@ export function LiveScoringInterface({
           </Alert>
       );
   }
-  
+
   return (
     <>
     <ConfettiBurst isActive={!!milestone} />
@@ -737,74 +741,61 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             {/* Team Names & Score */}
-            <div className="grid grid-cols-3 items-start gap-2">
+            <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-left space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase">{battingTeam.name}</p>
                     <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
-                        <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
+                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                        <p className="font-semibold text-sm sm:text-base uppercase">{battingTeam.abbrev}</p>
                     </div>
                 </div>
                 
                 <div className="text-center text-xs text-gray-300">
-                    <p className="font-bold text-sm sm:text-base">OVERS</p>
-                    <p className="font-bold text-3xl sm:text-4xl">{liveScore.overs || 0}.{liveScore.balls || 0}</p>
+                    <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}/{liveScore.wickets}</p>
+                    <p className="font-bold text-sm sm:text-base">({liveScore.overs || 0}.{liveScore.balls || 0})</p>
                 </div>
                 
                 <div className="text-right space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase">{bowlingTeam.name}</p>
-                     { !isFirstInnings && match.firstInningsLiveScore && (
-                        <div className="text-xs text-gray-400">
-                            1st Inns: {match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets} ({match.firstInningsLiveScore.overs}.{match.firstInningsLiveScore.balls || 0})
-                        </div>
-                    )}
-                    <div className="flex items-center justify-end gap-2">
+                     <div className="flex items-center justify-end gap-2">
+                        <p className="font-semibold text-sm sm:text-base uppercase">{bowlingTeam.abbrev}</p>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
+                     { !isFirstInnings && match.firstInningsLiveScore && (
+                        <div className="text-xs text-gray-400">
+                            1st Inns: {match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets}
+                        </div>
+                    )}
                 </div>
             </div>
+            
+            <Separator className="bg-white/20 my-2" />
 
-             {/* Batsmen Bar */}
-             <div className="flex flex-col items-center gap-2 pt-2">
-                <div className="relative flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1 overflow-hidden">
-                    <div className="relative h-full w-full flex items-center">
-                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-full shadow-md")}>
-                            {firstBatsman && firstBatsmanStats ? (
-                                <>
-                                    <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(firstBatsman, battingTeamRoster).split(' ').pop()}</span>
-                                    <span className="font-bold text-xs sm:text-sm">{firstBatsmanStats.runs} <span className="opacity-70 font-normal">({firstBatsmanStats.balls})</span></span>
-                                </>
-                            ) : (<span className="font-bold text-xs sm:text-sm uppercase truncate w-full text-center">SELECT...</span>)}
-                        </div>
-                        <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === secondBatsman && onStrikeBatsmanId && "bg-green-500 h-full shadow-md")}>
-                            {secondBatsman && secondBatsmanStats ? (
-                                <>
-                                    <span className="font-bold text-xs sm:text-sm uppercase truncate">{getDisplayName(secondBatsman, battingTeamRoster).split(' ').pop()}</span>
-                                    <span className="font-bold text-xs sm:text-sm">{secondBatsmanStats.runs} <span className="opacity-70 font-normal">({secondBatsmanStats.balls})</span></span>
-                                </>
-                            ) : onStrikeBatsmanId ? (<span className="font-bold text-xs sm:text-sm uppercase truncate w-full text-center">SELECT...</span>) : null}
-                        </div>
+            {/* Batsmen & Bowler Bar */}
+            <div className="space-y-2 text-sm">
+                <div className="flex items-center">
+                    <div className="w-6 text-center">{liveScore.onStrikeBatsmanId === onStrikeBatsmanId && <Circle className="h-3 w-3 fill-current text-blue-400" />}</div>
+                    <p className="flex-1 font-semibold">{getBatsmanDisplay(onStrikeBatsmanId)}</p>
+                    <div className="flex-1 text-right font-semibold">
+                      <span>{getDisplayName(bowlerId, bowlingTeamRoster)}:</span>
+                      <span className="ml-2">{bowlerStats.wickets}/{bowlerStats.runsConceded} ({bowlerStats.overs}.{bowlerStats.balls})</span>
                     </div>
                 </div>
-            </div>
-            
-            {/* Bowler Bar */}
-            <div className="flex items-center justify-center gap-4 text-center text-xs text-gray-300 h-10 mt-1">
-                <div className="text-left">
-                    <p className="font-semibold text-sm">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()}</p>
-                    <p className="text-xs">{bowlerStats.overs || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}</p>
+                <div className="flex items-center">
+                     <div className="w-6 text-center">{liveScore.onStrikeBatsmanId === nonStrikerBatsmanId && <Circle className="h-3 w-3 fill-current text-blue-400" />}</div>
+                     <p className="font-semibold">{getBatsmanDisplay(nonStrikerBatsmanId)}</p>
                 </div>
-                <OverHistory balls={liveScore.currentOver || []} />
             </div>
 
-            {/* Context Bar */}
-             <div className="text-center text-xs text-gray-300 h-4">
+            {/* Recent Balls */}
+            <div className="pt-2">
+                 <RecentBalls history={liveScore.ballHistory || []} />
+            </div>
+            
+            <Separator className="bg-white/20 my-2"/>
+
+            {/* Context Bars */}
+            <div className="text-center text-sm text-green-400 font-semibold h-4">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
-            
-            <Separator className="bg-white/20"/>
-
-            {/* Meta Bar */}
             <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs text-gray-300">
                  {isFirstInnings && <span>1st Innings</span>}
                 { !isFirstInnings && <span>2nd Innings</span> }
@@ -939,10 +930,6 @@ export function LiveScoringInterface({
                                               disabled={isPending || isSimulating || needsNewBatsman}
                                               shots={wagonWheelShots}
                                           />
-                                      </div>
-                                      <div className="pt-4 border-t">
-                                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Recent Balls</h4>
-                                      <RecentBalls history={liveScore.ballHistory || []} />
                                       </div>
                                   </div>
                               </CardContent>
