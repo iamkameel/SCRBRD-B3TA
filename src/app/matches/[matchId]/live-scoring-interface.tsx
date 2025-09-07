@@ -205,9 +205,9 @@ function RecentBalls({ history }: { history: string[] }) {
     }
     
     const formatEvent = (ballEvent: string) => {
-        if (ballEvent.includes('wd')) {
-            const runs = ballEvent.replace('wd', '');
-            return runs ? `${runs}WD` : 'WD';
+        if (ballEvent.toLowerCase().includes('wd')) {
+            const runs = parseInt(ballEvent.replace(/[^0-9]/g, ''));
+            return isNaN(runs) || runs === 0 ? 'WD' : `${runs}WD`;
         }
         return ballEvent.toUpperCase();
     }
@@ -566,17 +566,18 @@ export function LiveScoringInterface({
   }, [wagonWheelView, liveScore.shots, onStrikeBatsmanId, nonStrikerBatsmanId]);
 
   const getBatsmanDisplay = (personId: string | undefined | null) => {
-    if (!personId) return { name: 'SELECT...', score: '' };
+    if (!personId) return { name: 'SELECT...', runs: '', balls: '', isNotOut: false };
     const player = battingTeamRoster.find(p => p.personId === personId);
-    if (!player) return { name: 'Unknown', score: ''};
+    if (!player) return { name: 'Unknown', runs: '', balls: '', isNotOut: false };
     
     const stats = liveScore.batsmanStats?.[personId] || { runs: 0, balls: 0 };
-    
     const isNotOut = !liveScore.batsmenOut?.includes(personId);
 
     return { 
         name: getDisplayName(personId, battingTeamRoster), 
-        score: `${stats.runs} (${stats.balls})` 
+        runs: stats.runs.toString(),
+        balls: stats.balls.toString(),
+        isNotOut,
     };
   };
 
@@ -697,7 +698,7 @@ export function LiveScoringInterface({
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-  const bowlerFigures = `${bowlerStats.overs || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`;
+  const bowlerFigures = `${bowlerStats.overs}-${bowlerStats.maidens}-${bowlerStats.runsConceded}-${bowlerStats.wickets}`;
 
   if (!canLiveScore) {
       return (
@@ -759,11 +760,11 @@ export function LiveScoringInterface({
                  <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
                     <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center", onStrikeBatsmanId && "bg-green-500")}>
                         <span className="font-bold truncate">{onStrikePlayer.name}</span>
-                        <span className="font-mono text-sm ml-2">{onStrikePlayer.score}</span>
+                        <span className="font-mono text-sm ml-2">{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
                     </div>
                     <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center")}>
                         <span className="font-bold truncate">{nonStrikerPlayer.name}</span>
-                        <span className="font-mono text-sm ml-2">{nonStrikerPlayer.score}</span>
+                        <span className="font-mono text-sm ml-2">{nonStrikerPlayer.runs} ({nonStrikerPlayer.balls})</span>
                     </div>
                 </div>
             </div>
@@ -777,14 +778,14 @@ export function LiveScoringInterface({
                 </div>
             </div>
 
-            <div className="text-center text-sm text-green-400 font-semibold h-4 pt-2">
+            <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-4">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
 
             <Separator className="bg-white/10" />
 
             <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-3">
-                <span>{isFirstInnings ? '1st' : '2nd'} Innings</span>
+                <span className="font-semibold">{isFirstInnings ? '1st' : '2nd'} Innings</span>
                 <Separator orientation="vertical" className="h-4 bg-gray-600" />
                 <span>{format(new Date(), 'p')}</span>
                 <Separator orientation="vertical" className="h-4 bg-gray-600" />
@@ -797,6 +798,12 @@ export function LiveScoringInterface({
                      <>
                         <Separator orientation="vertical" className="h-4 bg-gray-600" />
                         <span className="font-bold">TARGET: {match.firstInningsTotal + 1}</span>
+                    </>
+                 )}
+                  {match.tossWinnerId && (
+                     <>
+                        <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                        <span className="text-xs">Toss: {match.teamAId === match.tossWinnerId ? match.teamAName : match.teamBName} chose to {match.tossDecision}</span>
                     </>
                  )}
             </div>
@@ -1065,4 +1072,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
