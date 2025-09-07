@@ -166,7 +166,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
         return `${firstNameInitial}. ${lastName}`;
     }
     
-    return player.personName;
+    return player.personName.toUpperCase();
 };
 
 
@@ -215,19 +215,23 @@ function RecentBalls({ history }: { history: string[] }) {
                 if (ball === '|') {
                     return <Separator key={`divider-${index}`} orientation="vertical" className="h-6 bg-muted-foreground" />;
                 }
+                 const colorClass = 
+                    ball.includes('W') ? 'bg-red-500 text-white' :
+                    ball.includes('6') ? 'bg-purple-500 text-white' :
+                    ball.includes('4') ? 'bg-blue-500 text-white' :
+                    ball === '1' ? 'bg-green-500/20 text-green-500' :
+                    ball === '2' ? 'bg-green-500/30 text-green-400' :
+                    ball === '3' ? 'bg-green-500/40 text-green-300' :
+                    ball === '.' ? 'bg-gray-500 text-white' :
+                    (ball.includes('wd') || ball.includes('nb')) ? 'bg-yellow-500 text-black' :
+                    'bg-gray-300 text-black';
+
                 return (
                     <span
                       key={index}
                       className={cn(
-                        'flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold',
-                        ball.includes('W') && 'bg-red-500 text-white',
-                        ball.includes('4') && 'bg-blue-500 text-white',
-                        ball.includes('6') && 'bg-purple-500 text-white',
-                        ball === '1' && 'bg-pink-500 text-white',
-                        ball === '2' && 'bg-lime-300 text-black',
-                        ball === '3' && 'bg-amber-300 text-black',
-                        ball === '.' && 'bg-gray-500 text-white',
-                        (ball.includes('wd') || ball.includes('nb')) && 'bg-yellow-500 text-black'
+                        'flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold border border-white/20',
+                        colorClass
                       )}
                     >
                       {ball}
@@ -558,14 +562,14 @@ export function LiveScoringInterface({
   }, [wagonWheelView, liveScore.shots, onStrikeBatsmanId, nonStrikerBatsmanId]);
 
   const getBatsmanDisplay = (personId: string | undefined | null) => {
-    if (!personId) return 'SELECT...';
+    if (!personId) return { name: 'SELECT...', score: '' };
     const player = battingTeamRoster.find(p => p.personId === personId);
-    if (!player) return 'Unknown';
+    if (!player) return { name: 'Unknown', score: ''};
     
     const stats = liveScore.batsmanStats?.[personId] || { runs: 0, balls: 0 };
     const isOut = batsmenOut.includes(personId);
     
-    return `${getDisplayName(personId, battingTeamRoster)}: ${stats.runs}${!isOut ? '*' : ''} (${stats.balls})`;
+    return { name: getDisplayName(personId, battingTeamRoster), score: `${stats.runs}${!isOut ? '*' : ''} (${stats.balls})` };
   };
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler' | 'bowlingAngle', value: string) => {
@@ -703,7 +707,7 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3 relative">
+        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
@@ -711,7 +715,7 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             {/* Team Names & Score */}
-            <div className="grid grid-cols-3 items-center gap-2">
+            <div className="grid grid-cols-3 items-start gap-2">
                 <div className="text-left space-y-1">
                     <div className="flex items-center gap-2">
                          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
@@ -736,48 +740,30 @@ export function LiveScoringInterface({
                     )}
                 </div>
             </div>
-            
-            <Separator className="bg-white/20 my-2" />
 
-            {/* Batsmen & Bowler Bar */}
-            <div className="space-y-2 text-sm">
-                <div className="flex items-center">
-                    <div className="w-6 text-center">{liveScore.onStrikeBatsmanId === onStrikeBatsmanId && <Circle className="h-3 w-3 fill-current text-blue-400" />}</div>
-                    <p className="flex-1 font-semibold">{getBatsmanDisplay(onStrikeBatsmanId)}</p>
+            <div className="bg-black/20 rounded-full my-2 flex justify-between items-center text-sm font-semibold p-1">
+                <div className={cn("px-4 py-1 rounded-full flex-1 text-center", liveScore.onStrikeBatsmanId === onStrikeBatsmanId && "bg-primary")}>
+                    <span>{getBatsmanDisplay(onStrikeBatsmanId).name}</span>
+                    <span className="ml-2 font-mono text-xs">({getBatsmanDisplay(onStrikeBatsmanId).score})</span>
                 </div>
-                <div className="flex items-center">
-                     <div className="w-6 text-center">{liveScore.onStrikeBatsmanId === nonStrikerBatsmanId && <Circle className="h-3 w-3 fill-current text-blue-400" />}</div>
-                     <p className="font-semibold">{getBatsmanDisplay(nonStrikerBatsmanId)}</p>
+                <div className={cn("px-4 py-1 rounded-full flex-1 text-center", liveScore.onStrikeBatsmanId === nonStrikerBatsmanId && "bg-primary")}>
+                    <span>{getBatsmanDisplay(nonStrikerBatsmanId).name}</span>
+                    <span className="ml-2 font-mono text-xs">({getBatsmanDisplay(nonStrikerBatsmanId).score})</span>
                 </div>
             </div>
-
-            <Separator className="bg-white/20 my-2"/>
             
-             <div className="flex items-center justify-between text-sm">
+             <div className="flex items-center justify-between text-sm px-2">
                 <div className="flex-1 text-left font-semibold">
                     <span>{getDisplayName(bowlerId, bowlingTeamRoster)}:</span>
-                    <span className="ml-2">{bowlerStats.wickets}/{bowlerStats.runsConceded} ({bowlerStats.overs}.{bowlerStats.balls})</span>
+                    <span className="ml-2 font-mono">{bowlerStats.wickets}/{bowlerStats.runsConceded} ({bowlerStats.overs}.{bowlerStats.balls})</span>
                 </div>
                 <div className="flex-1 text-right">
                     <RecentBalls history={liveScore.currentOver || []} />
                 </div>
             </div>
 
-            <Separator className="bg-white/20 my-2"/>
-
-            {/* Context Bars */}
-            <div className="text-center text-sm text-green-400 font-semibold h-4">
+            <div className="text-center text-sm text-green-400 font-semibold h-4 pt-1">
                 <DynamicContextBar liveScore={liveScore} match={match} />
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs text-gray-300">
-                 {isFirstInnings && <span>1st Innings</span>}
-                { !isFirstInnings && <span>2nd Innings</span> }
-                <Separator orientation="vertical" className="h-4 bg-white/20"/>
-                <span>{format(match.dateTime, 'p')}</span>
-                <Separator orientation="vertical" className="h-4 bg-white/20"/>
-                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
-                 {forecast && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span></>}
-                 { !isFirstInnings && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span></> }
             </div>
         </div>
         
