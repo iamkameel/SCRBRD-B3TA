@@ -170,62 +170,30 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
 };
 
 
-function DynamicContextBar({ liveScore, match, bowler, bowlerStats, bowlingTeamRoster }: { liveScore: LiveScore, match: Match, bowler?: RosterMemberWithStats, bowlerStats: any, bowlingTeamRoster: RosterMemberWithStats[] }) {
-    const [currentIndex, setCurrentIndex] = React.useState(0);
-    const messages: (string | null)[] = [];
-
+function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: Match }) {
     const isFirstInnings = liveScore.liveInnings === 1;
     
     const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
-    if(oversDecimal > 0) {
-        const crr = (liveScore.runs / oversDecimal).toFixed(2);
-        messages.push(`Current Run Rate: ${crr}`);
-    }
-
+    
     if (!isFirstInnings && match.firstInningsTotal) {
         const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
         const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
         if (runsRequired > 0 && ballsRemaining > 0) {
-            messages.push(`${match.teamBName} requires ${runsRequired} runs from ${ballsRemaining} balls.`);
-            const rrr = (runsRequired / (ballsRemaining / 6)).toFixed(2);
-            messages.push(`Required Rate: ${rrr}`);
+            return <span>{match.teamBName} requires {runsRequired} runs from {ballsRemaining} balls.</span>;
         } else if (runsRequired <= 0) {
-            messages.push(`${match.teamBName} won the match.`);
+            return <span className="font-bold text-green-400">{match.teamBName} won the match.</span>;
         } else {
-            messages.push(`${match.teamAName} won the match.`);
+            return <span className="font-bold text-green-400">{match.teamAName} won the match.</span>;
         }
     }
     
     if (isFirstInnings && oversDecimal > 0) {
         const crr = (liveScore.runs / oversDecimal);
         const projected = Math.round(liveScore.runs + (20 - oversDecimal) * crr);
-        messages.push(`Projected Score: ~${projected}`);
+        return <span>Projected Score: ~{projected}</span>;
     }
 
-    const partnership = liveScore.extras?.partnership;
-    if (partnership && partnership > 0) {
-        messages.push(`Partnership: ${partnership} runs`);
-    }
-
-    const activeMessages = messages.filter(m => m !== null);
-
-    React.useEffect(() => {
-        if (activeMessages.length > 1) {
-            const interval = setInterval(() => {
-                setCurrentIndex((prevIndex) => (prevIndex + 1) % activeMessages.length);
-            }, 10000); 
-
-            return () => clearInterval(interval);
-        }
-    }, [activeMessages.length]);
-
-    if (activeMessages.length === 0) {
-        return <span className="truncate">First ball of the match.</span>
-    }
-
-    return (
-        <span className="truncate">{activeMessages[currentIndex]}</span>
-    );
+    return <span>First ball of the match.</span>
 }
 
 function OverHistory({ balls }: { balls: string[] }) {
@@ -761,11 +729,17 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3">
+        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 font-sans shadow-lg space-y-3 relative">
+            {boundary && <BoundaryAnimation runs={boundary} />}
+            {wicketEvent && <WicketAnimation />}
+            {isHatTrick && <HatTrickAnimation />}
+            {isDuck && <DuckAnimation />}
+            {isMaidenOver && <MaidenOverAnimation />}
+
             {/* Team Names & Score */}
             <div className="grid grid-cols-3 items-start gap-2">
                 <div className="text-left space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase truncate flex items-center gap-2">{battingTeam.name}</p>
+                    <p className="font-semibold text-sm sm:text-base uppercase">{battingTeam.name}</p>
                     <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
                         <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
@@ -778,22 +752,22 @@ export function LiveScoringInterface({
                 </div>
                 
                 <div className="text-right space-y-1">
-                    <p className="font-semibold text-sm sm:text-base uppercase flex items-center justify-end gap-2">{bowlingTeam.name}</p>
+                    <p className="font-semibold text-sm sm:text-base uppercase">{bowlingTeam.name}</p>
+                     { !isFirstInnings && match.firstInningsLiveScore && (
+                        <div className="text-xs text-gray-400">
+                            1st Inns: {match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets} ({match.firstInningsLiveScore.overs}.{match.firstInningsLiveScore.balls || 0})
+                        </div>
+                    )}
                     <div className="flex items-center justify-end gap-2">
-                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
                 </div>
             </div>
 
-             {/* Batsmen Bar, Bowler Stats & Context */}
+             {/* Batsmen Bar */}
              <div className="flex flex-col items-center gap-2 pt-2">
                 <div className="relative flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1 overflow-hidden">
                     <div className="relative h-full w-full flex items-center">
-                        {boundary && <BoundaryAnimation runs={boundary} />}
-                        {wicketEvent && <WicketAnimation />}
-                        {isHatTrick && <HatTrickAnimation />}
-                        {isDuck && <DuckAnimation />}
-                        {isMaidenOver && <MaidenOverAnimation />}
                         <div className={cn("flex-1 flex items-center justify-between px-2 sm:px-3 h-full rounded-full z-10 transition-all duration-300", onStrikeBatsmanId === firstBatsman && onStrikeBatsmanId && "bg-green-500 h-full shadow-md")}>
                             {firstBatsman && firstBatsmanStats ? (
                                 <>
@@ -812,21 +786,25 @@ export function LiveScoringInterface({
                         </div>
                     </div>
                 </div>
-                 <div className="flex items-center justify-center gap-4 text-center text-xs text-gray-300 h-10 mt-1">
-                    <div>
-                        <p className="font-semibold text-sm">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()}</p>
-                        <p className="text-xs">{bowlerStats.overs || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}</p>
-                    </div>
-                    <OverHistory balls={liveScore.currentOver || []} />
-                 </div>
-                <div className="text-center text-xs text-gray-300 h-4">
-                    <DynamicContextBar liveScore={liveScore} match={match} bowler={bowler} bowlerStats={bowlerStats} bowlingTeamRoster={bowlingTeamRoster} />
+            </div>
+            
+            {/* Bowler Bar */}
+            <div className="flex items-center justify-center gap-4 text-center text-xs text-gray-300 h-10 mt-1">
+                <div className="text-left">
+                    <p className="font-semibold text-sm">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()}</p>
+                    <p className="text-xs">{bowlerStats.overs || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}</p>
                 </div>
+                <OverHistory balls={liveScore.currentOver || []} />
+            </div>
+
+            {/* Context Bar */}
+             <div className="text-center text-xs text-gray-300 h-4">
+                <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
             
             <Separator className="bg-white/20"/>
 
-             {/* Context Bar */}
+            {/* Meta Bar */}
             <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 text-xs text-gray-300">
                  {isFirstInnings && <span>1st Innings</span>}
                 { !isFirstInnings && <span>2nd Innings</span> }
@@ -835,7 +813,6 @@ export function LiveScoringInterface({
                 <Separator orientation="vertical" className="h-4 bg-white/20"/>
                 <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
                  {forecast && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span></>}
-                 {match.tossWinnerId && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span className="flex items-center gap-1.5"><Medal className="h-3 w-3" />{tossWinner} won the toss & chose to {match.tossDecision}</span></>}
                  { !isFirstInnings && <><Separator orientation="vertical" className="h-4 bg-white/20"/><span>TARGET: {match.firstInningsTotal ? match.firstInningsTotal + 1 : '-'}</span></> }
             </div>
         </div>
