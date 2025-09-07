@@ -771,7 +771,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            <div className="text-center text-sm space-y-1">
+             <div className="text-center text-sm space-y-1">
                 <div className="font-semibold flex items-center justify-center gap-4">
                     <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures}</span>
                     <div className="flex items-center justify-center">
@@ -978,23 +978,22 @@ export function LiveScoringInterface({
                               <CardContent className="min-h-[10rem] flex flex-col justify-center">
                                   {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
                                   {!isGeneratingUpdate && liveUpdate && (
-                                      <div className="space-y-2">
-                                          <div className="flex justify-between font-bold text-lg">
-                                              <span>{isFirstInnings ? match.teamAName : match.teamBName}</span>
-                                              <span>{liveUpdate.winProbability}%</span>
-                                          </div>
-                                          <Progress value={liveUpdate.winProbability} />
-                                          <p className="text-xs text-muted-foreground text-center">{liveUpdate.summary}</p>
-                                          {liveUpdate.tacticalSuggestions && liveUpdate.tacticalSuggestions.length > 0 && (
-                                              <div className="pt-4">
-                                                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Lightbulb className="text-yellow-400" /> AI Suggestions</h4>
-                                                  <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
-                                                      {liveUpdate.tacticalSuggestions.map((suggestion, index) => (
-                                                          <li key={index}>{suggestion}</li>
-                                                      ))}
-                                                  </ul>
-                                              </div>
-                                          )}
+                                      <div className="space-y-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="text-left">
+                                                    <p className="font-bold">{isFirstInnings ? match.teamAName : match.teamBName}</p>
+                                                    <p className="text-2xl font-bold text-blue-500">{liveUpdate.winProbability}%</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-bold">{isFirstInnings ? match.teamBName : match.teamAName}</p>
+                                                    <p className="text-2xl font-bold text-green-500">{100 - liveUpdate.winProbability}%</p>
+                                                </div>
+                                            </div>
+                                            <Progress value={liveUpdate.winProbability} indicatorClassName="bg-blue-500" className="h-2 [&>div]:bg-green-500" />
+                                            <div className="text-xs text-muted-foreground flex justify-between">
+                                                <span>{battingTeam.abbrev} {liveUpdate.winProbability}% ({liveScore.runs}/{liveScore.wickets}, {liveScore.overs}.{liveScore.balls} overs)</span>
+                                                <span>{bowlingTeam.abbrev} {100 - liveUpdate.winProbability}%</span>
+                                            </div>
                                       </div>
                                   )}
                                   {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Click "Analyze" for a win probability prediction.</p>}
@@ -1074,6 +1073,7 @@ export function LiveScoringInterface({
     </>
   );
 }
+
 
 
 
