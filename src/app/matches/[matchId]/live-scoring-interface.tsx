@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -169,8 +168,9 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     return lastName.toUpperCase();
 };
 
-function DynamicContextBar({ liveScore, match, teamBName }: { liveScore: LiveScore, match: Match, teamBName: string }) {
+function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: Match }) {
     const isFirstInnings = liveScore.liveInnings === 1;
+    const battingTeamName = isFirstInnings ? match.teamAName : match.teamBName;
     
     const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
 
@@ -181,16 +181,21 @@ function DynamicContextBar({ liveScore, match, teamBName }: { liveScore: LiveSco
     }
 
     if (!isFirstInnings && match.firstInningsTotal != null) {
-        const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
+        const target = match.firstInningsTotal + 1;
+        const runsRequired = target - liveScore.runs;
         const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
         
-        if (runsRequired > 0 && ballsRemaining > 0) {
-            return <span>{teamBName} requires {runsRequired} runs from {ballsRemaining} balls.</span>;
-        } else if (runsRequired <= 0) {
-            return <span className="font-bold text-green-400">{teamBName} won the match.</span>;
-        } else {
-            return <span className="font-bold text-green-400">{match.teamAName} won the match.</span>;
+        if (runsRequired <= 0) {
+            const wicketsRemaining = 10 - liveScore.wickets;
+            return <span className="font-bold text-green-400">{battingTeamName} won by {wicketsRemaining} wickets.</span>;
+        } 
+        
+        if (ballsRemaining <= 0) {
+            const margin = runsRequired - 1;
+            return <span className="font-bold text-green-400">{match.teamAName} won by {margin} runs.</span>;
         }
+
+        return <span>{battingTeamName} needs {runsRequired} runs in {ballsRemaining} balls.</span>;
     }
 
     return <span>First ball of the match.</span>
@@ -476,38 +481,43 @@ export function LiveScoringInterface({
   const [isHatTrick, setIsHatTrick] = React.useState(false);
   const [isMaidenOver, setIsMaidenOver] = React.useState(false);
 
-
-  React.useEffect(() => {
-      getMatchForecastAction(match.matchId).then(data => {
-          if (!("error" in data)) {
-              setForecast(data);
-          }
-      });
-  }, [match.matchId]);
-
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
   const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle, ballHistory: [], fallOfWickets: [] };
 
   const [liveScore, setLiveScore] = React.useState<LiveScore>({
       ...defaultLiveScore,
       ...match.liveScore,
-      extras: {
-          ...defaultExtras,
-          ...match.liveScore?.extras,
-      },
+      extras: { ...defaultExtras, ...match.liveScore?.extras },
       bowlingAngle: match.liveScore?.bowlingAngle || 'Over the Wicket',
       ballHistory: match.liveScore?.ballHistory || [],
       fallOfWickets: match.liveScore?.fallOfWickets || [],
   });
+  
+  const updateWinProbability = React.useCallback(() => {
+    startUpdateGeneration(async () => {
+        try {
+            const result = await generateLiveMatchUpdateAction(match.matchId);
+            setLiveUpdate(result);
+        } catch(error) {
+             toast({ title: "Error", description: "Could not fetch win probability.", variant: "destructive" });
+        }
+    });
+  }, [match.matchId, toast]);
 
+  React.useEffect(() => {
+    getMatchForecastAction(match.matchId).then(data => {
+        if (!("error" in data)) setForecast(data);
+    });
+    if (match.status === 'live') {
+      updateWinProbability();
+    }
+  }, [match.matchId, match.status, updateWinProbability]);
+  
   React.useEffect(() => {
     setLiveScore({
         ...defaultLiveScore,
         ...match.liveScore,
-        extras: {
-            ...defaultExtras,
-            ...match.liveScore?.extras,
-        },
+        extras: { ...defaultExtras, ...match.liveScore?.extras },
         bowlingAngle: match.liveScore?.bowlingAngle || 'Over the Wicket',
         ballHistory: match.liveScore?.ballHistory || [],
         fallOfWickets: match.liveScore?.fallOfWickets || [],
@@ -638,6 +648,8 @@ export function LiveScoringInterface({
                 setIsMaidenOver(true);
                 setTimeout(() => setIsMaidenOver(false), 5000);
             }
+            // Trigger win probability update after a successful ball recording
+            updateWinProbability();
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not record ball.", variant: "destructive" });
         } finally {
@@ -650,6 +662,7 @@ export function LiveScoringInterface({
     startSimulation(async () => {
         try {
             await simulateBallAction(match.matchId);
+            updateWinProbability(); // Also update after simulation
         } catch(error) {
             toast({ title: "Simulation Error", description: error instanceof Error ? error.message : "Could not simulate ball.", variant: "destructive" });
         }
@@ -667,23 +680,12 @@ export function LiveScoringInterface({
     });
   };
 
-  const handleGetLiveUpdate = () => {
-    startUpdateGeneration(async () => {
-        setLiveUpdate(null);
-        try {
-            const result = await generateLiveMatchUpdateAction(match.matchId);
-            setLiveUpdate(result);
-        } catch(error) {
-             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not get live update.", variant: "destructive" });
-        }
-    });
-  }
-
   const handleUndo = (reason: string) => {
     startTransition(async () => {
         try {
             await undoLastBallAction(match.matchId, reason);
             toast({ title: "Action Undone", description: "The last recorded ball has been removed."});
+            updateWinProbability(); // Update after undo
         } catch(error) {
             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not undo action.", variant: "destructive" });
         } finally {
@@ -699,8 +701,8 @@ export function LiveScoringInterface({
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-  const bowlerOvers = (bowlerStats.overs || 0) + ((bowlerStats.balls || 0) / 10);
-  const bowlerFigures = `${bowlerStats.runsConceded || 0}/${bowlerStats.wickets || 0} (${bowlerOvers.toFixed(1)})`;
+  const bowlerOvers = `${bowlerStats.overs || 0}.${bowlerStats.balls || 0}`;
+  const bowlerFigures = `${bowlerStats.wickets || 0}/${bowlerStats.runsConceded || 0}`;
 
   if (!canLiveScore) {
       return (
@@ -762,18 +764,18 @@ export function LiveScoringInterface({
                 <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
                     <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center", onStrikeBatsmanId && "bg-green-500")}>
                         <span className="font-bold truncate">{onStrikePlayer.name}</span>
-                        <span className="font-mono text-sm ml-2">{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
+                        <span className="font-mono text-sm ml-2">{onStrikePlayer.runs}({onStrikePlayer.balls})</span>
                     </div>
                     <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center")}>
                         <span className="font-bold truncate">{nonStrikerPlayer.name}</span>
-                        <span className="font-mono text-sm ml-2">{nonStrikerPlayer.runs} ({nonStrikerPlayer.balls})</span>
+                        <span className="font-mono text-sm ml-2">{nonStrikerPlayer.runs}({nonStrikerPlayer.balls})</span>
                     </div>
                 </div>
             </div>
             
-             <div className="text-center text-sm space-y-1">
+             <div className="text-center text-sm space-y-1 pb-2">
                 <div className="font-semibold flex items-center justify-center gap-4">
-                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures}</span>
+                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
                     <div className="flex items-center justify-center">
                         <RecentBalls history={liveScore.currentOver || []} />
                     </div>
@@ -781,7 +783,7 @@ export function LiveScoringInterface({
             </div>
             
             <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-1">
-                <DynamicContextBar liveScore={liveScore} match={match} teamBName={bowlingTeam.name} />
+                <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
 
             <Separator className="bg-white/10 my-1" />
@@ -967,13 +969,7 @@ export function LiveScoringInterface({
                       <div className="lg:col-span-1 space-y-4">
                           <Card>
                               <CardHeader>
-                                  <div className="flex items-center justify-between">
-                                      <CardTitle>Win Probability</CardTitle>
-                                      <Button size="sm" variant="outline" onClick={handleGetLiveUpdate} disabled={isGeneratingUpdate || isSimulating}>
-                                          <Wand2 className={cn('mr-2 h-4 w-4', isGeneratingUpdate && 'animate-spin')} />
-                                          Analyze
-                                      </Button>
-                                  </div>
+                                  <CardTitle>Win Probability</CardTitle>
                               </CardHeader>
                               <CardContent className="min-h-[10rem] flex flex-col justify-center">
                                   {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
@@ -996,7 +992,7 @@ export function LiveScoringInterface({
                                             </div>
                                       </div>
                                   )}
-                                  {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Click "Analyze" for a win probability prediction.</p>}
+                                  {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Win probability will appear here.</p>}
                               </CardContent>
                           </Card>
                           <Card>
@@ -1073,7 +1069,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
-
-
-
