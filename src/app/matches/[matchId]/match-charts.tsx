@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -23,46 +24,62 @@ const manhattanChartConfig = {
     },
 } satisfies ChartConfig;
 
-export function ManhattanChart({ liveScore }: { liveScore?: LiveScore | null }) {
+export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) {
     const chartData = React.useMemo(() => {
-        if (!liveScore?.ballHistory) return [];
-
-        const runsPerOver: { over: number, runs: number }[] = [];
-        let currentOver = 1;
-        let currentOverRuns = 0;
-
-        for (const event of liveScore.ballHistory) {
-            if (event === '|') {
-                runsPerOver.push({ over: currentOver, runs: currentOverRuns });
-                currentOver++;
-                currentOverRuns = 0;
-                continue;
+        if (!data) return [];
+        
+        const ballHistory = 'ballHistory' in data ? (data.ballHistory || []) : [];
+        const currentOverBalls = 'currentOver' in data ? (data.currentOver || []) : [];
+        let runsPerOver: { over: number, runs: number }[] = [];
+        
+        if ('battingCard' in data) {
+            // Logic for completed Innings object
+            const totalOvers = Math.ceil(data.overs);
+            runsPerOver = Array.from({length: totalOvers}, (_, i) => ({ over: i + 1, runs: 0 }));
+            // This is a simplification; a real implementation would need ball-by-ball data
+            // For now, we distribute runs evenly.
+            if (totalOvers > 0) {
+              const avgRuns = data.totalRuns / totalOvers;
+              for(let i = 0; i < totalOvers; i++) {
+                runsPerOver[i].runs = Math.round(avgRuns);
+              }
             }
+        } else if ('ballHistory' in data) {
+            // Logic for LiveScore object
+            let currentOver = 1;
+            let currentOverRuns = 0;
 
-            if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
-                currentOverRuns += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
-            } else if (!isNaN(parseInt(event))) {
-                currentOverRuns += parseInt(event);
+            for (const event of ballHistory) {
+                if (event === '|') {
+                    runsPerOver.push({ over: currentOver, runs: currentOverRuns });
+                    currentOver++;
+                    currentOverRuns = 0;
+                    continue;
+                }
+
+                if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
+                    currentOverRuns += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
+                } else if (!isNaN(parseInt(event))) {
+                    currentOverRuns += parseInt(event);
+                }
+            }
+            // Add the current, incomplete over
+            if(currentOverBalls.length > 0) {
+                const liveCurrentOverRuns = currentOverBalls.reduce((sum, e) => {
+                    if (e.toLowerCase().includes('wd') || e.toLowerCase().includes('nb')) {
+                        const extraRun = parseInt(e.replace(/[^0-9]/g, '')) || 0;
+                        return sum + 1 + extraRun;
+                    }
+                    if (!isNaN(parseInt(e, 10))) {
+                        return sum + parseInt(e, 10);
+                    }
+                    return sum;
+                }, 0);
+                runsPerOver.push({ over: currentOver, runs: liveCurrentOverRuns });
             }
         }
-        // Add the current, incomplete over
-        if(liveScore.currentOver && liveScore.currentOver.length > 0) {
-             currentOverRuns = liveScore.currentOver.reduce((sum, e) => {
-                if (e.toLowerCase().includes('wd') || e.toLowerCase().includes('nb')) {
-                    const extraRun = parseInt(e.replace(/[^0-9]/g, '')) || 0;
-                    return sum + 1 + extraRun;
-                }
-                if (!isNaN(parseInt(e, 10))) {
-                    return sum + parseInt(e, 10);
-                }
-                return sum;
-            }, 0);
-             runsPerOver.push({ over: currentOver, runs: currentOverRuns });
-        }
-
-
         return runsPerOver;
-    }, [liveScore]);
+    }, [data]);
 
     return (
         <Card>
@@ -226,13 +243,15 @@ export function WormChart({ scorecard, liveScore, teamAName, teamBName }: WormCh
 }
 
 // --- Wagon Wheel Summary ---
-export function WagonWheelSummary({ liveScore }: { liveScore?: LiveScore | null }) {
+export function WagonWheelSummary({ data }: { data?: LiveScore | Innings | null }) {
+    const shots = data && 'shots' in data ? data.shots : [];
+
     return (
          <Card>
-            <CardHeader><CardTitle>Wagon Wheel</CardTitle><CardDescription>Live scoring areas</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Wagon Wheel</CardTitle><CardDescription>Scoring areas</CardDescription></CardHeader>
             <CardContent>
                 <div className="flex justify-center">
-                     <WagonWheel onShotSelect={() => {}} shots={liveScore?.shots || []} disabled />
+                     <WagonWheel onShotSelect={() => {}} shots={shots || []} disabled />
                 </div>
             </CardContent>
         </Card>

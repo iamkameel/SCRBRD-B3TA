@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -454,6 +455,9 @@ export default function MatchDetailsClient({
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
   const canGenerateScorecard = teamALineup.playingXI.length === 11 && teamBLineup.playingXI.length === 11;
 
+  const firstInningsData = match.liveScore?.liveInnings === 1 ? match.liveScore : match.firstInningsLiveScore;
+  const secondInningsData = match.liveScore?.liveInnings === 2 ? match.liveScore : null;
+
 
   return (
     <>
@@ -610,11 +614,26 @@ export default function MatchDetailsClient({
             </TabsContent>
             
             <TabsContent value="visuals" className="mt-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <ManhattanChart liveScore={match.liveScore} />
-                    <WormChart scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
-                    <WagonWheelSummary liveScore={match.liveScore}/>
-                </div>
+                <Tabs defaultValue="innings1">
+                    <TabsList>
+                        <TabsTrigger value="innings1" disabled={!firstInningsData}>Innings 1: {match.teamAName}</TabsTrigger>
+                        <TabsTrigger value="innings2" disabled={!secondInningsData}>Innings 2: {match.teamBName}</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="innings1" className="mt-4">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <ManhattanChart data={firstInningsData} />
+                            <WagonWheelSummary data={firstInningsData} />
+                            <WormChart scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                        </div>
+                    </TabsContent>
+                     <TabsContent value="innings2" className="mt-4">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <ManhattanChart data={secondInningsData} />
+                            <WagonWheelSummary data={secondInningsData} />
+                            <WormChart scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </TabsContent>
 
             <TabsContent value="analysis" className="mt-4">
