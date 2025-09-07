@@ -17,18 +17,24 @@ export function Scorecard({ innings }: { innings: Innings }) {
 
   const yetToBat = Array.from(allPlayerNames).filter(name => !battedPlayerNames.has(name));
 
+  const getRoleIndicator = (playerName: string) => {
+    // This is a simplification. A real implementation might need richer player data.
+    if (playerName.includes("(C)")) return " (C)";
+    if (playerName.includes("(Wk)")) return " (Wk)";
+    return "";
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h3 className="text-2xl font-bold">{innings.teamName} Innings</h3>
+        <h3 className="text-2xl font-bold">{innings.teamName}</h3>
       </div>
-      <Separator />
+      
       <div>
-        <h4 className="font-bold text-lg mb-2">Batting</h4>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[250px]">Batsman</TableHead>
+              <TableHead className="w-[250px]">Batting</TableHead>
               <TableHead className="text-right">R</TableHead>
               <TableHead className="text-right">B</TableHead>
               <TableHead className="text-right">4s</TableHead>
@@ -38,49 +44,53 @@ export function Scorecard({ innings }: { innings: Innings }) {
           </TableHeader>
           <TableBody>
             {innings.battingCard.filter(b => b.status.toLowerCase() !== 'did not bat').map((batsman) => (
-              <TableRow key={batsman.name}>
-                <TableCell className="font-medium">
+              <TableRow key={batsman.name} className="h-16">
+                <TableCell className="font-medium align-top py-2">
                     <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                            {/* In a real app, you'd have a mapping from name to image URL */}
                             <AvatarFallback>{batsman.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <p>{batsman.name}</p>
+                            <p className="font-semibold">{batsman.name.replace(/\s*\(C\)|\s*\(Wk\)/, '')}{getRoleIndicator(batsman.name)}</p>
                             <p className="text-xs text-muted-foreground">{batsman.status}</p>
                         </div>
                     </div>
                 </TableCell>
-                <TableCell className="text-right">{batsman.runs}</TableCell>
-                <TableCell className="text-right">{batsman.balls}</TableCell>
-                <TableCell className="text-right">{batsman.fours}</TableCell>
-                <TableCell className="text-right">{batsman.sixes}</TableCell>
-                <TableCell className="text-right">{batsman.strikeRate.toFixed(2)}</TableCell>
+                <TableCell className="text-right align-top py-4">{batsman.runs}</TableCell>
+                <TableCell className="text-right align-top py-4">{batsman.balls}</TableCell>
+                <TableCell className="text-right align-top py-4">{batsman.fours}</TableCell>
+                <TableCell className="text-right align-top py-4">{batsman.sixes}</TableCell>
+                <TableCell className="text-right align-top py-4">{batsman.strikeRate.toFixed(2)}</TableCell>
               </TableRow>
             ))}
-             <TableRow>
-                <TableCell className="font-medium">Extras</TableCell>
-                <TableCell colSpan={4} className="text-muted-foreground">{innings.extras.details}</TableCell>
-                <TableCell className="text-right font-bold">{innings.extras.total}</TableCell>
-            </TableRow>
-            <TableRow className="bg-muted/50 font-bold">
-                <TableCell>Total</TableCell>
-                <TableCell colSpan={4}>({innings.wickets} wkts; {innings.overs} overs)</TableCell>
-                <TableCell className="text-right">{innings.totalRuns}</TableCell>
-            </TableRow>
           </TableBody>
         </Table>
 
+        <Separator />
+
+        <div className="flex justify-between p-4">
+            <span className="font-semibold">Extras</span>
+            <span className="font-semibold">{innings.extras.total} {innings.extras.details && `(${innings.extras.details})`}</span>
+        </div>
+
+        <Separator />
+        
+        <div className="flex justify-between p-4">
+            <span className="font-bold text-lg">Total runs</span>
+            <span className="font-bold text-lg">{innings.totalRuns} ({innings.wickets} wkts, {innings.overs} ov)</span>
+        </div>
+
         {yetToBat.length > 0 && (
-             <div className="mt-4">
-                <h5 className="font-semibold text-sm">Yet to bat</h5>
+             <div className="px-4 pb-4">
+                <Separator />
+                <h5 className="font-semibold text-sm pt-4">Yet to bat</h5>
                 <p className="text-sm text-muted-foreground">{yetToBat.join(', ')}</p>
             </div>
         )}
       </div>
       
       <div>
-        <h4 className="font-bold text-lg mb-2">Bowling</h4>
+        <h4 className="font-bold text-lg mb-2 px-4">Bowling</h4>
         <Table>
           <TableHeader>
             <TableRow>
