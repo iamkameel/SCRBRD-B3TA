@@ -169,8 +169,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     return lastName.toUpperCase();
 };
 
-
-function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: Match }) {
+function DynamicContextBar({ liveScore, match, teamAName, teamBName }: { liveScore: LiveScore, match: Match, teamAName: string, teamBName: string }) {
     const isFirstInnings = liveScore.liveInnings === 1;
     
     const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
@@ -183,17 +182,19 @@ function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: 
     if (!isFirstInnings && match.firstInningsTotal != null) {
         const runsRequired = (match.firstInningsTotal + 1) - liveScore.runs;
         const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
+        
         if (runsRequired > 0 && ballsRemaining > 0) {
-            return <span>{match.teamBName} requires {runsRequired} runs from {ballsRemaining} balls.</span>;
+            return <span>{teamBName} requires {runsRequired} runs from {ballsRemaining} balls.</span>;
         } else if (runsRequired <= 0) {
-            return <span className="font-bold text-green-400">{match.teamBName} won the match.</span>;
+            return <span className="font-bold text-green-400">{teamBName} won the match.</span>;
         } else {
-            return <span className="font-bold text-green-400">{match.teamAName} won the match.</span>;
+            return <span className="font-bold text-green-400">{teamAName} won the match.</span>;
         }
     }
 
     return <span>First ball of the match.</span>
 }
+
 
 function RecentBalls({ history }: { history: string[] }) {
     if (!history || history.length === 0) {
@@ -218,15 +219,15 @@ function RecentBalls({ history }: { history: string[] }) {
                 if (ball === '|') {
                     return <Separator key={`divider-${index}`} orientation="vertical" className="h-6 bg-muted-foreground" />;
                 }
-                 const colorClass = 
-                    ball.includes('W') ? 'bg-red-500 text-white' :
-                    ball.includes('6') ? 'bg-green-500 text-white' :
-                    ball.includes('4') ? 'bg-blue-500 text-white' :
-                    ball === '1' ? 'bg-pink-500 text-white' :
-                    ball === '2' ? 'bg-lime-500 text-white' :
-                    ball === '3' ? 'bg-amber-500 text-white' :
+                const colorClass = 
+                    ball === 'W' ? 'bg-pink-500 text-white' :
+                    ball === '6' ? 'bg-green-500 text-white' :
+                    ball === '4' ? 'bg-blue-500 text-white' :
+                    ball === '1' ? 'bg-gray-300 text-black' :
+                    ball === '2' ? 'bg-gray-300 text-black' :
+                    ball === '3' ? 'bg-gray-300 text-black' :
                     ball === '.' ? 'bg-gray-500 text-white' :
-                    (ball.includes('wd') || ball.includes('nb')) ? 'bg-yellow-500 text-black' :
+                    (ball.toLowerCase().includes('wd') || ball.toLowerCase().includes('nb')) ? 'bg-yellow-500 text-black' :
                     'bg-gray-300 text-black';
 
                 return (
@@ -698,7 +699,8 @@ export function LiveScoringInterface({
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-  const bowlerFigures = `${bowlerStats.overs}-${bowlerStats.maidens}-${bowlerStats.runsConceded}-${bowlerStats.wickets}`;
+  const bowlerOvers = bowlerStats.overs + (bowlerStats.balls / 10);
+  const bowlerFigures = `${bowlerStats.runsConceded}/${bowlerStats.wickets} (${bowlerOvers.toFixed(1)})`;
 
   if (!canLiveScore) {
       return (
@@ -725,7 +727,7 @@ export function LiveScoringInterface({
                     <p className="font-bold text-sm leading-tight uppercase">{battingTeam.name}</p>
                      <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-green-500/50 border-2 border-green-400 flex items-center justify-center font-bold text-sm">
-                            {battingTeam.name.charAt(0)}
+                            <Avatar className="h-8 w-8"><AvatarImage src={battingTeam.logoUrl} /></Avatar>
                         </div>
                         <p className="font-bold text-4xl tracking-tighter">{liveScore.runs}-{liveScore.wickets}</p>
                     </div>
@@ -743,7 +745,7 @@ export function LiveScoringInterface({
                           <>
                             <p className="font-bold text-4xl tracking-tighter">{match.firstInningsLiveScore?.runs}-{match.firstInningsLiveScore?.wickets}</p>
                              <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center font-bold text-sm">
-                                {bowlingTeam.name.charAt(0)}
+                                <Avatar className="h-8 w-8"><AvatarImage src={bowlingTeam.logoUrl} /></Avatar>
                             </div>
                           </>
                         )}
@@ -770,19 +772,20 @@ export function LiveScoringInterface({
             </div>
             
             <div className="text-center text-sm space-y-1">
-                <div className="font-semibold">
+                <div className="font-semibold flex items-center justify-center gap-4">
                     <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures}</span>
-                </div>
-                 <div className="flex items-center justify-center pt-1">
-                    <RecentBalls history={liveScore.currentOver || []} />
+                    <div className="flex items-center justify-center">
+                        <RecentBalls history={liveScore.currentOver || []} />
+                    </div>
                 </div>
             </div>
-
-            <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-4">
-                <DynamicContextBar liveScore={liveScore} match={match} />
+            
+             <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-4">
+                <DynamicContextBar liveScore={liveScore} match={match} teamAName={battingTeam.name} teamBName={bowlingTeam.name} />
             </div>
 
-            <Separator className="bg-white/10" />
+
+            <Separator className="bg-white/10 my-1" />
 
             <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-3">
                 <span className="font-semibold">{isFirstInnings ? '1st' : '2nd'} Innings</span>
