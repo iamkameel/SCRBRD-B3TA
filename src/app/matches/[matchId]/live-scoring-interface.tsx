@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -207,6 +208,14 @@ function RecentBalls({ history }: { history: string[] }) {
             </div>
         );
     }
+    
+    const formatEvent = (ballEvent: string) => {
+        if (ballEvent.includes('wd')) {
+            const runs = ballEvent.replace('wd', '');
+            return runs ? `${runs}WD` : 'WD';
+        }
+        return ballEvent.toUpperCase();
+    }
 
     return (
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -233,7 +242,7 @@ function RecentBalls({ history }: { history: string[] }) {
                         colorClass
                       )}
                     >
-                      {ball}
+                      {formatEvent(ball)}
                     </span>
                 );
             })}
@@ -566,9 +575,8 @@ export function LiveScoringInterface({
     if (!player) return { name: 'Unknown', score: ''};
     
     const stats = liveScore.batsmanStats?.[personId] || { runs: 0, balls: 0 };
-    const isOut = batsmenOut.includes(personId);
     
-    return { name: getDisplayName(personId, battingTeamRoster), score: `${stats.runs}${!isOut ? '*' : ''} (${stats.balls})` };
+    return { name: getDisplayName(personId, battingTeamRoster), score: `${stats.runs} (${stats.balls})` };
   };
 
   const handlePlayerSelection = (type: 'onStrike' | 'nonStriker' | 'bowler' | 'bowlingAngle', value: string) => {
@@ -734,31 +742,48 @@ export function LiveScoringInterface({
             </div>
 
             {/* Batsman Bar */}
-            <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1">
-                <div className="px-4 py-1 rounded-full flex-1 text-left bg-primary flex justify-between items-center">
-                    <span className="font-bold">{onStrikePlayer.name}</span>
-                    <span className="font-mono text-xs">{onStrikePlayer.score}</span>
-                </div>
-                <div className="px-4 py-1 rounded-full flex-1 text-right flex justify-between items-center">
-                    <span className="font-bold">{nonStrikerPlayer.name}</span>
-                    <span className="font-mono text-xs">{nonStrikerPlayer.score}</span>
-                </div>
-            </div>
-
-            {/* Bowler & Over Bar */}
-             <div className="text-center text-sm px-2">
-                <div className="font-semibold">
-                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: </span>
-                    <span className="ml-2 font-mono">{bowlerStats.wickets}/{bowlerStats.runsConceded || 0} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
-                </div>
-                 <div className="flex items-center justify-center pt-1">
-                    <RecentBalls history={liveScore.currentOver || []} />
+            <div className="flex justify-center">
+                <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
+                    <div className={cn("px-4 py-1 rounded-full flex-1 text-left flex justify-between items-center", onStrikeBatsmanId && 'bg-primary')}>
+                        <span className="font-bold">{onStrikePlayer.name}</span>
+                        <span className="font-mono text-xs">{onStrikePlayer.score}</span>
+                    </div>
+                    <div className={cn("px-4 py-1 rounded-full flex-1 text-right flex justify-between items-center")}>
+                        <span className="font-bold">{nonStrikerPlayer.name}</span>
+                        <span className="font-mono text-xs">{nonStrikerPlayer.score}</span>
+                    </div>
                 </div>
             </div>
             
-            {/* Context Bar */}
-            <div className="text-center text-sm text-green-400 font-semibold h-4 pt-2">
+             {/* Bowler & Over Bar */}
+             <div className="text-center text-sm px-2">
+                <div className="font-semibold">
+                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: </span>
+                    <span className="ml-2">{bowlerStats.wickets}/{bowlerStats.runsConceded || 0} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
+                </div>
+                 <div className="flex items-center justify-center pt-2">
+                    <RecentBalls history={liveScore.currentOver || []} />
+                </div>
+            </div>
+
+            {/* Context Bars */}
+             <div className="text-center text-sm text-green-400 font-semibold h-4 pt-2">
                 <DynamicContextBar liveScore={liveScore} match={match} />
+            </div>
+            <div className="text-center text-xs text-gray-400 h-4 pt-2 flex items-center justify-center gap-x-4">
+                <span>{isFirstInnings ? '1st' : '2nd'} Innings</span>
+                <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                <span>{format(new Date(), 'p')}</span>
+                <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {match.fieldName}</span>
+                {forecast && <>
+                    <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                    <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /> {forecast.details.condition}, {forecast.details.temperature}°C</span>
+                </>}
+                 {!isFirstInnings && match.firstInningsTotal && <>
+                     <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                    <span className="flex items-center gap-1.5"><Target className="h-3 w-3" /> TARGET: {match.firstInningsTotal + 1}</span>
+                </>}
             </div>
         </div>
         
