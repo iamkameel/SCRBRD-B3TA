@@ -613,7 +613,7 @@ export default function MatchDetailsClient({
             <TabsContent value="visuals" className="mt-4">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <ManhattanChart />
-                    <WormChart />
+                    {scorecard && <WormChart scorecard={scorecard} teamAName={match.teamAName} teamBName={match.teamBName} />}
                     <WagonWheelSummary />
                 </div>
             </TabsContent>
