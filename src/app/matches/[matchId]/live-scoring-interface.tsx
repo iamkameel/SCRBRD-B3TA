@@ -193,40 +193,11 @@ function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: 
     }
 
     if (match.tossWinnerId && match.tossDecision) {
-      return <span>{match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName} chose to {match.tossDecision}.</span>;
+      const tossWinnerName = match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName;
+      return <span>{tossWinnerName} won the toss and chose to {match.tossDecision}.</span>;
     }
 
     return <span>First ball of the match.</span>
-}
-
-function OverHistory({ balls }: { balls: string[] }) {
-  const displayBalls = [...balls];
-  while (displayBalls.length < 6) {
-    displayBalls.push('');
-  }
-  return (
-    <div className="flex items-center gap-1.5 mt-2 justify-end">
-      {displayBalls.map((ball, index) => (
-        <span
-          key={index}
-          className={cn(
-            'flex items-center justify-center h-6 w-6 rounded-full border text-xs font-bold',
-             ball === '' && 'bg-transparent border-white/30',
-            ball.includes('W') && 'bg-destructive text-destructive-foreground',
-            ball.includes('4') && 'bg-blue-500 text-white',
-            ball.includes('6') && 'bg-purple-600 text-white',
-            ball === '1' && 'bg-pink-500 text-white',
-            ball === '2' && 'bg-lime-300 text-black',
-            ball === '3' && 'bg-amber-300 text-black',
-            ball === '.' && 'bg-gray-500 text-white',
-            (ball.includes('wd') || ball.includes('nb')) && 'bg-yellow-500 text-black'
-          )}
-        >
-          {ball}
-        </span>
-      ))}
-    </div>
-  );
 }
 
 function RecentBalls({ history }: { history: string[] }) {
@@ -249,9 +220,9 @@ function RecentBalls({ history }: { history: string[] }) {
                       key={index}
                       className={cn(
                         'flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold',
-                        ball.includes('W') && 'bg-destructive text-destructive-foreground',
+                        ball.includes('W') && 'bg-red-500 text-white',
                         ball.includes('4') && 'bg-blue-500 text-white',
-                        ball.includes('6') && 'bg-purple-600 text-white',
+                        ball.includes('6') && 'bg-purple-500 text-white',
                         ball === '1' && 'bg-pink-500 text-white',
                         ball === '2' && 'bg-lime-300 text-black',
                         ball === '3' && 'bg-amber-300 text-black',
@@ -717,8 +688,7 @@ export function LiveScoringInterface({
   };
 
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-  const tossWinner = match.tossWinnerId === match.teamAId ? match.teamAName : match.teamBName;
-
+  
   if (!canLiveScore) {
       return (
           <Alert variant="warning">
@@ -745,7 +715,7 @@ export function LiveScoringInterface({
                 <div className="text-left space-y-1">
                     <div className="flex items-center gap-2">
                          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
-                        <p className="font-semibold text-sm sm:text-base uppercase">{battingTeam.abbrev}</p>
+                        <p className="font-semibold text-sm sm:text-base uppercase">{battingTeam.name}</p>
                     </div>
                 </div>
                 
@@ -756,7 +726,7 @@ export function LiveScoringInterface({
                 
                 <div className="text-right space-y-1">
                      <div className="flex items-center justify-end gap-2">
-                        <p className="font-semibold text-sm sm:text-base uppercase">{bowlingTeam.abbrev}</p>
+                        <p className="font-semibold text-sm sm:text-base uppercase">{bowlingTeam.name}</p>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
                      { !isFirstInnings && match.firstInningsLiveScore && (
@@ -774,10 +744,6 @@ export function LiveScoringInterface({
                 <div className="flex items-center">
                     <div className="w-6 text-center">{liveScore.onStrikeBatsmanId === onStrikeBatsmanId && <Circle className="h-3 w-3 fill-current text-blue-400" />}</div>
                     <p className="flex-1 font-semibold">{getBatsmanDisplay(onStrikeBatsmanId)}</p>
-                    <div className="flex-1 text-right font-semibold">
-                      <span>{getDisplayName(bowlerId, bowlingTeamRoster)}:</span>
-                      <span className="ml-2">{bowlerStats.wickets}/{bowlerStats.runsConceded} ({bowlerStats.overs}.{bowlerStats.balls})</span>
-                    </div>
                 </div>
                 <div className="flex items-center">
                      <div className="w-6 text-center">{liveScore.onStrikeBatsmanId === nonStrikerBatsmanId && <Circle className="h-3 w-3 fill-current text-blue-400" />}</div>
@@ -785,11 +751,18 @@ export function LiveScoringInterface({
                 </div>
             </div>
 
-            {/* Recent Balls */}
-            <div className="pt-2">
-                 <RecentBalls history={liveScore.ballHistory || []} />
-            </div>
+            <Separator className="bg-white/20 my-2"/>
             
+             <div className="flex items-center justify-between text-sm">
+                <div className="flex-1 text-left font-semibold">
+                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}:</span>
+                    <span className="ml-2">{bowlerStats.wickets}/{bowlerStats.runsConceded} ({bowlerStats.overs}.{bowlerStats.balls})</span>
+                </div>
+                <div className="flex-1 text-right">
+                    <RecentBalls history={liveScore.currentOver || []} />
+                </div>
+            </div>
+
             <Separator className="bg-white/20 my-2"/>
 
             {/* Context Bars */}
