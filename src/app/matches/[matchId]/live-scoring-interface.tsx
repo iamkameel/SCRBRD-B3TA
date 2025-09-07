@@ -997,8 +997,12 @@ export function LiveScoringInterface({
                                   <CardTitle>Win Probability</CardTitle>
                               </CardHeader>
                               <CardContent className="min-h-[10rem] flex flex-col justify-center">
-                                  {isGeneratingUpdate && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />}
-                                  {!isGeneratingUpdate && liveUpdate && (
+                                  {isGeneratingUpdate ? (
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                      <Loader2 className="h-6 w-6 animate-spin" />
+                                      <p className="mt-2 text-sm">Calculating...</p>
+                                    </div>
+                                  ) : liveUpdate ? (
                                       <div className="space-y-4">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="text-left">
@@ -1016,8 +1020,11 @@ export function LiveScoringInterface({
                                                 <span>{bowlingTeam.abbrev} {100 - liveUpdate.winProbability}%</span>
                                             </div>
                                       </div>
+                                  ) : (
+                                    <div className="text-center text-muted-foreground">
+                                        <p>Win probability will appear here.</p>
+                                    </div>
                                   )}
-                                  {!isGeneratingUpdate && !liveUpdate && <p className="text-sm text-center text-muted-foreground">Win probability will appear here.</p>}
                               </CardContent>
                           </Card>
                           <Card>
