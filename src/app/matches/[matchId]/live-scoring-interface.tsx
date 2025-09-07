@@ -207,11 +207,6 @@ function DynamicContextBar({ liveScore, match, bowler, bowlerStats, bowlingTeamR
         messages.push(`Partnership: ${partnership} runs`);
     }
 
-    if (bowler && bowlerStats) {
-        const bowlerName = getDisplayName(bowler.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase();
-        messages.push(`${bowlerName}: ${bowlerStats.overs || 0}.${bowlerStats.balls || 0}-${bowlerStats.maidens || 0}-${bowlerStats.runsConceded || 0}-${bowlerStats.wickets || 0}`);
-    }
-
     const activeMessages = messages.filter(m => m !== null);
 
     React.useEffect(() => {
@@ -785,18 +780,12 @@ export function LiveScoringInterface({
                 <div className="text-right space-y-1">
                     <p className="font-semibold text-sm sm:text-base uppercase flex items-center justify-end gap-2">{bowlingTeam.name}</p>
                     <div className="flex items-center justify-end gap-2">
-                        <div>
-                            <p className="text-xs sm:text-sm font-semibold">
-                                {getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()} {bowlerStats.overs || 0}.{bowlerStats.balls || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}
-                            </p>
-                            <OverHistory balls={liveScore.currentOver || []} />
-                        </div>
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-green-400 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
                     </div>
                 </div>
             </div>
 
-             {/* Batsmen Bar & Context */}
+             {/* Batsmen Bar, Bowler Stats & Context */}
              <div className="flex flex-col items-center gap-2 pt-2">
                 <div className="relative flex items-center w-full max-w-xl bg-black/30 rounded-full h-9 sm:h-10 px-1 overflow-hidden">
                     <div className="relative h-full w-full flex items-center">
@@ -823,7 +812,14 @@ export function LiveScoringInterface({
                         </div>
                     </div>
                 </div>
-                <div className="text-center text-xs text-gray-300 h-4 mt-1">
+                 <div className="flex items-center justify-center gap-4 text-center text-xs text-gray-300 h-10 mt-1">
+                    <div>
+                        <p className="font-semibold text-sm">{getDisplayName(bowler?.personId, bowlingTeamRoster)?.split(' ').pop()?.toUpperCase()}</p>
+                        <p className="text-xs">{bowlerStats.overs || 0}-{bowlerStats.maidens || 0}-{bowlerStats.runsConceded || 0}-{bowlerStats.wickets || 0}</p>
+                    </div>
+                    <OverHistory balls={liveScore.currentOver || []} />
+                 </div>
+                <div className="text-center text-xs text-gray-300 h-4">
                     <DynamicContextBar liveScore={liveScore} match={match} bowler={bowler} bowlerStats={bowlerStats} bowlingTeamRoster={bowlingTeamRoster} />
                 </div>
             </div>
