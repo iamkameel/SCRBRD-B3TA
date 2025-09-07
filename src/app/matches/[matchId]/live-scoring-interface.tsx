@@ -746,14 +746,14 @@ export function LiveScoringInterface({
             </div>
 
             {/* Bowler & Over Bar */}
-             <div className="flex items-center justify-center text-center text-sm px-2">
-                <div className="flex-1 font-semibold">
+             <div className="text-center text-sm px-2">
+                <div className="font-semibold">
                     <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: </span>
                     <span className="ml-2 font-mono">{bowlerStats.wickets}/{bowlerStats.runsConceded || 0} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
                 </div>
-            </div>
-             <div className="flex items-center justify-center pt-1">
-                <RecentBalls history={liveScore.currentOver || []} />
+                 <div className="flex items-center justify-center pt-1">
+                    <RecentBalls history={liveScore.currentOver || []} />
+                </div>
             </div>
             
             {/* Context Bar */}
