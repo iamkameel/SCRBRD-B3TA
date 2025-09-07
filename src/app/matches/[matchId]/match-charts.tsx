@@ -28,24 +28,12 @@ export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) 
     const chartData = React.useMemo(() => {
         if (!data) return [];
         
-        const ballHistory = 'ballHistory' in data ? (data.ballHistory || []) : [];
-        const currentOverBalls = 'currentOver' in data ? (data.currentOver || []) : [];
-        let runsPerOver: { over: number, runs: number }[] = [];
+        const runsPerOver: { over: number, runs: number }[] = [];
         
-        if ('battingCard' in data) {
-            // Logic for completed Innings object
-            const totalOvers = Math.ceil(data.overs);
-            runsPerOver = Array.from({length: totalOvers}, (_, i) => ({ over: i + 1, runs: 0 }));
-            // This is a simplification; a real implementation would need ball-by-ball data
-            // For now, we distribute runs evenly.
-            if (totalOvers > 0) {
-              const avgRuns = data.totalRuns / totalOvers;
-              for(let i = 0; i < totalOvers; i++) {
-                runsPerOver[i].runs = Math.round(avgRuns);
-              }
-            }
-        } else if ('ballHistory' in data) {
+        if ('ballHistory' in data) {
             // Logic for LiveScore object
+            const ballHistory = data.ballHistory || [];
+            const currentOverBalls = data.currentOver || [];
             let currentOver = 1;
             let currentOverRuns = 0;
 
@@ -58,13 +46,14 @@ export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) 
                 }
 
                 if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
-                    currentOverRuns += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
+                    const extraRun = parseInt(event.replace(/[^0-9]/g, '')) || 0;
+                    currentOverRuns += 1 + extraRun;
                 } else if (!isNaN(parseInt(event))) {
                     currentOverRuns += parseInt(event);
                 }
             }
             // Add the current, incomplete over
-            if(currentOverBalls.length > 0) {
+            if (currentOverBalls.length > 0 || ballHistory.length === 0) { // Also add if it's the very first over
                 const liveCurrentOverRuns = currentOverBalls.reduce((sum, e) => {
                     if (e.toLowerCase().includes('wd') || e.toLowerCase().includes('nb')) {
                         const extraRun = parseInt(e.replace(/[^0-9]/g, '')) || 0;
@@ -77,6 +66,10 @@ export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) 
                 }, 0);
                 runsPerOver.push({ over: currentOver, runs: liveCurrentOverRuns });
             }
+        } else {
+             // For completed innings, we cannot reconstruct a Manhattan chart without ball-by-ball data.
+             // Displaying an average would be misleading. So we'll return an empty array and show a message.
+             return [];
         }
         return runsPerOver;
     }, [data]);
@@ -92,15 +85,18 @@ export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) 
                     <ChartContainer config={manhattanChartConfig} className="min-h-[200px] w-full">
                     <BarChart data={chartData}>
                         <CartesianGrid vertical={false} />
-                        <XAxis dataKey="over" tickLine={false} tickMargin={10} axisLine={false} label={{ value: 'Over', position: 'insideBottom', offset: -5 }} />
+                        <XAxis dataKey="over" tickLine={false} tickMargin={10} axisLine={false} label={{ value: 'Over', position: 'insideBottom', offset: -5 }} type="number" domain={[0, 'dataMax']} />
                         <YAxis tickLine={false} tickMargin={10} axisLine={false} />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Bar dataKey="runs" fill="var(--color-runs)" radius={4} />
                     </BarChart>
                     </ChartContainer>
                 ) : (
-                    <div className="flex justify-center items-center h-[200px] text-muted-foreground">
-                        No scoring data available yet.
+                    <div className="flex justify-center items-center h-[200px] text-muted-foreground text-center p-4">
+                        {data && !('ballHistory' in data) 
+                            ? "Manhattan chart can only be generated for live matches with ball-by-ball data." 
+                            : "No scoring data available yet."
+                        }
                     </div>
                 )}
             </CardContent>
@@ -196,8 +192,11 @@ const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
 
 export function WormChart({ scorecard, liveScore, teamAName, teamBName }: WormChartProps) {
     
-    const teamAData = processInningsForWormChart(scorecard?.innings1 || (liveScore?.liveInnings === 1 ? liveScore : null));
-    const teamBData = processInningsForWormChart(scorecard?.innings2 || (liveScore?.liveInnings === 2 ? liveScore : null));
+    const innings1Data = scorecard?.innings1 || (liveScore?.liveInnings === 1 ? liveScore : (liveScore?.liveInnings === 2 ? match.firstInningsLiveScore : null));
+    const innings2Data = scorecard?.innings2 || (liveScore?.liveInnings === 2 ? liveScore : null);
+    
+    const teamAData = processInningsForWormChart(innings1Data);
+    const teamBData = processInningsForWormChart(innings2Data);
 
     const chartData = Array.from({ length: 21 }, (_, i) => ({
         over: i,
