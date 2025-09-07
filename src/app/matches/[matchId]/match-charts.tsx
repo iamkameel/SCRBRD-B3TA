@@ -3,7 +3,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart, Pie, PieChart, Legend, Tooltip } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart, Pie, PieChart, Legend } from 'recharts';
 
 import {
   ChartConfig,
@@ -28,43 +28,54 @@ export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) 
     const chartData = React.useMemo(() => {
         const runsPerOver = Array.from({ length: 20 }, (_, i) => ({ over: i + 1, runs: 0 }));
 
-        if (!data) return runsPerOver;
+        if (!data || !('ballHistory' in data)) {
+            // For completed scorecards without ball-by-ball history, we can't build this chart.
+            return runsPerOver;
+        }
 
-        if ('ballHistory' in data) { // Logic for LiveScore
-            const ballHistory = data.ballHistory || [];
-            let currentOverIndex = 0;
+        const ballHistory = data.ballHistory || [];
+        let currentOverIndex = 0;
+        let runsThisOver = 0;
 
-            for (const event of ballHistory) {
-                if (event === '|') {
-                    currentOverIndex++;
-                    continue;
+        for (const event of ballHistory) {
+            if (event === '|') {
+                if (currentOverIndex < 20) {
+                    runsPerOver[currentOverIndex].runs = runsThisOver;
                 }
-
-                if (currentOverIndex >= 20) break;
-
-                if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
-                    const extraRun = parseInt(event.replace(/[^0-9]/g, '')) || 0;
-                    runsPerOver[currentOverIndex].runs += 1 + extraRun;
-                } else if (!isNaN(parseInt(event))) {
-                    runsPerOver[currentOverIndex].runs += parseInt(event);
-                }
+                currentOverIndex++;
+                runsThisOver = 0;
+                continue;
             }
-             // Add the current, incomplete over from live data
-            if (data.currentOver && data.currentOver.length > 0 && currentOverIndex < 20) {
-                 const liveCurrentOverRuns = data.currentOver.reduce((sum, e) => {
-                    if (e.toLowerCase().includes('wd') || e.toLowerCase().includes('nb')) {
-                        const extraRun = parseInt(e.replace(/[^0-9]/g, '')) || 0;
-                        return sum + 1 + extraRun;
-                    }
-                    if (!isNaN(parseInt(e, 10))) {
-                        return sum + parseInt(e, 10);
-                    }
-                    return sum;
-                }, 0);
-                runsPerOver[currentOverIndex].runs += liveCurrentOverRuns;
+
+            if (currentOverIndex >= 20) break;
+
+            if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
+                const extraRun = parseInt(event.replace(/[^0-9]/g, '')) || 0;
+                runsThisOver += 1 + extraRun;
+            } else if (!isNaN(parseInt(event))) {
+                runsThisOver += parseInt(event);
             }
         }
-        // No logic for completed innings as ball-by-ball is not stored
+        
+        // Finalize the last full over if the history ends without a '|'
+        if (currentOverIndex < 20) {
+            runsPerOver[currentOverIndex].runs = runsThisOver;
+        }
+
+        // Add the current, incomplete over from live data
+        if (data.currentOver && data.currentOver.length > 0 && currentOverIndex < 20) {
+             const liveCurrentOverRuns = data.currentOver.reduce((sum, e) => {
+                if (e.toLowerCase().includes('wd') || e.toLowerCase().includes('nb')) {
+                    const extraRun = parseInt(e.replace(/[^0-9]/g, '')) || 0;
+                    return sum + 1 + extraRun;
+                }
+                if (!isNaN(parseInt(e, 10))) {
+                    return sum + parseInt(e, 10);
+                }
+                return sum;
+            }, 0);
+            runsPerOver[currentOverIndex].runs += liveCurrentOverRuns;
+        }
 
         return runsPerOver;
     }, [data]);
@@ -76,35 +87,30 @@ export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) 
                 <CardDescription>Runs per Over</CardDescription>
             </CardHeader>
             <CardContent>
-                {data && 'ballHistory' in data ? (
-                    <ChartContainer config={manhattanChartConfig} className="min-h-[200px] w-full">
-                    <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis 
-                          dataKey="over" 
-                          tickLine={false} 
-                          tickMargin={10} 
-                          axisLine={false} 
-                          label={{ value: 'Over', position: 'insideBottom', offset: -5 }}
-                          allowDecimals={false}
-                          interval={1}
-                        />
-                        <YAxis 
-                          tickLine={false} 
-                          tickMargin={10} 
-                          axisLine={false}
-                          allowDecimals={false}
-                          label={{ value: 'Runs', angle: -90, position: 'insideLeft' }}
-                        />
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                        <Bar dataKey="runs" fill="var(--color-runs)" radius={4} />
-                    </BarChart>
-                    </ChartContainer>
-                ) : (
-                    <div className="flex justify-center items-center h-[200px] text-muted-foreground text-center p-4">
-                        Manhattan chart is only available for live matches.
-                    </div>
-                )}
+                <ChartContainer config={manhattanChartConfig} className="min-h-[200px] w-full">
+                <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis 
+                        dataKey="over" 
+                        tickLine={false} 
+                        tickMargin={10} 
+                        axisLine={false} 
+                        label={{ value: 'Over', position: 'insideBottom', offset: -5 }}
+                        allowDecimals={false}
+                        interval="preserveStartEnd"
+                        ticks={[1, 5, 10, 15, 20]}
+                    />
+                    <YAxis 
+                        tickLine={false} 
+                        tickMargin={10} 
+                        axisLine={false}
+                        allowDecimals={false}
+                        label={{ value: 'Runs', angle: -90, position: 'insideLeft' }}
+                    />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                    <Bar dataKey="runs" fill="var(--color-runs)" radius={4} />
+                </BarChart>
+                </ChartContainer>
             </CardContent>
         </Card>
     );
@@ -226,7 +232,7 @@ export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }:
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="over" tickLine={false} axisLine={false} tickMargin={8} label={{ value: 'overs', position: 'insideBottomLeft', offset: -5 }} />
                     <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                    <Tooltip content={<CustomTooltip />} />
+                    <ChartTooltip content={<CustomTooltip />} />
                     <Legend 
                         content={({ payload }) => (
                             <div className="flex gap-4">
@@ -263,4 +269,5 @@ export function WagonWheelSummary({ data }: { data?: LiveScore | Innings | null 
         </Card>
     )
 }
+
 
