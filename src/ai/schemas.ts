@@ -223,6 +223,7 @@ export const LiveMatchUpdateInputSchema = z.object({
     currentScore: z.number(),
     wickets: z.number(),
     overs: z.number(),
+    balls: z.number(),
     targetScore: z.number().optional().describe("The target score to win. Only applicable in the second innings."),
 });
 export type LiveMatchUpdateInput = z.infer<typeof LiveMatchUpdateInputSchema>;

@@ -287,7 +287,8 @@ export async function generateLiveMatchUpdateAction(matchId: string): Promise<Li
             bowlingTeamName: bowlingTeamName,
             currentScore: match.liveScore.runs,
             wickets: match.liveScore.wickets,
-            overs: parseFloat(`${match.liveScore.overs}.${match.liveScore.balls || 0}`),
+            overs: match.liveScore.overs,
+            balls: match.liveScore.balls || 0,
             targetScore: targetScore,
         });
         return result;
@@ -379,3 +380,4 @@ export async function generateHighlightReelAction(matchId: string): Promise<High
         throw new Error("The AI failed to generate highlights.");
     }
 }
+

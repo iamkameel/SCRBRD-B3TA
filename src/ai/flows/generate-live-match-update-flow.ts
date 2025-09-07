@@ -21,7 +21,7 @@ Current Match State:
 - Batting Team: {{{battingTeamName}}}
 - Bowling Team: {{{bowlingTeamName}}}
 - Score: {{{currentScore}}}/{{{wickets}}}
-- Overs Completed: {{{overs}}}
+- Overs Completed: {{{overs}}}.{{{balls}}}
 {{#if targetScore}}
 - Target Score: {{{targetScore}}}
 {{else}}
