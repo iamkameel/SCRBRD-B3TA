@@ -45,6 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 const assignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -308,7 +309,7 @@ function BulkAddPlayerDialog({ team, open, onOpenChange }: { team: Team, open: b
 function EditAssignmentDialog({ teamId, member, open, onOpenChange }: { teamId: string; member: RosterMember; open: boolean; onOpenChange: (open: boolean) => void; }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
-
+  
   const form = useForm<EditAssignmentFormValues>({
     resolver: zodResolver(editAssignmentSchema),
     defaultValues: {
@@ -584,9 +585,17 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                                                 <TableCell>{isClient ? format(match.dateTime, "PPP p") : ' '}</TableCell>
                                                 <TableCell>{match.fieldName}</TableCell>
                                                 <TableCell>
-                                                    <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">
+                                                  <Badge
+                                                    variant={
+                                                      match.status === 'completed' ? 'secondary' :
+                                                      match.status === 'live' ? 'default' :
+                                                      ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
+                                                      'default'
+                                                    }
+                                                    className={cn("capitalize", match.status === 'live' && "bg-green-600 text-white")}
+                                                  >
                                                         {match.status}
-                                                    </Badge>
+                                                  </Badge>
                                                 </TableCell>
                                             </TableRow>
                                         )

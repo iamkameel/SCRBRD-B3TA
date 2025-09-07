@@ -477,11 +477,11 @@ export default function MatchDetailsClient({
                     <Badge
                         variant={
                             match.status === 'completed' ? 'secondary' :
-                            match.status === 'live' ? 'destructive' :
+                            match.status === 'live' ? 'default' :
                             ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
                             'default'
                         }
-                        className={cn("capitalize h-fit", match.status === 'live' && "bg-red-500 text-white animate-pulse")}
+                        className={cn("capitalize h-fit", match.status === 'live' && "bg-green-600 text-white animate-pulse")}
                     >
                         {match.status}
                     </Badge>

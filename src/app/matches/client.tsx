@@ -475,11 +475,11 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                               <Badge
                                 variant={
                                   match.status === 'completed' ? 'secondary' :
-                                  match.status === 'live' ? 'destructive' :
+                                  match.status === 'live' ? 'default' :
                                   ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
                                   'default'
                                 }
-                                className="capitalize"
+                                className={cn("capitalize", match.status === 'live' && "bg-green-600 text-white")}
                               >
                                 {match.status}
                               </Badge>
