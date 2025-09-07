@@ -496,7 +496,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                               <TableCell className="font-medium flex items-center gap-2">
                                 <Link href={`/people/${member.personId}`} className="hover:underline">{member.personName}</Link>
                                 {member.isCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline" className="text-amber-500 border-amber-500">C</Badge></TooltipTrigger><TooltipContent><p>Captain</p></TooltipContent></Tooltip></TooltipProvider>}
-                                {member.isViceCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline">VC</Badge></TooltipTrigger><TooltipContent><p>Vice-Captain</p></TooltipContent></Tooltip></TooltipProvider>}
+                                {member.isViceCaptain && <TooltipProvider><Tooltip><TooltipTrigger><Badge variant="outline">VC</Badge></TooltipTrigger><TooltipContent><p>Vice-Captain</pTooltipContent></Tooltip></TooltipProvider>}
                               </TableCell>
                               <TableCell><Badge variant="secondary" className="capitalize">{member.status.replace(/_/g, " ")}</Badge></TableCell>
                               {canManage && <TableCell className="text-right">
@@ -564,12 +564,7 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
                     <CardContent>
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>Opponent</TableHead>
-                                    <TableHead>Date & Time</TableHead>
-                                    <TableHead>Venue</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
+                                <TableRow><TableHead>Opponent</TableHead><TableHead>Date & Time</TableHead><TableHead>Venue</TableHead><TableHead>Status</TableHead></TableRow>
                             </TableHeader>
                             <TableBody>
                                 {teamMatches.length > 0 ? (
@@ -677,12 +672,9 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
 
       {canManage && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+          <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>
               This will remove <strong>{selectedMember?.personName}</strong> from the team. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedMember(null)} disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemove} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Removing..." : "Remove Member"}</AlertDialogAction>
@@ -692,3 +684,5 @@ export default function TeamDetailsClient({ team, initialRoster, people, teamSta
     </>
   )
 }
+
+    
