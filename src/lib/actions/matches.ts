@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle, BatsmanStats, Lineup } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle, BatsmanStats, Lineup, Partnership } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
@@ -174,7 +174,7 @@ export async function addMatchAction(data: FixtureFormValues) {
   }
   
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
-  const defaultLiveScore: LiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' };
+  const defaultLiveScore: LiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket', partnerships: [] };
 
   if (competitionId === 'friendly') {
     newMatchData = {
@@ -737,6 +737,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (!liveScore.extras) liveScore.extras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
     if (!liveScore.batsmenOut) liveScore.batsmenOut = [];
     if (!liveScore.ballHistory) liveScore.ballHistory = [];
+    if (!liveScore.partnerships) liveScore.partnerships = [];
 
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
@@ -864,6 +865,23 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                         batsmanName: `${onStrikeBatsman.firstName} ${onStrikeBatsman.lastName}`,
                         timestamp: new Date(),
                     });
+                }
+                
+                // Finalize partnership
+                const nonStriker = await getPerson(liveScore.nonStrikerBatsmanId!);
+                if (liveScore.partnerships && onStrikeBatsman && nonStriker) {
+                  liveScore.partnerships.push({
+                      batsman1Id: onStrikeId,
+                      batsman2Id: liveScore.nonStrikerBatsmanId!,
+                      batsman1Name: `${onStrikeBatsman.firstName} ${onStrikeBatsman.lastName}`,
+                      batsman2Name: `${nonStriker.firstName} ${nonStriker.lastName}`,
+                      totalRuns: liveScore.extras.partnership || 0,
+                      totalBalls: 0, // Not yet tracked
+                      batsman1Runs: liveScore.batsmanStats[onStrikeId]?.runs,
+                      batsman1Balls: liveScore.batsmanStats[onStrikeId]?.balls,
+                      batsman2Runs: liveScore.batsmanStats[liveScore.nonStrikerBatsmanId!]?.runs,
+                      batsman2Balls: liveScore.batsmanStats[liveScore.nonStrikerBatsmanId!]?.balls,
+                  });
                 }
             }
             liveScore.onStrikeBatsmanId = null; 
@@ -1234,4 +1252,3 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
 }
       
     
-

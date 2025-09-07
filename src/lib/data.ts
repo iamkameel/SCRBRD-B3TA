@@ -208,6 +208,19 @@ export interface LiveFallOfWicket {
 
 export type BowlingAngle = 'Over the Wicket' | 'Round the Wicket';
 
+export interface Partnership {
+  batsman1Id: string;
+  batsman2Id: string;
+  batsman1Name: string;
+  batsman2Name: string;
+  totalRuns: number;
+  totalBalls: number;
+  batsman1Runs: number;
+  batsman1Balls: number;
+  batsman2Runs: number;
+  batsman2Balls: number;
+}
+
 export interface LiveScore {
     runs: number;
     wickets: number;
@@ -222,13 +235,14 @@ export interface LiveScore {
     batsmenOut?: string[];
     liveInnings?: 1 | 2;
     shots?: ShotData[];
-    batsmanStats: { [key: string]: { runs: number, balls: number, timeIn: Date | null, timeOut?: Date | null } };
-    bowlerStats: { [key: string]: { wickets: number, runsConceded: number, overs: number, balls: number, maidens: number } };
+    batsmanStats: { [key: string]: { runs: number, balls: number, timeIn: Date | null, timeOut?: Date | null, status?: string } };
+    bowlerStats: { [key: string]: { wickets: number, runsConceded: number, overs: number, balls: number, maidens: number, consecutiveWickets?: number } };
     extras: Extras;
     bowlingAngle: BowlingAngle;
     newBatsmanRequired?: boolean;
     endOfOver?: boolean;
     fallOfWickets?: LiveFallOfWicket[];
+    partnerships?: Partnership[];
 }
 
 export interface Lineup {

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle, Hand } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -29,6 +29,7 @@ import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DialogContent } from '@radix-ui/react-dialog';
+import { PartnershipCard } from './partnership-card';
 
 
 const BoundaryAnimation = ({ runs }: { runs: number }) => {
@@ -839,9 +840,10 @@ export function LiveScoringInterface({
         </div>
         
         <Tabs defaultValue="live">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="live">Live Scoring</TabsTrigger>
               <TabsTrigger value="scorecard">Full Scorecard</TabsTrigger>
+              <TabsTrigger value="partnerships">Partnerships</TabsTrigger>
           </TabsList>
           
           <TabsContent value="live" className="mt-4">
@@ -1021,7 +1023,7 @@ export function LiveScoringInterface({
                                             </div>
                                       </div>
                                   ) : (
-                                    <div className="text-center text-muted-foreground">
+                                    <div className="text-center text-muted-foreground py-8">
                                         <p>Win probability will appear here.</p>
                                     </div>
                                   )}
@@ -1084,6 +1086,20 @@ export function LiveScoringInterface({
                         </Card>
                     </TabsContent>
                 </Tabs>
+            </TabsContent>
+            <TabsContent value="partnerships" className="mt-4">
+                 <Tabs defaultValue="innings1">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="innings1">{isFirstInnings ? battingTeam.name : bowlingTeam.name} Partnerships</TabsTrigger>
+                        <TabsTrigger value="innings2" disabled={isFirstInnings}>{isFirstInnings ? bowlingTeam.name : battingTeam.name} Partnerships</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="innings1" className="mt-4">
+                        <PartnershipCard partnerships={isFirstInnings ? liveScore.partnerships : match.firstInningsLiveScore?.partnerships} />
+                    </TabsContent>
+                    <TabsContent value="innings2" className="mt-4">
+                        <PartnershipCard partnerships={isFirstInnings ? undefined : liveScore.partnerships} />
+                    </TabsContent>
+                 </Tabs>
             </TabsContent>
         </Tabs>
     </div>
