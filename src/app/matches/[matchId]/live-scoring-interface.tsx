@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -692,6 +690,8 @@ export function LiveScoringInterface({
   };
 
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+  const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
+  const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   
   if (!canLiveScore) {
       return (
@@ -714,54 +714,51 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-            {/* Team Names & Score */}
-            <div className="grid grid-cols-3 items-start gap-2">
+            {/* Scoreboard Header */}
+            <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-left space-y-1">
+                    <p className="font-semibold text-sm sm:text-base uppercase truncate">{battingTeam.name}</p>
                     <div className="flex items-center gap-2">
-                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
-                        <p className="font-semibold text-sm sm:text-base uppercase">{battingTeam.name}</p>
+                        <Avatar className="h-8 w-8 border-2 border-white/50"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev[0]}</AvatarFallback></Avatar>
+                        <p className="text-3xl font-bold tracking-tighter text-green-400">{liveScore.runs}-{liveScore.wickets}</p>
                     </div>
                 </div>
-                
-                <div className="text-center text-xs text-gray-300">
-                    <p className="text-3xl sm:text-4xl font-bold tracking-tighter text-green-400">{liveScore.runs}/{liveScore.wickets}</p>
-                    <p className="font-bold text-sm sm:text-base">({liveScore.overs || 0}.{liveScore.balls || 0})</p>
+                <div className="text-center">
+                    <p className="text-xs text-gray-300">OVERS</p>
+                    <p className="text-3xl font-bold tracking-tighter">{liveScore.overs}.{liveScore.balls || 0}</p>
                 </div>
-                
                 <div className="text-right space-y-1">
-                     <div className="flex items-center justify-end gap-2">
-                        <p className="font-semibold text-sm sm:text-base uppercase">{bowlingTeam.name}</p>
-                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white/50 shadow-lg"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev[0]}</AvatarFallback></Avatar>
-                    </div>
-                     { !isFirstInnings && match.firstInningsLiveScore && (
-                        <div className="text-xs text-gray-400">
-                            1st Inns: {match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets}
-                        </div>
+                    <p className="font-semibold text-sm sm:text-base uppercase truncate">{bowlingTeam.name}</p>
+                    { !isFirstInnings && match.firstInningsLiveScore && (
+                        <p className="text-xs text-gray-400">1st Inns: {match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets}</p>
                     )}
                 </div>
             </div>
 
-            <div className="bg-black/20 rounded-full my-2 flex justify-between items-center text-sm font-semibold p-1">
-                <div className={cn("px-4 py-1 rounded-full flex-1 text-center", liveScore.onStrikeBatsmanId === onStrikeBatsmanId && "bg-primary")}>
-                    <span>{getBatsmanDisplay(onStrikeBatsmanId).name}</span>
-                    <span className="ml-2 font-mono text-xs">({getBatsmanDisplay(onStrikeBatsmanId).score})</span>
+            {/* Batsman Bar */}
+            <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1">
+                <div className="px-4 py-1 rounded-full flex-1 text-left bg-primary">
+                    <span className="font-bold">{onStrikePlayer.name}</span>
+                    <span className="ml-2 font-mono text-xs">{onStrikePlayer.score}</span>
                 </div>
-                <div className={cn("px-4 py-1 rounded-full flex-1 text-center", liveScore.onStrikeBatsmanId === nonStrikerBatsmanId && "bg-primary")}>
-                    <span>{getBatsmanDisplay(nonStrikerBatsmanId).name}</span>
-                    <span className="ml-2 font-mono text-xs">({getBatsmanDisplay(nonStrikerBatsmanId).score})</span>
+                <div className="px-4 py-1 rounded-full flex-1 text-right">
+                    <span className="font-mono text-xs">{nonStrikerPlayer.score}</span>
+                    <span className="ml-2 font-bold">{nonStrikerPlayer.name}</span>
                 </div>
             </div>
-            
+
+            {/* Bowler & Over Bar */}
              <div className="flex items-center justify-between text-sm px-2">
                 <div className="flex-1 text-left font-semibold">
-                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}:</span>
-                    <span className="ml-2 font-mono">{bowlerStats.wickets}/{bowlerStats.runsConceded} ({bowlerStats.overs}.{bowlerStats.balls})</span>
+                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}: </span>
+                    <span className="ml-2 font-mono">{bowlerStats.overs}.{bowlerStats.balls}-{bowlerStats.maidens}-{bowlerStats.runsConceded}-{bowlerStats.wickets}</span>
                 </div>
                 <div className="flex-1 text-right">
                     <RecentBalls history={liveScore.currentOver || []} />
                 </div>
             </div>
-
+            
+            {/* Context Bar */}
             <div className="text-center text-sm text-green-400 font-semibold h-4 pt-1">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
