@@ -661,8 +661,9 @@ export function LiveScoringInterface({
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-            <div className="relative flex items-center h-16 shadow-lg bg-gray-800 rounded-full p-1">
-                <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-l-full">
+
+            <div className="relative flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
+                <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-full min-w-[30%]">
                     <p className="font-bold text-lg">{battingTeam.abbrev}</p>
                     <p className="font-bold text-lg mx-2">v</p>
                     <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
@@ -683,12 +684,12 @@ export function LiveScoringInterface({
                 )}
             </div>
 
-            <div className="flex items-center justify-center mx-auto h-10 bg-gray-800 rounded-full max-w-lg shadow-lg relative p-1">
-                <div className="absolute left-1 flex items-center justify-between px-4 py-1 h-8 rounded-full bg-primary text-white w-1/2">
+            <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
+                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-primary text-primary-foreground w-1/2">
                     <span className="font-bold text-base">{onStrikePlayer.name}*</span>
                     <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="absolute right-1 flex items-center justify-between px-4 py-1 h-8 w-1/2 bg-gray-700 rounded-full">
+                <div className="flex items-center justify-between px-4 py-1 h-8 w-1/2">
                     <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
                     <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm text-gray-300">({nonStrikerPlayer.balls})</span></span>
                 </div>
