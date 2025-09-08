@@ -170,110 +170,6 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     return lastName.toUpperCase();
 };
 
-function DynamicContextBar({ liveScore, match }: { liveScore: LiveScore, match: Match }) {
-    const isFirstInnings = liveScore.liveInnings === 1;
-    const battingTeamName = isFirstInnings ? match.teamAName : match.teamBName;
-    
-    const oversDecimal = (liveScore.overs || 0) + ((liveScore.balls || 0)/6);
-    
-    const messages = [];
-    
-    if (isFirstInnings) {
-        const crr = oversDecimal > 0 ? (liveScore.runs / oversDecimal) : 0;
-        const projectedScore = liveScore.runs + (20 - oversDecimal) * crr;
-        messages.push(<span>CRR: <strong>{crr.toFixed(2)}</strong></span>);
-        messages.push(<span>Projected Score: <strong>~{Math.round(projectedScore)}</strong></span>);
-    }
-
-    if (!isFirstInnings && match.firstInningsTotal != null) {
-        const target = match.firstInningsTotal + 1;
-        const runsRequired = target - liveScore.runs;
-        const ballsRemaining = (20 * 6) - (liveScore.overs * 6 + (liveScore.balls || 0));
-        
-        if (runsRequired <= 0) {
-            const wicketsRemaining = 10 - liveScore.wickets;
-            return <span className="font-bold text-green-400">{battingTeamName} won by {wicketsRemaining} wickets.</span>;
-        } 
-        
-        if (ballsRemaining <= 0) {
-            const margin = runsRequired - 1;
-            return <span className="font-bold text-green-400">{match.teamAName} won by {margin} runs.</span>;
-        }
-        
-        const rrr = ballsRemaining > 0 ? (runsRequired / ballsRemaining) * 6 : 0;
-        messages.push(<span>{battingTeamName} needs <strong>{runsRequired}</strong> in <strong>{ballsRemaining}</strong></span>);
-        messages.push(<span>Required Rate: <strong>{rrr.toFixed(2)}</strong></span>);
-    }
-    
-    if (messages.length === 0) {
-        return <span>First ball of the match.</span>;
-    }
-    
-    const [index, setIndex] = React.useState(0);
-    React.useEffect(() => {
-        const interval = setInterval(() => {
-            setIndex((prevIndex) => (prevIndex + 1) % messages.length);
-        }, 3000); // Change message every 3 seconds
-        return () => clearInterval(interval);
-    }, [messages.length]);
-
-    return messages[index];
-}
-
-function RecentBalls({ history }: { history: string[] }) {
-    if (!history || history.length === 0) {
-        return (
-            <div className="text-center text-xs text-muted-foreground p-2">
-                Ball history will appear here.
-            </div>
-        );
-    }
-    
-    const formatEvent = (ballEvent: string) => {
-        if (ballEvent.toLowerCase().includes('wd')) {
-            const runs = parseInt(ballEvent.replace(/[^0-9]/g, ''));
-            return isNaN(runs) || runs === 0 ? 'WD' : `${runs}WD`;
-        }
-         if (ballEvent.toLowerCase().includes('nb')) {
-            const runs = parseInt(ballEvent.replace(/[^0-9]/g, ''));
-            return isNaN(runs) || runs === 0 ? 'NB' : `${runs}NB`;
-        }
-        return ballEvent.toUpperCase();
-    }
-
-    return (
-        <div className="flex items-center gap-1.5 flex-wrap">
-            {history.map((ball, index) => {
-                if (ball === '|') {
-                    return <Separator key={`divider-${index}`} orientation="vertical" className="h-6 bg-muted-foreground" />;
-                }
-                const colorClass = 
-                    ball === 'W' ? 'bg-red-500 text-white' :
-                    ball === '6' ? 'bg-red-500 text-white' :
-                    ball === '4' ? 'bg-blue-500 text-white' :
-                    ball === '3' ? 'bg-yellow-500 text-black' :
-                    ball === '2' ? 'bg-lime-500 text-black' :
-                    ball === '1' ? 'bg-pink-300 text-black' :
-                    ball === '.' ? 'bg-gray-500 text-white' :
-                    (ball.toLowerCase().includes('wd') || ball.toLowerCase().includes('nb')) ? 'bg-purple-500 text-white' :
-                    'bg-gray-300 text-black';
-
-                return (
-                    <span
-                      key={index}
-                      className={cn(
-                        'flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold border border-white/20',
-                        colorClass
-                      )}
-                    >
-                      {formatEvent(ball)}
-                    </span>
-                );
-            })}
-        </div>
-    );
-}
-
 function WeatherIcon({ condition, ...props }: { condition: string } & React.ComponentProps<typeof Sun>) {
     switch (condition?.toLowerCase()) {
         case "sunny": return <Sun {...props} />;
@@ -723,8 +619,6 @@ export function LiveScoringInterface({
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-  const bowlerOvers = `${bowlerStats.overs || 0}.${bowlerStats.balls || 0}`;
-  const bowlerFigures = `${bowlerStats.wickets || 0}/${bowlerStats.runsConceded || 0}`;
 
   if (!canLiveScore) {
       return (
@@ -771,34 +665,35 @@ export function LiveScoringInterface({
 
                 <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-xl">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
-
-            <div className="text-center text-sm font-semibold flex justify-around">
-                {match.firstInningsTotal != null && <span>1st Innings: {match.firstInningsTotal}</span>}
-                {!isFirstInnings && match.firstInningsTotal != null && <span className="text-primary">Target: {match.firstInningsTotal + 1}</span>}
-                <DynamicContextBar liveScore={liveScore} match={match} />
-            </div>
+            
+            {!isFirstInnings && match.firstInningsTotal != null && (
+                 <div className="text-center text-sm font-semibold flex justify-around">
+                    <span>1st Innings: {match.firstInningsTotal}</span>
+                    <span className="text-primary font-bold">TARGET {match.firstInningsTotal + 1}</span>
+                    <span>1st Innings Stats</span>
+                 </div>
+            )}
             
             <Separator className="bg-white/10 my-2" />
 
-            <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 text-center text-sm font-sans">
-                <div className="flex flex-col items-center">
-                    <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
-                </div>
-                <RecentBalls history={liveScore.currentOver || []} />
-            </div>
-
-            <Separator className="bg-white/10 my-2" />
-             
+             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center text-sm font-sans">
+                 <div className="flex-1 text-left">
+                    <span className="font-semibold">{onStrikePlayer.name}*</span>
+                    <span className="ml-2">{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
+                 </div>
+                 <div className="flex-1 text-right">
+                    <span className="mr-2">{nonStrikerPlayer.runs} ({nonStrikerPlayer.balls})</span>
+                    <span className="font-semibold">{nonStrikerPlayer.name}</span>
+                 </div>
+             </div>
              <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-2 sm:gap-x-3 flex-wrap">
-                <span className="flex items-center gap-1.5"><TrendingDown className="h-3 w-3" />{isFirstInnings ? '1st' : '2nd'} Innings</span>
+                <span className="font-semibold">BOWLER</span>
+                <span>{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                 <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{format(new Date(), 'p')}</span>
-                <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
-                {forecast && <>
-                    <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                    <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /> {forecast.details.condition}, <Thermometer className="h-3 w-3 ml-1" />{forecast.details.temperature}°C</span>
-                </>}
+                <span>{bowlerStats.overs}.{bowlerStats.balls || 0}</span>
+                <span>{bowlerStats.maidens}</span>
+                <span>{bowlerStats.runsConceded}</span>
+                <span>{bowlerStats.wickets}</span>
             </div>
         </div>
         
@@ -981,7 +876,7 @@ export function LiveScoringInterface({
                                             </div>
                                             <Progress value={liveUpdate.winProbability} indicatorClassName="bg-blue-500" className="h-2 [&>div]:bg-green-500" />
                                             <div className="text-xs text-muted-foreground flex justify-between">
-                                                <span>{battingTeam.abbrev} {liveUpdate.winProbability}% ({liveScore.runs}/{liveScore.wickets}, {liveScore.overs}.{liveScore.balls} overs)</span>
+                                                <span>{battingTeam.abbrev} {liveUpdate.winProbability}% ({liveScore.runs}/{liveScore.wickets}, {liveScore.overs}.{liveScore.balls || 0} overs)</span>
                                                 <span>{bowlingTeam.abbrev} {100 - liveUpdate.winProbability}%</span>
                                             </div>
                                       </div>

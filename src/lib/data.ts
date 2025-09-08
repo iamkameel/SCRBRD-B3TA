@@ -1,4 +1,5 @@
 
+
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -153,6 +154,7 @@ export interface Team {
     secondary?: string;
   };
   analysisReport?: string;
+  abbreviation?: string;
 }
 
 export interface RosterMember {
