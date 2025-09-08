@@ -297,4 +297,3 @@ export const PlayerPerformanceForecastPromptInputSchema = z.object({
   opponentTeamStats: z.any().describe("JSON string of the opponent team's overall season stats."),
 });
 
-

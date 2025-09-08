@@ -254,9 +254,11 @@ export interface Match {
   matchId: string;
   teamAId: string;
   teamAName: string;
+  teamAAbbreviation?: string;
   teamALogoUrl?: string;
   teamBId: string;
   teamBName: string;
+  teamBAbbreviation?: string;
   teamBLogoUrl?: string;
   competitionId?: string;
   competitionName?: string;

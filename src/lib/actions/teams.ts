@@ -7,12 +7,13 @@ import { z } from 'zod';
 import { db, app } from '@/lib/firebase';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp, collectionGroup, documentId } from 'firebase/firestore';
-import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment, Person, Division } from '@/lib/data';
+import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment, Person, Division, School } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { getDivisions } from './divisions';
 import { logAuditEvent } from './audit';
+import { getSchool } from './schools';
 
 export const getTeams = cache(async (): Promise<Team[]> => {
   const userId = await getUserId();
@@ -74,14 +75,22 @@ export const getTeams = cache(async (): Promise<Team[]> => {
   return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
 });
 
-export const getTeam = cache(async (teamId: string): Promise<Team | null> => {
-  const userId = await getUserId();
-  if (!userId) return null;
+export const getTeam = cache(async (teamId: string): Promise<Team & { schoolAbbreviation?: string } | null> => {
+  if (!teamId) return null;
   try {
     const teamDocRef = doc(db, 'teams', teamId);
     const teamSnap = await getDoc(teamDocRef);
     if (!teamSnap.exists()) return null;
-    return { teamId: teamSnap.id, ...teamSnap.data() } as Team;
+    
+    const teamData = teamSnap.data();
+    const school = await getSchool(teamData.schoolId);
+
+    return { 
+        teamId: teamSnap.id, 
+        ...teamData,
+        schoolAbbreviation: school?.abbreviation,
+    } as Team & { schoolAbbreviation?: string };
+
   } catch (error) {
     console.error(`Error fetching team with ID ${teamId}:`, error);
     return null;
@@ -457,7 +466,7 @@ export async function deleteTeamAction(teamId: string) {
     if (!userId) throw new Error("User not authenticated");
 
     const user = await getPerson(userId);
-    if (!user?.roles.includes('Admin') && !user.roles.includes('Sportsmaster')) {
+    if (!user?.roles.includes('Admin') && !user?.roles.includes('Sportsmaster')) {
         throw new Error("You do not have permission to delete teams.");
     }
     
@@ -691,7 +700,11 @@ export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> 
   }
 });
 
-export const getTeamsByDivision = cache(async (divisionId: string): Promise<Team[]> => {
+export const getTeamsByDivision = cache(async (divisionId: string | undefined): Promise<Team[]> => {
+  if (!divisionId) {
+    return getTeams();
+  }
+  
   const userId = await getUserId();
   if (!userId) return [];
   try {
@@ -709,7 +722,8 @@ export const getTeamsByDivision = cache(async (divisionId: string): Promise<Team
   }
 });
 
-export async function isTeamManagerOrAdmin(teamId: string, userId: string): Promise<boolean> {
+export async function isTeamManagerOrAdmin(teamId: string, userId: string | null): Promise<boolean> {
+    if (!userId) return false;
     const user = await getPerson(userId);
     if (!user) return false;
 

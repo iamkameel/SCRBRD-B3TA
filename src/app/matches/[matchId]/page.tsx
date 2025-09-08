@@ -9,10 +9,11 @@ import { getPlayers, getPerson, getPeopleByRole } from '@/lib/actions/players';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import { Button } from '@/components/ui/button';
-import type { RosterMember, PlayerStats, RosterMemberWithStats, Lineup } from '@/lib/data';
+import type { RosterMember, PlayerStats, RosterMemberWithStats, Lineup, Team, School } from '@/lib/data';
 import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import { getUserId } from '@/lib/auth';
 import { getMatchForecast } from '@/lib/actions/analysis';
+import { getSchool } from '@/lib/actions/schools';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const { matchId } = params;
@@ -40,8 +41,17 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
         };
     }));
   };
+  
+  const getTeamWithAbbreviation = async (teamId: string): Promise<Team & { abbreviation?: string } | null> => {
+    const team = await getTeam(teamId);
+    if (!team) return null;
+    const school = await getSchool(team.schoolId);
+    return { ...team, abbreviation: school?.abbreviation };
+  };
 
   const [
+    teamA,
+    teamB,
     officials,
     people,
     teamARoster,
@@ -56,6 +66,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     isManagerForA,
     isManagerForB
   ] = await Promise.all([
+    getTeamWithAbbreviation(match.teamAId),
+    match.teamBId ? getTeamWithAbbreviation(match.teamBId) : Promise.resolve(null),
     getMatchOfficials(matchId),
     getPlayers(),
     getTeamRoster(match.teamAId),
@@ -71,6 +83,12 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     match.teamBId ? isTeamManagerOrAdmin(match.teamBId, userId) : Promise.resolve(false)
   ]);
   
+  const matchWithAbbreviations: Match = {
+    ...match,
+    teamAAbbreviation: teamA?.abbreviation || teamA?.name.substring(0, 3).toUpperCase(),
+    teamBAbbreviation: teamB?.abbreviation || teamB?.name.substring(0, 3).toUpperCase(),
+  };
+
   const [teamARosterWithStats, teamBRosterWithStats] = await Promise.all([
     getRosterWithStats(teamARoster),
     getRosterWithStats(teamBRoster)
@@ -82,7 +100,7 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
   const isOfficialForMatch = isAdminOrSportsmaster || isOfficial;
 
   return <MatchDetailsClient 
-    match={match} 
+    match={matchWithAbbreviations} 
     initialOfficials={officials} 
     people={people} 
     teamARosterWithStats={teamARosterWithStats}
@@ -99,4 +117,3 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     isOfficialForMatch={isOfficialForMatch}
   />;
 }
-
