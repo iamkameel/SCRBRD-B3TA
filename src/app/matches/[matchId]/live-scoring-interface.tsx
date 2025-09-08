@@ -652,25 +652,21 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
-                {match.competitionName}
+                {match.teamAName} v {match.teamBName}
             </h2>
             
-            <h3 className="text-center text-lg font-bold uppercase tracking-wider text-white">
-                {`${match.teamAName} v ${match.teamBName}`}
-            </h3>
-
             <div className="flex justify-center items-center gap-2">
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                 <div className="flex items-center h-16 shadow-lg bg-gray-900 rounded-full">
-                    <div className="bg-primary text-primary-foreground rounded-l-full h-full flex items-center px-6">
+                <div className="flex items-center h-16 shadow-lg bg-gray-900 rounded-full">
+                    <div className="bg-white text-gray-900 rounded-l-full h-full flex items-center px-6">
                        <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="bg-primary/80 rounded-r-full h-full flex items-center justify-center gap-4 px-6">
+                    <div className="bg-white/80 text-gray-900 rounded-r-full h-full flex items-center justify-center gap-4 px-6">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
-                            <p className="text-xs uppercase tracking-wider text-primary-foreground/80 -mt-1">Overs</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-800/80 -mt-1">Overs</p>
                         </div>
                     </div>
                 </div>
@@ -679,7 +675,7 @@ export function LiveScoringInterface({
             </div>
             
             <div className="text-sm font-semibold flex justify-between items-center px-4">
-                 <span>1st Innings: {match.firstInningsTotal || 0}</span>
+                <span>1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-white font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
@@ -695,7 +691,7 @@ export function LiveScoringInterface({
                     <span className="text-lg opacity-80">{nonStrikerPlayer.runs} <span className="text-base text-gray-300">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
-
+            
             <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
                  <div className="flex items-center justify-center gap-2">
                     <span className="font-semibold text-gray-400">BOWLER</span>
@@ -913,7 +909,7 @@ export function LiveScoringInterface({
                                   )}
                               </CardContent>
                           </Card>
-                          <Card>
+                           <Card>
                               <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
                               <CardContent className="flex flex-col gap-2">
                                   <Button onClick={handleSimulateBall} variant="secondary" className="w-full" disabled={isSimulating || isPending}>
@@ -924,7 +920,7 @@ export function LiveScoringInterface({
                                       <Undo className="mr-2 h-4 w-4" />
                                       Undo Last Ball
                                   </Button>
-                                   <Button onClick={handleChangeBowler} variant="secondary" className="w-full" disabled={isPending || isSimulating}>
+                                  <Button onClick={handleChangeBowler} variant="secondary" className="w-full" disabled={isPending || isSimulating}>
                                       <Repeat className="mr-2 h-4 w-4" />
                                       Change Bowler
                                   </Button>
