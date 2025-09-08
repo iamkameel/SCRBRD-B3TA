@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -643,21 +644,25 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-900 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
+        <div className="bg-gray-800 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-            
-             <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
-                {`${match.teamAName} v ${match.teamBName}`}
+
+            <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
+                {match.competitionName}
             </h2>
+            
+            <h3 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
+                {`${match.teamAName} v ${match.teamBName}`}
+            </h3>
 
             <div className="flex justify-center items-center gap-2">
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                <div className="flex items-center h-16 shadow-lg bg-gray-900/80 rounded-full">
+                <div className="flex items-center h-16 shadow-lg bg-gray-900 rounded-full">
                     <div className="bg-primary text-primary-foreground rounded-l-full h-full flex items-center px-6">
                        <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
@@ -680,14 +685,14 @@ export function LiveScoringInterface({
                 )}
             </div>
 
-            <div className="flex items-center justify-center mx-auto h-10 bg-black/40 rounded-full max-w-lg shadow-lg px-2">
+            <div className="flex items-center justify-center mx-auto h-12 bg-gray-900 rounded-full max-w-lg shadow-lg px-2">
                 <div className={cn("flex-1 flex items-center justify-between px-4 py-1 rounded-full bg-primary text-white")}>
-                    <span className="font-bold text-base">{onStrikePlayer.name}*</span>
-                    <span className="text-base">{onStrikePlayer.runs} <span className="text-xs text-gray-300">({onStrikePlayer.balls})</span></span>
+                    <span className="font-bold text-lg">{onStrikePlayer.name}*</span>
+                    <span className="text-lg">{onStrikePlayer.runs} <span className="text-base text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>
                 <div className="flex-1 flex items-center justify-between px-4 py-1">
-                    <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
-                    <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-xs text-gray-300">({nonStrikerPlayer.balls})</span></span>
+                    <span className="font-bold text-lg opacity-80">{nonStrikerPlayer.name}</span>
+                    <span className="text-lg opacity-80">{nonStrikerPlayer.runs} <span className="text-base text-gray-300">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
 
