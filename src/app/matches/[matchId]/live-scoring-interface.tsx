@@ -632,11 +632,11 @@ export function LiveScoringInterface({
   const getBallDisplay = (ball: string): string => {
     if (ball.toLowerCase().startsWith('wd')) {
       const runs = parseInt(ball.substring(2));
-      return isNaN(runs) || runs === 0 ? 'wd' : `${runs}wd`;
+      return isNaN(runs) || runs === 0 ? 'WD' : `${runs}WD`;
     }
      if (ball.toLowerCase().startsWith('nb')) {
       const runs = parseInt(ball.substring(2));
-      return isNaN(runs) || runs === 0 ? 'nb' : `${runs}nb`;
+      return isNaN(runs) || runs === 0 ? 'NB' : `${runs}NB`;
     }
     return ball;
   }
@@ -661,7 +661,7 @@ export function LiveScoringInterface({
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-             <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
+            <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
                 {match.teamAName} v {match.teamBName}
             </h2>
             <div className="flex justify-center items-center gap-2">
