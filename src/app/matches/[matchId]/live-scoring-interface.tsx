@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -659,18 +659,19 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-            <p className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">{match.teamAName} vs {match.teamBName}</p>
-
-             <div className="flex items-center justify-between gap-2">
-                <Avatar className="h-12 w-12 border-2" style={{ borderColor: battingTeam.teamColor }}>
-                    <AvatarFallback style={{ backgroundColor: battingTeam.teamColor, color: '#ffffff' }}>{battingTeam.abbrev}</AvatarFallback>
+            <p className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">{match.teamAName} vs {match.teamBName}</p>
+            
+            <div className="flex items-center justify-between gap-2">
+                <Avatar className="h-12 w-12 border-2 border-white">
+                    <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
+                    <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
-                    <div className="flex items-center justify-center px-4 h-full bg-[#4848ff] rounded-l-full" style={{minWidth: '30%'}}>
+                    <div className="flex items-center justify-center px-4 h-full bg-[#3ecc78] rounded-l-full text-black">
                         <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="flex-1 flex items-center justify-center gap-4 h-full px-6 rounded-r-full">
+                    <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
@@ -680,7 +681,8 @@ export function LiveScoringInterface({
                 </div>
 
                 <Avatar className="h-12 w-12 border-2" style={{ borderColor: bowlingTeam.teamColor }}>
-                    <AvatarFallback style={{ backgroundColor: bowlingTeam.teamColor, color: '#ffffff' }}>{bowlingTeam.abbrev}</AvatarFallback>
+                    <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
+                    <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
                 </Avatar>
             </div>
             
@@ -697,7 +699,7 @@ export function LiveScoringInterface({
                     <span className="font-bold text-base">{onStrikePlayer.name}*</span>
                     <span className="text-base">{onStrikePlayer.runs} <span className="text-sm">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1">
+                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1 text-white">
                     <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
                     <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm">({nonStrikerPlayer.balls})</span></span>
                 </div>
@@ -710,7 +712,7 @@ export function LiveScoringInterface({
                 </div>
                 <div className="flex items-center justify-center gap-2 min-h-[24px]">
                     {liveScore.currentOver.map((ball, i) => (
-                        <div key={i} className={cn("h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-white", getBallColor(ball))}>
+                        <div key={i} className={cn("h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-white border-2 border-white/50", getBallColor(ball))}>
                             {getBallDisplay(ball)}
                         </div>
                     ))}
@@ -724,7 +726,11 @@ export function LiveScoringInterface({
             )}
 
             <div className="text-center text-xs text-gray-400 flex items-center justify-around flex-wrap gap-x-4 gap-y-1">
-                 <p>{match.competitionName} | {format(match.dateTime, 'd MMM yyyy | p')} | {match.fieldName} | {forecast?.details.condition}, {forecast?.details.temperature}°C | 2nd Innings | 12:42PM</p>
+                <span className="flex items-center gap-1.5"><Trophy className="h-3 w-3" />{match.competitionName}</span>
+                <span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3" />{format(match.dateTime, 'd MMM yyyy | p')}</span>
+                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
+                {forecast && <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>}
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{isFirstInnings ? '1st Innings' : '2nd Innings'}</span>
             </div>
         </div>
         <Tabs defaultValue="live">
