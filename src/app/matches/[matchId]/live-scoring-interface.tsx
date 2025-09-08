@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -619,6 +618,10 @@ export function LiveScoringInterface({
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
+  const currentRunRate = liveScore.overs + ((liveScore.balls || 0) / 6) > 0 ? (liveScore.runs / (liveScore.overs + ((liveScore.balls || 0) / 6))).toFixed(2) : '0.00';
+  const projectedScore = liveScore.overs > 0 ? Math.round(parseFloat(currentRunRate) * 20) : '-';
+  const requiredRunRate = !isFirstInnings && match.firstInningsTotal ? ( (match.firstInningsTotal + 1 - liveScore.runs) / (120 - (liveScore.overs * 6 + (liveScore.balls || 0))) * 6).toFixed(2) : '0.00';
+
 
   if (!canLiveScore) {
       return (
@@ -634,7 +637,7 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-3 md:p-4 space-y-3 relative overflow-hidden">
+        <div className="bg-gray-900 text-white rounded-lg p-3 md:p-4 space-y-3 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
@@ -642,15 +645,15 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             <div className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
-                <p>{match.teamAName} vs {match.teamBName}</p>
+                <p>{battingTeam.name} vs {bowlingTeam.name}</p>
             </div>
             
-            <div className="flex justify-between items-center">
+            <div className="flex justify-center items-center gap-2 mx-auto">
                 <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-xl">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
                 <div className="flex items-center mx-2 h-16 bg-gray-900/50 rounded-full border border-gray-600">
                     <div className="px-4 py-1.5 flex-1 text-center bg-white text-black rounded-l-full h-full flex items-center">
-                       <p className="font-bold text-lg md:text-2xl">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
+                       <p className="font-bold text-lg md:text-xl">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
                     <div className="px-4 py-1.5 flex-1 text-center h-full flex items-center justify-center">
                         <p className="font-bold text-xl md:text-3xl">{liveScore.runs}/{liveScore.wickets}</p>
@@ -677,13 +680,13 @@ export function LiveScoringInterface({
             <Separator className="bg-white/10 my-2" />
 
              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center text-sm font-sans">
-                 <div className="flex-1 text-left">
-                    <span className="font-semibold">{onStrikePlayer.name}*</span>
-                    <span className="ml-2">{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
+                 <div className="flex-1 text-left flex gap-2 items-center">
+                    <span className={cn("font-bold", onStrikePlayer.isNotOut && "text-primary")}>{onStrikePlayer.name}*</span>
+                    <span>{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
                  </div>
-                 <div className="flex-1 text-right">
-                    <span className="mr-2">{nonStrikerPlayer.runs} ({nonStrikerPlayer.balls})</span>
-                    <span className="font-semibold">{nonStrikerPlayer.name}</span>
+                 <div className="flex-1 text-right flex gap-2 items-center justify-end">
+                    <span>{nonStrikerPlayer.runs} ({nonStrikerPlayer.balls})</span>
+                    <span className="font-bold">{nonStrikerPlayer.name}</span>
                  </div>
              </div>
              <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-2 sm:gap-x-3 flex-wrap">
@@ -695,6 +698,31 @@ export function LiveScoringInterface({
                 <span>{bowlerStats.runsConceded}</span>
                 <span>{bowlerStats.wickets}</span>
             </div>
+             <div className="text-center text-xs text-gray-400">
+                {isFirstInnings ? (
+                    `CRR: ${currentRunRate} | Proj. Score: ${projectedScore}`
+                ) : (
+                    `Req. RR: ${requiredRunRate}`
+                )}
+            </div>
+        </div>
+
+        <Separator />
+        <div className="flex items-center justify-around text-xs text-muted-foreground bg-background rounded-full p-2 border">
+            <div className="flex items-center gap-2"><Trophy className="h-4 w-4" /><span>{match.competitionName}</span></div>
+            <Separator orientation="vertical" className="h-4"/>
+            <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{format(match.dateTime, 'dd MMM yyyy')}</span></div>
+            <Separator orientation="vertical" className="h-4"/>
+            <div className="flex items-center gap-2"><Clock className="h-4 w-4" /><span>Innings {liveScore.liveInnings}</span></div>
+            <Separator orientation="vertical" className="h-4"/>
+            <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /><span>{match.fieldName}</span></div>
+             {forecast && (
+                 <>
+                <Separator orientation="vertical" className="h-4"/>
+                <div className="flex items-center gap-2"><WeatherIcon condition={forecast.details.condition} className="h-4 w-4" /><span>{forecast.details.condition}</span></div>
+                <div className="flex items-center gap-2"><Thermometer className="h-4 w-4" /><span>{forecast.details.temperature}°C</span></div>
+                </>
+             )}
         </div>
         
         <Tabs defaultValue="live">
