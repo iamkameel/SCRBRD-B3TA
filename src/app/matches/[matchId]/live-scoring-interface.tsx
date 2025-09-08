@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle, Hand, Trophy, CalendarDays } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle, Hand, Trophy, CalendarDays } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -637,7 +637,7 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-900 text-white rounded-lg p-3 md:p-4 space-y-3 relative overflow-hidden">
+        <div className="bg-gray-900 text-white rounded-lg p-3 md:p-4 space-y-4 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
@@ -645,22 +645,20 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             <div className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
-                <p>{battingTeam.name} vs {bowlingTeam.name}</p>
+                <p>{match.teamAName} vs {match.teamBName}</p>
             </div>
             
             <div className="flex justify-center items-center gap-2 mx-auto">
                 <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-xl">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                <div className="flex items-center mx-2 h-16 bg-gray-900/50 rounded-full border border-gray-600">
+                <div className="flex items-center mx-2 h-16 shadow-lg">
                     <div className="px-4 py-1.5 flex-1 text-center bg-white text-black rounded-l-full h-full flex items-center">
                        <p className="font-bold text-lg md:text-xl">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="px-4 py-1.5 flex-1 text-center h-full flex items-center justify-center">
+                    <div className="px-4 py-1.5 flex-1 text-center bg-gray-900/80 rounded-r-full h-full flex items-center justify-center gap-4">
                         <p className="font-bold text-xl md:text-3xl">{liveScore.runs}/{liveScore.wickets}</p>
-                    </div>
-                     <div className="px-4 py-1.5 flex-1 text-center h-full flex items-center justify-center">
-                        <div>
-                            <p className="font-bold text-lg md:text-2xl">{liveScore.overs}.{liveScore.balls || 0}</p>
+                        <div className="text-left">
+                            <p className="font-bold text-lg md:text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
                             <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">Overs</p>
                         </div>
                     </div>
@@ -669,41 +667,40 @@ export function LiveScoringInterface({
                 <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-xl">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
             
-            {!isFirstInnings && match.firstInningsTotal != null && (
-                 <div className="text-center text-sm font-semibold flex justify-around">
-                    <span>1st Innings: {match.firstInningsTotal}</span>
-                    <span className="text-primary font-bold">TARGET {match.firstInningsTotal + 1}</span>
-                    <span>1st Innings Stats</span>
-                 </div>
-            )}
-            
-            <Separator className="bg-white/10 my-2" />
-
-             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center text-sm font-sans">
-                 <div className="flex-1 text-left flex gap-2 items-center">
-                    <span className={cn("font-bold", onStrikePlayer.isNotOut && "text-primary")}>{onStrikePlayer.name}*</span>
-                    <span>{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
-                 </div>
-                 <div className="flex-1 text-right flex gap-2 items-center justify-end">
-                    <span>{nonStrikerPlayer.runs} ({nonStrikerPlayer.balls})</span>
-                    <span className="font-bold">{nonStrikerPlayer.name}</span>
-                 </div>
-             </div>
-             <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-2 sm:gap-x-3 flex-wrap">
-                <span className="font-semibold">BOWLER</span>
-                <span>{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
-                <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span>{bowlerStats.overs}.{bowlerStats.balls || 0}</span>
-                <span>{bowlerStats.maidens}</span>
-                <span>{bowlerStats.runsConceded}</span>
-                <span>{bowlerStats.wickets}</span>
-            </div>
-             <div className="text-center text-xs text-gray-400">
-                {isFirstInnings ? (
-                    `CRR: ${currentRunRate} | Proj. Score: ${projectedScore}`
-                ) : (
-                    `Req. RR: ${requiredRunRate}`
+             <div className="text-center text-sm font-semibold flex justify-around items-center">
+                <span className="text-gray-400">1st Innings: {match.firstInningsTotal || 0} ({match.firstInningsLiveScore?.overs || 20})</span>
+                {!isFirstInnings && match.firstInningsTotal != null && (
+                    <span className="text-primary font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
+                <span className="text-gray-400">1st Innings Stats</span>
+            </div>
+
+            <div className="flex items-center mx-auto h-14 bg-gray-800/80 rounded-full max-w-lg shadow-lg">
+                <div className="flex-1 text-center px-4">
+                    <span className={cn("font-bold text-lg", onStrikePlayer.isNotOut && "text-primary")}>{onStrikePlayer.name}*</span>
+                    <span className="text-gray-300 text-sm ml-2">{onStrikePlayer.runs} ({onStrikePlayer.balls})</span>
+                </div>
+                 <Separator orientation="vertical" className="bg-white/20 h-6" />
+                 <div className="flex-1 text-center px-4">
+                    <span className="font-bold text-lg">{nonStrikerPlayer.name}</span>
+                    <span className="text-gray-300 text-sm ml-2">{nonStrikerPlayer.runs} ({nonStrikerPlayer.balls})</span>
+                 </div>
+            </div>
+
+            <div className="text-center text-sm text-gray-400 flex items-center justify-center gap-x-4 sm:gap-x-6 flex-wrap">
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold">BOWLER</span>
+                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
+                    <span className="font-mono text-xs">({bowlerStats.overs}.{bowlerStats.balls || 0}-{bowlerStats.maidens}-{bowlerStats.runsConceded}-{bowlerStats.wickets})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold">CRR</span>
+                    <span>{currentRunRate}</span>
+                </div>
+                 <div className="flex items-center gap-2">
+                    <span className="font-semibold">REQ RR</span>
+                    <span className={cn(parseFloat(requiredRunRate) > 10 ? 'text-red-400' : '')}>{parseFloat(requiredRunRate) > 0 ? requiredRunRate : '-'}</span>
+                </div>
             </div>
         </div>
 
