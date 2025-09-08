@@ -662,7 +662,7 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
             <div className="relative flex items-center h-16 shadow-lg bg-gray-800 rounded-full p-1">
-                <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-full">
+                <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-l-full">
                     <p className="font-bold text-lg">{battingTeam.abbrev}</p>
                     <p className="font-bold text-lg mx-2">v</p>
                     <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
