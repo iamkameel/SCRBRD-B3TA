@@ -618,10 +618,7 @@ export function LiveScoringInterface({
   const onStrikePlayer = getBatsmanDisplay(onStrikeBatsmanId);
   const nonStrikerPlayer = getBatsmanDisplay(nonStrikerBatsmanId);
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
-  const currentRunRate = liveScore.overs + ((liveScore.balls || 0) / 6) > 0 ? (liveScore.runs / (liveScore.overs + ((liveScore.balls || 0) / 6))).toFixed(2) : '0.00';
-  const projectedScore = liveScore.overs > 0 ? Math.round(parseFloat(currentRunRate) * 20) : '-';
-  const requiredRunRate = !isFirstInnings && match.firstInningsTotal ? ( (match.firstInningsTotal + 1 - liveScore.runs) / (120 - (liveScore.overs * 6 + (liveScore.balls || 0))) * 6).toFixed(2) : '0.00';
-
+  
   const getBallColor = (ball: string) => {
     if (ball === 'W') return 'bg-red-500';
     if (ball === '4') return 'bg-blue-500';
@@ -653,7 +650,7 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
             
-            <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
+             <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
                 {`${match.teamAName} v ${match.teamBName}`}
             </h2>
 
