@@ -677,7 +677,7 @@ export function LiveScoringInterface({
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
-                            <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">Overs</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">OVERS</p>
                         </div>
                     </div>
                 </div>
@@ -696,7 +696,7 @@ export function LiveScoringInterface({
                     <span className="font-bold text-base">{onStrikePlayer.name}*</span>
                     <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="absolute right-1 flex items-center justify-between px-4 py-1 h-8 w-1/2">
+                <div className="absolute right-1 flex items-center justify-between px-4 py-1 h-8 w-1/2 bg-gray-700 rounded-full">
                     <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
                     <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm text-gray-300">({nonStrikerPlayer.balls})</span></span>
                 </div>
