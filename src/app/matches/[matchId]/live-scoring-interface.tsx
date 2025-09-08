@@ -618,8 +618,8 @@ export function LiveScoringInterface({
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   
   const getBallColor = (ball: string) => {
-    const runs = parseInt(ball);
-    if (ball.toLowerCase().startsWith('w') && ball !== 'W') return '#5200bc'; // Purple
+    const runs = parseInt(ball.replace(/\D/g, ''), 10);
+    if (ball.toLowerCase().includes('wd')) return '#5200bc'; // Purple
     if (ball === 'W') return '#dd514c'; // Red
     if (runs === 4) return '#3b83f6'; // Blue
     if (runs === 6) return '#ec4899'; // Pink
@@ -665,9 +665,9 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             <div className="flex items-center justify-between gap-2">
-                <Avatar className="h-12 w-12 border-2" style={{ borderColor: battingTeam.teamColor || '#ffc33e' }}>
-                    <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
-                    <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
+                <Avatar className="h-12 w-12 border-2" style={{ borderColor: match.teamAColor || '#ffc33e' }}>
+                    <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
+                    <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
@@ -683,9 +683,9 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                <Avatar className="h-12 w-12 border-2" style={{ borderColor: bowlingTeam.teamColor || '#3b83f6' }}>
-                    <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
-                    <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
+                 <Avatar className="h-12 w-12 border-2" style={{ borderColor: match.teamBColor || '#4848ff' }}>
+                    <AvatarImage src={match.teamBLogoUrl} alt={match.teamBName} />
+                    <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
                 </Avatar>
             </div>
             
@@ -698,18 +698,18 @@ export function LiveScoringInterface({
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
-                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] text-black flex-1">
-                    <span className="font-bold text-base">{onStrikePlayer.name}*</span>
+                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1 text-black">
+                    <span className="font-bold text-base">{onStrikePlayer.name}</span>
                     <span className="text-base">{onStrikePlayer.runs} <span className="text-sm">({onStrikePlayer.balls})</span></span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-1 h-8 flex-1 text-white">
-                    <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
-                    <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm">({nonStrikerPlayer.balls})</span></span>
+                    <span className="font-bold text-base">{nonStrikerPlayer.name}</span>
+                    <span className="text-base">{nonStrikerPlayer.runs} <span className="text-sm">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
              <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
-                <div className="flex items-center justify-center gap-6 w-full">
+                <div className="flex items-center justify-between gap-6 w-full max-w-lg mx-auto">
                     <div className="flex items-center gap-2">
                         <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                         <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
