@@ -665,15 +665,17 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-             <div className="flex items-center justify-between gap-2 max-w-md mx-auto">
+            <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e' }}>
                     <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
-                    <div className="flex items-center justify-center px-4 h-full rounded-l-full bg-[#4848ff] text-white">
-                        <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
+                    <div className="flex items-center justify-center px-4 h-full rounded-full bg-[#4848ff]">
+                         <p className="font-bold text-lg text-white">
+                            <span className="text-yellow-400">{battingTeam.abbrev}</span> v {bowlingTeam.abbrev}
+                        </p>
                     </div>
                     <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
@@ -699,30 +701,28 @@ export function LiveScoringInterface({
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
-                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1 text-white">
-                    <span className="font-bold text-base">{onStrikePlayer.name}</span>
-                    <span className="text-base font-bold">{onStrikePlayer.runs} <span className="font-normal opacity-75">({onStrikePlayer.balls})</span></span>
+                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1">
+                    <span className="font-bold text-base text-white">{onStrikePlayer.name}</span>
+                    <span className="text-base font-bold text-white">{onStrikePlayer.runs} <span className="font-normal opacity-75">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1 text-white">
-                    <span className="font-bold text-base">{nonStrikerPlayer.name}</span>
-                    <span className="text-base font-bold">{nonStrikerPlayer.runs} <span className="font-normal opacity-75">({nonStrikerPlayer.balls})</span></span>
+                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1">
+                    <span className="font-bold text-base text-white">{nonStrikerPlayer.name}</span>
+                    <span className="text-base font-bold text-white">{nonStrikerPlayer.runs} <span className="font-normal opacity-75">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
-             <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
-                <div className="flex items-center justify-between gap-6 w-full max-w-lg mx-auto">
-                    <div className="flex items-center gap-2">
-                        <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
-                        <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
-                        <span className="text-xs text-muted-foreground">({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-1.5 min-h-[24px]">
-                        {liveScore.currentOver.map((ball, i) => (
-                            <div key={i} style={{ backgroundColor: getBallColor(ball) }} className="h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-black border border-white/50">
-                                {getBallDisplay(ball)}
-                            </div>
-                        ))}
-                    </div>
+             <div className="flex items-center justify-between gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
+                    <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
+                    <span className="text-xs text-muted-foreground">({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
+                </div>
+                <div className="flex items-center justify-center gap-1.5 min-h-[24px]">
+                    {liveScore.currentOver.map((ball, i) => (
+                        <div key={i} style={{ backgroundColor: getBallColor(ball) }} className="h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-black border border-white/50">
+                            {getBallDisplay(ball)}
+                        </div>
+                    ))}
                 </div>
             </div>
 
