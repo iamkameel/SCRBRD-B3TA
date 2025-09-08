@@ -646,44 +646,44 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-900 text-white rounded-lg p-3 md:p-4 space-y-4 relative overflow-hidden">
+        <div className="bg-gray-900 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
             
-             <h2 className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
-                {isFirstInnings ? `${match.teamAName} vs ${match.teamBName}` : `${match.teamBName} vs ${match.teamAName}`}
+            <h2 className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
+                {`${match.teamAName} vs ${match.teamBName}`}
             </h2>
 
-            <div className="flex justify-center items-center gap-2 mx-auto">
-                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-xl bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
+            <div className="flex justify-center items-center gap-2">
+                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                 <div className="flex items-center mx-2 h-16 shadow-lg rounded-full">
-                    <div className="px-4 py-1.5 flex-1 text-center bg-white text-gray-900 rounded-l-full h-full flex items-center">
-                       <p className="font-bold text-lg md:text-xl">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
+                <div className="flex items-center h-16 shadow-lg rounded-full">
+                    <div className="px-6 py-1.5 flex-1 text-center bg-white text-gray-900 rounded-l-full h-full flex items-center">
+                       <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="px-4 py-1.5 flex-1 text-center bg-primary/80 rounded-r-full h-full flex items-center justify-center gap-4">
-                        <p className="font-bold text-xl md:text-3xl">{liveScore.runs}/{liveScore.wickets}</p>
+                    <div className="px-6 py-1.5 flex-1 text-center bg-primary rounded-r-full h-full flex items-center justify-center gap-4">
+                        <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
-                            <p className="font-bold text-lg md:text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
+                            <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
                             <p className="text-xs uppercase tracking-wider text-primary-foreground/80 -mt-1">Overs</p>
                         </div>
                     </div>
                 </div>
 
-                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-xl bg-gray-700">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
+                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
             
-            <div className="text-center text-sm font-semibold flex justify-between items-center px-4">
+            <div className="text-sm font-semibold flex justify-between items-center px-4">
                 <span className="text-gray-400">1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-white font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
             </div>
 
-            <div className="flex items-center mx-auto h-12 bg-black/40 rounded-full max-w-lg shadow-lg px-2">
+            <div className="flex items-center justify-center mx-auto h-12 bg-black/40 rounded-full max-w-lg shadow-lg px-2">
                 <div className={cn("flex-1 flex items-center justify-between px-4 py-1.5 rounded-full bg-primary text-white")}>
                     <span className="font-bold text-lg">{onStrikePlayer.name}*</span>
                     <span className="text-lg">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
@@ -694,7 +694,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
 
-            <div className="space-y-2 text-center text-sm text-gray-300 px-4">
+            <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
                  <div className="flex items-center justify-center gap-2">
                     <span className="font-semibold text-gray-400">BOWLER</span>
                     <span>{getDisplayName(bowlerId, bowlingTeamRoster)}</span>

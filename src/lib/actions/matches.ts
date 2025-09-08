@@ -1,4 +1,5 @@
 
+
       
 'use server';
 
@@ -84,8 +85,8 @@ export const getMatch = cache(async (matchId: string): Promise<Match | null> => 
       matchId: matchSnap.id,
       ...data,
       dateTime: (data.dateTime as Timestamp).toDate(),
-      teamAAbbreviation: teamA?.schoolAbbreviation,
-      teamBAbbreviation: teamB?.schoolAbbreviation,
+      teamAAbbreviation: teamA?.abbreviation,
+      teamBAbbreviation: teamB?.abbreviation,
     } as Match;
   } catch (error) {
     console.error(`Error fetching match with ID ${matchId}:`, error);
