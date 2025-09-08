@@ -628,7 +628,14 @@ export function LiveScoringInterface({
     if (ball === '.') return 'bg-gray-500';
     return 'bg-pink-500';
   }
-
+  
+  const getBallDisplay = (ball: string): string => {
+    if (ball.toLowerCase().startsWith('wd')) {
+      const runs = parseInt(ball.substring(2));
+      return isNaN(runs) || runs === 0 ? 'wd' : `${runs}wd`;
+    }
+    return ball;
+  }
 
   if (!canLiveScore) {
       return (
@@ -650,27 +657,24 @@ export function LiveScoringInterface({
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-
             <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
                 {match.teamAName} v {match.teamBName}
             </h2>
-            
             <div className="flex justify-center items-center gap-2">
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                <div className="flex items-center h-16 shadow-lg bg-gray-900 rounded-full">
-                    <div className="bg-white text-gray-900 rounded-l-full h-full flex items-center px-6">
+                <div className="relative flex items-center h-16 shadow-lg bg-gray-900 rounded-full">
+                    <div className="flex items-center h-full px-6 bg-primary text-primary-foreground rounded-l-full">
                        <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="bg-white/80 text-gray-900 rounded-r-full h-full flex items-center justify-center gap-4 px-6">
+                    <div className="flex items-center justify-center gap-4 h-full px-6 bg-primary/80 text-primary-foreground rounded-r-full">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
-                            <p className="text-xs uppercase tracking-wider text-gray-800/80 -mt-1">Overs</p>
+                            <p className="text-xs uppercase tracking-wider text-primary-foreground/80 -mt-1">Overs</p>
                         </div>
                     </div>
                 </div>
-
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
             
@@ -681,7 +685,7 @@ export function LiveScoringInterface({
                 )}
             </div>
 
-            <div className="flex items-center justify-center mx-auto h-10 bg-gray-900 rounded-full max-w-lg shadow-lg px-2">
+             <div className="flex items-center justify-center mx-auto h-12 bg-gray-900 rounded-full max-w-lg shadow-lg px-2">
                 <div className={cn("flex-1 flex items-center justify-between px-4 py-1 rounded-full bg-primary text-white")}>
                     <span className="font-bold text-lg">{onStrikePlayer.name}*</span>
                     <span className="text-lg">{onStrikePlayer.runs} <span className="text-base text-gray-300">({onStrikePlayer.balls})</span></span>
@@ -693,22 +697,20 @@ export function LiveScoringInterface({
             </div>
             
             <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
-                 <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                     <span className="font-semibold text-gray-400">BOWLER</span>
                     <span>{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
-                    <span className="text-xs">({bowlerStats.overs}.{bowlerStats.balls || 0}-{bowlerStats.maidens}-{bowlerStats.runsConceded}-{bowlerStats.wickets})</span>
+                    <span className="text-xs">({bowlerStats.runsConceded}/{bowlerStats.wickets} ({bowlerStats.overs}.{bowlerStats.balls || 0}))</span>
                 </div>
                 <div className="flex items-center justify-center gap-2 min-h-[24px]">
                     {liveScore.currentOver.map((ball, i) => (
                         <div key={i} className={cn("h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-white", getBallColor(ball))}>
-                            {ball}
+                            {getBallDisplay(ball)}
                         </div>
                     ))}
                 </div>
             </div>
-            
              <Separator className="bg-white/10" />
-
             <div className="text-center text-xs text-gray-400 flex items-center justify-around flex-wrap gap-x-4 gap-y-1">
                  <div className="flex items-center gap-1.5"><Trophy className="h-3 w-3" /><span>{match.competitionName}</span></div>
                  <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /><span>{format(match.dateTime, 'dd MMM yyyy')}</span></div>
@@ -720,8 +722,6 @@ export function LiveScoringInterface({
                  </>}
             </div>
         </div>
-
-        
         <Tabs defaultValue="live">
           <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="live">Live Scoring</TabsTrigger>
@@ -920,7 +920,7 @@ export function LiveScoringInterface({
                                       <Undo className="mr-2 h-4 w-4" />
                                       Undo Last Ball
                                   </Button>
-                                  <Button onClick={handleChangeBowler} variant="secondary" className="w-full" disabled={isPending || isSimulating}>
+                                   <Button onClick={handleChangeBowler} variant="secondary" className="w-full" disabled={isPending || isSimulating}>
                                       <Repeat className="mr-2 h-4 w-4" />
                                       Change Bowler
                                   </Button>
