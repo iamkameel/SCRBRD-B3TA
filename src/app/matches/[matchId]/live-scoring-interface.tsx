@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle, Hand, Trophy, CalendarDays } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays } from 'lucide-react';
+import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
@@ -17,12 +17,10 @@ import { Progress } from '@/components/ui/progress';
 import { WagonWheel } from '@/components/wagon-wheel';
 import { ScoringDialog } from './scoring-dialog';
 import { Separator } from '@/components/ui/separator';
-import { getPlayerStats } from '@/lib/actions/stats';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
 import { ConfettiBurst } from '@/components/confetti-burst';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -620,17 +618,17 @@ export function LiveScoringInterface({
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   
   const getBallColor = (ball: string) => {
-    if (ball.toLowerCase().startsWith('w')) return 'bg-red-500';
+    if (ball.toLowerCase().startsWith('w') && ball !== 'W') return 'bg-purple-500';
+    if (ball === 'W') return 'bg-red-500';
     if (ball === '4') return 'bg-blue-500';
-    if (ball === '6') return 'bg-purple-500';
-    if (ball.toLowerCase().includes('wd')) return 'bg-fuchsia-500';
+    if (ball === '6') return 'bg-red-500';
     if (ball === '.') return 'bg-gray-500';
-    return 'bg-pink-500';
+    return 'bg-yellow-500'; // For 1s, 2s, 3s
   }
   
   const getBallDisplay = (ball: string): string => {
-    const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
     if (ball.toLowerCase().includes('wd')) {
+      const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
       return runs > 0 ? `${runs}WD` : 'WD';
     }
      if (ball.toLowerCase().startsWith('nb')) {
@@ -660,17 +658,18 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-            <div className="flex items-center justify-between gap-2">
-                <Avatar className="h-10 w-10 border-2 border-white/50">
-                    <AvatarImage src={match.teamALogoUrl} />
-                    <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
+            <p className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">{match.teamAName} vs {match.teamBName}</p>
+
+             <div className="flex items-center justify-between gap-2">
+                <Avatar className="h-12 w-12 border-2 border-yellow-400">
+                    <AvatarFallback style={{ backgroundColor: '#fbbd23', color: '#000000' }}>{battingTeam.abbrev}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
-                    <div className="flex items-center justify-center px-4 h-full bg-primary text-primary-foreground rounded-full">
+                    <div className="flex items-center justify-center px-4 h-full bg-[#4848ff] rounded-l-full" style={{minWidth: '30%'}}>
                         <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
+                    <div className="flex-1 flex items-center justify-center gap-4 h-full px-6 rounded-r-full">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
@@ -679,27 +678,27 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                <Avatar className="h-10 w-10 border-2 border-white/50">
-                    <AvatarImage src={match.teamBLogoUrl} />
-                    <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
+                <Avatar className="h-12 w-12 border-2 border-[#4848ff]">
+                    <AvatarFallback style={{ backgroundColor: '#4848ff', color: '#ffffff' }}>{bowlingTeam.abbrev}</AvatarFallback>
                 </Avatar>
             </div>
             
             <div className="text-sm font-semibold flex justify-between items-center px-4">
                 <span>1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
-                    <span className="text-white font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
+                    <span className="text-[#3ecc78] font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
+                 <span>1st Innings Stats</span>
             </div>
 
-             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
-                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-primary text-primary-foreground flex-1">
+            <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
+                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] text-black flex-1">
                     <span className="font-bold text-base">{onStrikePlayer.name}*</span>
-                    <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
+                    <span className="text-base">{onStrikePlayer.runs} <span className="text-sm">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1 rounded-r-full">
+                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1">
                     <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
-                    <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm text-gray-300">({nonStrikerPlayer.balls})</span></span>
+                    <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
@@ -716,16 +715,16 @@ export function LiveScoringInterface({
                     ))}
                 </div>
             </div>
-             <Separator className="bg-white/10" />
+            
+            {!isFirstInnings && liveScore.runs > 0 && liveScore.overs > 0 && (
+                <p className="text-center font-semibold text-yellow-400">
+                    Required Rate: {((match.firstInningsTotal! + 1 - liveScore.runs) / (20 - (liveScore.overs + (liveScore.balls / 6)))).toFixed(2)}
+                </p>
+            )}
+
             <div className="text-center text-xs text-gray-400 flex items-center justify-around flex-wrap gap-x-4 gap-y-1">
-                 <div className="flex items-center gap-1.5"><Trophy className="h-3 w-3" /><span>{match.competitionName}</span></div>
-                 <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /><span>{format(match.dateTime, 'dd MMM yyyy')}</span></div>
-                 <div className="flex items-center gap-1.5"><Clock className="h-3 w-3" /><span>Innings {liveScore.liveInnings}</span></div>
-                 <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /><span>{match.fieldName}</span></div>
-                 {forecast && <>
-                    <div className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /><span>{forecast.details.condition}</span></div>
-                    <div className="flex items-center gap-1.5"><Thermometer className="h-3 w-3" /><span>{forecast.details.temperature}°C</span></div>
-                 </>}
+                 <p>{match.competitionName} | {format(match.dateTime, 'd MMM yyyy | p')} | {match.fieldName} | {forecast?.details.condition}, {forecast?.details.temperature}°C</p>
+                 <p>2nd Innings | 12:42PM</p>
             </div>
         </div>
         <Tabs defaultValue="live">
