@@ -2,11 +2,12 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -144,7 +145,7 @@ const MaidenOverAnimation = () => (
 );
 
 const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithStats[]): string => {
-    if (!playerId) return 'Select...';
+    if (!playerId) return 'SELECT...';
     
     const player = roster.find(p => p.personId === playerId);
     if (!player) return 'Unknown';
@@ -664,13 +665,13 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-            <div className="flex items-center justify-between gap-2">
+             <div className="flex items-center justify-between gap-2 max-w-md mx-auto">
                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e' }}>
                     <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
 
-                <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg max-w-md mx-auto">
+                <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
                     <div className="flex items-center justify-center px-4 h-full rounded-l-full bg-[#4848ff] text-white">
                         <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
@@ -689,7 +690,7 @@ export function LiveScoringInterface({
                 </Avatar>
             </div>
             
-            <div className="text-sm font-semibold flex justify-between items-center px-4">
+            <div className="text-sm font-semibold flex justify-between items-center px-4 max-w-lg mx-auto">
                 <span>1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-[#3ecc78] font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
@@ -700,11 +701,11 @@ export function LiveScoringInterface({
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
                 <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1 text-white">
                     <span className="font-bold text-base">{onStrikePlayer.name}</span>
-                    <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-muted-foreground">({onStrikePlayer.balls})</span></span>
+                    <span className="text-base font-bold">{onStrikePlayer.runs} <span className="font-normal opacity-75">({onStrikePlayer.balls})</span></span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-1 h-8 flex-1 text-white">
                     <span className="font-bold text-base">{nonStrikerPlayer.name}</span>
-                    <span className="text-base">{nonStrikerPlayer.runs} <span className="text-sm text-muted-foreground">({nonStrikerPlayer.balls})</span></span>
+                    <span className="text-base font-bold">{nonStrikerPlayer.runs} <span className="font-normal opacity-75">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
