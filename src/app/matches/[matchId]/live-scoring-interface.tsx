@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -655,17 +654,17 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
             
             <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
-                {`${match.teamAName} vs ${match.teamBName}`}
+                {`${match.teamAName} v ${match.teamBName}`}
             </h2>
 
             <div className="flex justify-center items-center gap-2">
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
                 <div className="flex items-center h-16 shadow-lg rounded-full bg-gray-900/80">
-                    <div className="px-6 py-1.5 flex-1 text-center bg-primary text-primary-foreground rounded-full h-full flex items-center">
+                    <div className="px-6 py-1.5 flex-1 text-center bg-primary text-primary-foreground rounded-l-full h-full flex items-center">
                        <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="px-6 py-1.5 flex-1 text-center h-full flex items-center justify-center gap-4">
+                    <div className="px-6 py-1.5 flex-1 text-center h-full flex items-center justify-center gap-4 bg-primary/80 rounded-r-full">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
@@ -857,11 +856,11 @@ export function LiveScoringInterface({
                                       <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex items-center justify-center gap-2" disabled={isPending || isSimulating}>
                                           <Label htmlFor="angle-over" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
                                               <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
-                                              <CornerUpRight className="h-4 w-4"/> Over the Wicket
+                                              <CornerUpRight className="h-4 w-4" /> Over the Wicket
                                           </Label>
                                           <Label htmlFor="angle-round" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
                                               <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
-                                              <CornerUpLeft className="h-4 w-4"/> Round the Wicket
+                                              <CornerUpLeft className="h-4 w-4" /> Round the Wicket
                                           </Label>
                                            <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleChangeBowler} disabled={isPending || isSimulating}>
                                               <Repeat className="mr-1 h-3 w-3" /> Change Bowler
