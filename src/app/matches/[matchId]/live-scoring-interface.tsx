@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -629,11 +630,12 @@ export function LiveScoringInterface({
   }
   
   const getBallDisplay = (ball: string): string => {
-    const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
     if (ball.toLowerCase().startsWith('wd')) {
+      const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
       return runs > 0 ? `${runs}WD` : 'WD';
     }
      if (ball.toLowerCase().startsWith('nb')) {
+      const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
       return runs > 0 ? `${runs}NB` : 'NB';
     }
     return ball.toUpperCase();
@@ -702,7 +704,6 @@ export function LiveScoringInterface({
             
              <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
                 <div className="flex items-center justify-center gap-2">
-                    <span className="font-semibold text-gray-400">BOWLER</span>
                     <span>{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="text-xs">{bowlerStats.runsConceded}/{bowlerStats.wickets} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
                 </div>
