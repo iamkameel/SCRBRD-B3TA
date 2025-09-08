@@ -657,7 +657,7 @@ export function LiveScoringInterface({
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
         <div className="bg-gray-900 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
-            <p className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">{match.teamAName} vs {match.teamBName}</p>
+            <p className="text-center text-lg font-bold uppercase tracking-wider text-gray-300">{match.teamAName} vs {match.teamBName}</p>
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
@@ -665,12 +665,12 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             <div className="flex items-center justify-between gap-2">
-                <Avatar className="h-12 w-12 border-2" style={{ borderColor: match.teamAColor || '#ffc33e' }}>
+                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e' }}>
                     <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
 
-                <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
+                <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg max-w-md mx-auto">
                     <div className="flex items-center justify-center px-4 h-full rounded-l-full bg-[#4848ff] text-white">
                         <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
@@ -683,7 +683,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                 <Avatar className="h-12 w-12 border-2" style={{ borderColor: match.teamBColor || '#4848ff' }}>
+                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff' }}>
                     <AvatarImage src={match.teamBLogoUrl} alt={match.teamBName} />
                     <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
                 </Avatar>
@@ -694,17 +694,17 @@ export function LiveScoringInterface({
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-[#3ecc78] font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
-                 <span>1st Innings Stats</span>
+                 <Link href={`/matches/${match.matchId}`} className="text-xs hover:underline">1st Innings Stats</Link>
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
-                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1 text-black">
+                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1 text-white">
                     <span className="font-bold text-base">{onStrikePlayer.name}</span>
-                    <span className="text-base">{onStrikePlayer.runs} <span className="text-sm">({onStrikePlayer.balls})</span></span>
+                    <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-muted-foreground">({onStrikePlayer.balls})</span></span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-1 h-8 flex-1 text-white">
                     <span className="font-bold text-base">{nonStrikerPlayer.name}</span>
-                    <span className="text-base">{nonStrikerPlayer.runs} <span className="text-sm">({nonStrikerPlayer.balls})</span></span>
+                    <span className="text-base">{nonStrikerPlayer.runs} <span className="text-sm text-muted-foreground">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
