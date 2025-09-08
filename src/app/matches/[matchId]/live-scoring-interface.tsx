@@ -164,7 +164,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     
     if (lastNameCount > 1) {
         const firstNameInitial = nameParts[0].charAt(0);
-        return `${'firstNameInitial'}. ${lastName}`.toUpperCase();
+        return `${firstNameInitial}. ${lastName}`.toUpperCase();
     }
     
     return lastName.toUpperCase();
@@ -630,12 +630,11 @@ export function LiveScoringInterface({
   }
   
   const getBallDisplay = (ball: string): string => {
+    const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
     if (ball.toLowerCase().includes('wd')) {
-      const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
       return runs > 0 ? `${runs}WD` : 'WD';
     }
      if (ball.toLowerCase().startsWith('nb')) {
-      const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
       return runs > 0 ? `${runs}NB` : 'NB';
     }
     return ball.toUpperCase();
@@ -662,13 +661,13 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-             <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2">
                 <Avatar className="h-12 w-12 border-2 border-white/50">
                     <AvatarImage src={match.teamALogoUrl} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
 
-                <div className="relative flex items-center h-16 bg-gray-800 rounded-full shadow-lg flex-1">
+                <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
                     <div className="flex items-center justify-center px-4 h-full bg-primary text-primary-foreground rounded-full">
                         <p className="font-bold text-lg">{battingTeam.abbrev}</p>
                         <p className="font-bold text-lg mx-2">v</p>
@@ -696,18 +695,18 @@ export function LiveScoringInterface({
                 )}
             </div>
 
-            <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
+             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
                 <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-primary text-primary-foreground w-1/2">
                     <span className="font-bold text-base">{onStrikePlayer.name}*</span>
                     <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-1 h-8 w-1/2 bg-gray-700 rounded-r-full">
+                <div className="flex items-center justify-between px-4 py-1 h-8 w-1/2 rounded-r-full">
                     <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
                     <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm text-gray-300">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
-             <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
+            <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
                 <div className="flex items-center justify-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="text-xs text-muted-foreground">{bowlerStats.runsConceded}/{bowlerStats.wickets} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
