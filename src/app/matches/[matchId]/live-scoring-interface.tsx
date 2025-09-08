@@ -164,7 +164,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     
     if (lastNameCount > 1) {
         const firstNameInitial = nameParts[0].charAt(0);
-        return `${'\'\'\''}${firstNameInitial}. ${lastName}`.toUpperCase();
+        return `${firstNameInitial}. ${lastName}`.toUpperCase();
     }
     
     return lastName.toUpperCase();
@@ -292,14 +292,14 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
     // Correctly calculating overs for career view from decimal
     const careerOversInt = Math.floor(careerStats.oversBowled);
     const careerBalls = Math.round((careerStats.oversBowled - careerOversInt) * 10);
-    const careerOversDisplay = `${'\'\'\''}${careerOversInt}.${careerBalls}`;
+    const careerOversDisplay = `${careerOversInt}.${careerBalls}`;
 
     const stats = statsView === 'match' ? matchStats : {
         ...careerStats,
         oversDisplay: careerOversDisplay,
     };
     
-    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${'\'\'\''}${player.physicalAttributes.bowlingHand}-arm` : '';
+    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${player.physicalAttributes.bowlingHand}-arm` : '';
     const bowlingStyle = player.physicalAttributes?.bowlingStyles?.join(', ');
 
     return (
@@ -316,7 +316,7 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
           </div>
         </div>
         <div className="grid grid-cols-5 gap-1 text-center mt-2 text-xs">
-          <div><strong>O</strong><br />{statsView === 'match' ? `${'\'\'\''}${stats.overs || 0}.${stats.balls || 0}` : stats.oversDisplay}</div>
+          <div><strong>O</strong><br />{statsView === 'match' ? `${stats.overs || 0}.${stats.balls || 0}` : stats.oversDisplay}</div>
           <div><strong>M</strong><br />{stats.maidens || 0}</div>
           <div><strong>R</strong><br />{stats.runsConceded || 0}</div>
           <div><strong>W</strong><br />{stats.wicketsTaken || stats.wickets || 0}</div>
@@ -661,27 +661,19 @@ export function LiveScoringInterface({
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-            <h2 className="text-center text-sm font-bold uppercase tracking-wider text-gray-400">
-                {match.teamAName} v {match.teamBName}
-            </h2>
-            <div className="flex justify-center items-center gap-2">
-                <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
-                
-                 <div className="relative flex items-center h-16 shadow-lg bg-gray-800 rounded-full px-2">
-                    <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-full min-w-[12rem]">
-                       <p className="font-bold text-lg">{battingTeam.abbrev}</p>
-                       <p className="font-bold text-lg">v</p>
-                       <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
-                    </div>
-                    <div className="flex items-center justify-center gap-4 h-full px-6">
-                        <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
-                        <div className="text-left">
-                            <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
-                            <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">OVERS</p>
-                        </div>
+            <div className="relative flex items-center h-16 shadow-lg bg-gray-800 rounded-full p-1">
+                <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-full">
+                    <p className="font-bold text-lg">{battingTeam.abbrev}</p>
+                    <p className="font-bold text-lg mx-2">v</p>
+                    <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
+                </div>
+                <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
+                    <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
+                    <div className="text-left">
+                        <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
+                        <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">OVERS</p>
                     </div>
                 </div>
-                <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
             
             <div className="text-sm font-semibold flex justify-between items-center px-4">
@@ -692,7 +684,7 @@ export function LiveScoringInterface({
             </div>
 
             <div className="flex items-center justify-center mx-auto h-10 bg-gray-800 rounded-full max-w-lg shadow-lg relative p-1">
-                <div className={cn("absolute left-1 flex items-center justify-between px-4 py-1 h-8 rounded-full bg-primary text-white w-1/2")}>
+                <div className="absolute left-1 flex items-center justify-between px-4 py-1 h-8 rounded-full bg-primary text-white w-1/2">
                     <span className="font-bold text-base">{onStrikePlayer.name}*</span>
                     <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>
