@@ -618,13 +618,17 @@ export function LiveScoringInterface({
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   
   const getBallColor = (ball: string) => {
-    if (ball.toLowerCase().startsWith('w') && ball !== 'W') return 'bg-purple-500';
-    if (ball === 'W') return 'bg-red-500';
-    if (ball === '4') return 'bg-blue-500';
-    if (ball === '6') return 'bg-red-500';
-    if (ball === '.') return 'bg-gray-500';
-    return 'bg-yellow-500'; // For 1s, 2s, 3s
-  }
+    const runs = parseInt(ball);
+    if (ball.toLowerCase().startsWith('w') && ball !== 'W') return '#5200bc'; // Purple
+    if (ball === 'W') return '#dd514c'; // Red
+    if (runs === 4) return '#3b83f6'; // Blue
+    if (runs === 6) return '#ec4899'; // Pink
+    if (runs === 3) return '#ffc33e'; // Amber
+    if (runs === 2) return '#b2e358'; // Lime
+    if (runs === 1) return '#e7ff00'; // Yellow
+    if (ball === '.') return '#f2c14b'; // Orange
+    return 'hsl(var(--muted-foreground))';
+  };
   
   const getBallDisplay = (ball: string): string => {
     if (ball.toLowerCase().includes('wd')) {
@@ -653,22 +657,21 @@ export function LiveScoringInterface({
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
         <div className="bg-gray-900 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
+            <p className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">{match.teamAName} vs {match.teamBName}</p>
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-            <p className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">{match.teamAName} vs {match.teamBName}</p>
-            
             <div className="flex items-center justify-between gap-2">
-                <Avatar className="h-12 w-12 border-2 border-white">
+                <Avatar className="h-12 w-12 border-2" style={{ borderColor: battingTeam.teamColor || '#ffc33e' }}>
                     <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
                     <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
-                    <div className="flex items-center justify-center px-4 h-full bg-[#3ecc78] rounded-l-full text-black">
+                    <div className="flex items-center justify-center px-4 h-full rounded-l-full bg-[#4848ff] text-white">
                         <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
                     <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
@@ -680,7 +683,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                <Avatar className="h-12 w-12 border-2" style={{ borderColor: bowlingTeam.teamColor }}>
+                <Avatar className="h-12 w-12 border-2" style={{ borderColor: bowlingTeam.teamColor || '#3b83f6' }}>
                     <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
                     <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
                 </Avatar>
@@ -705,32 +708,33 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
-                <div className="flex items-center justify-center gap-2">
-                    <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
-                    <span className="text-xs text-muted-foreground">{bowlerStats.runsConceded}/{bowlerStats.wickets} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
-                </div>
-                <div className="flex items-center justify-center gap-2 min-h-[24px]">
-                    {liveScore.currentOver.map((ball, i) => (
-                        <div key={i} className={cn("h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-white border-2 border-white/50", getBallColor(ball))}>
-                            {getBallDisplay(ball)}
-                        </div>
-                    ))}
+             <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
+                <div className="flex items-center justify-center gap-6 w-full">
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
+                        <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
+                        <span className="text-xs text-muted-foreground">({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5 min-h-[24px]">
+                        {liveScore.currentOver.map((ball, i) => (
+                            <div key={i} style={{ backgroundColor: getBallColor(ball) }} className="h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-black border border-white/50">
+                                {getBallDisplay(ball)}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
-            
-            {!isFirstInnings && liveScore.runs > 0 && liveScore.overs > 0 && (
-                <p className="text-center font-semibold text-yellow-400">
-                    Required Rate: {((match.firstInningsTotal! + 1 - liveScore.runs) / (20 - (liveScore.overs + (liveScore.balls / 6)))).toFixed(2)}
-                </p>
-            )}
 
-            <div className="text-center text-xs text-gray-400 flex items-center justify-around flex-wrap gap-x-4 gap-y-1">
-                <span className="flex items-center gap-1.5"><Trophy className="h-3 w-3" />{match.competitionName}</span>
-                <span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3" />{format(match.dateTime, 'd MMM yyyy | p')}</span>
-                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
-                {forecast && <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>}
-                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{isFirstInnings ? '1st Innings' : '2nd Innings'}</span>
+            <p className="text-center font-semibold text-[#ffc33e]">
+                Required Rate: {!isFirstInnings && match.firstInningsTotal != null && liveScore.overs < 20 ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - (liveScore.overs + (liveScore.balls / 6)))).toFixed(2) : '-'}
+            </p>
+
+            <div className="text-center text-xs text-gray-400 flex items-center justify-center flex-wrap gap-x-4 gap-y-1">
+                <span className="flex items-center gap-1.5"><Trophy className="h-3 w-3" />{match.competitionName}</span> |
+                <span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3" />{format(match.dateTime, 'd MMM yyyy | p')}</span> |
+                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span> |
+                {forecast && <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>} |
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{isFirstInnings ? '1st Innings' : '2nd Innings'} | {format(new Date(), 'p')}</span>
             </div>
         </div>
         <Tabs defaultValue="live">
