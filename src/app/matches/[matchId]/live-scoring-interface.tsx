@@ -653,31 +653,33 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
             
-            <h2 className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
-                {match.teamAName} v {match.teamBName}
+             <h2 className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
+                {match.teamAName} vs {match.teamBName}
             </h2>
 
             <div className="flex justify-center items-center gap-2 mx-auto">
-                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-xl">{battingTeam.abbrev}</AvatarFallback></Avatar>
+                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-xl bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
+                
                 <div className="flex items-center mx-2 h-16 shadow-lg rounded-full">
-                    <div className="px-4 py-1.5 flex-1 text-center bg-white text-black rounded-l-full h-full flex items-center">
+                    <div className="px-4 py-1.5 flex-1 text-center bg-primary text-primary-foreground rounded-l-full h-full flex items-center">
                        <p className="font-bold text-lg md:text-xl">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="px-4 py-1.5 flex-1 text-center bg-gray-900/80 rounded-r-full h-full flex items-center justify-center gap-4">
+                    <div className="px-4 py-1.5 flex-1 text-center bg-primary/80 rounded-r-full h-full flex items-center justify-center gap-4">
                         <p className="font-bold text-xl md:text-3xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-lg md:text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
-                            <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">Overs</p>
+                            <p className="text-xs uppercase tracking-wider text-primary-foreground/80 -mt-1">Overs</p>
                         </div>
                     </div>
                 </div>
-                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-xl">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
+
+                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-xl bg-gray-700">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
             
-            <div className="text-center text-sm font-semibold flex justify-around items-center">
+            <div className="text-center text-sm font-semibold flex justify-between items-center px-4">
                 <span className="text-gray-400">1st Innings: {match.firstInningsTotal || 0} ({match.firstInningsLiveScore?.overs || 0})</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
-                    <span className="text-primary font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
+                    <span className="text-white font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
                  <span className="text-gray-400">1st Innings Stats</span>
             </div>
@@ -710,14 +712,14 @@ export function LiveScoringInterface({
             
              <Separator className="bg-white/10" />
 
-            <div className="text-center text-sm text-gray-400 flex items-center justify-around flex-wrap gap-x-4 gap-y-1">
-                 <div className="flex items-center gap-2"><Trophy className="h-4 w-4" /><span>{match.competitionName}</span></div>
-                 <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{format(match.dateTime, 'dd MMM yyyy')}</span></div>
-                 <div className="flex items-center gap-2"><Clock className="h-4 w-4" /><span>Innings {liveScore.liveInnings}</span></div>
-                 <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /><span>{match.fieldName}</span></div>
+            <div className="text-center text-xs text-gray-400 flex items-center justify-around flex-wrap gap-x-4 gap-y-1">
+                 <div className="flex items-center gap-1.5"><Trophy className="h-3 w-3" /><span>{match.competitionName}</span></div>
+                 <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /><span>{format(match.dateTime, 'dd MMM yyyy')}</span></div>
+                 <div className="flex items-center gap-1.5"><Clock className="h-3 w-3" /><span>Innings {liveScore.liveInnings}</span></div>
+                 <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /><span>{match.fieldName}</span></div>
                  {forecast && <>
-                    <div className="flex items-center gap-2"><WeatherIcon condition={forecast.details.condition} className="h-4 w-4" /><span>{forecast.details.condition}</span></div>
-                    <div className="flex items-center gap-2"><Thermometer className="h-4 w-4" /><span>{forecast.details.temperature}°C</span></div>
+                    <div className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /><span>{forecast.details.condition}</span></div>
+                    <div className="flex items-center gap-1.5"><Thermometer className="h-3 w-3" /><span>{forecast.details.temperature}°C</span></div>
                  </>}
             </div>
         </div>
