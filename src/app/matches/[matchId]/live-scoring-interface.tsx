@@ -164,7 +164,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     
     if (lastNameCount > 1) {
         const firstNameInitial = nameParts[0].charAt(0);
-        return `${firstNameInitial}. ${lastName}`.toUpperCase();
+        return `${'firstNameInitial'}. ${lastName}`.toUpperCase();
     }
     
     return lastName.toUpperCase();
@@ -630,7 +630,7 @@ export function LiveScoringInterface({
   }
   
   const getBallDisplay = (ball: string): string => {
-    if (ball.toLowerCase().startsWith('wd')) {
+    if (ball.toLowerCase().includes('wd')) {
       const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
       return runs > 0 ? `${runs}WD` : 'WD';
     }
@@ -662,19 +662,31 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-            <div className="relative flex items-center h-16 bg-gray-900 rounded-full shadow-lg">
-                <div className="flex items-center justify-center px-4 h-full bg-primary text-primary-foreground rounded-full min-w-[30%]">
-                    <p className="font-bold text-lg">{battingTeam.abbrev}</p>
-                    <p className="font-bold text-lg mx-2">v</p>
-                    <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
-                </div>
-                <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
-                    <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
-                    <div className="text-left">
-                        <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
-                        <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">OVERS</p>
+             <div className="flex items-center justify-center gap-2">
+                <Avatar className="h-12 w-12 border-2 border-white/50">
+                    <AvatarImage src={match.teamALogoUrl} />
+                    <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
+                </Avatar>
+
+                <div className="relative flex items-center h-16 bg-gray-800 rounded-full shadow-lg flex-1">
+                    <div className="flex items-center justify-center px-4 h-full bg-primary text-primary-foreground rounded-full">
+                        <p className="font-bold text-lg">{battingTeam.abbrev}</p>
+                        <p className="font-bold text-lg mx-2">v</p>
+                        <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
+                        <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
+                        <div className="text-left">
+                            <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">OVERS</p>
+                        </div>
                     </div>
                 </div>
+
+                <Avatar className="h-12 w-12 border-2 border-white/50">
+                    <AvatarImage src={match.teamBLogoUrl} />
+                    <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
+                </Avatar>
             </div>
             
             <div className="text-sm font-semibold flex justify-between items-center px-4">
@@ -689,7 +701,7 @@ export function LiveScoringInterface({
                     <span className="font-bold text-base">{onStrikePlayer.name}*</span>
                     <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-1 h-8 w-1/2">
+                <div className="flex items-center justify-between px-4 py-1 h-8 w-1/2 bg-gray-700 rounded-r-full">
                     <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
                     <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm text-gray-300">({nonStrikerPlayer.balls})</span></span>
                 </div>
