@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle, Hand } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Users, Wand2, Loader2, Target, Lightbulb, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, Handshake, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, CloudRain, Cloudy, Wind, Lock, TrendingDown, ClipboardList, BarChart2, Repeat, Circle, Hand, Trophy } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, PlayerStats, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -753,12 +753,11 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
             
-             {/* Match Name Header */}
-            <p className="text-center text-xs font-semibold tracking-wider uppercase text-gray-400">
-                {match.teamAName} vs {match.teamBName}
-            </p>
+            <div className="flex justify-between items-center text-lg font-bold">
+                <p>{match.teamAName}</p>
+                <p>{match.teamBName}</p>
+            </div>
             
-            {/* Top Scoreboard */}
              <div className="flex justify-between items-center">
                 <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev}</AvatarFallback></Avatar>
                 <div className="flex-1 bg-black/50 rounded-full flex justify-between items-center text-center mx-2 px-4 py-1.5">
@@ -771,7 +770,7 @@ export function LiveScoringInterface({
 
             {/* Target/1st Innings Info */}
             <div className="text-center text-sm font-semibold flex justify-around">
-                {match.firstInningsLiveScore && <p className="text-gray-400">1st Innings: {match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets} ({match.firstInningsLiveScore.overs})</p>}
+                {match.firstInningsTotal != null && <p className="text-gray-400">1st Innings: {match.firstInningsTotal}</p>}
                 {!isFirstInnings && match.firstInningsTotal != null && <p className="text-white">TARGET: {match.firstInningsTotal + 1}</p>}
             </div>
 
@@ -808,19 +807,19 @@ export function LiveScoringInterface({
              
             {/* Footer Info */}
              <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-2 sm:gap-x-3 flex-wrap">
-                <span>{match.competitionName}</span>
+                {match.competitionName && <span className="flex items-center gap-1.5"><Trophy className="h-3 w-3" /> {match.competitionName}</span>}
                 <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span>{format(match.dateTime, 'dd MMM yyyy')}</span>
+                <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" />{format(match.dateTime, 'dd MMM yyyy')}</span>
                 <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span className="font-semibold">{isFirstInnings ? '1st' : '2nd'} Innings</span>
+                <span className="font-semibold flex items-center gap-1.5"><TrendingDown className="h-3 w-3" />{isFirstInnings ? '1st' : '2nd'} Innings</span>
                 <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span>{match.fieldName}</span>
+                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
                 {forecast && <>
                     <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                    <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /> {forecast.details.condition}, {forecast.details.temperature}°C</span>
+                    <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /> {forecast.details.condition}, <Thermometer className="h-3 w-3 ml-1" />{forecast.details.temperature}°C</span>
                 </>}
                  <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                 <span>{format(new Date(), 'p')}</span>
+                 <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{format(new Date(), 'p')}</span>
             </div>
         </div>
         
