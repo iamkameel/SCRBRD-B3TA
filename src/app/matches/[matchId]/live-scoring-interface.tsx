@@ -644,7 +644,7 @@ export function LiveScoringInterface({
     <>
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
-        <div className="bg-gray-800 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
+        <div className="bg-gray-900 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
@@ -655,14 +655,14 @@ export function LiveScoringInterface({
                 {match.competitionName}
             </h2>
             
-            <h3 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
+            <h3 className="text-center text-lg font-bold uppercase tracking-wider text-white">
                 {`${match.teamAName} v ${match.teamBName}`}
             </h3>
 
             <div className="flex justify-center items-center gap-2">
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                <div className="flex items-center h-16 shadow-lg bg-gray-900 rounded-full">
+                 <div className="flex items-center h-16 shadow-lg bg-gray-900 rounded-full">
                     <div className="bg-primary text-primary-foreground rounded-l-full h-full flex items-center px-6">
                        <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
@@ -685,7 +685,7 @@ export function LiveScoringInterface({
                 )}
             </div>
 
-            <div className="flex items-center justify-center mx-auto h-12 bg-gray-900 rounded-full max-w-lg shadow-lg px-2">
+            <div className="flex items-center justify-center mx-auto h-10 bg-gray-900 rounded-full max-w-lg shadow-lg px-2">
                 <div className={cn("flex-1 flex items-center justify-between px-4 py-1 rounded-full bg-primary text-white")}>
                     <span className="font-bold text-lg">{onStrikePlayer.name}*</span>
                     <span className="text-lg">{onStrikePlayer.runs} <span className="text-base text-gray-300">({onStrikePlayer.balls})</span></span>
@@ -864,9 +864,6 @@ export function LiveScoringInterface({
                                               <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
                                               <CornerUpLeft className="h-4 w-4" /> Round the Wicket
                                           </Label>
-                                           <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleChangeBowler} disabled={isPending || isSimulating}>
-                                              <Repeat className="mr-1 h-3 w-3" /> Change Bowler
-                                          </Button>
                                       </RadioGroup>
                                       <div className="flex justify-center pt-4">
                                           <WagonWheel
@@ -926,6 +923,10 @@ export function LiveScoringInterface({
                                   <Button onClick={() => setIsUndoDialogOpen(true)} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
                                       <Undo className="mr-2 h-4 w-4" />
                                       Undo Last Ball
+                                  </Button>
+                                   <Button onClick={handleChangeBowler} variant="secondary" className="w-full" disabled={isPending || isSimulating}>
+                                      <Repeat className="mr-2 h-4 w-4" />
+                                      Change Bowler
                                   </Button>
                                   <Button onClick={handleEndInnings} className="w-full" disabled={!canEndInnings || isPending || isSimulating}>
                                       {isFirstInnings ? "End Innings" : "End Match"}
