@@ -791,12 +791,16 @@ export function LiveScoringInterface({
             
             {/* Bowler and Recent Balls */}
             <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 text-center text-sm font-sans">
-                 <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
+                <div className="flex flex-col items-center">
+                    <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
+                </div>
                 <RecentBalls history={liveScore.currentOver || []} />
             </div>
             
+             <Separator className="bg-white/10 my-2" />
+
             {/* Dynamic Context */}
-            <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-1">
+            <div className="text-center text-sm text-green-400 font-semibold pt-1 pb-1">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
             
@@ -977,7 +981,7 @@ export function LiveScoringInterface({
                               <CardHeader>
                                   <CardTitle>Win Probability</CardTitle>
                               </CardHeader>
-                              <CardContent className="min-h-[10rem] flex flex-col justify-center">
+                               <CardContent className="min-h-[10rem] flex flex-col justify-center">
                                   {isGeneratingUpdate ? (
                                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -1096,3 +1100,4 @@ export function LiveScoringInterface({
     </>
   );
 }
+
