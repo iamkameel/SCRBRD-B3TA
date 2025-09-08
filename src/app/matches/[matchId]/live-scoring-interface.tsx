@@ -662,8 +662,8 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
 
-            <div className="relative flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
-                <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-full min-w-[30%]">
+            <div className="relative flex items-center h-16 bg-gray-900 rounded-full shadow-lg">
+                <div className="flex items-center justify-center px-4 h-full bg-primary text-primary-foreground rounded-full min-w-[30%]">
                     <p className="font-bold text-lg">{battingTeam.abbrev}</p>
                     <p className="font-bold text-lg mx-2">v</p>
                     <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
@@ -697,8 +697,8 @@ export function LiveScoringInterface({
             
              <div className="flex flex-col items-center justify-center space-y-2 text-sm text-gray-300 px-4">
                 <div className="flex items-center justify-center gap-2">
-                    <span>{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
-                    <span className="text-xs">{bowlerStats.runsConceded}/{bowlerStats.wickets} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
+                    <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
+                    <span className="text-xs text-muted-foreground">{bowlerStats.runsConceded}/{bowlerStats.wickets} ({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
                 </div>
                 <div className="flex items-center justify-center gap-2 min-h-[24px]">
                     {liveScore.currentOver.map((ball, i) => (
