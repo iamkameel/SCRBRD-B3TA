@@ -629,15 +629,14 @@ export function LiveScoringInterface({
   }
   
   const getBallDisplay = (ball: string): string => {
+    const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
     if (ball.toLowerCase().startsWith('wd')) {
-      const runs = parseInt(ball.substring(2));
-      return isNaN(runs) || runs === 0 ? 'WD' : `${'\'\'\''}${runs}WD`;
+      return runs > 0 ? `${runs}WD` : 'WD';
     }
      if (ball.toLowerCase().startsWith('nb')) {
-      const runs = parseInt(ball.substring(2));
-      return isNaN(runs) || runs === 0 ? 'NB' : `${'\'\'\''}${runs}NB`;
+      return runs > 0 ? `${runs}NB` : 'NB';
     }
-    return ball;
+    return ball.toUpperCase();
   }
 
   if (!canLiveScore) {
@@ -660,21 +659,23 @@ export function LiveScoringInterface({
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-            <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-400">
+            <h2 className="text-center text-sm font-bold uppercase tracking-wider text-gray-400">
                 {match.teamAName} v {match.teamBName}
             </h2>
             <div className="flex justify-center items-center gap-2">
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                 <div className="relative flex items-center h-16 shadow-lg bg-gray-800 rounded-full">
-                    <div className="flex items-center h-full px-6 bg-primary text-primary-foreground rounded-l-full">
-                       <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
+                 <div className="relative flex items-center h-16 shadow-lg bg-gray-800 rounded-full px-2">
+                    <div className="flex items-center justify-between h-full px-4 bg-primary text-primary-foreground rounded-full min-w-[12rem]">
+                       <p className="font-bold text-lg">{battingTeam.abbrev}</p>
+                       <p className="font-bold text-lg">v</p>
+                       <p className="font-bold text-lg">{bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="flex items-center justify-center gap-4 h-full px-6 bg-primary/80 text-primary-foreground rounded-r-full">
+                    <div className="flex items-center justify-center gap-4 h-full px-6">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
-                            <p className="text-xs uppercase tracking-wider text-primary-foreground/80 -mt-1">Overs</p>
+                            <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">Overs</p>
                         </div>
                     </div>
                 </div>
@@ -688,14 +689,14 @@ export function LiveScoringInterface({
                 )}
             </div>
 
-            <div className="flex items-center justify-center mx-auto h-10 bg-gray-800 rounded-full max-w-lg shadow-lg px-1">
-                <div className={cn("flex-1 flex items-center justify-between px-4 py-1 rounded-full bg-primary text-white")}>
-                    <span className="font-bold text-lg">{onStrikePlayer.name}*</span>
-                    <span className="text-lg">{onStrikePlayer.runs} <span className="text-base text-gray-300">({onStrikePlayer.balls})</span></span>
+            <div className="flex items-center justify-center mx-auto h-10 bg-gray-800 rounded-full max-w-lg shadow-lg relative p-1">
+                <div className={cn("absolute left-1 flex items-center justify-between px-4 py-1 h-8 rounded-full bg-primary text-white w-1/2")}>
+                    <span className="font-bold text-base">{onStrikePlayer.name}*</span>
+                    <span className="text-base">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="flex-1 flex items-center justify-between px-4 py-1 rounded-full bg-gray-700">
-                    <span className="font-bold text-lg opacity-80">{nonStrikerPlayer.name}</span>
-                    <span className="text-lg opacity-80">{nonStrikerPlayer.runs} <span className="text-base text-gray-300">({nonStrikerPlayer.balls})</span></span>
+                <div className="absolute right-1 flex items-center justify-between px-4 py-1 h-8 w-1/2">
+                    <span className="font-bold text-base opacity-80">{nonStrikerPlayer.name}</span>
+                    <span className="text-base opacity-80">{nonStrikerPlayer.runs} <span className="text-sm text-gray-300">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
