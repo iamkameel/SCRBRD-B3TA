@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -632,6 +632,7 @@ export function LiveScoringInterface({
       return runs > 0 ? `${runs}WD` : 'WD';
     }
      if (ball.toLowerCase().startsWith('nb')) {
+      const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
       return runs > 0 ? `${runs}NB` : 'NB';
     }
     return ball.toUpperCase();
@@ -661,8 +662,8 @@ export function LiveScoringInterface({
             <p className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">{match.teamAName} vs {match.teamBName}</p>
 
              <div className="flex items-center justify-between gap-2">
-                <Avatar className="h-12 w-12 border-2 border-yellow-400">
-                    <AvatarFallback style={{ backgroundColor: '#fbbd23', color: '#000000' }}>{battingTeam.abbrev}</AvatarFallback>
+                <Avatar className="h-12 w-12 border-2" style={{ borderColor: battingTeam.teamColor }}>
+                    <AvatarFallback style={{ backgroundColor: battingTeam.teamColor, color: '#ffffff' }}>{battingTeam.abbrev}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
@@ -678,8 +679,8 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                <Avatar className="h-12 w-12 border-2 border-[#4848ff]">
-                    <AvatarFallback style={{ backgroundColor: '#4848ff', color: '#ffffff' }}>{bowlingTeam.abbrev}</AvatarFallback>
+                <Avatar className="h-12 w-12 border-2" style={{ borderColor: bowlingTeam.teamColor }}>
+                    <AvatarFallback style={{ backgroundColor: bowlingTeam.teamColor, color: '#ffffff' }}>{bowlingTeam.abbrev}</AvatarFallback>
                 </Avatar>
             </div>
             
@@ -723,8 +724,7 @@ export function LiveScoringInterface({
             )}
 
             <div className="text-center text-xs text-gray-400 flex items-center justify-around flex-wrap gap-x-4 gap-y-1">
-                 <p>{match.competitionName} | {format(match.dateTime, 'd MMM yyyy | p')} | {match.fieldName} | {forecast?.details.condition}, {forecast?.details.temperature}°C</p>
-                 <p>2nd Innings | 12:42PM</p>
+                 <p>{match.competitionName} | {format(match.dateTime, 'd MMM yyyy | p')} | {match.fieldName} | {forecast?.details.condition}, {forecast?.details.temperature}°C | 2nd Innings | 12:42PM</p>
             </div>
         </div>
         <Tabs defaultValue="live">
