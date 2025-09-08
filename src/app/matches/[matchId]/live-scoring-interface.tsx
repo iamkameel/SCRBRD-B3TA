@@ -654,14 +654,14 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
             
              <h2 className="text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
-                {match.teamAName} vs {match.teamBName}
+                {isFirstInnings ? `${match.teamAName} vs ${match.teamBName}` : `${match.teamBName} vs ${match.teamAName}`}
             </h2>
 
             <div className="flex justify-center items-center gap-2 mx-auto">
                 <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-xl bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                <div className="flex items-center mx-2 h-16 shadow-lg rounded-full">
-                    <div className="px-4 py-1.5 flex-1 text-center bg-primary text-primary-foreground rounded-l-full h-full flex items-center">
+                 <div className="flex items-center mx-2 h-16 shadow-lg rounded-full">
+                    <div className="px-4 py-1.5 flex-1 text-center bg-white text-gray-900 rounded-l-full h-full flex items-center">
                        <p className="font-bold text-lg md:text-xl">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
                     <div className="px-4 py-1.5 flex-1 text-center bg-primary/80 rounded-r-full h-full flex items-center justify-center gap-4">
@@ -677,15 +677,14 @@ export function LiveScoringInterface({
             </div>
             
             <div className="text-center text-sm font-semibold flex justify-between items-center px-4">
-                <span className="text-gray-400">1st Innings: {match.firstInningsTotal || 0} ({match.firstInningsLiveScore?.overs || 0})</span>
+                <span className="text-gray-400">1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-white font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
-                 <span className="text-gray-400">1st Innings Stats</span>
             </div>
 
             <div className="flex items-center mx-auto h-12 bg-black/40 rounded-full max-w-lg shadow-lg px-2">
-                <div className={cn("flex-1 flex items-center justify-between px-4 py-1.5 rounded-full bg-green-600 text-white")}>
+                <div className={cn("flex-1 flex items-center justify-between px-4 py-1.5 rounded-full bg-primary text-white")}>
                     <span className="font-bold text-lg">{onStrikePlayer.name}*</span>
                     <span className="text-lg">{onStrikePlayer.runs} <span className="text-sm text-gray-300">({onStrikePlayer.balls})</span></span>
                 </div>

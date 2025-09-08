@@ -1,11 +1,12 @@
 
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import MatchDetailsClient from './client';
 import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
 import { getPlayers, getPerson, getPeopleByRole } from '@/lib/actions/players';
-import { getTeamRoster, getTeams, isTeamManagerOrAdmin, getTeam } from '@/lib/actions/teams';
+import { getTeamRoster, isTeamManagerOrAdmin, getTeam } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import type { RosterMember, PlayerStats, RosterMemberWithStats, Lineup, Team, School } from '@/lib/data';
 import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
