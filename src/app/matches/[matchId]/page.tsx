@@ -1,5 +1,4 @@
 
-
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -41,7 +40,7 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     }));
   };
   
-  const getTeamWithAbbreviation = async (teamId: string): Promise<Team & { abbreviation?: string } | null> => {
+  const getTeamWithAbbreviation = async (teamId: string): Promise<(Team & { abbreviation?: string }) | null> => {
     const team = await getTeam(teamId);
     if (!team) return null;
     const school = await getSchool(team.schoolId);

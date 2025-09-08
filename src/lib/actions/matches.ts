@@ -11,11 +11,12 @@ import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setD
 import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle, BatsmanStats, Lineup, Partnership } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
-import { getTeamRoster, getTeams, isTeamManagerOrAdmin } from './teams';
+import { getTeamRoster, getTeams, isTeamManagerOrAdmin, getTeam } from './teams';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
 import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-match-flow';
 import { logAuditEvent } from './audit';
+import { getSchool } from './schools';
 
 export const getMatches = cache(async (): Promise<Match[]> => {
   const userId = await getUserId();

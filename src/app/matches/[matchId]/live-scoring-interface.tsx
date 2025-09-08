@@ -759,14 +759,14 @@ export function LiveScoringInterface({
             </p>
             
             {/* Top Scoreboard */}
-            <div className="flex justify-between items-center">
-                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback></Avatar>
+             <div className="flex justify-between items-center">
+                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev}</AvatarFallback></Avatar>
                 <div className="flex-1 bg-black/50 rounded-full flex justify-between items-center text-center mx-2 px-4 py-1.5">
-                    <p className="font-bold text-lg">{bowlingTeam.abbrev} v {battingTeam.abbrev}</p>
+                    <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     <p className="font-bold text-2xl">{liveScore.runs}/{liveScore.wickets}</p>
                     <p className="text-sm">{liveScore.overs}.{liveScore.balls || 0} <span className="text-xs">Overs</span></p>
                 </div>
-                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev}</AvatarFallback></Avatar>
+                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
 
             {/* Target/1st Innings Info */}
@@ -797,13 +797,15 @@ export function LiveScoringInterface({
                 <RecentBalls history={liveScore.currentOver || []} />
             </div>
             
-             <Separator className="bg-white/10 my-2" />
+            <Separator className="bg-white/10 my-2" />
 
             {/* Dynamic Context */}
             <div className="text-center text-sm text-green-400 font-semibold pt-1 pb-1">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
             
+             <Separator className="bg-white/10 my-2" />
+             
             {/* Footer Info */}
              <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-2 sm:gap-x-3 flex-wrap">
                 <span>{match.competitionName}</span>
@@ -1100,4 +1102,3 @@ export function LiveScoringInterface({
     </>
   );
 }
-
