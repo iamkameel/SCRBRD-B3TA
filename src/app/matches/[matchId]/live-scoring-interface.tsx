@@ -753,28 +753,34 @@ export function LiveScoringInterface({
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
             
-            <div className="flex justify-between items-center text-lg font-bold">
-                <p>{match.teamAName}</p>
-                <p>{match.teamBName}</p>
+            <div className="flex justify-between items-center text-sm font-semibold">
+                <p className="w-1/3 text-left truncate">{match.teamAName}</p>
+                <p className="w-1/3 text-center truncate">{match.competitionName}</p>
+                <p className="w-1/3 text-right truncate">{match.teamBName}</p>
             </div>
             
-             <div className="flex justify-between items-center">
-                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback>{battingTeam.abbrev}</AvatarFallback></Avatar>
-                <div className="flex-1 bg-black/50 rounded-full flex justify-between items-center text-center mx-2 px-4 py-1.5">
-                    <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
-                    <p className="font-bold text-2xl">{liveScore.runs}/{liveScore.wickets}</p>
-                    <p className="text-sm">{liveScore.overs}.{liveScore.balls || 0} <span className="text-xs">Overs</span></p>
+            <div className="flex justify-between items-center">
+                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-xl">{battingTeam.abbrev}</AvatarFallback></Avatar>
+                <div className="flex-1 bg-black/50 rounded-full flex justify-around items-center text-center mx-2 px-1 py-1.5 h-16">
+                    <p className="font-bold text-lg md:text-2xl flex-1 text-right pr-4">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
+                    <Separator orientation="vertical" className="h-full bg-white/20" />
+                    <p className="font-bold text-xl md:text-3xl flex-1">{liveScore.runs}/{liveScore.wickets}</p>
+                    <Separator orientation="vertical" className="h-full bg-white/20" />
+                    <div className="flex-1 text-left pl-4">
+                        <p className="font-bold text-lg md:text-2xl">{liveScore.overs}.{liveScore.balls || 0}</p>
+                        <p className="text-xs uppercase tracking-wider text-gray-400 -mt-1">Overs</p>
+                    </div>
                 </div>
-                <Avatar className="h-10 w-10 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback></Avatar>
+                <Avatar className="h-12 w-12 border-2 border-white/20"><AvatarImage src={bowlingTeam.logoUrl} /><AvatarFallback className="text-xl">{bowlingTeam.abbrev}</AvatarFallback></Avatar>
             </div>
 
-            {/* Target/1st Innings Info */}
-            <div className="text-center text-sm font-semibold flex justify-around">
-                {match.firstInningsTotal != null && <p className="text-gray-400">1st Innings: {match.firstInningsTotal}</p>}
-                {!isFirstInnings && match.firstInningsTotal != null && <p className="text-white">TARGET: {match.firstInningsTotal + 1}</p>}
-            </div>
-
-            {/* Batsmen Bar */}
+            {match.firstInningsTotal != null && (
+                <div className="text-center text-xs font-semibold flex justify-around uppercase tracking-wider">
+                    <p className="text-gray-400">1st Innings: {match.firstInningsTotal}</p>
+                    {!isFirstInnings && <p className="text-white">TARGET: {match.firstInningsTotal + 1}</p>}
+                </div>
+            )}
+            
             <div className="flex justify-center w-full">
                 <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
                     <div className="px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center bg-primary">
@@ -788,7 +794,6 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            {/* Bowler and Recent Balls */}
             <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 text-center text-sm font-sans">
                 <div className="flex flex-col items-center">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
@@ -797,29 +802,23 @@ export function LiveScoringInterface({
             </div>
             
             <Separator className="bg-white/10 my-2" />
-
-            {/* Dynamic Context */}
+            
             <div className="text-center text-sm text-green-400 font-semibold pt-1 pb-1">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
             
-             <Separator className="bg-white/10 my-2" />
+            <Separator className="bg-white/10 my-2" />
              
-            {/* Footer Info */}
              <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-2 sm:gap-x-3 flex-wrap">
-                {match.competitionName && <span className="flex items-center gap-1.5"><Trophy className="h-3 w-3" /> {match.competitionName}</span>}
+                <span className="flex items-center gap-1.5"><TrendingDown className="h-3 w-3" />{isFirstInnings ? '1st' : '2nd'} Innings</span>
                 <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" />{format(match.dateTime, 'dd MMM yyyy')}</span>
-                <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                <span className="font-semibold flex items-center gap-1.5"><TrendingDown className="h-3 w-3" />{isFirstInnings ? '1st' : '2nd'} Innings</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{format(new Date(), 'p')}</span>
                 <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
                 <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span>
                 {forecast && <>
                     <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
                     <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /> {forecast.details.condition}, <Thermometer className="h-3 w-3 ml-1" />{forecast.details.temperature}°C</span>
                 </>}
-                 <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
-                 <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{format(new Date(), 'p')}</span>
             </div>
         </div>
         
@@ -943,7 +942,7 @@ export function LiveScoringInterface({
                                           <CardTitle>Scoring Controls</CardTitle>
                                           <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
                                       </div>
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-1 rounded-md bg-muted p-1">
                                           <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Team</Button>
                                           <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">On-strike</Button>
                                           <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Non-striker</Button>

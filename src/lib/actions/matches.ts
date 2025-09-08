@@ -37,24 +37,21 @@ export const getMatches = cache(async (): Promise<Match[]> => {
   }
 
   try {
-    const [teams, matchSnapshot] = await Promise.all([
-      getTeams(),
-      getDocs(q),
-    ]);
+    const teamsData = await getTeams();
+    const teams = new Map(teamsData.map(t => [t.teamId, t]));
     
-    const teamInfoMap = new Map<string, Team>();
-    teams.forEach(team => {
-      teamInfoMap.set(team.teamId, team);
-    });
+    const matchSnapshot = await getDocs(q);
 
     const matchesList = matchSnapshot.docs.map(doc => {
       const data = doc.data();
-      const teamA = teamInfoMap.get(data.teamAId);
-      const teamB = teamInfoMap.get(data.teamBId);
+      const teamA = teams.get(data.teamAId);
+      const teamB = teams.get(data.teamBId);
       return {
         matchId: doc.id,
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
+        teamAAbbreviation: teamA?.abbreviation,
+        teamBAbbreviation: teamB?.abbreviation,
         teamAColor: teamA?.teamColors?.primary,
         teamBColor: teamB?.teamColors?.secondary,
         teamALogoUrl: teamA?.logoUrl,
@@ -69,21 +66,27 @@ export const getMatches = cache(async (): Promise<Match[]> => {
 });
 
 export const getMatch = cache(async (matchId: string): Promise<Match | null> => {
-  const userId = await getUserId();
-  if (!userId) return null;
+  if (!matchId) return null;
   try {
     const matchDocRef = doc(db, 'matches', matchId);
     const matchSnap = await getDoc(matchDocRef);
 
-    if (!matchSnap.exists()) { // No need to check userId here, allow any authenticated user to view
+    if (!matchSnap.exists()) {
       return null;
     }
 
     const data = matchSnap.data();
+    const [teamA, teamB] = await Promise.all([
+        getTeam(data.teamAId),
+        data.teamBId ? getTeam(data.teamBId) : Promise.resolve(null),
+    ]);
+
     return {
       matchId: matchSnap.id,
       ...data,
       dateTime: (data.dateTime as Timestamp).toDate(),
+      teamAAbbreviation: teamA?.schoolAbbreviation,
+      teamBAbbreviation: teamB?.schoolAbbreviation,
     } as Match;
   } catch (error) {
     console.error(`Error fetching match with ID ${matchId}:`, error);
