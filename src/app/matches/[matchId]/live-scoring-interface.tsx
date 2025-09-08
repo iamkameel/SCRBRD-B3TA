@@ -556,8 +556,8 @@ export function LiveScoringInterface({
   const batsmenOut = liveScore.batsmenOut || [];
   
   const isFirstInnings = liveScore.liveInnings === 1;
-  const battingTeam = isFirstInnings ? { id: match.teamAId, name: match.teamAName, abbrev: match.teamAName.substring(0,4).toUpperCase(), logoUrl: match.teamALogoUrl } : { id: match.teamBId, name: match.teamBName, abbrev: match.teamBName.substring(0,4).toUpperCase(), logoUrl: match.teamBLogoUrl };
-  const bowlingTeam = isFirstInnings ? { id: match.teamBId, name: match.teamBName, abbrev: match.teamBName.substring(0,4).toUpperCase(), logoUrl: match.teamBLogoUrl } : { id: match.teamAId, name: match.teamAName, abbrev: match.teamAName.substring(0,4).toUpperCase(), logoUrl: match.teamALogoUrl };
+  const battingTeam = isFirstInnings ? { id: match.teamAId, name: match.teamAName, abbrev: match.teamAName.substring(0,4).toUpperCase(), logoUrl: match.teamALogoUrl, teamColor: match.teamAColor } : { id: match.teamBId, name: match.teamBName, abbrev: match.teamBName.substring(0,4).toUpperCase(), logoUrl: match.teamBLogoUrl, teamColor: match.teamBColor };
+  const bowlingTeam = isFirstInnings ? { id: match.teamBId, name: match.teamBName, abbrev: match.teamBName.substring(0,4).toUpperCase(), logoUrl: match.teamBLogoUrl, teamColor: match.teamBColor } : { id: match.teamAId, name: match.teamAName, abbrev: match.teamAName.substring(0,4).toUpperCase(), logoUrl: match.teamALogoUrl, teamColor: match.teamAColor };
   const battingTeamRoster = isFirstInnings ? teamARoster : teamBRoster;
   const bowlingTeamRoster = isFirstInnings ? teamBRoster : teamARoster;
 
@@ -752,11 +752,13 @@ export function LiveScoringInterface({
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
+            
+            {/* Top Scoreboard */}
             <div className="grid grid-cols-3 items-start gap-2">
                 <div className="text-left space-y-1">
-                    <p className="font-bold text-sm leading-tight uppercase">{battingTeam.name}</p>
+                    <p className="font-bold text-sm leading-tight uppercase truncate">{battingTeam.name}</p>
                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-green-500/50 border-2 border-green-400 flex items-center justify-center font-bold text-sm">
+                        <div className="w-8 h-8 rounded-full border-2 border-green-400 flex items-center justify-center font-bold text-sm" style={{ backgroundColor: battingTeam.teamColor || '#10B981'}}>
                             <Avatar className="h-8 w-8"><AvatarImage src={battingTeam.logoUrl} /></Avatar>
                         </div>
                         <p className="font-bold text-4xl tracking-tighter">{liveScore.runs}-{liveScore.wickets}</p>
@@ -767,14 +769,14 @@ export function LiveScoringInterface({
                     <p className="font-bold text-4xl tracking-tighter">{liveScore.overs}.{liveScore.balls || 0}</p>
                 </div>
                 <div className="text-right space-y-1">
-                    <p className="font-bold text-sm leading-tight uppercase">{bowlingTeam.name}</p>
+                    <p className="font-bold text-sm leading-tight uppercase truncate">{bowlingTeam.name}</p>
                      <div className="flex items-center justify-end gap-2">
                         {isFirstInnings ? (
                           <p className="text-4xl font-bold tracking-tighter text-gray-600">-</p>
                         ) : (
                           <>
                             <p className="font-bold text-4xl tracking-tighter">{match.firstInningsLiveScore?.runs}-{match.firstInningsLiveScore?.wickets}</p>
-                             <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center font-bold text-sm">
+                             <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center font-bold text-sm" style={{ backgroundColor: bowlingTeam.teamColor || '#FFFFFF'}}>
                                 <Avatar className="h-8 w-8"><AvatarImage src={bowlingTeam.logoUrl} /></Avatar>
                             </div>
                           </>
@@ -788,9 +790,10 @@ export function LiveScoringInterface({
                 </div>
             </div>
 
-             <div className="flex justify-center w-full">
+            {/* Batsmen Bar */}
+            <div className="flex justify-center w-full">
                 <div className="bg-black/20 rounded-full my-2 flex items-center text-sm font-semibold p-1 w-full md:w-4/5">
-                    <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center", onStrikeBatsmanId && "bg-green-500")}>
+                    <div className={cn("px-4 py-1.5 rounded-full flex-1 text-center flex justify-between items-center bg-primary")}>
                         <span className="font-bold truncate">{onStrikePlayer.name}</span>
                         <span className="font-mono text-sm ml-2">{onStrikePlayer.runs}({onStrikePlayer.balls})</span>
                     </div>
@@ -801,6 +804,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
+            {/* Bowler and Recent Balls */}
             <div className="text-center text-sm font-sans flex items-center justify-center gap-4">
                  <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}: {bowlerFigures} ({bowlerOvers})</span>
                 <div className="flex items-center justify-center">
@@ -808,32 +812,27 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
+            {/* Dynamic Context (RRR etc) */}
             <div className="text-center text-sm text-green-400 font-semibold pt-2 pb-1">
                 <DynamicContextBar liveScore={liveScore} match={match} />
             </div>
 
+            {/* Footer Info */}
             <Separator className="bg-white/10 my-1" />
-
-            <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-3">
+            <div className="text-center text-xs text-gray-400 flex items-center justify-center gap-x-3 flex-wrap">
                 <span className="font-semibold">{isFirstInnings ? '1st' : '2nd'} Innings</span>
-                <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
                 <span>{format(new Date(), 'p')}</span>
-                <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
                 <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {match.fieldName}</span>
                  {forecast && <>
-                    <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                    <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
                     <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" /> {forecast.details.condition}, {forecast.details.temperature}°C</span>
                 </>}
                  {!isFirstInnings && match.firstInningsTotal != null && (
                      <>
-                        <Separator orientation="vertical" className="h-4 bg-gray-600" />
+                        <Separator orientation="vertical" className="h-4 bg-gray-600 hidden sm:block" />
                         <span className="font-bold">TARGET: {match.firstInningsTotal + 1}</span>
-                    </>
-                 )}
-                 {match.tossWinnerId && (
-                     <>
-                        <Separator orientation="vertical" className="h-4 bg-gray-600" />
-                        <span className="text-xs">Toss: {match.teamAId === match.tossWinnerId ? match.teamAName : match.teamBName} chose to {match.tossDecision}</span>
                     </>
                  )}
             </div>

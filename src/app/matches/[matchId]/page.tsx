@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import type { RosterMember, PlayerStats, RosterMemberWithStats, Lineup } from '@/lib/data';
 import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import { getUserId } from '@/lib/auth';
+import { getMatchForecast } from '@/lib/actions/analysis';
 
 export default async function MatchDetailsPage({ params }: { params: { matchId: string } }) {
   const { matchId } = params;
