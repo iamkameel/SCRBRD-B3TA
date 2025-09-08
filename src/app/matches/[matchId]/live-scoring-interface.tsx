@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -164,7 +163,7 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     
     if (lastNameCount > 1) {
         const firstNameInitial = nameParts[0].charAt(0);
-        return `${firstNameInitial}. ${lastName}`.toUpperCase();
+        return `${'\'\'\''}${firstNameInitial}. ${lastName}`.toUpperCase();
     }
     
     return lastName.toUpperCase();
@@ -292,14 +291,14 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
     // Correctly calculating overs for career view from decimal
     const careerOversInt = Math.floor(careerStats.oversBowled);
     const careerBalls = Math.round((careerStats.oversBowled - careerOversInt) * 10);
-    const careerOversDisplay = `${careerOversInt}.${careerBalls}`;
+    const careerOversDisplay = `${'\'\'\''}${careerOversInt}.${careerBalls}`;
 
     const stats = statsView === 'match' ? matchStats : {
         ...careerStats,
         oversDisplay: careerOversDisplay,
     };
     
-    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${player.physicalAttributes.bowlingHand}-arm` : '';
+    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${'\'\'\''}${player.physicalAttributes.bowlingHand}-arm` : '';
     const bowlingStyle = player.physicalAttributes?.bowlingStyles?.join(', ');
 
     return (
@@ -316,7 +315,7 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
           </div>
         </div>
         <div className="grid grid-cols-5 gap-1 text-center mt-2 text-xs">
-          <div><strong>O</strong><br />{statsView === 'match' ? `${stats.overs || 0}.${stats.balls || 0}` : stats.oversDisplay}</div>
+          <div><strong>O</strong><br />{statsView === 'match' ? `${'\'\'\''}${stats.overs || 0}.${stats.balls || 0}` : stats.oversDisplay}</div>
           <div><strong>M</strong><br />{stats.maidens || 0}</div>
           <div><strong>R</strong><br />{stats.runsConceded || 0}</div>
           <div><strong>W</strong><br />{stats.wicketsTaken || stats.wickets || 0}</div>
@@ -632,11 +631,11 @@ export function LiveScoringInterface({
   const getBallDisplay = (ball: string): string => {
     if (ball.toLowerCase().startsWith('wd')) {
       const runs = parseInt(ball.substring(2));
-      return isNaN(runs) || runs === 0 ? 'WD' : `${runs}WD`;
+      return isNaN(runs) || runs === 0 ? 'WD' : `${'\'\'\''}${runs}WD`;
     }
      if (ball.toLowerCase().startsWith('nb')) {
       const runs = parseInt(ball.substring(2));
-      return isNaN(runs) || runs === 0 ? 'NB' : `${runs}NB`;
+      return isNaN(runs) || runs === 0 ? 'NB' : `${'\'\'\''}${runs}NB`;
     }
     return ball;
   }
