@@ -657,11 +657,11 @@ export function LiveScoringInterface({
             <div className="flex justify-center items-center gap-2">
                 <Avatar className="h-14 w-14 border-2 border-white/20"><AvatarImage src={battingTeam.logoUrl} /><AvatarFallback className="text-lg bg-gray-700">{battingTeam.abbrev}</AvatarFallback></Avatar>
                 
-                <div className="flex items-center h-16 shadow-lg rounded-full bg-gray-900/80">
-                    <div className="px-6 py-1.5 flex-1 text-center bg-primary text-primary-foreground rounded-l-full h-full flex items-center">
+                <div className="flex items-center h-16 shadow-lg bg-gray-900/80 rounded-full">
+                    <div className="bg-primary text-primary-foreground rounded-l-full h-full flex items-center px-6">
                        <p className="font-bold text-lg">{battingTeam.abbrev} v {bowlingTeam.abbrev}</p>
                     </div>
-                    <div className="px-6 py-1.5 flex-1 text-center h-full flex items-center justify-center gap-4 bg-primary/80 rounded-r-full">
+                    <div className="bg-primary/80 rounded-r-full h-full flex items-center justify-center gap-4 px-6">
                         <p className="font-bold text-4xl">{liveScore.runs}/{liveScore.wickets}</p>
                         <div className="text-left">
                             <p className="font-bold text-xl">{liveScore.overs}.{liveScore.balls || 0}</p>
