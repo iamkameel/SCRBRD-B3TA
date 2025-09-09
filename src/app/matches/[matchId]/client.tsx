@@ -284,11 +284,14 @@ export default function MatchDetailsClient({
   
   const playersInMatch = React.useMemo(() => {
     const allPlayers = new Map<string, { name: string; teamName: string }>();
-    (teamALineup?.playingXI || []).forEach(playerId => {
+    const lineupA = teamALineup || { playingXI: [], twelfthMan: null };
+    const lineupB = teamBLineup || { playingXI: [], twelfthMan: null };
+
+    lineupA.playingXI.forEach(playerId => {
         const player = teamARosterWithStats.find(p => p.personId === playerId);
         if (player) allPlayers.set(playerId, { name: player.personName, teamName: match.teamAName });
     });
-     (teamBLineup?.playingXI || []).forEach(playerId => {
+     lineupB.playingXI.forEach(playerId => {
         const player = teamBRosterWithStats.find(p => p.personId === playerId);
         if (player) allPlayers.set(playerId, { name: player.personName, teamName: match.teamBName });
     });
@@ -600,16 +603,27 @@ export default function MatchDetailsClient({
             </TabsContent>
             
             <TabsContent value="visuals" className="mt-4">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <ManhattanChart data={firstInningsData || innings1} />
-                    <WagonWheelCard data={firstInningsData || innings1} />
-                    <RunMapCard data={firstInningsData || innings1} roster={teamARosterWithStats} />
-
-                    <ManhattanChart data={secondInningsData || innings2} />
-                    <WagonWheelCard data={secondInningsData || innings2} />
-                    <RunMapCard data={secondInningsData || innings2} roster={teamBRosterWithStats} />
-                 </div>
-                 <div className="mt-4">
+                <div className="space-y-4">
+                    <Tabs defaultValue="innings1" className="w-full">
+                        <TabsList>
+                            <TabsTrigger value="innings1">{match.teamAName}</TabsTrigger>
+                            <TabsTrigger value="innings2" disabled={!secondInnings && !secondInningsData}>{match.teamBName}</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="innings1" className="mt-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                <ManhattanChart data={firstInningsData || innings1} />
+                                <WagonWheelCard data={firstInningsData || innings1} />
+                                <RunMapCard data={firstInningsData || innings1} roster={teamARosterWithStats} />
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="innings2" className="mt-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                <ManhattanChart data={secondInningsData || innings2} />
+                                <WagonWheelCard data={secondInningsData || innings2} />
+                                <RunMapCard data={secondInningsData || innings2} roster={teamBRosterWithStats} />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
                     <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
                 </div>
             </TabsContent>
