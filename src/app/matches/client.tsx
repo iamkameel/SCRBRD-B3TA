@@ -3,13 +3,13 @@
 'use client';
 
 import * as React from "react";
+import Link from 'next/link';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal, Edit, Lock, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 
 import { cn } from "@/lib/utils";
@@ -42,14 +42,14 @@ import { assignOfficialToMatchAction, removeOfficialFromMatchAction } from '@/li
 import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, generateOppositionAnalysisAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput, RosterMemberWithStats, Lineup } from "@/lib/data";
-import { Scorecard } from "./scorecard";
+import { Scorecard } from "./[matchId]/scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LiveScoringInterface } from "./live-scoring-interface";
+import { LiveScoringInterface } from "./[matchId]/live-scoring-interface";
 import { useAuth } from "@/lib/auth-context";
-import { ManhattanChart, WormChart, WagonWheelCard, RunMapCard } from "./match-charts";
-import { PlayerAvailabilityCard } from './player-availability-card';
-import { AvailabilityStatusCard } from "./availability-status-card";
-import { LineupManager } from "./manage/lineup-manager";
+import { ManhattanChart, WormChart, WagonWheelCard, RunMapCard } from "./[matchId]/match-charts";
+import { PlayerAvailabilityCard } from './[matchId]/player-availability-card';
+import { AvailabilityStatusCard } from "./[matchId]/availability-status-card";
+import { LineupManager } from "./[matchId]/manage/lineup-manager";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -504,7 +504,7 @@ export default function MatchDetailsClient({
             <TabsContent value="scorecard" className="mt-4">
                 <Card>
                     <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
-                         <div>
+                        <div>
                             <CardTitle>
                                 {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
                             </CardTitle>
