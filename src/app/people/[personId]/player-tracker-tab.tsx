@@ -16,7 +16,7 @@ import { Target, Heart, Dumbbell, Shield, Check, CalendarDays, Milestone as Mile
 import { DayPicker } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RunMap } from './run-map';
+import { RunMap } from '@/components/run-map';
 
 function AvailabilityCalendarCaption({ displayMonth, onMonthChange }: { displayMonth: Date, onMonthChange: (date: Date) => void }) {
     const handleMonthChange = (value: string) => {
@@ -164,7 +164,7 @@ export function PlayerTrackerTab({ person, trackerData }: { person: Person, trac
                             <CardDescription>Career scoring percentages.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex items-center justify-center">
-                            <RunMap data={runMap} />
+                            <RunMap shots={performanceEntries.flatMap(p => p.wagonWheel || [])} />
                         </CardContent>
                     </Card>
                      <Card>
