@@ -127,19 +127,7 @@ export function RunMap({ shots, size = 300 }: RunMapProps) {
                 {/* Stumps */}
                 <rect x={center - 4} y={center - 44} width="8" height="6" fill="white" />
                 <rect x={center - 4} y={center + 38} width="8" height="6" fill="white" />
-
-                {/* Sector Labels */}
-                {SECTORS.map((sector, index) => {
-                    const angle = sector.angle * Math.PI / 180;
-                    const radius = center * 0.9;
-                    const x = center + radius * Math.cos(-angle);
-                    const y = center + radius * Math.sin(-angle);
-                    return (
-                        <text key={index} x={x} y={y} fill="white" fontSize="8" textAnchor="middle" dominantBaseline="middle" className="font-sans uppercase font-bold" style={{ pointerEvents: 'none', textShadow: '1px 1px 2px black' }}>
-                            {sector.name}
-                        </text>
-                    );
-                })}
+                
             </svg>
              <PieChart width={size} height={size}>
                 <Pie
@@ -147,9 +135,8 @@ export function RunMap({ shots, size = 300 }: RunMapProps) {
                     cx={center}
                     cy={center}
                     labelLine={false}
-                    label={renderCustomizedLabel}
-                    outerRadius={center * 0.75}
-                    innerRadius={center * 0.3}
+                    outerRadius={center * 0.9}
+                    innerRadius={center * 0.4}
                     dataKey="value"
                     startAngle={22.5}
                     endAngle={382.5}
@@ -161,6 +148,32 @@ export function RunMap({ shots, size = 300 }: RunMapProps) {
                     ))}
                 </Pie>
             </PieChart>
+             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 pointer-events-none">
+                 {/* Sector Labels */}
+                {chartData.map((entry, index) => {
+                    const midAngle = (SECTORS[index].angle) * Math.PI / 180;
+                    const nameRadius = center * 0.9;
+                    const valueRadius = center * 0.65;
+                    
+                    const nameX = center + nameRadius * Math.cos(-midAngle);
+                    const nameY = center + nameRadius * Math.sin(-midAngle);
+                    const valueX = center + valueRadius * Math.cos(-midAngle);
+                    const valueY = center + valueRadius * Math.sin(-midAngle);
+                    
+                    return (
+                        <g key={index}>
+                             <text x={nameX} y={nameY} fill="white" fontSize="8" textAnchor="middle" dominantBaseline="middle" className="font-sans uppercase font-bold" style={{textShadow: '1px 1px 2px black' }}>
+                                {entry.name}
+                            </text>
+                            {entry.value > 0 && (
+                                <text x={valueX} y={valueY} fill="white" fontSize="12" textAnchor="middle" dominantBaseline="middle" className="font-sans font-bold" style={{textShadow: '1px 1px 2px black'}}>
+                                    {entry.value}%
+                                </text>
+                            )}
+                        </g>
+                    );
+                })}
+            </svg>
         </div>
     );
 }
