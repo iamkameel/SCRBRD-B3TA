@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -35,7 +34,7 @@ export const getPrimaryRole = (player: RosterMemberWithStats) => {
 
     if (battingScore > 1.5 && bowlingScore > 1.5) return { label: 'All-Rounder', icon: Swords, key: 'AR' };
     if (bowlingScore > battingScore && bowlingScore > 1) return { label: 'Bowler', icon: ShieldHalf, key: 'BOWL' };
-    if (battingScore > bowlingScore && battingScore > 1) return { label: 'Batsman', icon: User, key: 'BAT' };
+    if (battingScore > 0) return { label: 'Batsman', icon: User, key: 'BAT' };
     
     // Default fallback
     return { label: 'Player', icon: User, key: 'BAT' };
@@ -62,6 +61,7 @@ interface PlayerCardProps {
     onSelect: (checked: boolean) => void;
     dragHandleProps?: any;
     style?: React.CSSProperties;
+    isTwelfthMan?: boolean;
 }
 
 const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note?: string }) => {
@@ -89,7 +89,7 @@ const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note
 };
 
 export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
-    ({ player, index, isDragging, availability, isSelected, onSelect, dragHandleProps, style }, ref) => {
+    ({ player, index, isDragging, availability, isSelected, onSelect, dragHandleProps, style, isTwelfthMan }, ref) => {
     const { label: roleLabel, icon: RoleIcon } = getPrimaryRole(player);
     const specialities = getPlayerSpecialities(player);
     
@@ -106,7 +106,7 @@ export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
                     </div>
                 )}
                 {index && <span className="font-bold text-lg w-5 text-center text-muted-foreground">{index}</span>}
-                <Checkbox checked={isSelected} onCheckedChange={onSelect} className="mx-2"/>
+                {onSelect && <Checkbox checked={isSelected} onCheckedChange={onSelect} className="mx-2"/>}
                 <Avatar className="h-10 w-10">
                     <AvatarImage src={player.profileImageUrl} />
                     <AvatarFallback>{player.personName.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
@@ -114,8 +114,16 @@ export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
                 <div className="flex-1 overflow-hidden">
                     <p className="font-semibold text-base">{player.personName}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <RoleIcon className="h-3 w-3" />
-                        <span>{roleLabel}</span>
+                        {isTwelfthMan ? (
+                            <Badge variant="outline" className="px-1.5 py-0">12th</Badge>
+                        ) : (
+                           <TooltipProvider>
+                               <Tooltip>
+                                   <TooltipTrigger asChild><RoleIcon className="h-4 w-4" /></TooltipTrigger>
+                                   <TooltipContent><p>{roleLabel}</p></TooltipContent>
+                               </Tooltip>
+                           </TooltipProvider>
+                        )}
                         {player.isCaptain && <Badge variant="outline" className="text-amber-500 border-amber-500 px-1 py-0 text-[10px]">C</Badge>}
                         {player.isViceCaptain && <Badge variant="outline" className="px-1 py-0 text-[10px]">VC</Badge>}
                     </div>
