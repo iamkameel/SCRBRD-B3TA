@@ -287,14 +287,20 @@ export default function MatchDetailsClient({
     const lineupA = teamALineup || { playingXI: [], twelfthMan: null };
     const lineupB = teamBLineup || { playingXI: [], twelfthMan: null };
 
-    lineupA.playingXI.forEach(playerId => {
-        const player = teamARosterWithStats.find(p => p.personId === playerId);
-        if (player) allPlayers.set(playerId, { name: player.personName, teamName: match.teamAName });
-    });
-     lineupB.playingXI.forEach(playerId => {
-        const player = teamBRosterWithStats.find(p => p.personId === playerId);
-        if (player) allPlayers.set(playerId, { name: player.personName, teamName: match.teamBName });
-    });
+    if (lineupA && lineupA.playingXI) {
+        lineupA.playingXI.forEach(playerId => {
+            const player = teamARosterWithStats.find(p => p.personId === playerId);
+            if (player) allPlayers.set(playerId, { name: player.personName, teamName: match.teamAName });
+        });
+    }
+
+    if (lineupB && lineupB.playingXI) {
+        lineupB.playingXI.forEach(playerId => {
+            const player = teamBRosterWithStats.find(p => p.personId === playerId);
+            if (player) allPlayers.set(playerId, { name: player.personName, teamName: match.teamBName });
+        });
+    }
+    
     return Array.from(allPlayers.entries()).map(([id, data]) => ({ id, ...data }));
   }, [teamARosterWithStats, teamBRosterWithStats, teamALineup, teamBLineup, match.teamAName, match.teamBName]);
 
