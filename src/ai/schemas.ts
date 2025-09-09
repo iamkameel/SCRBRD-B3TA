@@ -97,7 +97,12 @@ export const PlayerOfTheMatchSchema = z.object({
     teamName: z.string().describe("The name of the player's team."),
     justification: z.string().describe("A short paragraph explaining why this player was chosen, citing their key stats (runs, balls, wickets, economy etc)."),
 });
-export type PlayerOfTheMatchOutput = z.infer<typeof PlayerOfTheMatchSchema>;
+export type PlayerOfTheMatch = z.infer<typeof PlayerOfTheMatchSchema>;
+
+export const TopPerformersOutputSchema = z.object({
+  performers: z.array(PlayerOfTheMatchSchema).length(4, { message: "Exactly four top performers must be selected." }),
+});
+export type TopPerformersOutput = z.infer<typeof TopPerformersOutputSchema>;
 
 // From generate-dream-team-flow.ts
 export const SimplifiedPlayerStatsSchema = z.object({
@@ -296,4 +301,3 @@ export const PlayerPerformanceForecastPromptInputSchema = z.object({
   weatherForecast: GetMatchForecastOutputSchema,
   opponentTeamStats: z.any().describe("JSON string of the opponent team's overall season stats."),
 });
-

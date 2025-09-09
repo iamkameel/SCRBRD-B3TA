@@ -9,11 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords, Sparkles, TrendingUp, Users, Shield } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
+import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership, PlayerOfTheMatch } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
-import { generateLiveMatchUpdateAction, getMatchForecastAction } from '@/lib/actions/analysis';
+import { generateLiveMatchUpdateAction, getMatchForecastAction, getTopPerformersAction, savePlayerOfTheMatchAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { WagonWheel } from '@/components/wagon-wheel';
@@ -446,6 +446,34 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     );
 };
 
+function ManOfTheMatchDialog({ open, onOpenChange, matchId, topPerformers, onSelect }: { open: boolean; onOpenChange: (open: boolean) => void; matchId: string; topPerformers: PlayerOfTheMatch[]; onSelect: (player: PlayerOfTheMatch) => void; }) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Select Player of the Match</DialogTitle>
+                    <DialogDescription>The AI has suggested the following top performers. Please select the official Player of the Match.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    {topPerformers.map(player => (
+                        <div
+                            key={player.name}
+                            onClick={() => onSelect(player)}
+                            className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        >
+                            <h4 className="font-bold">{player.name} <span className="font-normal text-sm text-muted-foreground">({player.teamName})</span></h4>
+                            <p className="text-sm text-muted-foreground">{player.justification}</p>
+                        </div>
+                    ))}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export function LiveScoringInterface({
   teamARoster,
   teamBRoster,
@@ -475,6 +503,10 @@ export function LiveScoringInterface({
   const [isHatTrick, setIsHatTrick] = React.useState(false);
   const [isMaidenOver, setIsMaidenOver] = React.useState(false);
   const [liveTime, setLiveTime] = React.useState(new Date());
+  
+  // Player of the Match state
+  const [topPerformers, setTopPerformers] = React.useState<PlayerOfTheMatch[]>([]);
+  const [isPotmDialogOpen, setIsPotmDialogOpen] = React.useState(false);
 
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
   const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle, ballHistory: [], fallOfWickets: [] };
@@ -668,13 +700,44 @@ export function LiveScoringInterface({
     });
   };
 
-  const handleEndInnings = () => {
+  const handleEndInnings = async () => {
+    if (liveScore.liveInnings === 1) {
+        startTransition(async () => {
+            try {
+                await endInningsAction(match.matchId);
+                toast({ title: "Innings Ended", description: "The second innings is ready to begin." });
+            } catch (error) {
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not end innings.", variant: "destructive" });
+            }
+        });
+    } else {
+        // End of match, show POTM dialog
+        startTransition(async () => {
+            try {
+                const performers = await getTopPerformersAction(matchId);
+                if (performers && performers.length > 0) {
+                    setTopPerformers(performers);
+                    setIsPotmDialogOpen(true);
+                } else {
+                    await endInningsAction(match.matchId); // End match without POTM if AI fails
+                    toast({ title: "Match Ended", description: "Match completed. No top performers could be identified." });
+                }
+            } catch (error) {
+                 toast({ title: "Error", description: error instanceof Error ? error.message : "Could not get top performers.", variant: "destructive" });
+            }
+        });
+    }
+  };
+
+  const handlePotmSelect = async (player: PlayerOfTheMatch) => {
+    setIsPotmDialogOpen(false);
     startTransition(async () => {
         try {
-            await endInningsAction(match.matchId);
-            toast({ title: "Innings Ended", description: "The second innings is ready to begin."});
+            await savePlayerOfTheMatchAction(match.matchId, player);
+            await endInningsAction(match.matchId); // Now fully end the match
+            toast({ title: "Player of the Match Awarded!", description: `${player.name} is the Player of the Match.` });
         } catch (error) {
-            toast({ title: "Error", description: error instanceof Error ? error.message : "Could not end innings.", variant: "destructive" });
+             toast({ title: "Error", description: error instanceof Error ? error.message : "Could not save Player of the Match.", variant: "destructive" });
         }
     });
   };
@@ -1086,6 +1149,13 @@ export function LiveScoringInterface({
         open={isUndoDialogOpen}
         onOpenChange={setIsUndoDialogOpen}
         onConfirm={handleUndo}
+    />
+    <ManOfTheMatchDialog
+        open={isPotmDialogOpen}
+        onOpenChange={setIsPotmDialogOpen}
+        matchId={match.matchId}
+        topPerformers={topPerformers}
+        onSelect={handlePotmSelect}
     />
     </>
   );

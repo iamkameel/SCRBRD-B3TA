@@ -8,7 +8,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 
 import { runUmpireReview } from '@/ai/flows/umpire-review-flow';
 import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
-import { generatePlayerOfTheMatch } from '@/ai/flows/generate-player-of-the-match-flow';
+import { getTopPerformers } from '@/ai/flows/generate-top-performers-flow';
 import { generateMatchReport } from '@/ai/flows/generate-match-summary-flow';
 import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
@@ -23,11 +23,38 @@ import { scoutPlayer } from '@/ai/flows/scout-player-flow';
 import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatchOutput, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatch, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput } from '@/ai/schemas';
 import type { MatchForecast, Person } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 import { getTeam } from './teams';
+
+export async function getTopPerformersAction(matchId: string): Promise<PlayerOfTheMatch[]> {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated");
+
+    const match = await getMatch(matchId);
+    if (!match) throw new Error("Match not found or permission denied.");
+
+    const scorecard = await getScorecard(matchId);
+    if (!scorecard) throw new Error("A complete scorecard is required to select top performers.");
+
+    const { performers } = await getTopPerformers(scorecard);
+    if (!performers || performers.length === 0) {
+        throw new Error("AI failed to identify top performers.");
+    }
+    return performers;
+}
+
+export async function savePlayerOfTheMatchAction(matchId: string, player: PlayerOfTheMatch) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated");
+
+    const matchRef = doc(db, 'matches', matchId);
+    await updateDoc(matchRef, { playerOfTheMatch: player });
+
+    revalidatePath(`/matches/${matchId}`);
+}
 
 export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {
   const userId = await getUserId();
@@ -103,13 +130,13 @@ export async function generateAndSaveScorecardAction(matchId: string) {
         throw new Error("AI failed to generate scorecard data.");
     }
     
-    const potmData = await generatePlayerOfTheMatch(scorecardData);
+    const { performers } = await getTopPerformers(scorecardData);
 
-    if (!potmData) {
+    if (!performers || performers.length === 0) {
         throw new Error("AI failed to generate Player of the Match data.");
     }
     
-    await saveScorecard(matchId, scorecardData, potmData);
+    await saveScorecard(matchId, scorecardData, performers[0]);
 
     revalidatePath(`/matches/${matchId}`);
     return { success: true, message: "Scorecard generated successfully!" };
@@ -381,4 +408,3 @@ export async function generateHighlightReelAction(matchId: string): Promise<High
         throw new Error("The AI failed to generate highlights.");
     }
 }
-
