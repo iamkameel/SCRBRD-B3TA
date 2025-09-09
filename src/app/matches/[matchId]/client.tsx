@@ -456,7 +456,7 @@ export default function MatchDetailsClient({
 
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
-  const canGenerateScorecard = currentTeamALineup.playingXI.length === 11 && currentTeamBLineup.playingXI.length === 11;
+  const canGenerateScorecard = teamALineup.playingXI.length === 11 && teamBLineup.playingXI.length === 11;
 
   const firstInningsData = match.liveScore?.liveInnings === 1 ? match.liveScore : match.firstInningsLiveScore;
   const secondInningsData = match.liveScore?.liveInnings === 2 ? match.liveScore : null;
