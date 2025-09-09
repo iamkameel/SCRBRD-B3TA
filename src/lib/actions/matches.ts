@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, Timestamp, query, where, setDoc, deleteDoc, writeBatch, updateDoc, collectionGroup } from 'firebase/firestore';
-import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle, BatsmanStats, Lineup, Partnership } from '@/lib/data';
+import type { Match, Official, Innings, PlayerOfTheMatch, MatchStatus, AvailabilityStatus, Team, LiveScore, BowlingAngle, BatsmanStats, Lineup, Partnership, GenerateScorecardOutput } from '@/lib/data';
 import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin, getTeam } from './teams';
@@ -17,7 +17,6 @@ import { getUserId } from '@/lib/auth';
 import { getTopPerformers } from '@/ai/flows/generate-top-performers-flow';
 import { logAuditEvent } from './audit';
 import { getSchool } from './schools';
-import { savePlayerOfTheMatchAction } from './analysis';
 
 export const getMatches = cache(async (): Promise<Match[]> => {
   const userId = await getUserId();
@@ -654,7 +653,7 @@ export const getMatchesByField = cache(async (fieldId: string): Promise<Match[]>
 });
 
 
-async function createScorecardFromLive(matchId: string) {
+export async function createScorecardFromLive(matchId: string) {
     const match = await getMatch(matchId);
     if (!match || !match.firstInningsLiveScore || !match.liveScore) return null;
 
@@ -1189,7 +1188,7 @@ export async function endInningsAction(matchId: string) {
             await batch.commit();
 
             if (!match.playerOfTheMatch) {
-                const { performers } = await getTopPerformers(generatedScorecard.scorecard);
+                const performers = await getTopPerformersAction(generatedScorecard.scorecard);
                 if (performers && performers.length > 0) {
                     await savePlayerOfTheMatchAction(matchId, performers[0]);
                 }
@@ -1201,7 +1200,6 @@ export async function endInningsAction(matchId: string) {
         return { message: "Match completed!" };
     }
 }
-
 
 export async function getOfficialAssignmentsForPerson(personId: string): Promise<(Official & { matchId: string; matchName: string; dateTime: Date; status: MatchStatus; })[]> {
     const userId = await getUserId();
@@ -1240,7 +1238,6 @@ export async function getOfficialAssignmentsForPerson(personId: string): Promise
     }
 }
 
-
 export async function updatePlayerAvailabilityAction(matchId: string, status: AvailabilityStatus, note?: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated.");
@@ -1266,10 +1263,36 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
     throw new Error("Could not update availability.");
   }
 }
+
+export async function getTopPerformersAction(scorecard: GenerateScorecardOutput): Promise<PlayerOfTheMatch[]> {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated");
+    
+    if (!scorecard || !scorecard.innings1 || !scorecard.innings2) {
+        throw new Error("A complete scorecard is required to select top performers.");
+    }
+
+    const { performers } = await getTopPerformers(scorecard);
+    if (!performers || performers.length === 0) {
+        throw new Error("AI failed to identify top performers.");
+    }
+    return performers;
+}
+
+export async function savePlayerOfTheMatchAction(matchId: string, player: PlayerOfTheMatch) {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated");
+
+    const matchRef = doc(db, 'matches', matchId);
+    await updateDoc(matchRef, { playerOfTheMatch: player });
+
+    revalidatePath(`/matches/${matchId}`);
+}
       
     
 
     
+
 
 
 

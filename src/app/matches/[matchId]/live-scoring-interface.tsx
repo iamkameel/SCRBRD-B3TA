@@ -12,8 +12,8 @@ import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, Shi
 import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership, PlayerOfTheMatch, Innings } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction, createScorecardFromLive } from '@/lib/actions/matches';
-import { generateLiveMatchUpdateAction, getMatchForecastAction, getTopPerformersAction, savePlayerOfTheMatchAction } from '@/lib/actions/analysis';
+import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction, createScorecardFromLive, getTopPerformersAction, savePlayerOfTheMatchAction } from '@/lib/actions/matches';
+import { generateLiveMatchUpdateAction, getMatchForecastAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { WagonWheel } from '@/components/wagon-wheel';
@@ -716,7 +716,7 @@ export function LiveScoringInterface({
                     throw new Error("Could not generate a temporary scorecard from live data.");
                 }
 
-                const { performers } = await getTopPerformers(generatedScorecard.scorecard);
+                const performers = await getTopPerformersAction(generatedScorecard.scorecard);
                 if (performers && performers.length > 0) {
                     setTopPerformers(performers);
                     setIsPotmDialogOpen(true);

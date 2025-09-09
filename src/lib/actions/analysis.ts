@@ -25,34 +25,10 @@ import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatch, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput, GenerateScorecardOutput } from '@/ai/schemas';
 import type { MatchForecast, Person } from '@/lib/data';
-import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
+import { getMatch, getMatchLineup, saveScorecard, getScorecard, getTopPerformersAction, savePlayerOfTheMatchAction } from './matches';
 import { getPerson } from './players';
 import { getTeam } from './teams';
 
-export async function getTopPerformersAction(scorecard: GenerateScorecardOutput): Promise<PlayerOfTheMatch[]> {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
-    
-    if (!scorecard || !scorecard.innings1 || !scorecard.innings2) {
-        throw new Error("A complete scorecard is required to select top performers.");
-    }
-
-    const { performers } = await getTopPerformers(scorecard);
-    if (!performers || performers.length === 0) {
-        throw new Error("AI failed to identify top performers.");
-    }
-    return performers;
-}
-
-export async function savePlayerOfTheMatchAction(matchId: string, player: PlayerOfTheMatch) {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
-
-    const matchRef = doc(db, 'matches', matchId);
-    await updateDoc(matchRef, { playerOfTheMatch: player });
-
-    revalidatePath(`/matches/${matchId}`);
-}
 
 export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {
   const userId = await getUserId();
@@ -128,7 +104,7 @@ export async function generateAndSaveScorecardAction(matchId: string) {
         throw new Error("AI failed to generate scorecard data.");
     }
     
-    const { performers } = await getTopPerformers(scorecardData);
+    const performers = await getTopPerformersAction(scorecardData);
 
     if (!performers || performers.length === 0) {
         throw new Error("AI failed to generate Player of the Match data.");
