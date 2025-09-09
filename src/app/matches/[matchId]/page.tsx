@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import MatchDetailsClient from './client';
 import { getMatch, getMatchOfficials, getMatchLineup, getScorecard } from '@/lib/actions/matches';
-import { getPlayers, getPerson, getPeopleByRole } from '@/lib/actions/players';
+import { getPlayers, getPerson } from '@/lib/actions/players';
 import { getTeamRoster, isTeamManagerOrAdmin, getTeam } from '@/lib/actions/teams';
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import type { RosterMember, PlayerStats, RosterMemberWithStats, Lineup, Team, School } from '@/lib/data';
-import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
+import { getPlayerStats } from '@/lib/actions/stats';
 import { getUserId } from '@/lib/auth';
 import { getMatchForecast } from '@/lib/actions/analysis';
 import { getSchool } from '@/lib/actions/schools';
@@ -104,8 +104,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     people={people} 
     teamARosterWithStats={teamARosterWithStats}
     teamBRosterWithStats={teamBRosterWithStats}
-    teamALineup={teamALineup!}
-    teamBLineup={teamBLineup!}
+    teamALineup={teamALineup}
+    teamBLineup={teamBLineup}
     scorecard={scorecard}
     transportAssignments={transportAssignments}
     vehicles={vehicles}
