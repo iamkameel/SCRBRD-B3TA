@@ -64,6 +64,7 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
   
   const handleWicketTypeSelect = (type: DismissalType) => {
       setDismissalType(type);
+      setFielderId(undefined); // Reset fielder when changing dismissal type
       if (type === 'Bowled' || type === 'LBW' || type === 'Hit Wicket') {
           // These dismissals don't involve fielders, so we can score immediately.
           onScore({ event: 'W', dismissal: { type } });
@@ -94,6 +95,15 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
   }
 
   const needsFielder = dismissalType === 'Caught' || dismissalType === 'Run Out' || dismissalType === 'Stumped';
+  
+  const filteredFielders = React.useMemo(() => {
+    if (dismissalType === 'Stumped') {
+      // Wicket-keepers are identified by role. In a more complex setup, you might check a specific "isWicketKeeper" flag.
+      return bowlingTeamRoster.filter(p => p.role === 'Wicket-Keeper' || p.role === 'Player');
+    }
+    return bowlingTeamRoster;
+  }, [dismissalType, bowlingTeamRoster]);
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -149,16 +159,19 @@ export function ScoringDialog({ open, onOpenChange, onScore, bowlingTeamRoster }
                 <div className="space-y-2 pt-4">
                   <Separator />
                   <Label>Fielder</Label>
-                  <Select onValueChange={handleFielderSelect}>
+                  <Select onValueChange={handleFielderSelect} value={fielderId}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select fielder..." />
                     </SelectTrigger>
                     <SelectContent>
-                        {bowlingTeamRoster.map(player => (
+                        {filteredFielders.map(player => (
                             <SelectItem key={player.personId} value={player.personId}>{player.personName}</SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
+                  {dismissalType === 'Stumped' && filteredFielders.length === 0 && (
+                    <p className="text-xs text-destructive">No wicket-keeper found on the bowling team.</p>
+                  )}
                 </div>
               )}
               {needsFielder && (
