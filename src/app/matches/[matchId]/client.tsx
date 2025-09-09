@@ -477,17 +477,6 @@ export default function MatchDetailsClient({
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 shrink-0">
-                    <Badge
-                        variant={
-                            match.status === 'completed' ? 'secondary' :
-                            match.status === 'live' ? 'default' :
-                            ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
-                            'default'
-                        }
-                        className={cn("capitalize h-fit", match.status === 'live' && "bg-green-600 text-white animate-pulse")}
-                    >
-                        {match.status}
-                    </Badge>
                     {match.statusReason && <p className="text-xs text-muted-foreground">{match.statusReason}</p>}
                 </div>
             </div>
@@ -516,13 +505,13 @@ export default function MatchDetailsClient({
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                            <div>
+                            <div className="flex items-center gap-2">
                                 <CardTitle>
                                     {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
                                 </CardTitle>
-                                <CardDescription>
-                                    {match.status === 'live' ? 'Enter ball-by-ball data here.' : (match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.')}
-                                </CardDescription>
+                                {match.status === 'live' && (
+                                    <Badge className="capitalize bg-red-600 text-white animate-pulse">Live</Badge>
+                                )}
                             </div>
                              <div className="flex items-center gap-2 mt-4 md:mt-0">
                                 {match.status === 'scheduled' && !innings1 && (
@@ -570,6 +559,9 @@ export default function MatchDetailsClient({
                                 )}
                             </div>
                         </div>
+                         <CardDescription>
+                            {match.status === 'live' ? 'Enter ball-by-ball data here.' : (match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.')}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {match.status === 'live' ? (
