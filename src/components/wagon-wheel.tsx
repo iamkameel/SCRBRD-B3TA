@@ -12,6 +12,24 @@ interface WagonWheelProps {
     onShotSelect: (shotData: { angle: number, distance: number }) => void;
 }
 
+const getShotColor = (runs: number) => {
+    if (runs === 6) return "#ef4444"; // red-500
+    if (runs === 4) return "#3b82f6"; // blue-500
+    if (runs === 3) return "#f59e0b"; // amber-500
+    if (runs === 2) return "#84cc16"; // lime-500
+    if (runs === 1) return "#ec4899"; // pink-500
+    return "#6b7280"; // gray-500 for 0 runs
+};
+
+const legendItems = [
+    { runs: 6, color: "#ef4444" },
+    { runs: 4, color: "#3b82f6" },
+    { runs: 3, color: "#f59e0b" },
+    { runs: 2, color: "#84cc16" },
+    { runs: 1, color: "#ec4899" },
+    { runs: 0, color: "#6b7280" },
+];
+
 export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSelect }: WagonWheelProps) {
     const svgRef = React.useRef<SVGSVGElement>(null);
 
@@ -37,26 +55,15 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
 
         onShotSelect({ angle, distance: distanceRatio });
     };
-
-    const getShotColor = (runs: number) => {
-        if (runs === 6) return "#ef4444"; // red-500
-        if (runs === 4) return "#3b82f6"; // blue-500
-        if (runs === 2) return "#a3e635"; // lime-500
-        if (runs === 1) return "#ec4899"; // pink-500
-        if (runs === 3) return "#f59e0b"; // amber-500
-        return "hsl(var(--muted-foreground))"; // Dot ball
-    };
     
     const center = size / 2;
     const radius = size / 2;
 
-    const sectorLines = Array.from({ length: 4 }).map((_, i) => {
+    const sectorLines = Array.from({ length: 8 }).map((_, i) => {
         const angle = i * 45;
-        const startX = center;
-        const startY = center;
         const endX = center + radius * Math.cos(angle * Math.PI / 180);
         const endY = center + radius * Math.sin(angle * Math.PI / 180);
-        return { x1: startX, y1: startY, x2: endX, y2: endY };
+        return { x1: center, y1: center, x2: endX, y2: endY };
     });
     
     return (
@@ -87,7 +94,7 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             
             {/* Sector lines */}
             {sectorLines.map((line, i) => (
-                <line key={i} {...line} stroke="white" strokeWidth="1" strokeOpacity="0.3" />
+                <line key={i} {...line} stroke="white" strokeWidth="0.5" strokeOpacity="0.3" />
             ))}
             
             {/* Pitch */}
@@ -130,6 +137,17 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
                 );
             })}
         </svg>
+        <div className="mt-4 text-center">
+            <div className="flex items-center justify-center gap-4 mb-1">
+                {legendItems.map(item => (
+                    <div key={item.runs} className="flex items-center gap-1.5 text-xs text-white">
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                        <span>{item.runs}</span>
+                    </div>
+                ))}
+            </div>
+            <p className="text-sm text-muted-foreground">Tap on the field to record a shot</p>
+        </div>
        </div>
     );
 }
