@@ -379,6 +379,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
     canManageA: boolean,
     canManageB: boolean
 }) {
+    const defaultLineup: Lineup = { playingXI: [], twelfthMan: null };
     return (
         <Tabs defaultValue="teamA">
             <TabsList className="grid w-full grid-cols-2">
@@ -392,7 +393,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamAName}
                     match={match}
                     rosterWithStats={teamARoster}
-                    initialLineup={teamALineup}
+                    initialLineup={teamALineup || defaultLineup}
                     canManage={canManageA}
                     isConfirmed={match.lineupConfirmedByCaptainA}
                 />
@@ -404,7 +405,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamBName}
                     match={match}
                     rosterWithStats={teamBRoster}
-                    initialLineup={teamBLineup}
+                    initialLineup={teamBLineup || defaultLineup}
                     canManage={canManageB}
                     isConfirmed={match.lineupConfirmedByCaptainB}
                 />
