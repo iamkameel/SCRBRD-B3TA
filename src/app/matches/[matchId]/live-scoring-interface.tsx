@@ -714,7 +714,7 @@ export function LiveScoringInterface({
         // End of match, show POTM dialog
         startTransition(async () => {
             try {
-                const performers = await getTopPerformersAction(matchId);
+                const performers = await getTopPerformersAction(match.matchId);
                 if (performers && performers.length > 0) {
                     setTopPerformers(performers);
                     setIsPotmDialogOpen(true);
