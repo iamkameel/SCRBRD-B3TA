@@ -70,14 +70,10 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
   );
 
   React.useEffect(() => {
-    // Initial setup from props
-    setSelectedIds(initialLineup?.playingXI || []);
-    setTwelfthManId(initialLineup?.twelfthMan || null);
-
-    // Set the initial order based on props
     const lineupOrder = (initialLineup?.playingXI || []).map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
     setOrderedPlayers(lineupOrder);
-
+    setSelectedIds(initialLineup?.playingXI || []);
+    setTwelfthManId(initialLineup?.twelfthMan || null);
   }, [initialLineup, rosterWithStats]);
 
   const handlePlayerSelect = (playerId: string, isSelected: boolean) => {
@@ -122,7 +118,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
     const searchMatch = player.personName.toLowerCase().includes(searchQuery.toLowerCase());
     const role = getPrimaryRole(player);
     const roleMatch = roleFilter === 'All' || role.key === roleFilter;
-    const isSelected = selectedIds.includes(player.personId) || twelfthManId === player.personId;
+    const isSelected = (selectedIds || []).includes(player.personId) || twelfthManId === player.personId;
     return searchMatch && roleMatch && !isSelected;
   });
 
@@ -180,35 +176,46 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
         }
     });
   };
+  
+  const isEditable = canManage && match.status === 'scheduled' && !isConfirmed;
 
-  if (!canManage) {
+  if (!isEditable) {
     return (
-      <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
-        <Lock className="h-16 w-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-bold">Lineup Locked</h2>
-        <p className="text-muted-foreground">You do not have permission to edit this lineup.</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Final Lineup: {teamName}</CardTitle>
+           <div className="flex justify-between items-center pt-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {lineupComposition.BAT > 0 && <span className="flex items-center gap-1"><User className="h-3 w-3"/>{lineupComposition.BAT}</span>}
+              {lineupComposition.BOWL > 0 && <span className="flex items-center gap-1"><ShieldHalf className="h-3 w-3"/>{lineupComposition.BOWL}</span>}
+              {lineupComposition.AR > 0 && <span className="flex items-center gap-1"><Swords className="h-3 w-3"/>{lineupComposition.AR}</span>}
+              {lineupComposition.WK > 0 && <span className="flex items-center gap-1"><ShieldHalf className="h-3 w-3"/>{lineupComposition.WK}</span>}
+            </div>
+            {match.status !== 'scheduled' && (
+                <Badge variant="outline" className="flex items-center gap-2">
+                    <Lock className="h-3 w-3"/> Lineup is Locked
+                </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <h3 className="font-semibold">Playing XI</h3>
+            <div className="space-y-2">
+                {orderedPlayers.map((player, index) => (
+                    <PlayerCard key={player.personId} player={player} index={index + 1} isSelected={true} onSelect={() => {}} />
+                ))}
+            </div>
+            {twelfthManId && rosterWithStats.find(p => p.personId === twelfthManId) && (
+                <div className="pt-4">
+                    <h3 className="font-semibold">12th Man (Substitute)</h3>
+                    <PlayerCard player={rosterWithStats.find(p => p.personId === twelfthManId)!} isSelected={true} isTwelfthMan={true} onSelect={() => {}} />
+                </div>
+            )}
+          </div>
+        </CardContent>
       </Card>
     );
-  }
-  
-  if (match.status !== 'scheduled') {
-    return (
-        <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
-            <Lock className="h-16 w-16 text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-bold">Lineup Locked</h2>
-            <p className="text-muted-foreground">Lineups cannot be changed after a match has started.</p>
-        </Card>
-    );
-  }
-  
-  if (isConfirmed) {
-      return (
-        <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
-          <ShieldCheck className="h-16 w-16 text-green-500 mb-4" />
-          <h2 className="text-2xl font-bold">Lineup Confirmed</h2>
-          <p className="text-muted-foreground">This lineup has been finalized and can no longer be edited.</p>
-        </Card>
-      );
   }
 
   const isLineupFull = selectedIds.length === 11 && !!twelfthManId;
@@ -404,7 +411,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamAName}
                     match={match}
                     rosterWithStats={teamARoster}
-                    initialLineup={teamALineup ?? defaultLineup}
+                    initialLineup={teamALineup}
                     canManage={canManageA}
                     isConfirmed={match.lineupConfirmedByCaptainA}
                 />
@@ -416,7 +423,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamBName}
                     match={match}
                     rosterWithStats={teamBRoster}
-                    initialLineup={teamBLineup ?? defaultLineup}
+                    initialLineup={teamBLineup}
                     canManage={canManageB}
                     isConfirmed={match.lineupConfirmedByCaptainB}
                 />
