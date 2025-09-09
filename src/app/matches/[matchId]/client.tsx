@@ -504,18 +504,16 @@ export default function MatchDetailsClient({
             <TabsContent value="scorecard" className="mt-4">
                 <Card>
                     <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-4">
-                                <CardTitle>
-                                    {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
-                                </CardTitle>
-                                {match.status === 'live' && <Badge className="bg-red-600 text-white animate-pulse">Live</Badge>}
-                            </div>
+                        <div>
+                            <CardTitle>
+                                {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
+                            </CardTitle>
                             <CardDescription>
                                 {match.status === 'live' ? 'Enter ball-by-ball data here.' : (match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.')}
                             </CardDescription>
                         </div>
                         <div className="flex items-center gap-2 mt-4 md:mt-0">
+                            {match.status === 'live' && <Badge className="bg-green-600 text-white animate-pulse">Live</Badge>}
                             {match.status === 'scheduled' && !innings1 && (
                                 <TooltipProvider>
                                     <Tooltip>
