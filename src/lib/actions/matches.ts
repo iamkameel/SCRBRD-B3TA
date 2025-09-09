@@ -1,5 +1,4 @@
 
-
       
 'use server';
 
@@ -742,6 +741,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
     if (!liveScore.batsmenOut) liveScore.batsmenOut = [];
     if (!liveScore.ballHistory) liveScore.ballHistory = [];
     if (!liveScore.partnerships) liveScore.partnerships = [];
+    if (!liveScore.fallOfWickets) liveScore.fallOfWickets = [];
 
 
     if (!liveScore.onStrikeBatsmanId || !liveScore.nonStrikerBatsmanId || !liveScore.bowlerId) {
@@ -862,7 +862,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
                 outBatsmanStats.status = status;
 
                 const onStrikeBatsman = await getPerson(onStrikeId);
-                if (liveScore.fallOfWickets && onStrikeBatsman) {
+                if (onStrikeBatsman) {
                     liveScore.fallOfWickets.push({
                         wicketNumber: liveScore.wickets,
                         runs: liveScore.runs,
@@ -1255,4 +1255,6 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
   }
 }
       
+    
+
     
