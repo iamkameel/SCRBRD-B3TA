@@ -56,11 +56,9 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
 
   const isCaptain = rosterWithStats.some(p => p.personId === person?.personId && p.isCaptain);
   
-  const [allPlayers, setAllPlayers] = React.useState<RosterMemberWithStats[]>([]);
-  const [view, setView] = React.useState<'selection' | 'ordering'>('selection');
-
   const [selectedIds, setSelectedIds] = React.useState<string[]>(initialLineup.playingXI);
   const [twelfthManId, setTwelfthManId] = React.useState<string | null>(initialLineup.twelfthMan);
+  const [orderedPlayers, setOrderedPlayers] = React.useState<RosterMemberWithStats[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState('All');
 
@@ -72,14 +70,14 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
   );
 
   React.useEffect(() => {
-    const combinedIds = [...initialLineup.playingXI, ...(initialLineup.twelfthMan ? [initialLineup.twelfthMan] : [])];
-    const lineupSet = new Set(combinedIds);
-    const lineupPlayers = combinedIds.map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
-    const squadPlayers = rosterWithStats.filter(p => !lineupSet.has(p.personId));
-    
-    setAllPlayers([...lineupPlayers, ...squadPlayers]);
+    // Initial setup from props
     setSelectedIds(initialLineup.playingXI);
     setTwelfthManId(initialLineup.twelfthMan);
+
+    // Set the initial order based on props
+    const lineupOrder = initialLineup.playingXI.map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
+    setOrderedPlayers(lineupOrder);
+
   }, [initialLineup, rosterWithStats]);
 
   const handlePlayerSelect = (playerId: string, isSelected: boolean) => {
@@ -91,6 +89,8 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
 
       if (selectedIds.length < 11) {
         setSelectedIds(prev => [...prev, playerId]);
+        const player = rosterWithStats.find(p => p.personId === playerId);
+        if (player) setOrderedPlayers(prev => [...prev, player]);
       } else if (!twelfthManId) {
         setTwelfthManId(playerId);
       } else {
@@ -99,6 +99,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
     } else {
       if (isCurrentlySelected) {
         setSelectedIds(prev => prev.filter(id => id !== playerId));
+        setOrderedPlayers(prev => prev.filter(p => p.personId !== playerId));
       } else if (isCurrentlyTwelfthMan) {
         setTwelfthManId(null);
       }
@@ -109,24 +110,24 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
     const { active, over } = event;
     setActiveId(null);
     if (over && active.id !== over.id) {
-        setAllPlayers((items) => {
+        setOrderedPlayers((items) => {
             const oldIndex = items.findIndex((item) => item.personId === active.id);
             const newIndex = items.findIndex((item) => item.personId === over.id);
             return arrayMove(items, oldIndex, newIndex);
         });
     }
   };
-
-  const filteredPlayers = allPlayers.filter(player => {
+  
+  const squadPlayers = rosterWithStats.filter(player => {
     const searchMatch = player.personName.toLowerCase().includes(searchQuery.toLowerCase());
     const role = getPrimaryRole(player);
     const roleMatch = roleFilter === 'All' || role.key === roleFilter;
-    return searchMatch && roleMatch;
+    const isSelected = selectedIds.includes(player.personId) || twelfthManId === player.personId;
+    return searchMatch && roleMatch && !isSelected;
   });
 
-  const selectedPlayers = allPlayers.filter(p => selectedIds.includes(p.personId));
-  const activePlayer = allPlayers.find(p => p.personId === activeId);
-  const lineupComposition = selectedPlayers.reduce((acc, player) => {
+  const activePlayer = rosterWithStats.find(p => p.personId === activeId);
+  const lineupComposition = orderedPlayers.reduce((acc, player) => {
       const role = getPrimaryRole(player).key;
       acc[role] = (acc[role] || 0) + 1;
       return acc;
@@ -135,9 +136,8 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
   const handleSaveLineup = () => {
     startTransition(async () => {
         try {
-            const orderedPlayingXI = allPlayers.filter(p => selectedIds.includes(p.personId)).map(p => p.personId);
             const finalLineup: Lineup = {
-                playingXI: orderedPlayingXI,
+                playingXI: orderedPlayers.map(p => p.personId),
                 twelfthMan: twelfthManId
             };
             await saveMatchLineupAction(match.matchId, teamId, finalLineup);
@@ -153,11 +153,9 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
       try {
         const { playerIds, justification } = await autoSelectLineupAction(match.matchId, teamId);
         setSelectedIds(playerIds);
-        setTwelfthManId(null); // AI selection doesn't pick a 12th man for now
-        const lineupSet = new Set(playerIds);
+        setTwelfthManId(null); 
         const newLineup = playerIds.map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
-        const newSquad = rosterWithStats.filter(p => !lineupSet.has(p.personId));
-        setAllPlayers([...newLineup, ...newSquad]);
+        setOrderedPlayers(newLineup);
 
         toast({ title: "AI Lineup Suggested", description: justification, duration: 10000 });
       } catch (error) {
@@ -173,8 +171,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
     }
     startTransition(async () => {
         try {
-            const orderedPlayingXI = allPlayers.filter(p => selectedIds.includes(p.personId)).map(p => p.personId);
-            const finalLineup: Lineup = { playingXI: orderedPlayingXI, twelfthMan: twelfthManId };
+            const finalLineup: Lineup = { playingXI: orderedPlayers.map(p => p.personId), twelfthMan: twelfthManId };
             await saveMatchLineupAction(match.matchId, teamId, finalLineup);
             await confirmLineupAction(match.matchId, teamId);
             toast({ title: "Lineup Confirmed", description: "You have confirmed the lineup for this match." });
@@ -204,7 +201,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
       );
   }
 
-  const selectedCount = selectedIds.length + (twelfthManId ? 1 : 0);
+  const isLineupFull = selectedIds.length === 11 && !!twelfthManId;
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={e => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
@@ -221,7 +218,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
                         {lineupComposition.AR > 0 && <span className="flex items-center gap-1"><Swords className="h-3 w-3"/>{lineupComposition.AR}</span>}
                         {lineupComposition.WK > 0 && <span className="flex items-center gap-1"><ShieldHalf className="h-3 w-3"/>{lineupComposition.WK}</span>}
                     </div>
-                    <Tabs value={view} onValueChange={(v) => setView(v as any)} className="w-auto">
+                    <Tabs defaultValue="selection" className="w-auto">
                         <TabsList>
                             <TabsTrigger value="selection">Selection</TabsTrigger>
                             <TabsTrigger value="ordering">Batting Order</TabsTrigger>
@@ -230,77 +227,120 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
                 </div>
             </CardHeader>
             <CardContent>
-                {view === 'selection' && (
-                    <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="Search roster..." className="pl-8" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                            </div>
-                            <div className="flex items-center p-1 rounded-md bg-muted">
-                                {ROLE_FILTERS.map(role => (
-                                    <Button key={role} variant={roleFilter === role ? 'secondary' : 'ghost'} size="sm" onClick={() => setRoleFilter(role)}>{role}</Button>
-                                ))}
-                            </div>
-                        </div>
-                         <ScrollArea className="h-[600px] pr-2">
-                             <div className="space-y-2">
-                                {filteredPlayers.map(player => (
+              <TabsContent value="selection" className="mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <h3 className="font-semibold mb-2">Selected Lineup ({selectedIds.length}/11 Playing, {twelfthManId ? 1 : 0}/1 Sub)</h3>
+                          <ScrollArea className="h-[600px] pr-2">
+                              <div className="space-y-2">
+                                  {orderedPlayers.map(player => (
+                                      <PlayerCard
+                                        key={player.personId}
+                                        player={player}
+                                        availability={match.availability?.[player.personId]}
+                                        isSelected={true}
+                                        onSelect={(checked) => handlePlayerSelect(player.personId, checked)}
+                                      />
+                                  ))}
+                                  {twelfthManId && (
                                     <PlayerCard
-                                      key={player.personId}
-                                      player={player}
-                                      availability={match.availability?.[player.personId]}
-                                      isSelected={selectedIds.includes(player.personId) || twelfthManId === player.personId}
-                                      isTwelfthMan={twelfthManId === player.personId}
-                                      onSelect={(checked) => handlePlayerSelect(player.personId, checked)}
-                                    />
-                                ))}
-                                {filteredPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">No players found.</p>}
-                            </div>
-                        </ScrollArea>
-                    </div>
-                )}
-                {view === 'ordering' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                             <h3 className="font-semibold mb-2">Playing XI (Batting Order)</h3>
-                             <SortableContext items={selectedPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-2 min-h-[300px] border rounded-lg p-2 bg-muted/30">
-                                    {selectedPlayers.map((player, index) => (
-                                        <SortablePlayerCard 
-                                          key={player.personId} 
-                                          player={player} 
-                                          index={index + 1} 
-                                          availability={match.availability?.[player.personId]}
-                                          isSelected={true}
-                                          onSelect={() => {}} // Selection is disabled in ordering view
-                                        />
-                                    ))}
-                                    {selectedPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">Select players to set the batting order.</p>}
-                                </div>
-                            </SortableContext>
-                        </div>
-                         <div>
-                            <h3 className="font-semibold mb-2">12th Man (Substitute)</h3>
-                             <div className="space-y-2 min-h-[100px] border rounded-lg p-2 bg-muted/30">
-                                {twelfthManId && rosterWithStats.find(p => p.personId === twelfthManId) ? (
-                                     <PlayerCard
+                                      key={twelfthManId}
                                       player={rosterWithStats.find(p => p.personId === twelfthManId)!}
                                       availability={match.availability?.[twelfthManId]}
                                       isSelected={true}
                                       isTwelfthMan={true}
-                                      onSelect={() => {}}
+                                      onSelect={(checked) => handlePlayerSelect(twelfthManId, checked)}
                                     />
-                                ) : (
-                                    <p className="text-center text-muted-foreground pt-10">No 12th man selected.</p>
-                                )}
-                             </div>
+                                  )}
+                                  {orderedPlayers.length === 0 && !twelfthManId && (
+                                      <div className="flex items-center justify-center h-full text-muted-foreground text-center p-4">Select players from the available squad.</div>
+                                  )}
+                              </div>
+                          </ScrollArea>
+                      </div>
+                      
+                      {!isLineupFull && (
+                        <div className="space-y-2">
+                            <h3 className="font-semibold mb-2">Available Squad ({squadPlayers.length})</h3>
+                              <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                      <Input placeholder="Search roster..." className="pl-8" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                                  </div>
+                                  <div className="flex items-center p-1 rounded-md bg-muted">
+                                      {ROLE_FILTERS.map(role => (
+                                          <Button key={role} variant={roleFilter === role ? 'secondary' : 'ghost'} size="sm" onClick={() => setRoleFilter(role)}>{role}</Button>
+                                      ))}
+                                  </div>
+                              </div>
+                              <ScrollArea className="h-[540px] pr-2">
+                                  <div className="space-y-2">
+                                      {squadPlayers.map(player => (
+                                          <PlayerCard
+                                            key={player.personId}
+                                            player={player}
+                                            availability={match.availability?.[player.personId]}
+                                            isSelected={false}
+                                            onSelect={(checked) => handlePlayerSelect(player.personId, checked)}
+                                          />
+                                      ))}
+                                      {squadPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">No more available players.</p>}
+                                  </div>
+                              </ScrollArea>
                         </div>
-                    </div>
-                )}
+                      )}
+
+                       {isLineupFull && (
+                        <div className="flex flex-col items-center justify-center text-center p-4 border-2 border-dashed rounded-lg bg-muted/30">
+                            <UserCheck className="h-12 w-12 text-primary" />
+                            <h3 className="mt-4 font-semibold">Lineup Complete</h3>
+                            <p className="text-sm text-muted-foreground">You have selected 11 players and a substitute. Proceed to the 'Batting Order' tab to finalize.</p>
+                        </div>
+                       )}
+
+                  </div>
+              </TabsContent>
+              <TabsContent value="ordering" className="mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                           <h3 className="font-semibold mb-2">Playing XI (Drag to reorder)</h3>
+                           <SortableContext items={orderedPlayers.map(p => p.personId)} strategy={verticalListSortingStrategy}>
+                              <div className="space-y-2 min-h-[300px] border rounded-lg p-2 bg-muted/30">
+                                  {orderedPlayers.map((player, index) => (
+                                      <SortablePlayerCard 
+                                        key={player.personId} 
+                                        player={player} 
+                                        index={index + 1} 
+                                        availability={match.availability?.[player.personId]}
+                                        isSelected={true}
+                                        onSelect={() => {}} // Selection is disabled in ordering view
+                                      />
+                                  ))}
+                                  {orderedPlayers.length === 0 && <p className="text-center text-muted-foreground pt-10">Select players to set the batting order.</p>}
+                              </div>
+                          </SortableContext>
+                      </div>
+                       <div>
+                          <h3 className="font-semibold mb-2">12th Man (Substitute)</h3>
+                           <div className="space-y-2 min-h-[100px] border rounded-lg p-2 bg-muted/30">
+                              {twelfthManId && rosterWithStats.find(p => p.personId === twelfthManId) ? (
+                                   <PlayerCard
+                                    player={rosterWithStats.find(p => p.personId === twelfthManId)!}
+                                    availability={match.availability?.[twelfthManId]}
+                                    isSelected={true}
+                                    isTwelfthMan={true}
+                                    onSelect={() => {}}
+                                  />
+                              ) : (
+                                  <p className="text-center text-muted-foreground pt-10">No 12th man selected.</p>
+                              )}
+                           </div>
+                      </div>
+                  </div>
+              </TabsContent>
             </CardContent>
         </Card>
-        <div className="lg:col-span-2 flex items-center justify-between mt-6 p-4 border rounded-lg bg-background sticky bottom-4 z-10 shadow-lg">
+        <div className="lg:col-span-2 flex items-center justify-between mt-6 p-4 border rounded-lg bg-card sticky bottom-4 z-10 shadow-lg">
             <div className="flex items-center gap-2 text-sm">
                 <UserCheck className="h-5 w-5 text-primary" />
                 <span className="font-semibold">{selectedIds.length} Playing XI, {twelfthManId ? 1 : 0} Substitute</span>
