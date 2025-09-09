@@ -939,14 +939,14 @@ export function LiveScoringInterface({
               ) : (isReadyToScore && !isAllOut && !isOversFinished && (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="lg:col-span-2 space-y-4">
-                          <Card>
+                          <Card className="bg-slate-800 text-white border-slate-700">
                               <CardHeader>
                                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                       <div>
-                                          <CardTitle>Scoring Controls</CardTitle>
-                                          <CardDescription>Select bowling angle, then tap the field where the ball was hit.</CardDescription>
+                                          <CardTitle className="text-white">Scoring Controls</CardTitle>
+                                          <CardDescription className="text-slate-400">Select bowling angle, then tap the field where the ball was hit.</CardDescription>
                                       </div>
-                                      <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+                                      <div className="flex items-center p-1 rounded-md bg-slate-700">
                                           <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Team</Button>
                                           <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">On-strike</Button>
                                           <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Non-striker</Button>
@@ -955,16 +955,10 @@ export function LiveScoringInterface({
                               </CardHeader>
                               <CardContent>
                                   <div className="space-y-4">
-                                      <RadioGroup onValueChange={(val) => handlePlayerSelection('bowlingAngle', val)} value={liveScore.bowlingAngle} className="flex items-center justify-center gap-2" disabled={isPending || isSimulating}>
-                                          <Label htmlFor="angle-over" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Over the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                              <RadioGroupItem value="Over the Wicket" id="angle-over" className="sr-only" />
-                                              <CornerUpRight className="h-4 w-4" /> Over the Wicket
-                                          </Label>
-                                          <Label htmlFor="angle-round" className={cn("flex items-center gap-1.5 rounded-md border-2 p-1 px-2 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer", liveScore.bowlingAngle === 'Round the Wicket' ? 'border-primary' : 'border-muted bg-popover')}>
-                                              <RadioGroupItem value="Round the Wicket" id="angle-round" className="sr-only" />
-                                              <CornerUpLeft className="h-4 w-4" /> Round the Wicket
-                                          </Label>
-                                      </RadioGroup>
+                                      <div className="flex items-center justify-center gap-2">
+                                         <Button variant={liveScore.bowlingAngle === 'Over the Wicket' ? 'secondary' : 'outline'} onClick={() => handlePlayerSelection('bowlingAngle', 'Over the Wicket')} className="flex-1"><CornerUpRight className="mr-2"/>Over the Wicket</Button>
+                                         <Button variant={liveScore.bowlingAngle === 'Round the Wicket' ? 'secondary' : 'outline'} onClick={() => handlePlayerSelection('bowlingAngle', 'Round the Wicket')} className="flex-1"><CornerUpLeft className="mr-2"/>Round the Wicket</Button>
+                                      </div>
                                       <div className="flex justify-center pt-4">
                                           <WagonWheel
                                               onShotSelect={handleShotSelect}
