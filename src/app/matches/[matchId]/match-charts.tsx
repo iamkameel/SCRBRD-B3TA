@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart, Legend } from 'recharts';
 
 import {
   ChartConfig,
@@ -265,7 +265,7 @@ export function WagonWheelCard({ data }: { data?: LiveScore | Innings | null }) 
                 <CardDescription>Shot direction for this innings.</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-center">
-                 <WagonWheel onShotSelect={() => {}} shots={shots || []} disabled />
+                 <WagonWheel shots={shots || []} />
             </CardContent>
         </Card>
     )
