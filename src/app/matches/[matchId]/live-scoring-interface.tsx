@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -665,13 +664,13 @@ export function LiveScoringInterface({
             {isHatTrick && <HatTrickAnimation />}
             {isDuck && <DuckAnimation />}
             {isMaidenOver && <MaidenOverAnimation />}
-
+            
             <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff', backgroundColor: match.teamBColor ? `${match.teamBColor}40` : '#4848ff40' }}>
                     <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
-
+                
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
                     <div className="flex items-center justify-center h-full rounded-full bg-[#4848ff] min-w-[30%] px-4">
                          <p className="font-bold text-lg whitespace-nowrap">
@@ -726,7 +725,6 @@ export function LiveScoringInterface({
                     ))}
                 </div>
             </div>
-
 
             <p className="text-center font-semibold text-[#ffc33e]">
                 Required Rate: {!isFirstInnings && match.firstInningsTotal != null && liveScore.overs < 20 ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - (liveScore.overs + (liveScore.balls / 6)))).toFixed(2) : '-'}
