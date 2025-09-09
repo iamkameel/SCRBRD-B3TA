@@ -438,9 +438,10 @@ export async function acceptAssignmentAction(matchId: string, assignmentId: stri
     return { success: true };
 }
 
-export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup | null> => {
+export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup> => {
+  const defaultLineup: Lineup = { playingXI: [], twelfthMan: null };
   const match = await getMatch(matchId);
-  if (!match || !teamId) return null;
+  if (!match || !teamId) return defaultLineup;
   
   try {
     const lineupDocRef = doc(db, 'matches', matchId, 'lineups', teamId);
@@ -452,10 +453,10 @@ export const getMatchLineup = cache(async (matchId: string, teamId: string): Pro
             twelfthMan: data.twelfthMan || null,
         }
     }
-    return null;
+    return defaultLineup;
   } catch (error) {
     console.error(`Error fetching lineup for match ${matchId}, team ${teamId}:`, error);
-    return null;
+    return defaultLineup;
   }
 });
 
@@ -688,7 +689,7 @@ export async function updateLivePlayersAction(matchId: string, updates: Partial<
     const liveScoreUpdate: { [key: string]: any } = {};
     if (updates.onStrikeBatsmanId !== undefined) {
         liveScoreUpdate['liveScore.onStrikeBatsmanId'] = updates.onStrikeBatsmanId;
-        const batsmanStatsKey = `liveScore.batsmanStats.${updates.onStrikeBatsmanId}`;
+        const batsmanStatsKey = `liveScore.batsmanStats.${updates.onStrikeBatsmanId!}`;
         if (!currentLiveScore.batsmanStats?.[updates.onStrikeBatsmanId!]) {
             liveScoreUpdate[batsmanStatsKey] = { runs: 0, balls: 0, timeIn: Timestamp.now() };
             liveScoreUpdate['liveScore.extras.partnership'] = 0;
@@ -1259,3 +1260,4 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
     
 
     
+
