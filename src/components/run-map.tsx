@@ -23,14 +23,14 @@ const COLORS = [
 ];
 
 const SECTORS = [
-  { name: 'Cover', angle: 0 },
-  { name: 'Long Off', angle: 45 },
-  { name: 'Long On', angle: 90 },
-  { name: 'Mid-Wicket', angle: 135 },
-  { name: 'Square Leg', angle: 180 },
-  { name: 'Fine Leg', angle: 225 },
-  { name: 'Third Man', angle: 270 },
-  { name: 'Point', angle: 315 },
+  { name: 'Point', angle: 0 },
+  { name: 'Cover', angle: 45 },
+  { name: 'Long Off', angle: 90 },
+  { name: 'Long On', angle: 135 },
+  { name: 'Mid-Wicket', angle: 180 },
+  { name: 'Square Leg', angle: 225 },
+  { name: 'Fine Leg', angle: 270 },
+  { name: 'Third Man', angle: 315 },
 ];
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, value, name }: any) => {
@@ -48,29 +48,41 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, value, name }: a
 
 const calculateRunMapData = (shots: ShotData[]): { name: string; value: number }[] => {
     const runMap: Record<string, number> = {
-        'Cover': 0, 'Long Off': 0, 'Long On': 0, 'Mid-Wicket': 0,
-        'Square Leg': 0, 'Fine Leg': 0, 'Third Man': 0, 'Point': 0
+        'Point': 0, 'Cover': 0, 'Long Off': 0, 'Long On': 0,
+        'Mid-Wicket': 0, 'Square Leg': 0, 'Fine Leg': 0, 'Third Man': 0
     };
     let totalRuns = 0;
 
     shots.forEach(shot => {
-        totalRuns += shot.runs;
-        const angle = shot.angle;
+        if(shot.runs > 0) {
+            totalRuns += shot.runs;
+            const angle = shot.angle;
 
-        if (angle >= 337.5 || angle < 22.5) runMap.Point += shot.runs;
-        else if (angle >= 22.5 && angle < 67.5) runMap.Cover += shot.runs;
-        else if (angle >= 67.5 && angle < 112.5) runMap['Long Off'] += shot.runs;
-        else if (angle >= 112.5 && angle < 157.5) runMap['Long On'] += shot.runs;
-        else if (angle >= 157.5 && angle < 202.5) runMap['Mid-Wicket'] += shot.runs;
-        else if (angle >= 202.5 && angle < 247.5) runMap['Square Leg'] += shot.runs;
-        else if (angle >= 247.5 && angle < 292.5) runMap['Fine Leg'] += shot.runs;
-        else if (angle >= 292.5 && angle < 337.5) runMap['Third Man'] += shot.runs;
+            if (angle >= 337.5 || angle < 22.5) runMap.Point += shot.runs;
+            else if (angle >= 22.5 && angle < 67.5) runMap.Cover += shot.runs;
+            else if (angle >= 67.5 && angle < 112.5) runMap['Long Off'] += shot.runs;
+            else if (angle >= 112.5 && angle < 157.5) runMap['Long On'] += shot.runs;
+            else if (angle >= 157.5 && angle < 202.5) runMap['Mid-Wicket'] += shot.runs;
+            else if (angle >= 202.5 && angle < 247.5) runMap['Square Leg'] += shot.runs;
+            else if (angle >= 247.5 && angle < 292.5) runMap['Fine Leg'] += shot.runs;
+            else if (angle >= 292.5 && angle < 337.5) runMap['Third Man'] += shot.runs;
+        }
     });
 
-    return SECTORS.map(sector => ({
+    const data = SECTORS.map(sector => ({
         name: sector.name,
         value: totalRuns > 0 ? Math.round((runMap[sector.name] / totalRuns) * 100) : 0,
     }));
+    
+    // Ensure percentages add up to 100
+    const currentTotal = data.reduce((sum, item) => sum + item.value, 0);
+    if (totalRuns > 0 && currentTotal !== 100) {
+        const diff = 100 - currentTotal;
+        const maxValIndex = data.reduce((maxIndex, item, index, arr) => item.value > arr[maxIndex].value ? index : maxIndex, 0);
+        data[maxValIndex].value += diff;
+    }
+
+    return data;
 };
 
 export function RunMap({ shots, size = 300 }: RunMapProps) {
@@ -116,9 +128,18 @@ export function RunMap({ shots, size = 300 }: RunMapProps) {
                 <rect x={center - 4} y={center - 44} width="8" height="6" fill="white" />
                 <rect x={center - 4} y={center + 38} width="8" height="6" fill="white" />
 
-                {/* Labels */}
-                <text x={center - 30} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold uppercase">Off</text>
-                <text x={center + 23} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold uppercase">Leg</text>
+                {/* Sector Labels */}
+                {SECTORS.map((sector, index) => {
+                    const angle = sector.angle * Math.PI / 180;
+                    const radius = center * 0.9;
+                    const x = center + radius * Math.cos(-angle);
+                    const y = center + radius * Math.sin(-angle);
+                    return (
+                        <text key={index} x={x} y={y} fill="white" fontSize="8" textAnchor="middle" dominantBaseline="middle" className="font-sans uppercase font-bold" style={{ pointerEvents: 'none', textShadow: '1px 1px 2px black' }}>
+                            {sector.name}
+                        </text>
+                    );
+                })}
             </svg>
              <PieChart width={size} height={size}>
                 <Pie
@@ -127,16 +148,16 @@ export function RunMap({ shots, size = 300 }: RunMapProps) {
                     cy={center}
                     labelLine={false}
                     label={renderCustomizedLabel}
-                    outerRadius={center * 0.9}
-                    innerRadius={center * 0.2}
+                    outerRadius={center * 0.75}
+                    innerRadius={center * 0.3}
                     dataKey="value"
                     startAngle={22.5}
                     endAngle={382.5}
                     stroke="white"
-                    strokeWidth={1}
+                    strokeWidth={0.5}
                 >
                     {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index]} fillOpacity={0.4} />
+                        <Cell key={`cell-${index}`} fill={COLORS[index]} fillOpacity={0.5} />
                     ))}
                 </Pie>
             </PieChart>
