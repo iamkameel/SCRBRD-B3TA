@@ -438,25 +438,19 @@ export async function acceptAssignmentAction(matchId: string, assignmentId: stri
     return { success: true };
 }
 
-export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup> => {
-  const defaultLineup: Lineup = { playingXI: [], twelfthMan: null };
+export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup | null> => {
   const match = await getMatch(matchId);
-  if (!match || !teamId) return defaultLineup;
-  
+  if (!match || !teamId) return null;
   try {
     const lineupDocRef = doc(db, 'matches', matchId, 'lineups', teamId);
     const lineupSnap = await getDoc(lineupDocRef);
     if (lineupSnap.exists()) {
-        const data = lineupSnap.data();
-        return {
-            playingXI: data.playingXI || [],
-            twelfthMan: data.twelfthMan || null,
-        }
+      return lineupSnap.data() as Lineup;
     }
-    return defaultLineup;
+    return null;
   } catch (error) {
     console.error(`Error fetching lineup for match ${matchId}, team ${teamId}:`, error);
-    return defaultLineup;
+    return null;
   }
 });
 
@@ -1260,4 +1254,5 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
     
 
     
+
 

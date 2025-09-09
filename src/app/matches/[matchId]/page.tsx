@@ -48,12 +48,6 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     return { ...team, abbreviation: school?.abbreviation };
   };
 
-  const fetchLineup = async (teamId: string | undefined): Promise<Lineup> => {
-    if (!teamId) return { playingXI: [], twelfthMan: null };
-    // The getMatchLineup function is now guaranteed to return a Lineup object.
-    return getMatchLineup(matchId, teamId);
-  };
-
   const [
     teamA,
     teamB,
@@ -77,8 +71,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getPlayers(),
     getTeamRoster(match.teamAId),
     match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
-    fetchLineup(match.teamAId),
-    fetchLineup(match.teamBId),
+    getMatchLineup(matchId, match.teamAId),
+    getMatchLineup(matchId, match.teamBId),
     getScorecard(matchId),
     getMatchTransportAssignments(matchId),
     getVehicles(),
@@ -110,8 +104,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     people={people} 
     teamARosterWithStats={teamARosterWithStats}
     teamBRosterWithStats={teamBRosterWithStats}
-    teamALineup={teamALineup}
-    teamBLineup={teamBLineup}
+    teamALineup={teamALineup!}
+    teamBLineup={teamBLineup!}
     scorecard={scorecard}
     transportAssignments={transportAssignments}
     vehicles={vehicles}
