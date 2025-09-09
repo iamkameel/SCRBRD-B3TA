@@ -56,8 +56,8 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
 
   const isCaptain = rosterWithStats.some(p => p.personId === person?.personId && p.isCaptain);
   
-  const [selectedIds, setSelectedIds] = React.useState<string[]>(initialLineup.playingXI);
-  const [twelfthManId, setTwelfthManId] = React.useState<string | null>(initialLineup.twelfthMan);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>(initialLineup?.playingXI || []);
+  const [twelfthManId, setTwelfthManId] = React.useState<string | null>(initialLineup?.twelfthMan || null);
   const [orderedPlayers, setOrderedPlayers] = React.useState<RosterMemberWithStats[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState('All');
@@ -71,11 +71,11 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
 
   React.useEffect(() => {
     // Initial setup from props
-    setSelectedIds(initialLineup.playingXI);
-    setTwelfthManId(initialLineup.twelfthMan);
+    setSelectedIds(initialLineup?.playingXI || []);
+    setTwelfthManId(initialLineup?.twelfthMan || null);
 
     // Set the initial order based on props
-    const lineupOrder = initialLineup.playingXI.map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
+    const lineupOrder = (initialLineup?.playingXI || []).map(id => rosterWithStats.find(p => p.personId === id)).filter(Boolean) as RosterMemberWithStats[];
     setOrderedPlayers(lineupOrder);
 
   }, [initialLineup, rosterWithStats]);
