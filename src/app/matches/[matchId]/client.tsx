@@ -51,6 +51,7 @@ import { ManhattanChart, WormChart, WagonWheelCard, RunMapCard } from "./match-c
 import { PlayerAvailabilityCard } from './player-availability-card';
 import { AvailabilityStatusCard } from "./availability-status-card";
 import { LineupManager } from "./manage/lineup-manager";
+import { MatchRecapCard } from './match-recap-card';
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -509,12 +510,13 @@ export default function MatchDetailsClient({
                 <TabsTrigger value="logistics"><Bus className="mr-2 h-4 w-4" />Logistics</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="scorecard" className="mt-4">
+            <TabsContent value="scorecard" className="mt-4 space-y-4">
+                {scorecard && match.status === 'completed' && <MatchRecapCard match={match} scorecard={scorecard} />}
                 <Card>
                     <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
                         <div>
                             <CardTitle>
-                                {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
+                                {match.status === 'live' ? 'Live Scoring Interface' : 'Detailed Scorecard'}
                             </CardTitle>
                             <CardDescription>
                                 {match.status === 'live' ? 'Enter ball-by-ball data here.' : (match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.')}
@@ -602,8 +604,8 @@ export default function MatchDetailsClient({
                     match={match}
                     teamARoster={teamARosterWithStats}
                     teamBRoster={teamBRosterWithStats}
-                    teamALineup={teamALineup!}
-                    teamBLineup={teamBLineup!}
+                    teamALineup={teamALineup}
+                    teamBLineup={teamBLineup}
                     canManageA={isManagerForA}
                     canManageB={isManagerForB}
                 />
