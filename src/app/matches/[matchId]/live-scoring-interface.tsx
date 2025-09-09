@@ -420,14 +420,14 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     }, [stats.length]);
 
     if (stats.length === 0) {
-        return <p className="text-center font-semibold text-white h-auto py-2 text-base">&nbsp;</p>;
+        return <p className="text-center font-semibold h-auto py-2 text-base">&nbsp;</p>;
     }
 
     const currentStat = stats[currentIndex];
     const Icon = currentStat.icon;
 
     return (
-        <div className="text-center text-white h-auto py-2 text-base flex items-center justify-center">
+        <div className="text-center h-auto py-2 text-base flex items-center justify-center">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -435,7 +435,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-white"
                 >
                     <Icon className="h-4 w-4 text-[#ffc33e]" />
                     <span className="uppercase text-[#ffc33e] font-semibold">{currentStat.label}:</span>
@@ -485,13 +485,13 @@ const FirstInningsTicker = ({ match, firstInnings }: { match: Match; firstInning
     }, [stats.length]);
 
     if (!firstInnings) {
-        return <Link href={`/matches/${match.matchId}`} className="text-sm hover:underline">1st Innings Stats</Link>;
+        return <span className="text-sm">&nbsp;</span>;
     }
     
     const currentStat = stats[currentIndex];
 
     return (
-        <div className="flex items-center justify-end text-right h-full text-sm">
+        <div className="flex items-center justify-end text-right h-full text-base">
              <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -765,15 +765,15 @@ export function LiveScoringInterface({
   
   const getBallColor = (ball: string) => {
     const runs = parseInt(ball.replace(/\D/g, ''), 10);
-    if (ball.toLowerCase().includes('wd')) return '#5200bc'; // Purple
-    if (ball === 'W') return '#dd514c'; // Red
-    if (runs === 4) return '#3b83f6'; // Blue
-    if (runs === 6) return '#ec4899'; // Pink
-    if (runs === 3) return '#ffc33e'; // Amber
-    if (runs === 2) return '#b2e358'; // Lime
-    if (runs === 1) return '#e7ff00'; // Yellow
-    if (ball === '.') return '#f2c14b'; // Orange
-    return 'hsl(var(--muted-foreground))';
+    if (ball.toLowerCase().includes('wd')) return '#a855f7'; // Purple for Wide
+    if (ball === 'W') return '#ef4444'; // Red for Wicket
+    if (runs === 6) return '#ef4444'; // Red for 6
+    if (runs === 4) return '#3b82f6'; // Blue for 4
+    if (runs === 3) return '#f59e0b'; // Amber for 3
+    if (runs === 2) return '#84cc16'; // Lime for 2
+    if (runs === 1) return '#ec4899'; // Pink for 1
+    if (ball === '.') return 'hsl(var(--muted-foreground))'; // Grey for dot
+    return 'hsl(var(--muted-foreground))'; // Default grey
   };
   
   const getBallDisplay = (ball: string): string => {
@@ -836,9 +836,9 @@ export function LiveScoringInterface({
                 </Avatar>
             </div>
             
-            <div className="text-base grid grid-cols-3 items-center px-4 max-w-lg mx-auto text-white">
-                <div className="text-left text-sm">
-                    <span>1st Innings: {match.firstInningsTotal || 0}</span>
+            <div className="grid grid-cols-3 items-center px-4 max-w-lg mx-auto text-white">
+                <div className="text-left text-base">
+                   <FirstInningsTicker match={match} firstInnings={match.firstInningsLiveScore} />
                 </div>
                 <div className="text-center">
                     {!isFirstInnings && (
@@ -846,9 +846,7 @@ export function LiveScoringInterface({
                     )}
                 </div>
                 <div className="text-right">
-                    {isFirstInnings && (
-                        <FirstInningsTicker match={match} firstInnings={match.firstInningsLiveScore} />
-                    )}
+                    &nbsp;
                 </div>
             </div>
 
@@ -863,7 +861,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            <div className="flex items-center justify-center gap-4 w-full max-w-lg mx-auto text-sm text-gray-300">
+             <div className="flex items-center justify-center gap-4 w-full max-w-lg mx-auto text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
