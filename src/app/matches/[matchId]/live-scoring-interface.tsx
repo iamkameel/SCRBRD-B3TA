@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -667,7 +667,7 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
-                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e', backgroundColor: match.teamAColor ? `${match.teamAColor}40` : '#ffc33e40' }}>
+                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff', backgroundColor: match.teamBColor ? `${match.teamBColor}40` : '#4848ff40' }}>
                     <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
@@ -687,7 +687,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff', backgroundColor: match.teamBColor ? `${match.teamBColor}40` : '#4848ff40' }}>
+                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e', backgroundColor: match.teamAColor ? `${match.teamAColor}40` : '#ffc33e40' }}>
                     <AvatarImage src={match.teamBLogoUrl} alt={match.teamBName} />
                     <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
                 </Avatar>
