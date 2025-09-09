@@ -563,7 +563,7 @@ export interface PerformanceEntry {
   ballsFaced: number;
   wickets: number;
   oversBowled: number;
-  wagonWheel: { angle: number; runs: number, distance: number }[];
+  wagonWheel: ShotData[];
   strikeRate: number;
   economyRate: number;
 }
@@ -617,6 +617,8 @@ export interface RunMapData {
     longOn: number;
     cover: number;
     point: number;
+    thirdMan: number;
+    longOff: number;
 }
 
 export interface PlayerTrackerData {

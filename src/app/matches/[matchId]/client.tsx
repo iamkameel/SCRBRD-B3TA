@@ -46,7 +46,7 @@ import { Scorecard } from "./scorecard";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LiveScoringInterface } from "./live-scoring-interface";
 import { useAuth } from "@/lib/auth-context";
-import { ManhattanChart, WormChart, WagonWheelSummary } from "./match-charts";
+import { ManhattanChart, WormChart, WagonWheelCard, RunMapCard } from "./match-charts";
 import { PlayerAvailabilityCard } from './player-availability-card';
 import { AvailabilityStatusCard } from "./availability-status-card";
 import { LineupManager } from "./manage/lineup-manager";
@@ -506,10 +506,12 @@ export default function MatchDetailsClient({
                     <CardHeader>
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                              <div className="flex items-center justify-between flex-1">
-                                <CardTitle>
-                                    {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
-                                </CardTitle>
-                                {match.status === 'live' && <Badge className="bg-green-600 text-white animate-pulse">Live</Badge>}
+                                <div className="flex items-center gap-2">
+                                  <CardTitle>
+                                      {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
+                                  </CardTitle>
+                                  {match.status === 'live' && <Badge className="bg-red-600 text-white animate-pulse">Live</Badge>}
+                                </div>
                             </div>
                              <div className="flex items-center gap-2 mt-4 md:mt-0 md:ml-4">
                                 {match.status === 'scheduled' && !innings1 && (
@@ -612,15 +614,17 @@ export default function MatchDetailsClient({
                     <TabsContent value="innings1" className="mt-4">
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             <ManhattanChart data={firstInningsData} />
-                            <WagonWheelSummary data={firstInningsData} />
                             <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                            <WagonWheelCard data={firstInningsData} />
+                            <RunMapCard data={firstInningsData} />
                         </div>
                     </TabsContent>
                      <TabsContent value="innings2" className="mt-4">
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             <ManhattanChart data={secondInningsData} />
-                            <WagonWheelSummary data={secondInningsData} />
                             <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                            <WagonWheelCard data={secondInningsData} />
+                            <RunMapCard data={secondInningsData} />
                         </div>
                     </TabsContent>
                 </Tabs>

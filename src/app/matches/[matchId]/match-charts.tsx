@@ -257,9 +257,7 @@ export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }:
 
 // --- Wagon Wheel Summary ---
 const calculateMatchRunMap = (shots: ShotData[]): RunMapData => {
-    const runMap: RunMapData = {
-        fineLeg: 0, squareLeg: 0, midWicket: 0, longOn: 0, cover: 0, point: 0,
-    };
+    const runMap: RunMapData = { fineLeg: 0, squareLeg: 0, midWicket: 0, longOn: 0, cover: 0, point: 0, thirdMan: 0, longOff: 0 };
     let totalRuns = 0;
 
     if (shots.length === 0) return runMap;
@@ -267,41 +265,61 @@ const calculateMatchRunMap = (shots: ShotData[]): RunMapData => {
     shots.forEach(shot => {
         totalRuns += shot.runs;
         const angle = shot.angle;
-        if (angle >= 225 && angle < 315) runMap.point += shot.runs;
-        else if (angle >= 315 || angle < 45) runMap.cover += shot.runs;
-        else if (angle >= 45 && angle < 90) runMap.longOn += shot.runs;
-        else if (angle >= 90 && angle < 135) runMap.midWicket += shot.runs;
-        else if (angle >= 135 && angle < 225) runMap.squareLeg += shot.runs;
+
+        if (angle >= 337.5 || angle < 22.5) runMap.cover += shot.runs;
+        else if (angle >= 22.5 && angle < 67.5) runMap.longOff += shot.runs;
+        else if (angle >= 67.5 && angle < 112.5) runMap.longOn += shot.runs;
+        else if (angle >= 112.5 && angle < 157.5) runMap.midWicket += shot.runs;
+        else if (angle >= 157.5 && angle < 202.5) runMap.squareLeg += shot.runs;
+        else if (angle >= 202.5 && angle < 247.5) runMap.fineLeg += shot.runs;
+        else if (angle >= 247.5 && angle < 292.5) runMap.thirdMan += shot.runs;
+        else if (angle >= 292.5 && angle < 337.5) runMap.point += shot.runs;
     });
 
     if (totalRuns > 0) {
         Object.keys(runMap).forEach(key => {
             runMap[key as keyof RunMapData] = Math.round((runMap[key as keyof RunMapData] / totalRuns) * 100);
         });
+        
         let currentTotal = Object.values(runMap).reduce((sum, val) => sum + val, 0);
-        if (currentTotal > 100) runMap.cover -= (currentTotal - 100);
+        if (currentTotal > 100) {
+            runMap.cover -= (currentTotal - 100);
+        } else if (currentTotal < 100 && currentTotal > 0) {
+            runMap.cover += (100 - currentTotal);
+        }
     }
     
     return runMap;
 };
 
-export function WagonWheelSummary({ data }: { data?: LiveScore | Innings | null }) {
+export function WagonWheelCard({ data }: { data?: LiveScore | Innings | null }) {
+    const shots = data && 'shots' in data ? data.shots : [];
+
+    return (
+         <Card>
+            <CardHeader>
+                <CardTitle>Wagon Wheel</CardTitle>
+                <CardDescription>Shot direction for this innings.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center">
+                 <WagonWheel onShotSelect={() => {}} shots={shots || []} disabled />
+            </CardContent>
+        </Card>
+    )
+}
+
+export function RunMapCard({ data }: { data?: LiveScore | Innings | null }) {
     const shots = data && 'shots' in data ? data.shots : [];
     const runMapData = calculateMatchRunMap(shots || []);
 
     return (
-         <Card className="col-span-1 md:col-span-2">
+        <Card>
             <CardHeader>
-                <CardTitle>Scoring Analysis</CardTitle>
-                <CardDescription>Shot direction and run distribution for this innings.</CardDescription>
+                <CardTitle>Run Map</CardTitle>
+                <CardDescription>Scoring distribution for this innings.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div className="flex justify-center">
-                     <WagonWheel onShotSelect={() => {}} shots={shots || []} disabled />
-                </div>
-                 <div className="flex justify-center">
-                    <RunMap data={runMapData} />
-                </div>
+            <CardContent className="flex items-center justify-center">
+                <RunMap data={runMapData} />
             </CardContent>
         </Card>
     )

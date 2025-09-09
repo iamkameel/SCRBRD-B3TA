@@ -9,12 +9,7 @@ import { cache } from 'react';
 
 const calculateRunMap = (performances: PerformanceEntry[]): RunMapData => {
     const runMap: RunMapData = {
-        fineLeg: 0,
-        squareLeg: 0,
-        midWicket: 0,
-        longOn: 0,
-        cover: 0,
-        point: 0,
+        fineLeg: 0, squareLeg: 0, midWicket: 0, longOn: 0, cover: 0, point: 0, thirdMan: 0, longOff: 0
     };
     let totalRuns = 0;
 
@@ -25,34 +20,27 @@ const calculateRunMap = (performances: PerformanceEntry[]): RunMapData => {
     allShots.forEach(shot => {
         totalRuns += shot.runs;
         const angle = shot.angle;
-        // Angles: 0 is right (Cover), 90 is down (Long On), 180 is left (Mid-wicket), 270 is up (Point/Fine Leg)
-        if (angle >= 225 && angle < 315) { // Point
-            runMap.point += shot.runs;
-        } else if (angle >= 315 || angle < 45) { // Cover
-            runMap.cover += shot.runs;
-        } else if (angle >= 45 && angle < 90) { // Long On
-            runMap.longOn += shot.runs;
-        } else if (angle >= 90 && angle < 135) { // Mid-Wicket
-            runMap.midWicket += shot.runs;
-        } else if (angle >= 135 && angle < 225) { // Square Leg
-            runMap.squareLeg += shot.runs;
-        }
-        // Fine leg is often behind square, grouping with point for simplicity here.
-        // A more granular model could be used if needed.
+        
+        if (angle >= 337.5 || angle < 22.5) runMap.cover += shot.runs;
+        else if (angle >= 22.5 && angle < 67.5) runMap.longOff += shot.runs;
+        else if (angle >= 67.5 && angle < 112.5) runMap.longOn += shot.runs;
+        else if (angle >= 112.5 && angle < 157.5) runMap.midWicket += shot.runs;
+        else if (angle >= 157.5 && angle < 202.5) runMap.squareLeg += shot.runs;
+        else if (angle >= 202.5 && angle < 247.5) runMap.fineLeg += shot.runs;
+        else if (angle >= 247.5 && angle < 292.5) runMap.thirdMan += shot.runs;
+        else if (angle >= 292.5 && angle < 337.5) runMap.point += shot.runs;
     });
 
     if (totalRuns > 0) {
-        runMap.fineLeg = Math.round((runMap.point / totalRuns) * 100);
-        runMap.squareLeg = Math.round((runMap.squareLeg / totalRuns) * 100);
-        runMap.midWicket = Math.round((runMap.midWicket / totalRuns) * 100);
-        runMap.longOn = Math.round((runMap.longOn / totalRuns) * 100);
-        runMap.cover = Math.round((runMap.cover / totalRuns) * 100);
-        runMap.point = Math.round((runMap.point / totalRuns) * 100);
+        Object.keys(runMap).forEach(key => {
+            runMap[key as keyof RunMapData] = Math.round((runMap[key as keyof RunMapData] / totalRuns) * 100);
+        });
         
-        // Normalize to sum to 100%
         let currentTotal = Object.values(runMap).reduce((sum, val) => sum + val, 0);
         if (currentTotal > 100) {
-            runMap.cover -= (currentTotal - 100); // Adjust largest category
+            runMap.cover -= (currentTotal - 100);
+        } else if (currentTotal < 100 && currentTotal > 0) {
+            runMap.cover += (100 - currentTotal);
         }
     }
     
