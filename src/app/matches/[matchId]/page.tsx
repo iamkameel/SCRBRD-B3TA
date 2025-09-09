@@ -48,6 +48,13 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     return { ...team, abbreviation: school?.abbreviation };
   };
 
+  // Fetch lineups and ensure they are never null
+  const fetchLineup = async (teamId: string | undefined): Promise<Lineup> => {
+      if (!teamId) return { playingXI: [], twelfthMan: null };
+      const lineup = await getMatchLineup(matchId, teamId);
+      return lineup || { playingXI: [], twelfthMan: null };
+  };
+
   const [
     teamA,
     teamB,
@@ -71,8 +78,8 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     getPlayers(),
     getTeamRoster(match.teamAId),
     match.teamBId ? getTeamRoster(match.teamBId) : Promise.resolve([]),
-    getMatchLineup(match.matchId, match.teamAId),
-    match.teamBId ? getMatchLineup(match.matchId, match.teamBId) : Promise.resolve({ playingXI: [], twelfthMan: null }),
+    fetchLineup(match.teamAId),
+    fetchLineup(match.teamBId),
     getScorecard(matchId),
     getMatchTransportAssignments(matchId),
     getVehicles(),
