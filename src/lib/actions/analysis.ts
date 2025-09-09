@@ -23,21 +23,19 @@ import { scoutPlayer } from '@/ai/flows/scout-player-flow';
 import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatch, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatch, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput, GenerateScorecardOutput } from '@/ai/schemas';
 import type { MatchForecast, Person } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 import { getTeam } from './teams';
 
-export async function getTopPerformersAction(matchId: string): Promise<PlayerOfTheMatch[]> {
+export async function getTopPerformersAction(scorecard: GenerateScorecardOutput): Promise<PlayerOfTheMatch[]> {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
-
-    const match = await getMatch(matchId);
-    if (!match) throw new Error("Match not found or permission denied.");
-
-    const scorecard = await getScorecard(matchId);
-    if (!scorecard) throw new Error("A complete scorecard is required to select top performers.");
+    
+    if (!scorecard || !scorecard.innings1 || !scorecard.innings2) {
+        throw new Error("A complete scorecard is required to select top performers.");
+    }
 
     const { performers } = await getTopPerformers(scorecard);
     if (!performers || performers.length === 0) {

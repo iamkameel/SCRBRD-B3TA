@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords, Sparkles, TrendingUp, Users, Shield } from 'lucide-react';
-import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership, PlayerOfTheMatch } from '@/lib/data';
+import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership, PlayerOfTheMatch, Innings } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction } from '@/lib/actions/matches';
+import { updateLivePlayersAction, recordBallAction, endInningsAction, undoLastBallAction, simulateBallAction, createScorecardFromLive } from '@/lib/actions/matches';
 import { generateLiveMatchUpdateAction, getMatchForecastAction, getTopPerformersAction, savePlayerOfTheMatchAction } from '@/lib/actions/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
@@ -354,7 +354,7 @@ function UndoDialog({ open, onOpenChange, onConfirm }: { open: boolean; onOpenCh
                         {UNDO_REASONS.map((r) => (
                             <div key={r} className="flex items-center space-x-2">
                                 <RadioGroupItem value={r} id={r} />
-                                <Label htmlFor={r} className="font-normal">{r}</Label>
+                                <Label htmlFor={r} className="font-normal cursor-pointer">{r}</Label>
                             </div>
                         ))}
                     </RadioGroup>
@@ -711,10 +711,14 @@ export function LiveScoringInterface({
             }
         });
     } else {
-        // End of match, show POTM dialog
         startTransition(async () => {
             try {
-                const performers = await getTopPerformersAction(match.matchId);
+                const generatedScorecard = await createScorecardFromLive(match.matchId);
+                if (!generatedScorecard) {
+                  throw new Error("Could not generate a temporary scorecard from live data.");
+                }
+
+                const performers = await getTopPerformersAction(generatedScorecard.scorecard);
                 if (performers && performers.length > 0) {
                     setTopPerformers(performers);
                     setIsPotmDialogOpen(true);
