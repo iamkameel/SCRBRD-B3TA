@@ -435,11 +435,11 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="flex items-center gap-2 text-sm"
+                    className="flex items-center gap-2 text-base"
                 >
                     <Icon className="h-4 w-4" />
-                    <span className="uppercase text-sm">{currentStat.label}:</span>
-                    <span className="text-sm">{currentStat.value}</span>
+                    <span className="uppercase">{currentStat.label}:</span>
+                    <span>{currentStat.value}</span>
                 </motion.div>
             </AnimatePresence>
         </div>
@@ -772,16 +772,12 @@ export function LiveScoringInterface({
                     <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
                     <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
                 </Avatar>
-                
-                 {match.status === 'live' && (
-                    <Badge className="capitalize bg-green-600 text-white animate-pulse ml-2">Live</Badge>
-                 )}
             </div>
             
-            <div className="text-sm font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
+            <div className="text-base font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
                 <span>1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
-                    <span className="text-[#3ecc78] font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
+                    <span className="text-green-400 font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
                  <Link href={`/matches/${match.matchId}`} className="text-xs hover:underline">1st Innings Stats</Link>
             </div>
@@ -797,7 +793,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            <div className="flex items-center justify-center gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
+            <div className="flex items-center justify-center gap-2 w-full max-w-lg mx-auto text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
