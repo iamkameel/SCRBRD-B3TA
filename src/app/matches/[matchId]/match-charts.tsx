@@ -162,7 +162,7 @@ const CustomizedWicketDot = (props: any) => {
 };
 
 
-const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
+const processInningsForWormChart = (innings: Innings | LiveScore | null, teamKey: 'teamA' | 'teamB') => {
     if (!innings || !('ballHistory' in innings)) return [];
     
     const data: { over: number; score: number; wicket?: { team: 'teamA' | 'teamB', wickets: number } }[] = [{ over: 0, score: 0 }];
@@ -196,11 +196,13 @@ const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
         if (isLegalDelivery) {
             ballsThisOver++;
             const currentOverProgress = oversCompleted + ballsThisOver / 10;
-            const newDataPoint = {
+            const newDataPoint: any = {
                 over: currentOverProgress,
                 score: cumulativeScore,
-                ...(isWicket && { wicket: { wickets: cumulativeWickets } })
             };
+             if (isWicket) {
+                newDataPoint.wicket = { wickets: cumulativeWickets, team: teamKey };
+            }
             data.push(newDataPoint);
             
             if (ballsThisOver === 6) {
@@ -215,24 +217,35 @@ const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
 
 export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }: WormChartProps) {
     
-    const innings1Data = scorecard?.innings1 || (liveScore?.liveInnings === 1 ? liveScore : match.firstInningsLiveScore);
-    const innings2Data = scorecard?.innings2 || (liveScore?.liveInnings === 2 ? liveScore : null);
+    const firstInningsData = scorecard?.innings1 || (liveScore?.liveInnings === 1 ? liveScore : match.firstInningsLiveScore);
+    const secondInningsData = scorecard?.innings2 || (liveScore?.liveInnings === 2 ? liveScore : null);
     
-    const teamAData = processInningsForWormChart(innings1Data);
-    const teamBData = processInningsForWormChart(innings2Data);
+    const firstInningsTeamKey = firstInningsData?.teamName === teamAName ? 'teamA' : 'teamB';
+    const secondInningsTeamKey = secondInningsData?.teamName === teamAName ? 'teamA' : 'teamB';
+
+    const firstInningsWorm = processInningsForWormChart(firstInningsData, firstInningsTeamKey);
+    const secondInningsWorm = processInningsForWormChart(secondInningsData, secondInningsTeamKey);
 
     const combinedData = [];
-    const maxLength = Math.max(teamAData.length, teamBData.length);
+    const maxLength = Math.max(firstInningsWorm.length, secondInningsWorm.length);
     for (let i = 0; i < maxLength; i++) {
-        const teamAPoint = teamAData[i] || teamAData[teamAData.length - 1];
-        const teamBPoint = teamBData[i] || teamBData[teamBData.length - 1];
+        const firstPoint = firstInningsWorm[i] || firstInningsWorm[firstInningsWorm.length - 1];
+        const secondPoint = secondInningsWorm[i] || secondInningsWorm[secondInningsWorm.length - 1];
+
+        const dataPoint: any = {
+            over: Math.max(firstPoint?.over || 0, secondPoint?.over || 0),
+        };
         
-        combinedData.push({
-            over: Math.max(teamAPoint?.over || 0, teamBPoint?.over || 0),
-            teamA: teamAPoint?.score,
-            teamB: teamBPoint?.score,
-            wicket: teamAPoint?.wicket ? { ...teamAPoint.wicket, team: 'teamA' } : (teamBPoint?.wicket ? { ...teamBPoint.wicket, team: 'teamB' } : undefined)
-        });
+        dataPoint[firstInningsTeamKey] = firstPoint?.score;
+        dataPoint[secondInningsTeamKey] = secondPoint?.score;
+        
+        if (firstPoint?.wicket) {
+            dataPoint.wicket = firstPoint.wicket;
+        } else if (secondPoint?.wicket) {
+            dataPoint.wicket = secondPoint.wicket;
+        }
+        
+        combinedData.push(dataPoint);
     }
 
 
@@ -273,8 +286,8 @@ export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }:
                             </div>
                         )}
                     />
-                    <Line type="monotone" dataKey="teamA" stroke="var(--color-teamA)" strokeWidth={2} dot={<CustomizedWicketDot />} name={teamAName} />
-                    <Line type="monotone" dataKey="teamB" stroke="var(--color-teamB)" strokeWidth={2} dot={<CustomizedWicketDot />} name={teamBName} />
+                    <Line type="monotone" dataKey="teamA" stroke="var(--color-teamA)" strokeWidth={2} dot={<CustomizedWicketDot />} name={teamAName} connectNulls />
+                    <Line type="monotone" dataKey="teamB" stroke="var(--color-teamB)" strokeWidth={2} dot={<CustomizedWicketDot />} name={teamBName} connectNulls />
                 </LineChart>
                 </ChartContainer>
             </CardContent>
@@ -383,6 +396,7 @@ export function RunMapCard({ data, roster }: { data?: LiveScore | Innings | null
         </Card>
     );
 }
+
 
 
 
