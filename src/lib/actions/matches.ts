@@ -14,7 +14,7 @@ import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin, getTeam } from './teams';
 import { cache } from 'react';
 import { getUserId } from '@/lib/auth';
-import { getTopPerformers } from '@/ai/flows/generate-top-performers-flow';
+import { getTopPerformers } from '@/ai/flows/generate-player-of-the-match-flow';
 import { logAuditEvent } from './audit';
 import { getSchool } from './schools';
 
@@ -1292,6 +1292,7 @@ export async function savePlayerOfTheMatchAction(matchId: string, player: Player
     
 
     
+
 
 
 

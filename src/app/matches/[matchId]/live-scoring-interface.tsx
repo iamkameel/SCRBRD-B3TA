@@ -26,8 +26,7 @@ import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@
 import { ConfettiBurst } from '@/components/confetti-burst';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { DialogContent } from '@radix-ui/react-dialog';
+import { Dialog, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogContent } from '@/components/ui/dialog';
 import { PartnershipCard } from './partnership-card';
 import { Badge } from '@/components/ui/badge';
 

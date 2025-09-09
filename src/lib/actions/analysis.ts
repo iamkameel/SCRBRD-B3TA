@@ -8,7 +8,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 
 import { runUmpireReview } from '@/ai/flows/umpire-review-flow';
 import { generateScorecard } from '@/ai/flows/generate-scorecard-flow';
-import { getTopPerformers } from '@/ai/flows/generate-top-performers-flow';
+import { getTopPerformers } from '@/ai/flows/generate-player-of-the-match-flow';
 import { generateMatchReport } from '@/ai/flows/generate-match-summary-flow';
 import { generateMatchPreview } from '@/ai/flows/generate-match-preview-flow';
 import { getMatchForecast } from '@/ai/flows/get-match-forecast-flow';
@@ -23,9 +23,9 @@ import { scoutPlayer } from '@/ai/flows/scout-player-flow';
 import { generateHighlightReel } from '@/ai/flows/generate-highlight-reel-flow';
 
 
-import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatch, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput, GenerateScorecardOutput } from '@/ai/schemas';
+import type { UmpireDecisionOutput, GenerateMatchReportInput, PlayerOfTheMatch, LiveMatchUpdateOutput, PlayerPerformanceForecastInput, PlayerPerformanceForecastOutput, ScoutingReportInput, ScoutingReportOutput, HighlightReelOutput, UmpireReviewInput } from '@/ai/schemas';
 import type { MatchForecast, Person } from '@/lib/data';
-import { getMatch, getMatchLineup, saveScorecard, getScorecard, getTopPerformersAction, savePlayerOfTheMatchAction } from './matches';
+import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 import { getTeam } from './teams';
 
@@ -62,7 +62,7 @@ export async function generateAndSaveScorecardAction(matchId: string) {
         getMatchLineup(matchId, match.teamBId),
     ]);
 
-    if (teamALineup.length !== 11 || teamBLineup.length !== 11) {
+    if (teamALineup.playingXI.length !== 11 || teamBLineup.playingXI.length !== 11) {
         throw new Error("Both teams must have exactly 11 players selected in their lineup to generate a scorecard.");
     }
     
@@ -89,8 +89,8 @@ export async function generateAndSaveScorecardAction(matchId: string) {
 
 
     const [teamAPlayerNames, teamBPlayerNames] = await Promise.all([
-        getPlayerNames(teamALineup),
-        getPlayerNames(teamBLineup),
+        getPlayerNames(teamALineup.playingXI),
+        getPlayerNames(teamBLineup.playingXI),
     ]);
     
     const scorecardData = await generateScorecard({
@@ -104,7 +104,7 @@ export async function generateAndSaveScorecardAction(matchId: string) {
         throw new Error("AI failed to generate scorecard data.");
     }
     
-    const performers = await getTopPerformersAction(scorecardData);
+    const { performers } = await getTopPerformers(scorecardData);
 
     if (!performers || performers.length === 0) {
         throw new Error("AI failed to generate Player of the Match data.");
