@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DialogContent } from '@radix-ui/react-dialog';
 import { PartnershipCard } from './partnership-card';
+import { Badge } from '@/components/ui/badge';
 
 
 const BoundaryAnimation = ({ runs }: { runs: number }) => {
@@ -437,8 +438,8 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
                     className="flex items-center gap-2 text-sm"
                 >
                     <Icon className="h-4 w-4" />
-                    <span className="uppercase">{currentStat.label}:</span>
-                    <span>{currentStat.value}</span>
+                    <span className="uppercase text-sm">{currentStat.label}:</span>
+                    <span className="text-sm">{currentStat.value}</span>
                 </motion.div>
             </AnimatePresence>
         </div>
@@ -473,6 +474,7 @@ export function LiveScoringInterface({
   const [isDuck, setIsDuck] = React.useState(false);
   const [isHatTrick, setIsHatTrick] = React.useState(false);
   const [isMaidenOver, setIsMaidenOver] = React.useState(false);
+  const [liveTime, setLiveTime] = React.useState(new Date());
 
   const defaultExtras = { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 };
   const defaultLiveScore = { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [], batsmanStats: {}, bowlerStats: {}, extras: defaultExtras, bowlingAngle: 'Over the Wicket' as BowlingAngle, ballHistory: [], fallOfWickets: [] };
@@ -486,6 +488,11 @@ export function LiveScoringInterface({
       fallOfWickets: match.liveScore?.fallOfWickets || [],
   });
   
+  React.useEffect(() => {
+    const timer = setInterval(() => setLiveTime(new Date()), 60 * 1000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
+
   const updateWinProbability = React.useCallback(() => {
     startUpdateGeneration(async () => {
         try {
@@ -765,6 +772,10 @@ export function LiveScoringInterface({
                     <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
                     <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
                 </Avatar>
+                
+                 {match.status === 'live' && (
+                    <Badge className="capitalize bg-green-600 text-white animate-pulse ml-2">Live</Badge>
+                 )}
             </div>
             
             <div className="text-sm font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
@@ -786,7 +797,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-             <div className="flex items-center justify-center gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
+            <div className="flex items-center justify-center gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
@@ -805,10 +816,10 @@ export function LiveScoringInterface({
 
             <div className="text-center text-xs text-gray-400 flex items-center justify-center flex-wrap gap-x-4 gap-y-1">
                 <span className="flex items-center gap-1.5"><Trophy className="h-3 w-3" />{match.competitionName}</span> |
-                <span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3" />{format(match.dateTime, 'd MMM yyyy | p')}</span> |
+                <span className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3" />{format(match.dateTime, 'd MMM yyyy')}</span> |
                 <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" />{match.fieldName}</span> |
                 {forecast && <span className="flex items-center gap-1.5"><WeatherIcon condition={forecast.details.condition} className="h-3 w-3" />{forecast.details.condition}, {forecast.details.temperature}°C</span>} |
-                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{isFirstInnings ? '1st Innings' : '2nd Innings'} | {format(new Date(), 'p')}</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3" />{isFirstInnings ? '1st Innings' : '2nd Innings'} | {format(liveTime, 'p')}</span>
             </div>
         </div>
         <Tabs defaultValue="live">
