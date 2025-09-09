@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -149,57 +150,59 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
-    if (!innings) return Array(21).fill({ score: 0, wickets: 0 });
-    
+    const data: { score: number, wickets: number }[] = Array(21).fill(null).map(() => ({ score: 0, wickets: 0 }));
+    data[0] = { score: 0, wickets: 0 };
+
+    if (!innings) return data;
+
     const isLive = 'ballHistory' in innings;
-    let ballHistory = isLive ? innings.ballHistory ?? [] : [];
+    
+    if (isLive) {
+        const ballHistory = innings.ballHistory ?? [];
+        let cumulativeScore = 0;
+        let cumulativeWickets = 0;
+        let over = 1;
 
-    if (!isLive && 'fallOfWickets' in innings) {
-        // Mock ball history for completed scorecard for now
-        let tempScore = 0;
-        for (let i = 0; i < innings.overs; i++) {
-            const runsThisOver = Math.floor(innings.totalRuns / innings.overs);
-            tempScore += runsThisOver;
-            for(let j=0; j<6; j++) ballHistory.push(Math.floor(runsThisOver / 6).toString());
-            ballHistory.push('|');
+        for (const event of ballHistory) {
+            if (event === '|') {
+                if (over <= 20) data[over] = { score: cumulativeScore, wickets: cumulativeWickets };
+                over++;
+                continue;
+            }
+            if (event === 'W') {
+                cumulativeWickets++;
+            } else if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
+                cumulativeScore += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
+            } else if (!isNaN(parseInt(event))) {
+                cumulativeScore += parseInt(event);
+            }
+        }
+    } else if ('fallOfWickets' in innings) {
+        // Use fall of wickets for a more accurate completed scorecard plot
+        const fow = innings.fallOfWickets.sort((a,b) => a.over - b.over);
+        let currentOver = 1;
+        
+        for (let i = 1; i <= 20; i++) {
+            const wicketsThisOver = fow.filter(w => Math.floor(w.over) === i -1).length;
+            const lastWicketInPrevOver = fow.filter(w => Math.floor(w.over) < i - 1).pop();
+            const scoreAtStartOfOver = lastWicketInPrevOver ? lastWicketInPrevOver.runs : 0;
+            const scoreAtEndOfOver = fow.find(w => Math.floor(w.over) === i -1)?.runs || (i === Math.floor(innings.overs) ? innings.totalRuns : scoreAtStartOfOver + Math.round(innings.totalRuns / innings.overs));
+
+            data[i] = {
+                score: scoreAtEndOfOver,
+                wickets: data[i-1].wickets + wicketsThisOver,
+            }
+        }
+        if (Math.floor(innings.overs) < 20) {
+           for (let i = Math.ceil(innings.overs); i <= 20; i++) {
+               data[i] = { score: innings.totalRuns, wickets: innings.wickets };
+           }
         }
     }
 
-    let cumulativeScore = 0;
-    let cumulativeWickets = 0;
-    let data: { score: number, wickets: number }[] = [{ score: 0, wickets: 0 }];
-    let over = 1;
-
-    for (const event of ballHistory) {
-        if (event === '|') {
-            data[over] = { score: cumulativeScore, wickets: cumulativeWickets };
-            over++;
-            continue;
-        }
-
-        if (event === 'W') {
-            cumulativeWickets++;
-        } else if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
-            cumulativeScore += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
-        } else if (!isNaN(parseInt(event))) {
-            cumulativeScore += parseInt(event);
-        }
-    }
-    
-    // Add current over if live
-    if (isLive && innings.currentOver && innings.currentOver.length > 0) {
-        const currentOverRuns = innings.currentOver.reduce((sum, e) => {
-            if (e.toLowerCase().includes('wd') || e.toLowerCase().includes('nb')) return sum + 1 + (parseInt(e.replace(/[^0-9]/g, '')) || 0);
-            if (!isNaN(parseInt(e))) return sum + parseInt(e);
-            return sum;
-        }, 0);
-        data[over] = { score: cumulativeScore + currentOverRuns, wickets: cumulativeWickets };
-    }
-    
-    while(data.length < 21) data.push(data[data.length-1]);
-    
     return data;
 };
+
 
 export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }: WormChartProps) {
     
@@ -353,4 +356,5 @@ export function RunMapCard({ data, roster }: { data?: LiveScore | Innings | null
         </Card>
     );
 }
+
 
