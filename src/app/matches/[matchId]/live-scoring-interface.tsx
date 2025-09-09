@@ -701,24 +701,22 @@ export function LiveScoringInterface({
   };
 
   const handleEndInnings = async () => {
-    if (liveScore.liveInnings === 1) {
-        startTransition(async () => {
+    startTransition(async () => {
+        if (liveScore.liveInnings === 1) {
             try {
                 await endInningsAction(match.matchId);
                 toast({ title: "Innings Ended", description: "The second innings is ready to begin." });
             } catch (error) {
                 toast({ title: "Error", description: error instanceof Error ? error.message : "Could not end innings.", variant: "destructive" });
             }
-        });
-    } else {
-        startTransition(async () => {
+        } else {
             try {
                 const generatedScorecard = await createScorecardFromLive(match.matchId);
                 if (!generatedScorecard) {
-                  throw new Error("Could not generate a temporary scorecard from live data.");
+                    throw new Error("Could not generate a temporary scorecard from live data.");
                 }
 
-                const performers = await getTopPerformersAction(generatedScorecard.scorecard);
+                const { performers } = await getTopPerformers(generatedScorecard.scorecard);
                 if (performers && performers.length > 0) {
                     setTopPerformers(performers);
                     setIsPotmDialogOpen(true);
@@ -729,8 +727,8 @@ export function LiveScoringInterface({
             } catch (error) {
                  toast({ title: "Error", description: error instanceof Error ? error.message : "Could not get top performers.", variant: "destructive" });
             }
-        });
-    }
+        }
+    });
   };
 
   const handlePotmSelect = async (player: PlayerOfTheMatch) => {
