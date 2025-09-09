@@ -128,14 +128,28 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             {/* Shots */}
             {filteredShots.map((shot, index) => {
                 const angleRad = (shot.angle - 90) * (Math.PI / 180);
-                const startRadius = 6; 
                 const endRadius = radius * shot.distance;
-
-                const startX = center + startRadius * Math.cos(angleRad);
-                const startY = center + startRadius * Math.sin(angleRad);
                 const endX = center + endRadius * Math.cos(angleRad);
                 const endY = center + endRadius * Math.sin(angleRad);
 
+                if (shot.runs === 0) {
+                    return (
+                        <circle
+                            key={index}
+                            cx={endX}
+                            cy={endY}
+                            r="2.5"
+                            fill={getShotColor(shot.runs)}
+                            stroke="white"
+                            strokeWidth="0.5"
+                        />
+                    );
+                }
+
+                const startRadius = 6; 
+                const startX = center + startRadius * Math.cos(angleRad);
+                const startY = center + startRadius * Math.sin(angleRad);
+                
                 return (
                     <line
                         key={index}
