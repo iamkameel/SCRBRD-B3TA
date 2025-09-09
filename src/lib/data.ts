@@ -610,6 +610,15 @@ export interface Milestone {
   achievedDate: Date;
 }
 
+export interface RunMapData {
+    fineLeg: number;
+    squareLeg: number;
+    midWicket: number;
+    longOn: number;
+    cover: number;
+    point: number;
+}
+
 export interface PlayerTrackerData {
   performanceEntries: PerformanceEntry[];
   skillRatings: SkillRating[];
@@ -617,6 +626,7 @@ export interface PlayerTrackerData {
   injuryRecords: InjuryRecord[];
   availability: Availability[];
   milestones: Milestone[];
+  runMap: RunMapData;
 }
 
 export interface AwardsData {

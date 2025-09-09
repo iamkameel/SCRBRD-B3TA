@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -15,6 +16,7 @@ import { Target, Heart, Dumbbell, Shield, Check, CalendarDays, Milestone as Mile
 import { DayPicker } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RunMap } from './run-map';
 
 function AvailabilityCalendarCaption({ displayMonth, onMonthChange }: { displayMonth: Date, onMonthChange: (date: Date) => void }) {
     const handleMonthChange = (value: string) => {
@@ -119,7 +121,7 @@ function InfoCard({ title, value, icon: Icon }: { title: string, value: string |
 }
 
 export function PlayerTrackerTab({ person, trackerData }: { person: Person, trackerData: PlayerTrackerData }) {
-    const { performanceEntries, skillRatings, trainingLogs, injuryRecords, availability, milestones } = trackerData;
+    const { performanceEntries, skillRatings, trainingLogs, injuryRecords, availability, milestones, runMap } = trackerData;
     
     // Find the latest performance entry for wagon wheel
     const latestPerformance = performanceEntries.length > 0 ? performanceEntries[performanceEntries.length - 1] : null;
@@ -142,7 +144,7 @@ export function PlayerTrackerTab({ person, trackerData }: { person: Person, trac
                     </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card>
                          <CardHeader>
                             <CardTitle>Wagon Wheel</CardTitle>
@@ -154,6 +156,15 @@ export function PlayerTrackerTab({ person, trackerData }: { person: Person, trac
                             ) : (
                                 <p className="text-muted-foreground text-center py-10">No shot data available.</p>
                             )}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                         <CardHeader>
+                            <CardTitle>Run Map</CardTitle>
+                            <CardDescription>Career scoring percentages.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex items-center justify-center">
+                            <RunMap data={runMap} />
                         </CardContent>
                     </Card>
                      <Card>
