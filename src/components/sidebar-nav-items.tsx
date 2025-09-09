@@ -75,6 +75,7 @@ const adminNavGroups = [
         items: [
              { href: '/planner', label: 'Session Planner', icon: CalendarDays },
              { href: '/drills', label: 'Drill Library', icon: Target },
+             { href: '/people', label: 'Player Development', icon: Dumbbell },
         ]
     },
     {
