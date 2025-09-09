@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -32,6 +33,13 @@ const legendItems = [
 
 export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSelect }: WagonWheelProps) {
     const svgRef = React.useRef<SVGSVGElement>(null);
+    const [visibleRuns, setVisibleRuns] = React.useState<number[]>([0, 1, 2, 3, 4, 6]);
+
+    const handleLegendClick = (runs: number) => {
+        setVisibleRuns(prev => 
+            prev.includes(runs) ? prev.filter(r => r !== runs) : [...prev, runs]
+        );
+    };
 
     const handleClick = (e: React.MouseEvent<SVGSVGElement>) => {
         if (disabled || !svgRef.current) return;
@@ -65,6 +73,8 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
         const endY = center + radius * Math.sin(angle * Math.PI / 180);
         return { x1: center, y1: center, x2: endX, y2: endY };
     });
+
+    const filteredShots = shots.filter(shot => visibleRuns.includes(shot.runs));
     
     return (
        <div className="flex flex-col items-center">
@@ -94,11 +104,11 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             
             {/* Sector lines */}
             {sectorLines.map((line, i) => (
-                <line key={i} {...line} stroke="white" strokeWidth="1" strokeOpacity="0.4" />
+                <line key={i} {...line} stroke="white" strokeWidth="1.5" strokeOpacity="0.6" />
             ))}
             
             {/* 30-yard circle */}
-            <circle cx={center} cy={center} r={radius * 0.55} stroke="white" strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
+            <circle cx={center} cy={center} r={radius * 0.55} stroke="white" strokeWidth="2" strokeDasharray="4 4" fill="none" strokeOpacity="0.8" />
             
             {/* Pitch */}
             <rect x={center - 7} y={center - 50} width="14" height="100" fill="#BCA48C" />
@@ -116,7 +126,7 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             <text x={center + 18} y={center + 5} fontSize="10" fill="white" className="font-sans font-bold uppercase" style={{ textShadow: '1px 1px 2px black' }}>LEG</text>
 
             {/* Shots */}
-            {shots.map((shot, index) => {
+            {filteredShots.map((shot, index) => {
                 const angleRad = (shot.angle - 90) * (Math.PI / 180);
                 const startRadius = 6; 
                 const endRadius = radius * shot.distance;
@@ -143,10 +153,17 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
         <div className="mt-4 text-center">
             <div className="flex items-center justify-center gap-4 mb-1">
                 {legendItems.map(item => (
-                    <div key={item.runs} className="flex items-center gap-1.5 text-xs text-white">
-                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <button 
+                        key={item.runs} 
+                        className={cn(
+                            "flex items-center gap-1.5 text-xs text-white transition-opacity rounded-full px-2 py-1",
+                            !visibleRuns.includes(item.runs) && 'opacity-50'
+                        )}
+                        onClick={() => handleLegendClick(item.runs)}
+                    >
+                        <div className="h-3 w-3 rounded-full border border-white/50" style={{ backgroundColor: item.color }}></div>
                         <span>{item.runs}</span>
-                    </div>
+                    </button>
                 ))}
             </div>
             <p className="text-sm text-muted-foreground">Tap on the field to record a shot</p>
