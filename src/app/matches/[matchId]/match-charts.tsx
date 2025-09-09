@@ -3,7 +3,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart, Legend, PieChart, Pie, Cell } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart, Legend, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Dot } from 'recharts';
 
 import {
   ChartConfig,
@@ -127,20 +127,22 @@ interface WormChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
-    const teamAData = data.teamA || { score: 0, wickets: 0 };
-    const teamBData = data.teamB || { score: 0, wickets: 0 };
     
     return (
       <div className="rounded-lg border bg-background p-2 shadow-sm">
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col">
             <span className="text-[0.70rem] uppercase text-muted-foreground">
-              Over {data.over}
+              Over {data.over.toFixed(1)}
             </span>
           </div>
           <div className="flex flex-col items-end">
-            <span className="font-bold text-foreground">{teamAData.score}/{teamAData.wickets}</span>
-            <span className="font-bold text-foreground">{teamBData.score}/{teamBData.wickets}</span>
+            {payload.map((p: any) => (
+                <span key={p.dataKey} className="font-bold" style={{color: p.color}}>
+                    {p.value}
+                    {data.wicket && p.dataKey === data.wicket.team && `/${data.wicket.wickets}`}
+                </span>
+            ))}
           </div>
         </div>
       </div>
@@ -149,58 +151,90 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
-    const data: { score: number, wickets: number }[] = Array(21).fill(null).map(() => ({ score: 0, wickets: 0 }));
-    data[0] = { score: 0, wickets: 0 };
+const CustomizedWicketDot = (props: any) => {
+    const { cx, cy, payload, dataKey } = props;
 
-    if (!innings || !('ballHistory' in innings)) return data;
+    if (payload.wicket && payload.wicket.team === dataKey) {
+        return <Dot cx={cx} cy={cy} r={4} fill={props.stroke} stroke="#fff" strokeWidth={1} />;
+    }
+
+    return null;
+};
+
+
+const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
+    if (!innings || !('ballHistory' in innings)) return [];
     
+    const data: { over: number; score: number; wicket?: { team: 'teamA' | 'teamB', wickets: number } }[] = [{ over: 0, score: 0 }];
     const ballHistory = innings.ballHistory ?? [];
+    
     let cumulativeScore = 0;
     let cumulativeWickets = 0;
-    let over = 1;
+    let ballsThisOver = 0;
+    let oversCompleted = 0;
 
     for (const event of ballHistory) {
-        if (event === '|') {
-            if (over <= 20) data[over] = { score: cumulativeScore, wickets: cumulativeWickets };
-            over++;
-            if (over > 20) break;
-            continue;
-        }
+        if (event === '|') continue;
+
+        let runsThisBall = 0;
+        let isWicket = false;
+        let isLegalDelivery = !event.toLowerCase().includes('wd') && !event.toLowerCase().includes('nb');
 
         if (event === 'W') {
+            isWicket = true;
             cumulativeWickets++;
         } else if (event.toLowerCase().includes('wd')) {
-            cumulativeScore += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
+            runsThisBall = 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
         } else if (event.toLowerCase().includes('nb')) {
-            cumulativeScore += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
+            runsThisBall = 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
         } else if (!isNaN(parseInt(event))) {
-            cumulativeScore += parseInt(event);
+            runsThisBall = parseInt(event);
+        }
+        
+        cumulativeScore += runsThisBall;
+
+        if (isLegalDelivery) {
+            ballsThisOver++;
+            const currentOverProgress = oversCompleted + ballsThisOver / 10;
+            const newDataPoint = {
+                over: currentOverProgress,
+                score: cumulativeScore,
+                ...(isWicket && { wicket: { wickets: cumulativeWickets } })
+            };
+            data.push(newDataPoint);
+            
+            if (ballsThisOver === 6) {
+                oversCompleted++;
+                ballsThisOver = 0;
+            }
         }
     }
-    
-    // Fill the rest of the overs if the innings ended early
-    for (let i = over; i <= 20; i++) {
-        data[i] = { score: cumulativeScore, wickets: cumulativeWickets };
-    }
-
     return data;
 };
 
 
 export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }: WormChartProps) {
     
-    const innings1Data = scorecard?.innings1 || (liveScore?.liveInnings === 1 ? liveScore : (liveScore?.liveInnings === 2 ? match.firstInningsLiveScore : null));
+    const innings1Data = scorecard?.innings1 || (liveScore?.liveInnings === 1 ? liveScore : match.firstInningsLiveScore);
     const innings2Data = scorecard?.innings2 || (liveScore?.liveInnings === 2 ? liveScore : null);
     
     const teamAData = processInningsForWormChart(innings1Data);
     const teamBData = processInningsForWormChart(innings2Data);
 
-    const chartData = Array.from({ length: 21 }, (_, i) => ({
-        over: i,
-        teamA: teamAData[i],
-        teamB: teamBData[i],
-    }));
+    const combinedData = [];
+    const maxLength = Math.max(teamAData.length, teamBData.length);
+    for (let i = 0; i < maxLength; i++) {
+        const teamAPoint = teamAData[i] || teamAData[teamAData.length - 1];
+        const teamBPoint = teamBData[i] || teamBData[teamBData.length - 1];
+        
+        combinedData.push({
+            over: Math.max(teamAPoint?.over || 0, teamBPoint?.over || 0),
+            teamA: teamAPoint?.score,
+            teamB: teamBPoint?.score,
+            wicket: teamAPoint?.wicket ? { ...teamAPoint.wicket, team: 'teamA' } : (teamBPoint?.wicket ? { ...teamBPoint.wicket, team: 'teamB' } : undefined)
+        });
+    }
+
 
     const wormChartConfig = {
         teamA: { label: teamAName, color: 'hsl(var(--chart-1))' },
@@ -213,11 +247,20 @@ export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }:
             <CardHeader><CardTitle>Worm Graph</CardTitle><CardDescription>Scoring comparison</CardDescription></CardHeader>
             <CardContent>
                 <ChartContainer config={wormChartConfig} className="min-h-[200px] w-full">
-                <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
+                <LineChart data={combinedData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
                     <CartesianGrid vertical={false} />
-                    <XAxis dataKey="over" tickLine={false} axisLine={false} tickMargin={8} label={{ value: 'overs', position: 'insideBottomLeft', offset: -5 }} />
+                    <XAxis 
+                        dataKey="over" 
+                        type="number" 
+                        domain={[0, 20]} 
+                        tickLine={false} 
+                        axisLine={false} 
+                        tickMargin={8} 
+                        label={{ value: 'overs', position: 'insideBottomLeft', offset: -5 }} 
+                        ticks={[0, 5, 10, 15, 20]}
+                    />
                     <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                    <ChartTooltip content={<CustomTooltip />} />
+                    <RechartsTooltip content={<CustomTooltip />} />
                     <Legend 
                         content={({ payload }) => (
                             <div className="flex gap-4">
@@ -230,8 +273,8 @@ export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }:
                             </div>
                         )}
                     />
-                    <Line type="monotone" dataKey="teamA.score" stroke="var(--color-teamA)" strokeWidth={2} dot={false} name={teamAName} />
-                    <Line type="monotone" dataKey="teamB.score" stroke="var(--color-teamB)" strokeWidth={2} dot={false} name={teamBName} />
+                    <Line type="monotone" dataKey="teamA" stroke="var(--color-teamA)" strokeWidth={2} dot={<CustomizedWicketDot />} name={teamAName} />
+                    <Line type="monotone" dataKey="teamB" stroke="var(--color-teamB)" strokeWidth={2} dot={<CustomizedWicketDot />} name={teamBName} />
                 </LineChart>
                 </ChartContainer>
             </CardContent>
@@ -340,6 +383,7 @@ export function RunMapCard({ data, roster }: { data?: LiveScore | Innings | null
         </Card>
     );
 }
+
 
 
 
