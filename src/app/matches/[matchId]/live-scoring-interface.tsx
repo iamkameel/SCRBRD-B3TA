@@ -427,7 +427,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     const Icon = currentStat.icon;
 
     return (
-        <div className="text-center h-auto py-2 flex items-center justify-center">
+        <div className="text-center h-auto py-2 flex items-center justify-center text-base">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -435,66 +435,11 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="flex items-center gap-2 text-white text-base"
+                    className="flex items-center gap-2 text-white"
                 >
                     <Icon className="h-4 w-4 text-[#ffc33e]" />
                     <span className="uppercase text-[#ffc33e] font-semibold">{currentStat.label}:</span>
                     <span className="font-bold">{currentStat.value}</span>
-                </motion.div>
-            </AnimatePresence>
-        </div>
-    );
-};
-
-const FirstInningsTicker = ({ firstInnings }: { firstInnings: LiveScore | null }) => {
-    const [currentIndex, setCurrentIndex] = React.useState(0);
-    if (!firstInnings) return null;
-
-    const stats = React.useMemo(() => {
-        const statsArray = [];
-        statsArray.push({ label: "1st Innings", value: `${firstInnings.runs}/${firstInnings.wickets}` });
-
-        const topScorer = Object.entries(firstInnings.batsmanStats).sort(([, a], [, b]) => b.runs - a.runs)[0];
-        if (topScorer) {
-            const [playerId, stats] = topScorer;
-            statsArray.push({ label: "Top Scorer", value: `${playerId} ${stats.runs} (${stats.balls})` }); // Needs name lookup
-        }
-
-        const topBowler = Object.entries(firstInnings.bowlerStats).sort(([, a], [, b]) => b.wickets - a.wickets || a.runsConceded - b.runsConceded)[0];
-        if (topBowler) {
-            const [playerId, stats] = topBowler;
-            statsArray.push({ label: "Best Bowler", value: `${playerId} ${stats.wickets}/${stats.runsConceded}` });
-        }
-        
-        return statsArray;
-    }, [firstInnings]);
-
-    React.useEffect(() => {
-        if (stats.length <= 1) return;
-        const interval = setInterval(() => {
-            setCurrentIndex((prevIndex) => (prevIndex + 1) % stats.length);
-        }, 3000);
-        return () => clearInterval(interval);
-    }, [stats.length]);
-
-    if (stats.length === 0) {
-        return null;
-    }
-
-    const currentStat = stats[currentIndex];
-
-    return (
-        <div className="text-left text-white">
-             <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentIndex}
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <p className="text-sm font-semibold opacity-80">{currentStat.label}</p>
-                    <p className="font-bold">{currentStat.value}</p>
                 </motion.div>
             </AnimatePresence>
         </div>
@@ -757,16 +702,16 @@ export function LiveScoringInterface({
   const bowlerStats = liveScore.bowlerStats?.[bowlerId || ''] || { wickets: 0, runsConceded: 0, overs: 0, balls: 0, maidens: 0 };
   
   const getBallColor = (ball: string) => {
-    if (ball.toLowerCase().includes('wd')) return '#a855f7'; // Purple for Wide
-    if (ball.toLowerCase().includes('nb')) return '#facc15'; // Yellow for No Ball
-    if (ball === 'W') return '#ef4444'; // Red for Wicket
+    if (ball.toLowerCase().includes('wd')) return '#a855f7';
+    if (ball.toLowerCase().includes('nb')) return '#facc15';
+    if (ball === 'W') return '#ef4444';
     const runs = parseInt(ball.replace(/\D/g, ''), 10);
-    if (runs === 6) return "#ef4444"; // Red
-    if (runs === 4) return "#3b82f6"; // Blue
-    if (runs === 3) return "#f59e0b"; // Amber
-    if (runs === 2) return "#84cc16"; // Lime
-    if (runs === 1) return "#ec4899"; // Pink
-    return 'hsl(var(--muted-foreground))'; // Grey for dot
+    if (runs === 6) return "#ef4444";
+    if (runs === 4) return "#3b82f6";
+    if (runs === 3) return "#f59e0b";
+    if (runs === 2) return "#84cc16";
+    if (runs === 1) return "#ec4899";
+    return 'hsl(var(--muted-foreground))';
   };
   
   const getBallDisplay = (ball: string): string => {
@@ -808,6 +753,7 @@ export function LiveScoringInterface({
                         <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
                         <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
                     </Avatar>
+                    {match.status === 'live' && <Badge className="absolute -top-1 -right-2 bg-green-600 text-white animate-pulse">Live</Badge>}
                 </div>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
@@ -832,7 +778,13 @@ export function LiveScoringInterface({
             </div>
             
              <div className="flex items-center justify-between px-4 max-w-lg mx-auto">
-                <FirstInningsTicker firstInnings={match.firstInningsLiveScore} />
+                {!isFirstInnings && match.firstInningsLiveScore ? (
+                    <div className="text-left text-white">
+                        <p className="text-sm font-semibold opacity-80">1st Innings</p>
+                        <p className="font-bold text-base">{match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets}</p>
+                    </div>
+                ) : <div />}
+                
                 <div className="text-right">
                     {!isFirstInnings && (
                         <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal ? match.firstInningsTotal + 1 : 0}</span>
