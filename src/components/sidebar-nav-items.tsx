@@ -17,7 +17,8 @@ import {
     FileClock,
     ListChecks,
     FileText,
-    RadioTower
+    RadioTower,
+    Presentation,
 } from 'lucide-react';
 
 const topLevelNavItems = [
@@ -106,6 +107,7 @@ const adminNavGroups = [
             { href: '/user-management', label: 'User Management', icon: UserCog },
             { href: '/data-management', label: 'Data Management', icon: Database },
             { href: '/audit-log', label: 'Audit Log', icon: FileClock },
+            { href: '/pitch-deck', label: 'Pitch Deck', icon: Presentation },
         ]
     },
     referenceGroup
