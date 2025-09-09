@@ -275,7 +275,10 @@ export default function MatchDetailsClient({
   
   const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
   
-  const isPlayerInMatch = [...teamALineup.playingXI, teamALineup.twelfthMan, ...teamBLineup.playingXI, teamBLineup.twelfthMan].includes(person?.personId || '');
+  const currentTeamALineup = teamALineup || { playingXI: [], twelfthMan: null };
+  const currentTeamBLineup = teamBLineup || { playingXI: [], twelfthMan: null };
+
+  const isPlayerInMatch = [...currentTeamALineup.playingXI, currentTeamALineup.twelfthMan, ...currentTeamBLineup.playingXI, currentTeamBLineup.twelfthMan].includes(person?.personId || '');
   const canLiveScore = isAdmin || isOfficialForMatch;
 
   React.useEffect(() => {
@@ -285,17 +288,17 @@ export default function MatchDetailsClient({
   const playersInMatch = React.useMemo(() => {
     const allPlayers = new Map<string, { name: string; teamName: string }>();
     teamARosterWithStats.forEach(p => {
-        if (teamALineup.playingXI.includes(p.personId)) {
+        if (currentTeamALineup.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamAName });
         }
     });
     teamBRosterWithStats.forEach(p => {
-        if (teamBLineup.playingXI.includes(p.personId)) {
+        if (currentTeamBLineup.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamBName });
         }
     });
     return Array.from(allPlayers.entries()).map(([id, data]) => ({ id, ...data }));
-  }, [teamARosterWithStats, teamBRosterWithStats, teamALineup, teamBLineup, match.teamAName, match.teamBName]);
+  }, [teamARosterWithStats, teamBRosterWithStats, currentTeamALineup, currentTeamBLineup, match.teamAName, match.teamBName]);
 
   const handleGenerateForecast = () => {
     if (!forecastedPlayer) {
@@ -453,7 +456,7 @@ export default function MatchDetailsClient({
 
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
-  const canGenerateScorecard = teamALineup.playingXI.length === 11 && teamBLineup.playingXI.length === 11;
+  const canGenerateScorecard = currentTeamALineup.playingXI.length === 11 && currentTeamBLineup.playingXI.length === 11;
 
   const firstInningsData = match.liveScore?.liveInnings === 1 ? match.liveScore : match.firstInningsLiveScore;
   const secondInningsData = match.liveScore?.liveInnings === 2 ? match.liveScore : null;
@@ -594,8 +597,8 @@ export default function MatchDetailsClient({
                     match={match}
                     teamARoster={teamARosterWithStats}
                     teamBRoster={teamBRosterWithStats}
-                    teamALineup={teamALineup}
-                    teamBLineup={teamBLineup}
+                    teamALineup={currentTeamALineup}
+                    teamBLineup={currentTeamBLineup}
                     canManageA={isManagerForA}
                     canManageB={isManagerForB}
                 />
