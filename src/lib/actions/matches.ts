@@ -1135,8 +1135,11 @@ async function createScorecardFromLive(matchId: string) {
             if (!stats) {
                 return { name: player.personName, status: 'did not bat', runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0, timeAtCrease: 0 };
             }
-            const timeIn = stats.timeIn ? (stats.timeIn as any).toDate() : null;
-            const timeOut = stats.timeOut ? (stats.timeOut as any).toDate() : null;
+            
+            // Check if timeIn and timeOut are Firebase Timestamps or JS Dates
+            const timeIn = stats.timeIn instanceof Timestamp ? stats.timeIn.toDate() : (stats.timeIn ? new Date(stats.timeIn) : null);
+            const timeOut = stats.timeOut instanceof Timestamp ? stats.timeOut.toDate() : (stats.timeOut ? new Date(stats.timeOut) : null);
+
             const timeAtCrease = timeIn && timeOut ? Math.round((timeOut.getTime() - timeIn.getTime()) / 60000) : 0;
             return {
                 name: player.personName,
@@ -1255,6 +1258,7 @@ export async function updatePlayerAvailabilityAction(matchId: string, status: Av
     
 
     
+
 
 
 
