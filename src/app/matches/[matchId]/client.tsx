@@ -213,7 +213,7 @@ function ScorecardPlaceholder() {
 }
 
 function WeatherIcon({ condition, ...props }: { condition: string } & React.ComponentProps<typeof Sun>) {
-    switch (condition.toLowerCase()) {
+    switch (condition?.toLowerCase()) {
         case "sunny": return <Sun {...props} />;
         case "cloudy": return <Cloudy {...props} />;
         case "rain":
@@ -503,65 +503,63 @@ export default function MatchDetailsClient({
 
             <TabsContent value="scorecard" className="mt-4">
                 <Card>
-                    <CardHeader>
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                             <div className="flex items-center justify-between flex-1">
-                                <div className="flex items-center gap-2">
-                                  <CardTitle>
-                                      {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
-                                  </CardTitle>
-                                  {match.status === 'live' && <Badge className="bg-red-600 text-white animate-pulse">Live</Badge>}
-                                </div>
+                    <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-4">
+                                <CardTitle>
+                                    {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
+                                </CardTitle>
+                                {match.status === 'live' && <Badge className="bg-red-600 text-white animate-pulse">Live</Badge>}
                             </div>
-                             <div className="flex items-center gap-2 mt-4 md:mt-0 md:ml-4">
-                                {match.status === 'scheduled' && !innings1 && (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div className="inline-block">
-                                                    <Button onClick={handleGenerateScorecard} disabled={!canGenerateScorecard || isGenerating}>
-                                                        <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-                                                        {isGenerating ? "Generating..." : "Generate Scorecard"}
-                                                    </Button>
-                                                </div>
-                                            </TooltipTrigger>
-                                            {!canGenerateScorecard && (
-                                                <TooltipContent>
-                                                    <p>Select 11 players for each team to enable generation.</p>
-                                                </TooltipContent>
-                                            )}
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
-                                {match.status === 'completed' && innings1 && (
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="outline" disabled={isGenerating}>
-                                                <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-                                                {isGenerating ? "Regenerating..." : "Regenerate Scorecard"}
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will generate a new scorecard, permanently overwriting the current one. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel disabled={isGenerating}>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleGenerateScorecard} disabled={isGenerating}>
-                                                    {isGenerating ? "Regenerating..." : "Yes, Regenerate"}
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                )}
-                            </div>
+                            <CardDescription>
+                                {match.status === 'live' ? 'Enter ball-by-ball data here.' : (match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.')}
+                            </CardDescription>
                         </div>
-                         <CardDescription>
-                            {match.status === 'live' ? 'Enter ball-by-ball data here.' : (match.status === 'completed' ? 'Detailed match scorecard for both innings.' : 'Generate a scorecard once lineups are set.')}
-                        </CardDescription>
+                        <div className="flex items-center gap-2 mt-4 md:mt-0">
+                            {match.status === 'scheduled' && !innings1 && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="inline-block">
+                                                <Button onClick={handleGenerateScorecard} disabled={!canGenerateScorecard || isGenerating}>
+                                                    <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                                                    {isGenerating ? "Generating..." : "Generate Scorecard"}
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        {!canGenerateScorecard && (
+                                            <TooltipContent>
+                                                <p>Select 11 players for each team to enable generation.</p>
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            {match.status === 'completed' && innings1 && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="outline" disabled={isGenerating}>
+                                            <RefreshCcw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                                            {isGenerating ? "Regenerating..." : "Regenerate Scorecard"}
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will generate a new scorecard, permanently overwriting the current one. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel disabled={isGenerating}>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleGenerateScorecard} disabled={isGenerating}>
+                                                {isGenerating ? "Regenerating..." : "Yes, Regenerate"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {match.status === 'live' ? (
@@ -606,28 +604,18 @@ export default function MatchDetailsClient({
             </TabsContent>
             
             <TabsContent value="visuals" className="mt-4">
-                <Tabs defaultValue="innings1">
-                    <TabsList>
-                        <TabsTrigger value="innings1" disabled={!firstInningsData}>Innings 1: {match.teamAName}</TabsTrigger>
-                        <TabsTrigger value="innings2" disabled={!secondInningsData}>Innings 2: {match.teamBName}</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="innings1" className="mt-4">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            <ManhattanChart data={firstInningsData} />
-                            <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
-                            <WagonWheelCard data={firstInningsData} />
-                            <RunMapCard data={firstInningsData} />
-                        </div>
-                    </TabsContent>
-                     <TabsContent value="innings2" className="mt-4">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            <ManhattanChart data={secondInningsData} />
-                            <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
-                            <WagonWheelCard data={secondInningsData} />
-                            <RunMapCard data={secondInningsData} />
-                        </div>
-                    </TabsContent>
-                </Tabs>
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <ManhattanChart data={firstInningsData || innings1} />
+                    <WagonWheelCard data={firstInningsData || innings1} />
+                    <RunMapCard data={firstInningsData || innings1} roster={teamARosterWithStats} />
+
+                    <ManhattanChart data={secondInningsData || innings2} />
+                    <WagonWheelCard data={secondInningsData || innings2} />
+                    <RunMapCard data={secondInningsData || innings2} roster={teamBRosterWithStats} />
+                 </div>
+                 <div className="mt-4">
+                    <WormChart match={match} scorecard={scorecard} liveScore={match.liveScore} teamAName={match.teamAName} teamBName={match.teamBName} />
+                </div>
             </TabsContent>
 
             <TabsContent value="analysis" className="mt-4">

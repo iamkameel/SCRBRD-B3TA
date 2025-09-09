@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart, Pie, PieChart, Legend } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, Area, AreaChart } from 'recharts';
 
 import {
   ChartConfig,
@@ -11,11 +10,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import type { Innings, LiveScore, Match, RunMapData, ShotData } from '@/lib/data';
+import type { Innings, LiveScore, Match, RosterMemberWithStats, ShotData } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 import { WagonWheel } from '@/components/wagon-wheel';
 import { RunMap } from '@/components/run-map';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 // --- Manhattan Chart ---
 const manhattanChartConfig = {
@@ -255,43 +254,7 @@ export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }:
     );
 }
 
-// --- Wagon Wheel Summary ---
-const calculateMatchRunMap = (shots: ShotData[]): RunMapData => {
-    const runMap: RunMapData = { fineLeg: 0, squareLeg: 0, midWicket: 0, longOn: 0, cover: 0, point: 0, thirdMan: 0, longOff: 0 };
-    let totalRuns = 0;
-
-    if (shots.length === 0) return runMap;
-
-    shots.forEach(shot => {
-        totalRuns += shot.runs;
-        const angle = shot.angle;
-
-        if (angle >= 337.5 || angle < 22.5) runMap.cover += shot.runs;
-        else if (angle >= 22.5 && angle < 67.5) runMap.longOff += shot.runs;
-        else if (angle >= 67.5 && angle < 112.5) runMap.longOn += shot.runs;
-        else if (angle >= 112.5 && angle < 157.5) runMap.midWicket += shot.runs;
-        else if (angle >= 157.5 && angle < 202.5) runMap.squareLeg += shot.runs;
-        else if (angle >= 202.5 && angle < 247.5) runMap.fineLeg += shot.runs;
-        else if (angle >= 247.5 && angle < 292.5) runMap.thirdMan += shot.runs;
-        else if (angle >= 292.5 && angle < 337.5) runMap.point += shot.runs;
-    });
-
-    if (totalRuns > 0) {
-        Object.keys(runMap).forEach(key => {
-            runMap[key as keyof RunMapData] = Math.round((runMap[key as keyof RunMapData] / totalRuns) * 100);
-        });
-        
-        let currentTotal = Object.values(runMap).reduce((sum, val) => sum + val, 0);
-        if (currentTotal > 100) {
-            runMap.cover -= (currentTotal - 100);
-        } else if (currentTotal < 100 && currentTotal > 0) {
-            runMap.cover += (100 - currentTotal);
-        }
-    }
-    
-    return runMap;
-};
-
+// --- Wagon Wheel Card ---
 export function WagonWheelCard({ data }: { data?: LiveScore | Innings | null }) {
     const shots = data && 'shots' in data ? data.shots : [];
 
@@ -308,18 +271,53 @@ export function WagonWheelCard({ data }: { data?: LiveScore | Innings | null }) 
     )
 }
 
-export function RunMapCard({ data }: { data?: LiveScore | Innings | null }) {
-    const shots = data && 'shots' in data ? data.shots : [];
-    const runMapData = calculateMatchRunMap(shots || []);
+// --- Run Map Card ---
+interface RunMapCardProps {
+    data?: LiveScore | Innings | null;
+    roster: RosterMemberWithStats[];
+}
+export function RunMapCard({ data, roster }: RunMapCardProps) {
+    const [selectedBatsman, setSelectedBatsman] = React.useState('team');
+
+    const allShots = (data && 'shots' in data ? data.shots : []) || [];
+
+    const displayedShots = React.useMemo(() => {
+        if (selectedBatsman === 'team') {
+            return allShots;
+        }
+        return allShots.filter(shot => shot.batsmanId === selectedBatsman);
+    }, [selectedBatsman, allShots]);
+
+    const battersInInnings = React.useMemo(() => {
+        const batterIds = new Set(allShots.map(s => s.batsmanId));
+        return roster.filter(p => batterIds.has(p.personId));
+    }, [allShots, roster]);
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Run Map</CardTitle>
-                <CardDescription>Scoring distribution for this innings.</CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mb-2 sm:mb-0">
+                        <CardTitle>Run Map</CardTitle>
+                        <CardDescription>Scoring distribution.</CardDescription>
+                    </div>
+                    <Select value={selectedBatsman} onValueChange={setSelectedBatsman}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Select batsman..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="team">Team</SelectItem>
+                            {battersInInnings.map(player => (
+                                <SelectItem key={player.personId} value={player.personId}>
+                                    {player.personName}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </CardHeader>
             <CardContent className="flex items-center justify-center">
-                <RunMap data={runMapData} />
+                <RunMap shots={displayedShots} />
             </CardContent>
         </Card>
     )
