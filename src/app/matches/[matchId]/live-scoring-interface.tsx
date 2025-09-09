@@ -427,7 +427,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     const Icon = currentStat.icon;
 
     return (
-        <div className="text-center h-auto py-2 text-base flex items-center justify-center">
+        <div className="text-center h-auto py-2 flex items-center justify-center">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -446,16 +446,60 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     );
 };
 
-const FirstInningsTicker = ({ match, firstInnings }: { match: Match; firstInnings: LiveScore | null }) => {
+const FirstInningsTicker = ({ firstInnings }: { firstInnings: LiveScore | null }) => {
+    const [currentIndex, setCurrentIndex] = React.useState(0);
     if (!firstInnings) return null;
 
+    const stats = React.useMemo(() => {
+        const statsArray = [];
+        statsArray.push({ label: "1st Innings", value: `${firstInnings.runs}/${firstInnings.wickets}` });
+
+        const topScorer = Object.entries(firstInnings.batsmanStats).sort(([, a], [, b]) => b.runs - a.runs)[0];
+        if (topScorer) {
+            const [playerId, stats] = topScorer;
+            statsArray.push({ label: "Top Scorer", value: `${playerId} ${stats.runs} (${stats.balls})` }); // Needs name lookup
+        }
+
+        const topBowler = Object.entries(firstInnings.bowlerStats).sort(([, a], [, b]) => b.wickets - a.wickets || a.runsConceded - b.runsConceded)[0];
+        if (topBowler) {
+            const [playerId, stats] = topBowler;
+            statsArray.push({ label: "Best Bowler", value: `${playerId} ${stats.wickets}/${stats.runsConceded}` });
+        }
+        
+        return statsArray;
+    }, [firstInnings]);
+
+    React.useEffect(() => {
+        if (stats.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentIndex((prevIndex) => (prevIndex + 1) % stats.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [stats.length]);
+
+    if (stats.length === 0) {
+        return null;
+    }
+
+    const currentStat = stats[currentIndex];
+
     return (
-        <div className="text-left text-base text-white">
-            <p className="text-sm font-semibold opacity-80">1st Innings</p>
-            <p className="font-bold">{firstInnings.runs}/{firstInnings.wickets}</p>
+        <div className="text-left text-white">
+             <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentIndex}
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <p className="text-sm font-semibold opacity-80">{currentStat.label}</p>
+                    <p className="font-bold">{currentStat.value}</p>
+                </motion.div>
+            </AnimatePresence>
         </div>
-    )
-}
+    );
+};
 
 export function LiveScoringInterface({
   teamARoster,
@@ -759,11 +803,13 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
             
             <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
-                <Avatar className="h-16 w-16 border-2" style={{ borderColor: bowlingTeam.teamColor || '#ffc33e', backgroundColor: bowlingTeam.teamColor ? `${bowlingTeam.teamColor}40` : '#ffc33e40' }}>
-                    <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
-                    <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
-                </Avatar>
-                
+                 <div className="relative">
+                    <Avatar className="h-16 w-16 border-2" style={{ borderColor: bowlingTeam.teamColor || '#ffc33e', backgroundColor: bowlingTeam.teamColor ? `${bowlingTeam.teamColor}40` : '#ffc33e40' }}>
+                        <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
+                        <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
+                    </Avatar>
+                </div>
+
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
                     <div className="flex items-center justify-center h-full rounded-full bg-[#4848ff] min-w-[30%] px-4">
                          <p className="font-bold text-lg whitespace-nowrap">
@@ -786,9 +832,7 @@ export function LiveScoringInterface({
             </div>
             
              <div className="flex items-center justify-between px-4 max-w-lg mx-auto">
-                <div className="text-left">
-                    <FirstInningsTicker match={match} firstInnings={match.firstInningsLiveScore} />
-                </div>
+                <FirstInningsTicker firstInnings={match.firstInningsLiveScore} />
                 <div className="text-right">
                     {!isFirstInnings && (
                         <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal ? match.firstInningsTotal + 1 : 0}</span>
@@ -813,7 +857,7 @@ export function LiveScoringInterface({
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
                     <span className="text-xs text-muted-foreground">({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
                 </div>
-                 <div className="flex items-center justify-center gap-1.5 min-h-[24px]">
+                <div className="flex items-center justify-center gap-1.5 min-h-[24px]">
                     {liveScore.currentOver.map((ball, i) => (
                         <div key={i} style={{ backgroundColor: getBallColor(ball) }} className="h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-black border border-white/50">
                             {getBallDisplay(ball)}
