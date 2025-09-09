@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -666,14 +667,14 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
 
             <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
-                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e' }}>
+                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e', backgroundColor: match.teamAColor ? `${match.teamAColor}40` : '#ffc33e40' }}>
                     <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
-                    <div className="flex items-center justify-center px-4 h-full rounded-full bg-[#4848ff]">
-                         <p className="font-bold text-lg text-white">
+                    <div className="flex items-center justify-center h-full rounded-full bg-[#4848ff] min-w-[30%] px-4">
+                         <p className="font-bold text-lg whitespace-nowrap">
                             <span className="text-yellow-400">{battingTeam.abbrev}</span> v {bowlingTeam.abbrev}
                         </p>
                     </div>
@@ -686,7 +687,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff' }}>
+                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff', backgroundColor: match.teamBColor ? `${match.teamBColor}40` : '#4848ff40' }}>
                     <AvatarImage src={match.teamBLogoUrl} alt={match.teamBName} />
                     <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
                 </Avatar>
@@ -711,7 +712,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-             <div className="flex items-center justify-between gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
+            <div className="flex items-center justify-between gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
@@ -725,6 +726,7 @@ export function LiveScoringInterface({
                     ))}
                 </div>
             </div>
+
 
             <p className="text-center font-semibold text-[#ffc33e]">
                 Required Rate: {!isFirstInnings && match.firstInningsTotal != null && liveScore.overs < 20 ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - (liveScore.overs + (liveScore.balls / 6)))).toFixed(2) : '-'}
