@@ -771,15 +771,18 @@ export function LiveScoringInterface({
                  <Avatar className="h-16 w-16 border-2" style={{ borderColor: battingTeam.teamColor || '#4848ff', backgroundColor: battingTeam.teamColor ? `${battingTeam.teamColor}40` : '#4848ff40' }}>
                     <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
                     <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
-                </Avatar>
+                 </Avatar>
+                  {match.status === 'live' && (
+                    <Badge className="absolute top-2 right-2 bg-green-600 text-white animate-pulse">Live</Badge>
+                  )}
             </div>
             
-            <div className="text-base font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
-                <span className="text-base">1st Innings: {match.firstInningsTotal || 0}</span>
+            <div className="text-sm font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
+                <span className="text-sm">1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal + 1}</span>
                 )}
-                 <Link href={`/matches/${match.matchId}`} className="text-xs hover:underline">1st Innings Stats</Link>
+                 <Link href={`/matches/${match.matchId}`} className="text-sm hover:underline">1st Innings Stats</Link>
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
@@ -793,7 +796,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            <div className="flex items-center justify-center gap-2 w-full max-w-lg mx-auto text-sm text-gray-300">
+             <div className="flex items-center justify-center gap-2 w-full max-w-lg mx-auto text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
@@ -994,9 +997,8 @@ export function LiveScoringInterface({
                                                 <div style={{ width: `${liveUpdate.winProbability}%`, backgroundColor: battingTeam.teamColor || 'hsl(var(--primary))' }} />
                                                 <div style={{ width: `${100 - liveUpdate.winProbability}%`, backgroundColor: bowlingTeam.teamColor || 'hsl(var(--secondary))' }} />
                                             </div>
-                                            <div className="text-xs text-muted-foreground flex justify-between">
-                                                <span>{battingTeam.abbrev} at {liveScore.runs}/{liveScore.wickets} ({liveScore.overs}.{liveScore.balls || 0} ov)</span>
-                                                <span>{bowlingTeam.abbrev}</span>
+                                            <div className="text-xs text-muted-foreground">
+                                                <p>{battingTeam.abbrev} at {liveScore.runs}/{liveScore.wickets} ({liveScore.overs}.{liveScore.balls || 0} ov) - {liveUpdate.summary}</p>
                                             </div>
                                       </div>
                                   ) : (
