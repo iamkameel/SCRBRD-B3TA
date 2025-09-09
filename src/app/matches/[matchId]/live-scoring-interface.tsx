@@ -427,7 +427,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     const Icon = currentStat.icon;
 
     return (
-        <div className="text-center font-semibold text-white h-auto py-2 flex items-center justify-center">
+        <div className="text-center font-semibold text-white h-auto py-2 flex items-center justify-center text-base">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -435,7 +435,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="flex items-center gap-2 text-base"
+                    className="flex items-center gap-2"
                 >
                     <Icon className="h-4 w-4 text-[#ffc33e]" />
                     <span className="uppercase text-[#ffc33e]">{currentStat.label}:</span>
@@ -445,6 +445,68 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
         </div>
     );
 };
+
+const FirstInningsTicker = ({ match, firstInnings }: { match: Match; firstInnings: LiveScore | null }) => {
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+
+    const stats = React.useMemo(() => {
+        if (!firstInnings) return [];
+        
+        const statsArray = [{ label: "1st Innings Total", value: `${firstInnings.runs}/${firstInnings.wickets}` }];
+
+        const topScorer = Object.entries(firstInnings.batsmanStats).reduce((top, [id, stats]) => {
+            return stats.runs > (top.stats?.runs || -1) ? { id, stats } : top;
+        }, { id: null, stats: null } as { id: string | null, stats: any | null });
+
+        if (topScorer.id && topScorer.stats) {
+            statsArray.push({ label: "Top Scorer", value: `${getDisplayName(topScorer.id, [])} ${topScorer.stats.runs} (${topScorer.stats.balls})` });
+        }
+        
+        const bestBowler = Object.entries(firstInnings.bowlerStats).reduce((best, [id, stats]) => {
+            if (stats.wickets > (best.stats?.wickets || -1)) return { id, stats };
+            if (stats.wickets === best.stats?.wickets && stats.runsConceded < best.stats?.runsConceded) return { id, stats };
+            return best;
+        }, { id: null, stats: null } as { id: string | null, stats: any | null });
+        
+        if (bestBowler.id && bestBowler.stats) {
+             statsArray.push({ label: "Best Bowler", value: `${getDisplayName(bestBowler.id, [])} ${bestBowler.stats.wickets}/${bestBowler.stats.runsConceded}` });
+        }
+
+        return statsArray;
+
+    }, [firstInnings]);
+
+     React.useEffect(() => {
+        if (stats.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentIndex((prevIndex) => (prevIndex + 1) % stats.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [stats.length]);
+
+    if (!firstInnings) {
+        return <Link href={`/matches/${match.matchId}`} className="text-sm hover:underline">1st Innings Stats</Link>;
+    }
+    
+    const currentStat = stats[currentIndex];
+
+    return (
+        <div className="flex items-center justify-end text-right h-full">
+             <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentIndex}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.3 }}
+                >
+                   <span className="font-semibold text-white/80">{currentStat.label}:</span>
+                   <span className="ml-2 font-bold">{currentStat.value}</span>
+                </motion.div>
+            </AnimatePresence>
+        </div>
+    )
+}
 
 export function LiveScoringInterface({
   teamARoster,
@@ -768,21 +830,24 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: battingTeam.teamColor || '#4848ff', backgroundColor: battingTeam.teamColor ? `${battingTeam.teamColor}40` : '#4848ff40' }}>
-                    <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
-                    <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
-                 </Avatar>
-                  {match.status === 'live' && (
-                    <Badge className="absolute top-2 right-2 bg-green-600 text-white animate-pulse">Live</Badge>
-                  )}
+                 <div className="relative">
+                    <Avatar className="h-16 w-16 border-2" style={{ borderColor: battingTeam.teamColor || '#4848ff', backgroundColor: battingTeam.teamColor ? `${battingTeam.teamColor}40` : '#4848ff40' }}>
+                        <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
+                        <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
+                    </Avatar>
+                     {match.status === 'live' && (
+                        <Badge className="absolute -top-1 -right-2 bg-green-600 text-white animate-pulse">Live</Badge>
+                     )}
+                 </div>
             </div>
             
             <div className="text-sm font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
                 <span className="text-sm">1st Innings: {match.firstInningsTotal || 0}</span>
-                {!isFirstInnings && match.firstInningsTotal != null && (
-                    <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal + 1}</span>
+                {!isFirstInnings ? (
+                    <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal ? match.firstInningsTotal + 1 : 0}</span>
+                ) : (
+                    <FirstInningsTicker match={match} firstInnings={match.firstInningsLiveScore} />
                 )}
-                 <Link href={`/matches/${match.matchId}`} className="text-sm hover:underline">1st Innings Stats</Link>
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
