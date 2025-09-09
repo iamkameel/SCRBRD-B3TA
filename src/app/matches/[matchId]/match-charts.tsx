@@ -11,10 +11,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import type { Innings, LiveScore, Match } from '@/lib/data';
+import type { Innings, LiveScore, Match, RunMapData, ShotData } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { WagonWheel } from '@/components/wagon-wheel';
+import { RunMap } from '@/components/run-map';
 
 // --- Manhattan Chart ---
 const manhattanChartConfig = {
@@ -255,19 +256,53 @@ export function WormChart({ match, scorecard, liveScore, teamAName, teamBName }:
 }
 
 // --- Wagon Wheel Summary ---
+const calculateMatchRunMap = (shots: ShotData[]): RunMapData => {
+    const runMap: RunMapData = {
+        fineLeg: 0, squareLeg: 0, midWicket: 0, longOn: 0, cover: 0, point: 0,
+    };
+    let totalRuns = 0;
+
+    if (shots.length === 0) return runMap;
+
+    shots.forEach(shot => {
+        totalRuns += shot.runs;
+        const angle = shot.angle;
+        if (angle >= 225 && angle < 315) runMap.point += shot.runs;
+        else if (angle >= 315 || angle < 45) runMap.cover += shot.runs;
+        else if (angle >= 45 && angle < 90) runMap.longOn += shot.runs;
+        else if (angle >= 90 && angle < 135) runMap.midWicket += shot.runs;
+        else if (angle >= 135 && angle < 225) runMap.squareLeg += shot.runs;
+    });
+
+    if (totalRuns > 0) {
+        Object.keys(runMap).forEach(key => {
+            runMap[key as keyof RunMapData] = Math.round((runMap[key as keyof RunMapData] / totalRuns) * 100);
+        });
+        let currentTotal = Object.values(runMap).reduce((sum, val) => sum + val, 0);
+        if (currentTotal > 100) runMap.cover -= (currentTotal - 100);
+    }
+    
+    return runMap;
+};
+
 export function WagonWheelSummary({ data }: { data?: LiveScore | Innings | null }) {
     const shots = data && 'shots' in data ? data.shots : [];
+    const runMapData = calculateMatchRunMap(shots || []);
 
     return (
-         <Card>
-            <CardHeader><CardTitle>Wagon Wheel</CardTitle><CardDescription>Scoring areas</CardDescription></CardHeader>
-            <CardContent>
+         <Card className="col-span-1 md:col-span-2">
+            <CardHeader>
+                <CardTitle>Scoring Analysis</CardTitle>
+                <CardDescription>Shot direction and run distribution for this innings.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 <div className="flex justify-center">
                      <WagonWheel onShotSelect={() => {}} shots={shots || []} disabled />
+                </div>
+                 <div className="flex justify-center">
+                    <RunMap data={runMapData} />
                 </div>
             </CardContent>
         </Card>
     )
 }
-
-

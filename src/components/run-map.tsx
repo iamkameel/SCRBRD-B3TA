@@ -12,13 +12,6 @@ interface RunMapProps {
 export function RunMap({ data }: RunMapProps) {
     const size = 300;
     const center = size / 2;
-
-    const sectors = [
-        { angle: -135, length: 90, label: 'Fine Leg', value: data.fineLeg, x: 70, y: 70 },
-        { angle: -45, length: 90, label: 'Point', value: data.point, x: 230, y: 70 },
-        { angle: 45, length: 90, label: 'Cover', value: data.cover, x: 230, y: 230 },
-        { angle: 135, length: 90, label: 'Mid-Wicket', value: data.midWicket, x: 70, y: 230 },
-    ];
     
     // Simplified sectors for display
     const displaySectors = [
