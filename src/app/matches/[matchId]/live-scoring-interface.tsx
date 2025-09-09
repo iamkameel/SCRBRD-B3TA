@@ -376,7 +376,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     const stats = React.useMemo(() => {
         const statsArray = [];
         const isSecondInnings = liveScore.liveInnings === 2;
-        const totalOversSoFar = liveScore.overs + (liveScore.balls / 6);
+        const totalOversSoFar = liveScore.overs + ((liveScore.balls || 0) / 6);
         
         // 1. Current Run Rate
         if (totalOversSoFar > 0) {
