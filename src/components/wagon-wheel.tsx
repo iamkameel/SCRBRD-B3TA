@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -50,20 +49,16 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
     
     const center = size / 2;
     const radius = size / 2;
-    const innerRadius = radius * 0.55;
 
     const sectorLines = Array.from({ length: 4 }).map((_, i) => {
         const angle = i * 45;
-        const startX = center + innerRadius * Math.cos(angle * Math.PI / 180);
-        const startY = center + innerRadius * Math.sin(angle * Math.PI / 180);
+        const startX = center;
+        const startY = center;
         const endX = center + radius * Math.cos(angle * Math.PI / 180);
         const endY = center + radius * Math.sin(angle * Math.PI / 180);
         return { x1: startX, y1: startY, x2: endX, y2: endY };
     });
     
-    // Horizontal line
-    sectorLines.push({ x1: center - radius, y1: center, x2: center + radius, y2: center });
-
     return (
        <div className="flex flex-col items-center">
         <svg
@@ -72,26 +67,27 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             height="auto"
             viewBox={`0 0 ${size} ${size}`}
             onClick={handleClick}
-            className={cn("bg-[#1e272e] rounded-full", disabled ? "cursor-not-allowed opacity-70" : "cursor-crosshair")}
+            className={cn("rounded-full", disabled ? "cursor-not-allowed opacity-70" : "cursor-crosshair")}
+            style={{ backgroundColor: '#1e272e' }}
         >
             <defs>
-                <pattern id="checkered" patternUnits="userSpaceOnUse" width="10" height="10">
-                    <rect x="0" y="0" width="5" height="5" fill="#43a047" />
-                    <rect x="5" y="0" width="5" height="5" fill="#4caf50" />
-                    <rect x="0" y="5" width="5" height="5" fill="#4caf50" />
-                    <rect x="5" y="5" width="5" height="5" fill="#43a047" />
+                <pattern id="checkered" patternUnits="userSpaceOnUse" width="20" height="20">
+                    <rect x="0" y="0" width="10" height="10" fill="#43A047" />
+                    <rect x="10" y="0" width="10" height="10" fill="#4CAF50" />
+                    <rect x="0" y="10" width="10" height="10" fill="#4CAF50" />
+                    <rect x="10" y="10" width="10" height="10" fill="#43A047" />
                 </pattern>
             </defs>
 
             {/* Outfield */}
-            <circle cx={center} cy={center} r={radius} fill="#388e3c" />
+            <circle cx={center} cy={center} r={radius} fill="#388E3C" />
             
             {/* Inner Circle (30-yard) */}
-            <circle cx={center} cy={center} r={innerRadius} fill="url(#checkered)" />
+            <circle cx={center} cy={center} r={radius * 0.55} fill="url(#checkered)" />
             
             {/* Sector lines */}
             {sectorLines.map((line, i) => (
-                <line key={i} {...line} stroke="white" strokeWidth="0.5" strokeOpacity="0.5" />
+                <line key={i} {...line} stroke="white" strokeWidth="1" strokeOpacity="0.3" />
             ))}
             
             {/* Pitch */}
@@ -106,8 +102,8 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             <rect x={center - 4} y={center + 39} width="8" height="2" fill="white" />
 
             {/* Labels */}
-            <text x={center - 30} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold uppercase">OFF</text>
-            <text x={center + 23} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold uppercase">LEG</text>
+            <text x={center - 30} y={center + 5} fontSize="10" fill="white" className="font-sans font-bold uppercase" style={{ textShadow: '1px 1px 2px black' }}>OFF</text>
+            <text x={center + 18} y={center + 5} fontSize="10" fill="white" className="font-sans font-bold uppercase" style={{ textShadow: '1px 1px 2px black' }}>LEG</text>
 
             {/* Shots */}
             {shots.map((shot, index) => {
