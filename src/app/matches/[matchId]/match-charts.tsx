@@ -30,72 +30,60 @@ export function ManhattanChart({ data }: { data?: LiveScore | Innings | null }) 
         const runsPerOver = Array.from({ length: 20 }, (_, i) => ({ over: i + 1, runs: 0 }));
 
         if (!data) {
-             return runsPerOver;
+            return runsPerOver;
         }
 
-        const processBallHistory = (history: string[] = []) => {
-            let overIndex = 0;
-            let currentOverRuns = 0;
-            
-            for (const event of history) {
-                if (event === '|') {
-                    if(overIndex < 20) {
-                        runsPerOver[overIndex].runs = currentOverRuns;
-                        overIndex++;
-                        currentOverRuns = 0;
-                    }
-                    continue;
-                }
+        const history = 'ballHistory' in data && data.ballHistory ? data.ballHistory : [];
+        const currentOverEvents = 'currentOver' in data && data.currentOver ? data.currentOver : [];
 
-                if (overIndex >= 20) break;
+        let currentOverIndex = 0;
+        let runsInCurrentOver = 0;
 
-                const extras = event.match(/(\d+)?(wd|nb)/i);
-                if (extras) {
-                    currentOverRuns += 1 + (parseInt(extras[1] || '0', 10));
-                } else if (!isNaN(parseInt(event, 10))) {
-                    currentOverRuns += parseInt(event, 10);
+        for (const event of history) {
+            if (event === '|') {
+                if (currentOverIndex < 20) {
+                    runsPerOver[currentOverIndex].runs = runsInCurrentOver;
                 }
+                currentOverIndex++;
+                runsInCurrentOver = 0;
+                continue;
             }
-             if (overIndex < 20) {
-                runsPerOver[overIndex].runs = currentOverRuns;
+            if (currentOverIndex >= 20) break;
+
+            const extras = event.match(/(\d+)?(wd|nb)/i);
+            if (extras) {
+                runsInCurrentOver += 1 + (parseInt(extras[1] || '0', 10));
+            } else if (!isNaN(parseInt(event, 10))) {
+                runsInCurrentOver += parseInt(event, 10);
             }
-        };
+        }
 
-        const processCurrentOver = (currentOver: string[] = [], overNumber: number) => {
-            if (overNumber > 20) return;
-            const overIndex = overNumber - 1;
-            
-            const liveCurrentOverRuns = currentOver.reduce((sum, e) => {
-                const extras = e.match(/(\d+)?(wd|nb)/i);
-                if (extras) {
-                    return sum + 1 + (parseInt(extras[1] || '0', 10));
-                }
-                if (!isNaN(parseInt(e, 10))) {
-                    return sum + parseInt(e, 10);
-                }
-                return sum;
-            }, 0);
-            runsPerOver[overIndex].runs += liveCurrentOverRuns;
-        };
-
-        if ('ballHistory' in data && data.ballHistory) {
-            processBallHistory(data.ballHistory);
-        } else if ('battingCard' in data) {
-            // Fallback for Innings data without ballHistory
-            // This is a rough estimation and may not be perfect.
-            const totalOvers = Math.floor(data.overs);
-            if (totalOvers > 0) {
-              const avgRunsPerOver = data.totalRuns / totalOvers;
+        // Add runs from the current, potentially incomplete over
+        const liveCurrentOverRuns = currentOverEvents.reduce((sum, e) => {
+            const extras = e.match(/(\d+)?(wd|nb)/i);
+            if (extras) {
+                return sum + 1 + (parseInt(extras[1] || '0', 10));
+            }
+            if (!isNaN(parseInt(e, 10))) {
+                return sum + parseInt(e, 10);
+            }
+            return sum;
+        }, 0);
+        
+        if (currentOverIndex < 20) {
+            runsPerOver[currentOverIndex].runs = runsInCurrentOver + liveCurrentOverRuns;
+        }
+        
+        // Fallback for static scorecard data without ballHistory
+        if (history.length === 0 && 'totalRuns' in data) {
+            const totalOvers = Math.floor(data.overs || 0);
+             if (totalOvers > 0) {
+              const avgRunsPerOver = Math.round(data.totalRuns / totalOvers);
               for (let i = 0; i < totalOvers && i < 20; i++) {
-                runsPerOver[i].runs = Math.round(avgRunsPerOver);
+                runsPerOver[i].runs = avgRunsPerOver;
               }
             }
         }
-        
-        if ('currentOver' in data && data.currentOver && data.overs !== undefined) {
-            processCurrentOver(data.currentOver, data.overs + 1);
-        }
-
 
         return runsPerOver;
     }, [data]);
@@ -417,6 +405,7 @@ export function RunMapCard({ data, roster }: { data?: LiveScore | Innings | null
         </Card>
     );
 }
+
 
 
 
