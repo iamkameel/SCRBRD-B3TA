@@ -936,7 +936,7 @@ export function LiveScoringInterface({
                           {isFirstInnings ? "End Innings & Start 2nd" : "End Match"} <ArrowRight />
                       </Button>
                   </Card>
-              ) : (isReadyToScore && !isAllOut && !isOversFinished && (
+              ) : (isReadyToScore && (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="lg:col-span-2 space-y-4">
                           <Card className="bg-slate-800 text-white border-slate-700">
