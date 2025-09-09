@@ -419,14 +419,14 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     }, [stats.length]);
 
     if (stats.length === 0) {
-        return <p className="text-center font-semibold text-[#ffc33e] h-6">&nbsp;</p>;
+        return <p className="text-center font-semibold text-[#ffc33e] h-auto py-2">&nbsp;</p>;
     }
 
     const currentStat = stats[currentIndex];
     const Icon = currentStat.icon;
 
     return (
-        <div className="text-center font-semibold text-[#ffc33e] h-6 flex items-center justify-center">
+        <div className="text-center font-semibold text-[#ffc33e] h-auto py-2 flex items-center justify-center">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -434,11 +434,11 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-sm"
                 >
                     <Icon className="h-4 w-4" />
-                    <span className="uppercase text-xs">{currentStat.label}:</span>
-                    <span className="text-lg">{currentStat.value}</span>
+                    <span className="uppercase">{currentStat.label}:</span>
+                    <span>{currentStat.value}</span>
                 </motion.div>
             </AnimatePresence>
         </div>
@@ -786,7 +786,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            <div className="flex items-center justify-center gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
+             <div className="flex items-center justify-center gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
