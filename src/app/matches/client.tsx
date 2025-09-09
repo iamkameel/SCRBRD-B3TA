@@ -479,7 +479,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
                                   ['postponed', 'cancelled', 'abandoned'].includes(match.status) ? 'outline' :
                                   'default'
                                 }
-                                className={cn("capitalize", match.status === 'live' && "bg-green-600 text-white")}
+                                className={cn("capitalize", match.status === 'live' && "bg-red-600 text-white animate-pulse")}
                               >
                                 {match.status}
                               </Badge>
