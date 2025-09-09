@@ -205,7 +205,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={e => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
-        <Card className="col-span-2">
+        <Card>
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Manage Lineup: {teamName}</CardTitle>
@@ -218,16 +218,15 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
                         {lineupComposition.AR > 0 && <span className="flex items-center gap-1"><Swords className="h-3 w-3"/>{lineupComposition.AR}</span>}
                         {lineupComposition.WK > 0 && <span className="flex items-center gap-1"><ShieldHalf className="h-3 w-3"/>{lineupComposition.WK}</span>}
                     </div>
-                    <Tabs defaultValue="selection" className="w-auto">
-                        <TabsList>
-                            <TabsTrigger value="selection">Selection</TabsTrigger>
-                            <TabsTrigger value="ordering">Batting Order</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
                 </div>
             </CardHeader>
             <CardContent>
-              <TabsContent value="selection" className="mt-0">
+              <Tabs defaultValue="selection">
+                <TabsList>
+                    <TabsTrigger value="selection">Selection</TabsTrigger>
+                    <TabsTrigger value="ordering">Batting Order</TabsTrigger>
+                </TabsList>
+                <TabsContent value="selection" className="mt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <h3 className="font-semibold mb-2">Selected Lineup ({selectedIds.length}/11 Playing, {twelfthManId ? 1 : 0}/1 Sub)</h3>
@@ -300,7 +299,7 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
 
                   </div>
               </TabsContent>
-              <TabsContent value="ordering" className="mt-0">
+              <TabsContent value="ordering" className="mt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                            <h3 className="font-semibold mb-2">Playing XI (Drag to reorder)</h3>
@@ -338,31 +337,34 @@ function TeamLineupManager({ teamId, match, rosterWithStats, initialLineup, canM
                       </div>
                   </div>
               </TabsContent>
+              </Tabs>
+            </CardContent>
+             <CardContent className="pt-0">
+                <div className="flex items-center justify-between mt-6 p-4 border rounded-lg bg-card sticky bottom-4 z-10 shadow-lg">
+                    <div className="flex items-center gap-2 text-sm">
+                        <UserCheck className="h-5 w-5 text-primary" />
+                        <span className="font-semibold">{selectedIds.length} Playing XI, {twelfthManId ? 1 : 0} Substitute</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                            <Tooltip><TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={handleAutoSelect} disabled={isPending || isAutoSelecting}><Wand2 className={isAutoSelecting ? 'animate-spin' : ''} /></Button>
+                            </TooltipTrigger><TooltipContent>Auto-Select with AI</TooltipContent></Tooltip>
+                        </TooltipProvider>
+                        <Button onClick={handleSaveLineup} disabled={isPending || isAutoSelecting}>
+                            <Save className="mr-2"/>
+                            {isPending ? 'Saving...' : 'Save Lineup'}
+                        </Button>
+                        {isCaptain && (
+                            <Button onClick={handleConfirmLineup} disabled={isPending || isAutoSelecting || selectedIds.length !== 11}>
+                                <ShieldCheck className="mr-2"/>
+                                Confirm Final Lineup
+                            </Button>
+                        )}
+                    </div>
+                </div>
             </CardContent>
         </Card>
-        <div className="lg:col-span-2 flex items-center justify-between mt-6 p-4 border rounded-lg bg-card sticky bottom-4 z-10 shadow-lg">
-            <div className="flex items-center gap-2 text-sm">
-                <UserCheck className="h-5 w-5 text-primary" />
-                <span className="font-semibold">{selectedIds.length} Playing XI, {twelfthManId ? 1 : 0} Substitute</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <TooltipProvider>
-                    <Tooltip><TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={handleAutoSelect} disabled={isPending || isAutoSelecting}><Wand2 className={isAutoSelecting ? 'animate-spin' : ''} /></Button>
-                    </TooltipTrigger><TooltipContent>Auto-Select with AI</TooltipContent></Tooltip>
-                </TooltipProvider>
-                <Button onClick={handleSaveLineup} disabled={isPending || isAutoSelecting}>
-                    <Save className="mr-2"/>
-                    {isPending ? 'Saving...' : 'Save Lineup'}
-                </Button>
-                {isCaptain && (
-                    <Button onClick={handleConfirmLineup} disabled={isPending || isAutoSelecting || selectedIds.length !== 11}>
-                        <ShieldCheck className="mr-2"/>
-                        Confirm Final Lineup
-                    </Button>
-                )}
-            </div>
-        </div>
          <DragOverlay>
             {activePlayer ? <PlayerCard player={activePlayer} availability={match.availability?.[activePlayer.personId]} isDragging isSelected={selectedIds.includes(activePlayer.personId) || twelfthManId === activePlayer.personId} isTwelfthMan={twelfthManId === activePlayer.personId} onSelect={() => {}} /> : null}
         </DragOverlay>
@@ -393,7 +395,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamAName}
                     match={match}
                     rosterWithStats={teamARoster}
-                    initialLineup={teamALineup || defaultLineup}
+                    initialLineup={teamALineup ?? defaultLineup}
                     canManage={canManageA}
                     isConfirmed={match.lineupConfirmedByCaptainA}
                 />
@@ -405,7 +407,7 @@ export function LineupManager({ match, teamARoster, teamBRoster, teamALineup, te
                     teamName={match.teamBName}
                     match={match}
                     rosterWithStats={teamBRoster}
-                    initialLineup={teamBLineup || defaultLineup}
+                    initialLineup={teamBLineup ?? defaultLineup}
                     canManage={canManageB}
                     isConfirmed={match.lineupConfirmedByCaptainB}
                 />
