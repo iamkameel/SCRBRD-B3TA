@@ -280,7 +280,7 @@ export default function MatchDetailsClient({
 
   const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
   
-  const isPlayerInMatch = [...teamALineup.playingXI, teamALineup.twelfthMan, ...teamBLineup.playingXI, teamBLineup.twelfthMan].filter(Boolean).includes(person?.personId || '');
+  const isPlayerInMatch = [...(teamALineup?.playingXI || []), teamALineup?.twelfthMan, ...(teamBLineup?.playingXI || []), teamBLineup?.twelfthMan].filter(Boolean).includes(person?.personId || '');
   const canLiveScore = isAdmin || isOfficialForMatch;
 
   React.useEffect(() => {
@@ -289,18 +289,21 @@ export default function MatchDetailsClient({
   
   const playersInMatch = React.useMemo(() => {
     const allPlayers = new Map<string, { name: string; teamName: string }>();
+    const lineupA = teamALineupProp || { playingXI: [] };
+    const lineupB = teamBLineupProp || { playingXI: [] };
+
     teamARosterWithStats.forEach(p => {
-        if (teamALineup.playingXI.includes(p.personId)) {
+        if (lineupA.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamAName });
         }
     });
     teamBRosterWithStats.forEach(p => {
-        if (teamBLineup.playingXI.includes(p.personId)) {
+        if (lineupB.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamBName });
         }
     });
     return Array.from(allPlayers.entries()).map(([id, data]) => ({ id, ...data }));
-  }, [teamARosterWithStats, teamBRosterWithStats, teamALineup, teamBLineup, match.teamAName, match.teamBName]);
+  }, [teamARosterWithStats, teamBRosterWithStats, teamALineupProp, teamBLineupProp, match.teamAName, match.teamBName]);
 
   const handleGenerateForecast = () => {
     if (!forecastedPlayer) {
