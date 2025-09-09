@@ -230,8 +230,8 @@ interface MatchDetailsClientProps {
   people: Person[];
   teamARosterWithStats: RosterMemberWithStats[];
   teamBRosterWithStats: RosterMemberWithStats[];
-  teamALineup: Lineup;
-  teamBLineup: Lineup;
+  teamALineup: Lineup | null;
+  teamBLineup: Lineup | null;
   scorecard: { innings1: Innings, innings2: Innings } | null;
   transportAssignments: TransportAssignment[];
   vehicles: Vehicle[];
@@ -245,7 +245,9 @@ interface MatchDetailsClientProps {
 export default function MatchDetailsClient({ 
     match, initialOfficials, people, 
     teamARosterWithStats, teamBRosterWithStats, 
-    teamALineup, teamBLineup, scorecard, 
+    teamALineup: teamALineupProp, 
+    teamBLineup: teamBLineupProp, 
+    scorecard, 
     transportAssignments, vehicles, drivers,
     canManage, isManagerForA, isManagerForB, isOfficialForMatch,
 }: MatchDetailsClientProps) {
@@ -273,12 +275,12 @@ export default function MatchDetailsClient({
   const [forecastedPlayer, setForecastedPlayer] = React.useState<string>('');
   const [forecastResult, setForecastResult] = React.useState<PlayerPerformanceForecast | null>(null);
   
+  const teamALineup = teamALineupProp || { playingXI: [], twelfthMan: null };
+  const teamBLineup = teamBLineupProp || { playingXI: [], twelfthMan: null };
+
   const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
   
-  const currentTeamALineup = teamALineup || { playingXI: [], twelfthMan: null };
-  const currentTeamBLineup = teamBLineup || { playingXI: [], twelfthMan: null };
-
-  const isPlayerInMatch = [...currentTeamALineup.playingXI, currentTeamALineup.twelfthMan, ...currentTeamBLineup.playingXI, currentTeamBLineup.twelfthMan].filter(Boolean).includes(person?.personId || '');
+  const isPlayerInMatch = [...teamALineup.playingXI, teamALineup.twelfthMan, ...teamBLineup.playingXI, teamBLineup.twelfthMan].filter(Boolean).includes(person?.personId || '');
   const canLiveScore = isAdmin || isOfficialForMatch;
 
   React.useEffect(() => {
@@ -288,17 +290,17 @@ export default function MatchDetailsClient({
   const playersInMatch = React.useMemo(() => {
     const allPlayers = new Map<string, { name: string; teamName: string }>();
     teamARosterWithStats.forEach(p => {
-        if (currentTeamALineup.playingXI.includes(p.personId)) {
+        if (teamALineup.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamAName });
         }
     });
     teamBRosterWithStats.forEach(p => {
-        if (currentTeamBLineup.playingXI.includes(p.personId)) {
+        if (teamBLineup.playingXI.includes(p.personId)) {
             allPlayers.set(p.personId, { name: p.personName, teamName: match.teamBName });
         }
     });
     return Array.from(allPlayers.entries()).map(([id, data]) => ({ id, ...data }));
-  }, [teamARosterWithStats, teamBRosterWithStats, currentTeamALineup, currentTeamBLineup, match.teamAName, match.teamBName]);
+  }, [teamARosterWithStats, teamBRosterWithStats, teamALineup, teamBLineup, match.teamAName, match.teamBName]);
 
   const handleGenerateForecast = () => {
     if (!forecastedPlayer) {
@@ -597,8 +599,8 @@ export default function MatchDetailsClient({
                     match={match}
                     teamARoster={teamARosterWithStats}
                     teamBRoster={teamBRosterWithStats}
-                    teamALineup={currentTeamALineup}
-                    teamBLineup={currentTeamBLineup}
+                    teamALineup={teamALineup}
+                    teamBLineup={teamBLineup}
                     canManageA={isManagerForA}
                     canManageB={isManagerForB}
                 />
