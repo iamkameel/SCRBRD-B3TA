@@ -278,7 +278,7 @@ export default function MatchDetailsClient({
   const currentTeamALineup = teamALineup || { playingXI: [], twelfthMan: null };
   const currentTeamBLineup = teamBLineup || { playingXI: [], twelfthMan: null };
 
-  const isPlayerInMatch = [...currentTeamALineup.playingXI, currentTeamALineup.twelfthMan, ...currentTeamBLineup.playingXI, currentTeamBLineup.twelfthMan].includes(person?.personId || '');
+  const isPlayerInMatch = [...currentTeamALineup.playingXI, currentTeamALineup.twelfthMan, ...currentTeamBLineup.playingXI, currentTeamBLineup.twelfthMan].filter(Boolean).includes(person?.personId || '');
   const canLiveScore = isAdmin || isOfficialForMatch;
 
   React.useEffect(() => {
