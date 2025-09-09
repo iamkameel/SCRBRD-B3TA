@@ -717,15 +717,14 @@ export function LiveScoringInterface({
                 }
 
                 const performers = await getTopPerformersAction(generatedScorecard.scorecard);
-                if (performers && performers.length > 0) {
-                    setTopPerformers(performers);
-                    setIsPotmDialogOpen(true);
-                } else {
-                    await endInningsAction(match.matchId); // End match without POTM if AI fails
-                    toast({ title: "Match Ended", description: "Match completed. No top performers could be identified." });
-                }
+                setTopPerformers(performers);
+                setIsPotmDialogOpen(true);
             } catch (error) {
-                 toast({ title: "Error", description: error instanceof Error ? error.message : "Could not get top performers.", variant: "destructive" });
+                const errorMessage = error instanceof Error ? error.message : "Could not get top performers.";
+                toast({ title: "Error fetching Top Performers", description: errorMessage, variant: "destructive" });
+                // If AI fails, still allow the match to end.
+                await endInningsAction(match.matchId);
+                toast({ title: "Match Ended", description: "The match has been completed." });
             }
         }
     });
