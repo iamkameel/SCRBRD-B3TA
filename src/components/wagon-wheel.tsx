@@ -94,8 +94,11 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             
             {/* Sector lines */}
             {sectorLines.map((line, i) => (
-                <line key={i} {...line} stroke="white" strokeWidth="0.5" strokeOpacity="0.3" />
+                <line key={i} {...line} stroke="white" strokeWidth="1" strokeOpacity="0.4" />
             ))}
+            
+            {/* 30-yard circle */}
+            <circle cx={center} cy={center} r={radius * 0.55} stroke="white" strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
             
             {/* Pitch */}
             <rect x={center - 7} y={center - 50} width="14" height="100" fill="#BCA48C" />
