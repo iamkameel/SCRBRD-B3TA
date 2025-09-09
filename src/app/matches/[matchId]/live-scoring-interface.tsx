@@ -753,7 +753,6 @@ export function LiveScoringInterface({
                         <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
                         <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
                     </Avatar>
-                    {match.status === 'live' && <Badge className="absolute -top-1 -right-2 bg-green-600 text-white animate-pulse">Live</Badge>}
                 </div>
 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
@@ -777,17 +776,16 @@ export function LiveScoringInterface({
                 </Avatar>
             </div>
             
-             <div className="flex items-center justify-between px-4 max-w-lg mx-auto">
-                {!isFirstInnings && match.firstInningsLiveScore ? (
+             <div className="flex items-center justify-between px-4 max-w-lg mx-auto text-base">
+                {!isFirstInnings && match.firstInningsTotal != null ? (
                     <div className="text-left text-white">
-                        <p className="text-sm font-semibold opacity-80">1st Innings</p>
-                        <p className="font-bold text-base">{match.firstInningsLiveScore.runs}/{match.firstInningsLiveScore.wickets}</p>
+                        <p className="font-semibold">1st Innings: {match.firstInningsTotal}</p>
                     </div>
                 ) : <div />}
                 
                 <div className="text-right">
                     {!isFirstInnings && (
-                        <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal ? match.firstInningsTotal + 1 : 0}</span>
+                        <span className="font-bold text-green-400">TARGET {match.firstInningsTotal ? match.firstInningsTotal + 1 : 0}</span>
                     )}
                 </div>
             </div>
