@@ -1,10 +1,12 @@
-
 'use client';
 
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import type { Partnership } from '@/lib/data';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { Users } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface PartnershipCardProps {
     partnerships: Partnership[] | undefined;
@@ -22,35 +24,70 @@ function PartnershipRow({ partnership }: { partnership: Partnership }) {
         batsman2Balls
     } = partnership;
 
-    const contribution1 = totalRuns > 0 ? (batsman1Runs / totalRuns) * 100 : 0;
+    const contribution1 = totalRuns > 0 ? (batsman1Runs / totalRuns) * 100 : 50;
+    const contribution2 = totalRuns > 0 ? (batsman2Runs / totalRuns) * 100 : 50;
 
     return (
-        <div className="py-3 border-b last:border-b-0">
-            <div className="grid grid-cols-3 items-center gap-4">
-                <div className="text-left">
-                    <p className="font-semibold">{batsman1Name}</p>
-                    <p className="text-sm text-muted-foreground">{batsman1Runs} ({batsman1Balls})</p>
+        <div className="py-4 border-b last:border-b-0">
+            <div className="flex justify-center items-center mb-2">
+                <p className="font-bold text-2xl text-primary">{totalRuns}</p>
+                <p className="ml-2 text-sm text-muted-foreground">({totalBalls} balls)</p>
+            </div>
+            <div className="w-full bg-secondary rounded-full h-2.5 mb-4">
+                <TooltipProvider>
+                    <div className="flex h-full">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div 
+                                    className="bg-chart-1 rounded-l-full" 
+                                    style={{ width: `${contribution1}%` }}
+                                ></div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{batsman1Name}: {batsman1Runs} ({batsman1Balls})</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div 
+                                    className="bg-chart-2 rounded-r-full" 
+                                    style={{ width: `${contribution2}%` }}
+                                ></div>
+                             </TooltipTrigger>
+                             <TooltipContent>
+                                <p>{batsman2Name}: {batsman2Runs} ({batsman2Balls})</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </TooltipProvider>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-chart-1" />
+                    <div>
+                        <p className="font-semibold">{batsman1Name}</p>
+                        <p className="text-muted-foreground">{batsman1Runs} ({batsman1Balls})</p>
+                    </div>
                 </div>
-                <div className="text-center">
-                    <p className="font-bold text-lg">{totalRuns}</p>
-                    <p className="text-xs text-muted-foreground">({totalBalls} balls)</p>
-                </div>
-                <div className="text-right">
-                    <p className="font-semibold">{batsman2Name}</p>
-                    <p className="text-sm text-muted-foreground">{batsman2Runs} ({batsman2Balls})</p>
+                <div className="flex items-center gap-2">
+                    <div className="text-right">
+                        <p className="font-semibold">{batsman2Name}</p>
+                        <p className="text-muted-foreground">{batsman2Runs} ({batsman2Balls})</p>
+                    </div>
+                    <div className="h-2.5 w-2.5 rounded-full bg-chart-2" />
                 </div>
             </div>
-            <Progress value={contribution1} className="mt-2 h-2" />
         </div>
     );
 }
+
 
 export function PartnershipCard({ partnerships }: PartnershipCardProps) {
     if (!partnerships || partnerships.length === 0) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Partnerships</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Users />Partnerships</CardTitle>
                     <CardDescription>All partnerships for this innings.</CardDescription>
                 </CardHeader>
                 <CardContent className="h-48 flex items-center justify-center text-muted-foreground">
@@ -63,7 +100,7 @@ export function PartnershipCard({ partnerships }: PartnershipCardProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Partnerships</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Users />Partnerships</CardTitle>
                 <CardDescription>All partnerships for this innings.</CardDescription>
             </CardHeader>
             <CardContent>
