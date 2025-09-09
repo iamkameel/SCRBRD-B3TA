@@ -510,7 +510,7 @@ export default function MatchDetailsClient({
                                     {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
                                 </CardTitle>
                                 {match.status === 'live' && (
-                                    <Badge className="capitalize bg-red-600 text-white animate-pulse">Live</Badge>
+                                    <Badge className="capitalize bg-green-600 text-white animate-pulse">Live</Badge>
                                 )}
                             </div>
                              <div className="flex items-center gap-2 mt-4 md:mt-0">
