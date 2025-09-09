@@ -153,51 +153,35 @@ const processInningsForWormChart = (innings: Innings | LiveScore | null) => {
     const data: { score: number, wickets: number }[] = Array(21).fill(null).map(() => ({ score: 0, wickets: 0 }));
     data[0] = { score: 0, wickets: 0 };
 
-    if (!innings) return data;
-
-    const isLive = 'ballHistory' in innings;
+    if (!innings || !('ballHistory' in innings)) return data;
     
-    if (isLive) {
-        const ballHistory = innings.ballHistory ?? [];
-        let cumulativeScore = 0;
-        let cumulativeWickets = 0;
-        let over = 1;
+    const ballHistory = innings.ballHistory ?? [];
+    let cumulativeScore = 0;
+    let cumulativeWickets = 0;
+    let over = 1;
 
-        for (const event of ballHistory) {
-            if (event === '|') {
-                if (over <= 20) data[over] = { score: cumulativeScore, wickets: cumulativeWickets };
-                over++;
-                continue;
-            }
-            if (event === 'W') {
-                cumulativeWickets++;
-            } else if (event.toLowerCase().includes('wd') || event.toLowerCase().includes('nb')) {
-                cumulativeScore += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
-            } else if (!isNaN(parseInt(event))) {
-                cumulativeScore += parseInt(event);
-            }
+    for (const event of ballHistory) {
+        if (event === '|') {
+            if (over <= 20) data[over] = { score: cumulativeScore, wickets: cumulativeWickets };
+            over++;
+            if (over > 20) break;
+            continue;
         }
-    } else if ('fallOfWickets' in innings) {
-        // Use fall of wickets for a more accurate completed scorecard plot
-        const fow = innings.fallOfWickets.sort((a,b) => a.over - b.over);
-        let currentOver = 1;
-        
-        for (let i = 1; i <= 20; i++) {
-            const wicketsThisOver = fow.filter(w => Math.floor(w.over) === i -1).length;
-            const lastWicketInPrevOver = fow.filter(w => Math.floor(w.over) < i - 1).pop();
-            const scoreAtStartOfOver = lastWicketInPrevOver ? lastWicketInPrevOver.runs : 0;
-            const scoreAtEndOfOver = fow.find(w => Math.floor(w.over) === i -1)?.runs || (i === Math.floor(innings.overs) ? innings.totalRuns : scoreAtStartOfOver + Math.round(innings.totalRuns / innings.overs));
 
-            data[i] = {
-                score: scoreAtEndOfOver,
-                wickets: data[i-1].wickets + wicketsThisOver,
-            }
+        if (event === 'W') {
+            cumulativeWickets++;
+        } else if (event.toLowerCase().includes('wd')) {
+            cumulativeScore += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
+        } else if (event.toLowerCase().includes('nb')) {
+            cumulativeScore += 1 + (parseInt(event.replace(/[^0-9]/g, ''), 10) || 0);
+        } else if (!isNaN(parseInt(event))) {
+            cumulativeScore += parseInt(event);
         }
-        if (Math.floor(innings.overs) < 20) {
-           for (let i = Math.ceil(innings.overs); i <= 20; i++) {
-               data[i] = { score: innings.totalRuns, wickets: innings.wickets };
-           }
-        }
+    }
+    
+    // Fill the rest of the overs if the innings ended early
+    for (let i = over; i <= 20; i++) {
+        data[i] = { score: cumulativeScore, wickets: cumulativeWickets };
     }
 
     return data;
@@ -356,5 +340,6 @@ export function RunMapCard({ data, roster }: { data?: LiveScore | Innings | null
         </Card>
     );
 }
+
 
 
