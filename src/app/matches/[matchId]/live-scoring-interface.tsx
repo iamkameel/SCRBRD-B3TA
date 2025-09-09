@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -161,7 +162,8 @@ const getDisplayName = (playerId: string | undefined, roster: RosterMemberWithSt
     
     if (lastNameCount > 1) {
         const firstNameInitial = nameParts[0].charAt(0);
-        return `${firstNameInitial}. ${lastName}`.toUpperCase();
+        return `${'\'\'\''}
+${firstNameInitial}. ${lastName}`.toUpperCase();
     }
     
     return lastName.toUpperCase();
@@ -289,14 +291,14 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
     // Correctly calculating overs for career view from decimal
     const careerOversInt = Math.floor(careerStats.oversBowled);
     const careerBalls = Math.round((careerStats.oversBowled - careerOversInt) * 10);
-    const careerOversDisplay = `${careerOversInt}.${careerBalls}`;
+    const careerOversDisplay = `${'\'\'\''}${careerOversInt}.${careerBalls}`;
 
     const stats = statsView === 'match' ? matchStats : {
         ...careerStats,
         oversDisplay: careerOversDisplay,
     };
     
-    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${player.physicalAttributes.bowlingHand}-arm` : '';
+    const bowlingHand = player.physicalAttributes?.bowlingHand ? `${'\'\'\''}${player.physicalAttributes.bowlingHand}-arm` : '';
     const bowlingStyle = player.physicalAttributes?.bowlingStyles?.join(', ');
 
     return (
@@ -313,7 +315,7 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
           </div>
         </div>
         <div className="grid grid-cols-5 gap-1 text-center mt-2 text-xs">
-          <div><strong>O</strong><br />{statsView === 'match' ? `${stats.overs || 0}.${stats.balls || 0}` : stats.oversDisplay}</div>
+          <div><strong>O</strong><br />{statsView === 'match' ? `${'\'\'\''}${stats.overs || 0}.${stats.balls || 0}` : stats.oversDisplay}</div>
           <div><strong>M</strong><br />{stats.maidens || 0}</div>
           <div><strong>R</strong><br />{stats.runsConceded || 0}</div>
           <div><strong>W</strong><br />{stats.wicketsTaken || stats.wickets || 0}</div>
@@ -633,11 +635,11 @@ export function LiveScoringInterface({
   const getBallDisplay = (ball: string): string => {
     if (ball.toLowerCase().includes('wd')) {
       const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
-      return runs > 0 ? `${runs}WD` : 'WD';
+      return runs > 0 ? `${'\'\'\''}${runs}WD` : 'WD';
     }
      if (ball.toLowerCase().startsWith('nb')) {
       const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
-      return runs > 0 ? `${runs}NB` : 'NB';
+      return runs > 0 ? `${'\'\'\''}${runs}NB` : 'NB';
     }
     return ball.toUpperCase();
   }
@@ -665,7 +667,7 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
             
             <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
-                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff', backgroundColor: match.teamBColor ? `${match.teamBColor}40` : '#4848ff40' }}>
+                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff', backgroundColor: match.teamBColor ? `${'\'\'\''}${match.teamBColor}40` : '#4848ff40' }}>
                     <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
                     <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
                 </Avatar>
@@ -685,7 +687,7 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e', backgroundColor: match.teamAColor ? `${match.teamAColor}40` : '#ffc33e40' }}>
+                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e', backgroundColor: match.teamAColor ? `${'\'\'\''}${match.teamAColor}40` : '#ffc33e40' }}>
                     <AvatarImage src={match.teamBLogoUrl} alt={match.teamBName} />
                     <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
                 </Avatar>
@@ -700,13 +702,13 @@ export function LiveScoringInterface({
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
-                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1">
-                    <span className="font-bold text-base text-white">{onStrikePlayer.name}</span>
-                    <span className="text-base font-bold text-white">{onStrikePlayer.runs} <span className="font-normal opacity-75">({onStrikePlayer.balls})</span></span>
+                <div className="flex items-center justify-between px-4 py-1 h-8 rounded-full bg-[#3ecc78] flex-1 text-white">
+                    <span className="font-bold text-base">{onStrikePlayer.name}</span>
+                    <span className="text-base font-bold">{onStrikePlayer.runs} <span className="font-normal opacity-75">({onStrikePlayer.balls})</span></span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1">
-                    <span className="font-bold text-base text-white">{nonStrikerPlayer.name}</span>
-                    <span className="text-base font-bold text-white">{nonStrikerPlayer.runs} <span className="font-normal opacity-75">({nonStrikerPlayer.balls})</span></span>
+                <div className="flex items-center justify-between px-4 py-1 h-8 flex-1 text-white">
+                    <span className="font-bold text-base">{nonStrikerPlayer.name}</span>
+                    <span className="text-base font-bold">{nonStrikerPlayer.runs} <span className="font-normal opacity-75">({nonStrikerPlayer.balls})</span></span>
                 </div>
             </div>
             
