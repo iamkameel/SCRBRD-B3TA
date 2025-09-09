@@ -11,6 +11,7 @@ const withPWA = withPWAInit({
 const nextConfig = {
   /* config options here */
   experimental: {
+    serverComponentsExternalPackages: ['genkit'],
   },
   typescript: {
     ignoreBuildErrors: true,
