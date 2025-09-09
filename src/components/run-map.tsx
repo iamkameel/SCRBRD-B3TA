@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -11,17 +12,6 @@ interface RunMapProps {
     size?: number;
 }
 
-const COLORS = [
-  '#3b82f6', // blue-500
-  '#14b8a6', // teal-500
-  '#22c55e', // green-500
-  '#84cc16', // lime-500
-  '#eab308', // yellow-500
-  '#f97316', // orange-500
-  '#ef4444', // red-500
-  '#8b5cf6', // violet-500
-];
-
 const SECTORS = [
   { name: 'Point', angle: 0 },
   { name: 'Cover', angle: 45 },
@@ -32,19 +22,6 @@ const SECTORS = [
   { name: 'Fine Leg', angle: 270 },
   { name: 'Third Man', angle: 315 },
 ];
-
-const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, value, name }: any) => {
-    if (value === 0) return null;
-    const radius = outerRadius * 0.7;
-    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-
-    return (
-        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold pointer-events-none drop-shadow-md">
-            {value}%
-        </text>
-    );
-};
 
 const calculateRunMapData = (shots: ShotData[]): { name: string; value: number }[] => {
     const runMap: Record<string, number> = {
@@ -74,7 +51,6 @@ const calculateRunMapData = (shots: ShotData[]): { name: string; value: number }
         value: totalRuns > 0 ? Math.round((runMap[sector.name] / totalRuns) * 100) : 0,
     }));
     
-    // Ensure percentages add up to 100
     const currentTotal = data.reduce((sum, item) => sum + item.value, 0);
     if (totalRuns > 0 && currentTotal !== 100) {
         const diff = 100 - currentTotal;
@@ -129,31 +105,13 @@ export function RunMap({ shots, size = 300 }: RunMapProps) {
                 <rect x={center - 4} y={center + 38} width="8" height="6" fill="white" />
                 
             </svg>
-             <PieChart width={size} height={size}>
-                <Pie
-                    data={chartData}
-                    cx={center}
-                    cy={center}
-                    labelLine={false}
-                    outerRadius={center * 0.9}
-                    innerRadius={center * 0.4}
-                    dataKey="value"
-                    startAngle={22.5}
-                    endAngle={382.5}
-                    stroke="white"
-                    strokeWidth={0.5}
-                >
-                    {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index]} fillOpacity={0.5} />
-                    ))}
-                </Pie>
-            </PieChart>
+            
              <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 pointer-events-none">
                  {/* Sector Labels */}
                 {chartData.map((entry, index) => {
                     const midAngle = (SECTORS[index].angle) * Math.PI / 180;
                     const nameRadius = center * 0.9;
-                    const valueRadius = center * 0.65;
+                    const valueRadius = center * 0.7;
                     
                     const nameX = center + nameRadius * Math.cos(-midAngle);
                     const nameY = center + nameRadius * Math.sin(-midAngle);
@@ -162,11 +120,11 @@ export function RunMap({ shots, size = 300 }: RunMapProps) {
                     
                     return (
                         <g key={index}>
-                             <text x={nameX} y={nameY} fill="white" fontSize="8" textAnchor="middle" dominantBaseline="middle" className="font-sans uppercase font-bold" style={{textShadow: '1px 1px 2px black' }}>
+                             <text x={nameX} y={nameY} fill="white" fontSize="9" textAnchor="middle" dominantBaseline="middle" className="font-sans uppercase font-bold" style={{textShadow: '1px 1px 2px black' }}>
                                 {entry.name}
                             </text>
                             {entry.value > 0 && (
-                                <text x={valueX} y={valueY} fill="white" fontSize="12" textAnchor="middle" dominantBaseline="middle" className="font-sans font-bold" style={{textShadow: '1px 1px 2px black'}}>
+                                <text x={valueX} y={valueY} fill="white" fontSize="14" textAnchor="middle" dominantBaseline="middle" className="font-sans font-bold" style={{textShadow: '1px 1px 2px black'}}>
                                     {entry.value}%
                                 </text>
                             )}
