@@ -505,8 +505,9 @@ export default function MatchDetailsClient({
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                            <CardTitle>
+                            <CardTitle className="flex items-center gap-2">
                                 {match.status === 'live' ? 'Live Scoring Interface' : 'Match Scorecard'}
+                                {match.status === 'live' && <Badge className="bg-green-600 text-white animate-pulse">Live</Badge>}
                             </CardTitle>
                              <div className="flex items-center gap-2 mt-4 md:mt-0">
                                 {match.status === 'scheduled' && !innings1 && (
