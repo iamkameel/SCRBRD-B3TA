@@ -895,7 +895,7 @@ export async function recordBallAction(matchId: string, ball: { runs?: number, e
         }
     }
     
-    if (ball.angle !== undefined && ball.distance !== undefined) {
+    if (ball.angle !== undefined && ball.distance !== undefined && onStrikeId) {
         if (!liveScore.shots) liveScore.shots = [];
         liveScore.shots.push({ runs: runsFromBall, angle: ball.angle, distance: ball.distance, batsmanId: onStrikeId });
     }

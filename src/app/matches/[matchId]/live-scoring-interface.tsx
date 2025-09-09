@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords, Sparkles, TrendingUp, Users, Shield } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -427,7 +427,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     const Icon = currentStat.icon;
 
     return (
-        <div className="text-center text-white h-auto py-2 flex items-center justify-center text-base">
+        <div className="text-center text-white h-auto py-2 text-base flex items-center justify-center">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
