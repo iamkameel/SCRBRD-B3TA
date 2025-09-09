@@ -675,7 +675,7 @@ export function LiveScoringInterface({
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
                     <div className="flex items-center justify-center h-full rounded-full bg-[#4848ff] min-w-[30%] px-4">
                          <p className="font-bold text-lg whitespace-nowrap">
-                            <span className="text-yellow-400">{battingTeam.abbrev}</span> v {bowlingTeam.abbrev}
+                            <span className="text-yellow-400">{battingTeam.abbrev}</span> vs {bowlingTeam.abbrev}
                         </p>
                     </div>
                     <div className="flex-1 flex items-center justify-center gap-4 h-full px-6">
@@ -712,7 +712,7 @@ export function LiveScoringInterface({
                 </div>
             </div>
             
-            <div className="flex items-center justify-between gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
+            <div className="flex items-center justify-center gap-6 w-full max-w-lg mx-auto text-sm text-gray-300">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold">{getDisplayName(bowlerId, bowlingTeamRoster)}</span>
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
