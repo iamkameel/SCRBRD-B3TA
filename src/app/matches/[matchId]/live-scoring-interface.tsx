@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -697,7 +698,7 @@ export function LiveScoringInterface({
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-[#3ecc78] font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
-                 <Link href={`/matches/${match.matchId}`} className="text-xs hover:underline">1st Innings Stats</Link>
+                 <Link href={`/matches/${match.matchId}`} className="text-xs hover:underline text-white">1st Innings Stats</Link>
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
