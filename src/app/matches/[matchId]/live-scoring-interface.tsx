@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Undo, Wand2, Loader2, Target, Bot, User, ShieldHalf, Play, MapPin, Calendar, Sun, Medal, ChevronRight, CornerUpLeft, CornerUpRight, Clock, ChevronDown, CheckCircle, HelpCircle, XCircle, Heart, Thermometer, Cloudy, Lock, Trophy, CalendarDays, Repeat, Swords, Sparkles, TrendingUp } from 'lucide-react';
 import type { RosterMember, Match, LiveMatchUpdateOutput, RosterMemberWithStats, LiveScore, BowlingAngle, MatchForecast, LiveFallOfWicket, Partnership } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
 import { ConfettiBurst } from '@/components/confetti-burst';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DialogContent } from '@radix-ui/react-dialog';
@@ -291,7 +291,7 @@ function BowlerSelectionItem({ player, liveScore, onSelect }: { player: RosterMe
     // Correctly calculating overs for career view from decimal
     const careerOversInt = Math.floor(careerStats.oversBowled);
     const careerBalls = Math.round((careerStats.oversBowled - careerOversInt) * 10);
-    const careerOversDisplay = `${careerOversInt}.${careerBalls}`;
+    const careerOversDisplay = `${'careerOversInt'}.${careerBalls}`;
 
     const stats = statsView === 'match' ? matchStats : {
         ...careerStats,
@@ -369,6 +369,81 @@ function UndoDialog({ open, onOpenChange, onConfirm }: { open: boolean; onOpenCh
         </Dialog>
     );
 }
+
+const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: LiveScore }) => {
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+    
+    const stats = React.useMemo(() => {
+        const statsArray = [];
+        const isSecondInnings = liveScore.liveInnings === 2;
+        const totalOversSoFar = liveScore.overs + (liveScore.balls / 6);
+        
+        // 1. Current Run Rate
+        if (totalOversSoFar > 0) {
+            const crr = (liveScore.runs / totalOversSoFar).toFixed(2);
+            statsArray.push({ label: "Current RR", value: crr, icon: TrendingUp });
+        }
+        
+        // 2. Required Run Rate (only in 2nd innings)
+        if (isSecondInnings && match.firstInningsTotal != null) {
+            const oversRemaining = 20 - totalOversSoFar;
+            if (oversRemaining > 0) {
+                const runsNeeded = (match.firstInningsTotal + 1) - liveScore.runs;
+                if (runsNeeded > 0) {
+                    const rrr = (runsNeeded / oversRemaining).toFixed(2);
+                    statsArray.push({ label: "Required RR", value: rrr, icon: Target });
+                }
+            }
+        }
+        
+        // 3. Partnership
+        const pshipRuns = liveScore.extras.partnership || 0;
+        statsArray.push({ label: "Partnership", value: `${pshipRuns} runs`, icon: Users });
+        
+        // 4. Projected Score (only in 1st innings)
+        if (liveScore.liveInnings === 1 && totalOversSoFar > 0) {
+            const projectedScore = (liveScore.runs / totalOversSoFar * 20).toFixed(0);
+            statsArray.push({ label: "Projected", value: `~${projectedScore}`, icon: Sparkles });
+        }
+
+        return statsArray;
+
+    }, [liveScore, match.firstInningsTotal]);
+
+    React.useEffect(() => {
+        if (stats.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentIndex((prevIndex) => (prevIndex + 1) % stats.length);
+        }, 5000); // Change stat every 5 seconds
+        return () => clearInterval(interval);
+    }, [stats.length]);
+
+    if (stats.length === 0) {
+        return <p className="text-center font-semibold text-[#ffc33e] h-6">&nbsp;</p>;
+    }
+
+    const currentStat = stats[currentIndex];
+    const Icon = currentStat.icon;
+
+    return (
+        <div className="text-center font-semibold text-[#ffc33e] h-6 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentIndex}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex items-center gap-2"
+                >
+                    <Icon className="h-4 w-4" />
+                    <span className="uppercase text-xs">{currentStat.label}:</span>
+                    <span className="text-lg">{currentStat.value}</span>
+                </motion.div>
+            </AnimatePresence>
+        </div>
+    );
+};
 
 export function LiveScoringInterface({
   teamARoster,
@@ -635,11 +710,11 @@ export function LiveScoringInterface({
   const getBallDisplay = (ball: string): string => {
     if (ball.toLowerCase().includes('wd')) {
       const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
-      return runs > 0 ? `${runs}WD` : 'WD';
+      return runs > 0 ? `${'runs'}WD` : 'WD';
     }
      if (ball.toLowerCase().startsWith('nb')) {
       const runs = parseInt(ball.replace(/[^0-9]/g, '')) || 0;
-      return runs > 0 ? `${runs}NB` : 'NB';
+      return runs > 0 ? `${'runs'}NB` : 'NB';
     }
     return ball.toUpperCase();
   }
@@ -659,7 +734,6 @@ export function LiveScoringInterface({
     <ConfettiBurst isActive={!!milestone} />
     <div className="space-y-4">
         <div className="bg-gray-900 text-white rounded-lg p-4 space-y-4 relative overflow-hidden">
-            <p className="text-center text-lg font-bold uppercase tracking-wider text-gray-300">{match.teamAName} vs {match.teamBName}</p>
             {boundary && <BoundaryAnimation runs={boundary} />}
             {wicketEvent && <WicketAnimation />}
             {isHatTrick && <HatTrickAnimation />}
@@ -667,9 +741,9 @@ export function LiveScoringInterface({
             {isMaidenOver && <MaidenOverAnimation />}
             
             <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
-                <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamBColor || '#4848ff', backgroundColor: match.teamBColor ? `${match.teamBColor}40` : '#4848ff40' }}>
-                    <AvatarImage src={match.teamALogoUrl} alt={match.teamAName} />
-                    <AvatarFallback>{match.teamAAbbreviation}</AvatarFallback>
+                <Avatar className="h-16 w-16 border-2" style={{ borderColor: bowlingTeam.teamColor || '#ffc33e', backgroundColor: bowlingTeam.teamColor ? `${bowlingTeam.teamColor}40` : '#ffc33e40' }}>
+                    <AvatarImage src={bowlingTeam.logoUrl} alt={bowlingTeam.name} />
+                    <AvatarFallback>{bowlingTeam.abbrev}</AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
@@ -687,9 +761,9 @@ export function LiveScoringInterface({
                     </div>
                 </div>
 
-                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: match.teamAColor || '#ffc33e', backgroundColor: match.teamAColor ? `${match.teamAColor}40` : '#ffc33e40' }}>
-                    <AvatarImage src={match.teamBLogoUrl} alt={match.teamBName} />
-                    <AvatarFallback>{match.teamBAbbreviation}</AvatarFallback>
+                 <Avatar className="h-16 w-16 border-2" style={{ borderColor: battingTeam.teamColor || '#4848ff', backgroundColor: battingTeam.teamColor ? `${battingTeam.teamColor}40` : '#4848ff40' }}>
+                    <AvatarImage src={battingTeam.logoUrl} alt={battingTeam.name} />
+                    <AvatarFallback>{battingTeam.abbrev}</AvatarFallback>
                 </Avatar>
             </div>
             
@@ -726,10 +800,8 @@ export function LiveScoringInterface({
                     ))}
                 </div>
             </div>
-
-            <p className="text-center font-semibold text-[#ffc33e]">
-                Required Rate: {!isFirstInnings && match.firstInningsTotal != null && liveScore.overs < 20 ? ((match.firstInningsTotal + 1 - liveScore.runs) / (20 - (liveScore.overs + (liveScore.balls / 6)))).toFixed(2) : '-'}
-            </p>
+            
+            <DynamicStatTicker match={match} liveScore={liveScore} />
 
             <div className="text-center text-xs text-gray-400 flex items-center justify-center flex-wrap gap-x-4 gap-y-1">
                 <span className="flex items-center gap-1.5"><Trophy className="h-3 w-3" />{match.competitionName}</span> |
