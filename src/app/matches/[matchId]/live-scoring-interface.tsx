@@ -958,7 +958,6 @@ export function LiveScoringInterface({
                                       <div className="flex items-center justify-center gap-2">
                                          <Button variant={liveScore.bowlingAngle === 'Over the Wicket' ? 'secondary' : 'outline'} onClick={() => handlePlayerSelection('bowlingAngle', 'Over the Wicket')} className="flex-1"><CornerUpRight className="mr-2"/>Over the Wicket</Button>
                                          <Button variant={liveScore.bowlingAngle === 'Round the Wicket' ? 'secondary' : 'outline'} onClick={() => handlePlayerSelection('bowlingAngle', 'Round the Wicket')} className="flex-1"><CornerUpLeft className="mr-2"/>Round the Wicket</Button>
-                                         <Button onClick={handleChangeBowler} variant="outline" className="flex-1" disabled={isPending || isSimulating}><Repeat className="mr-2"/>Change Bowler</Button>
                                       </div>
                                       <div className="flex justify-center pt-4">
                                           <WagonWheel
@@ -1009,6 +1008,7 @@ export function LiveScoringInterface({
                                       <Bot className={cn('mr-2 h-4 w-4', isSimulating && 'animate-pulse')} />
                                       Simulate Ball
                                   </Button>
+                                   <Button onClick={handleChangeBowler} variant="secondary" className="w-full" disabled={isPending || isSimulating}><Repeat className="mr-2"/>Change Bowler (Mid-over)</Button>
                                   <Button onClick={() => setIsUndoDialogOpen(true)} variant="secondary" className="w-full" disabled={!canUndo || isPending || isSimulating}>
                                       <Undo className="mr-2 h-4 w-4" />
                                       Undo Last Ball
