@@ -955,9 +955,9 @@ export function LiveScoringInterface({
                               </CardHeader>
                               <CardContent>
                                   <div className="space-y-4">
-                                      <div className="flex items-center justify-center gap-2">
-                                         <Button variant={liveScore.bowlingAngle === 'Over the Wicket' ? 'secondary' : 'outline'} onClick={() => handlePlayerSelection('bowlingAngle', 'Over the Wicket')} className="flex-1"><CornerUpRight className="mr-2"/>Over the Wicket</Button>
-                                         <Button variant={liveScore.bowlingAngle === 'Round the Wicket' ? 'secondary' : 'outline'} onClick={() => handlePlayerSelection('bowlingAngle', 'Round the Wicket')} className="flex-1"><CornerUpLeft className="mr-2"/>Round the Wicket</Button>
+                                      <div className="flex items-center justify-center p-1 rounded-lg bg-slate-700/50 max-w-sm mx-auto">
+                                         <Button variant={liveScore.bowlingAngle === 'Over the Wicket' ? 'secondary' : 'ghost'} onClick={() => handlePlayerSelection('bowlingAngle', 'Over the Wicket')} className="flex-1 text-xs h-8"><CornerUpRight className="mr-2"/>Over the Wicket</Button>
+                                         <Button variant={liveScore.bowlingAngle === 'Round the Wicket' ? 'secondary' : 'ghost'} onClick={() => handlePlayerSelection('bowlingAngle', 'Round the Wicket')} className="flex-1 text-xs h-8"><CornerUpLeft className="mr-2"/>Round the Wicket</Button>
                                       </div>
                                       <div className="flex justify-center pt-4">
                                           <WagonWheel
