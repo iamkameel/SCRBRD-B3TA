@@ -427,7 +427,7 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
     const Icon = currentStat.icon;
 
     return (
-        <div className="text-center font-semibold text-white h-auto py-2 flex items-center justify-center text-base">
+        <div className="text-center text-white h-auto py-2 flex items-center justify-center text-base">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -438,8 +438,8 @@ const DynamicStatTicker = ({ match, liveScore }: { match: Match, liveScore: Live
                     className="flex items-center gap-2"
                 >
                     <Icon className="h-4 w-4 text-[#ffc33e]" />
-                    <span className="uppercase text-[#ffc33e]">{currentStat.label}:</span>
-                    <span>{currentStat.value}</span>
+                    <span className="uppercase text-[#ffc33e] font-semibold">{currentStat.label}:</span>
+                    <span className="font-bold">{currentStat.value}</span>
                 </motion.div>
             </AnimatePresence>
         </div>
@@ -491,7 +491,7 @@ const FirstInningsTicker = ({ match, firstInnings }: { match: Match; firstInning
     const currentStat = stats[currentIndex];
 
     return (
-        <div className="flex items-center justify-end text-right h-full text-base">
+        <div className="flex items-center justify-end text-right h-full text-sm">
              <AnimatePresence mode="wait">
                 <motion.div
                     key={currentIndex}
@@ -836,13 +836,20 @@ export function LiveScoringInterface({
                 </Avatar>
             </div>
             
-            <div className="text-base font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
-                <span className="text-base">1st Innings: {match.firstInningsTotal || 0}</span>
-                {!isFirstInnings ? (
-                    <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal ? match.firstInningsTotal + 1 : 0}</span>
-                ) : (
-                    <FirstInningsTicker match={match} firstInnings={match.firstInningsLiveScore} />
-                )}
+            <div className="text-base grid grid-cols-3 items-center px-4 max-w-lg mx-auto text-white">
+                <div className="text-left text-sm">
+                    <span>1st Innings: {match.firstInningsTotal || 0}</span>
+                </div>
+                <div className="text-center">
+                    {!isFirstInnings && (
+                        <span className="text-lg font-bold text-green-400">TARGET {match.firstInningsTotal ? match.firstInningsTotal + 1 : 0}</span>
+                    )}
+                </div>
+                <div className="text-right">
+                    {isFirstInnings && (
+                        <FirstInningsTicker match={match} firstInnings={match.firstInningsLiveScore} />
+                    )}
+                </div>
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
@@ -862,7 +869,7 @@ export function LiveScoringInterface({
                     <span className="font-semibold text-base">{bowlerStats.runsConceded}/{bowlerStats.wickets}</span>
                     <span className="text-xs text-muted-foreground">({bowlerStats.overs}.{bowlerStats.balls || 0})</span>
                 </div>
-                <div className="flex items-center justify-center gap-1.5 min-h-[24px]">
+                 <div className="flex items-center justify-center gap-1.5 min-h-[24px]">
                     {liveScore.currentOver.map((ball, i) => (
                         <div key={i} style={{ backgroundColor: getBallColor(ball) }} className="h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs text-black border border-white/50">
                             {getBallDisplay(ball)}
