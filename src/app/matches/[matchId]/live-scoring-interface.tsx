@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -674,7 +672,7 @@ export function LiveScoringInterface({
                 
                 <div className="flex-1 flex items-center h-16 bg-gray-800 rounded-full shadow-lg">
                     <div className="flex items-center justify-center h-full rounded-full bg-[#4848ff] min-w-[30%] px-4">
-                         <p className="font-bold text-lg whitespace-nowrap">
+                         <p className="font-bold text-lg whitespace-nowrap text-white">
                             <span className="text-yellow-400">{battingTeam.abbrev}</span> vs {bowlingTeam.abbrev}
                         </p>
                     </div>
@@ -693,12 +691,12 @@ export function LiveScoringInterface({
                 </Avatar>
             </div>
             
-            <div className="text-sm font-semibold flex justify-between items-center px-4 max-w-lg mx-auto">
+            <div className="text-sm font-semibold flex justify-between items-center px-4 max-w-lg mx-auto text-white">
                 <span>1st Innings: {match.firstInningsTotal || 0}</span>
                 {!isFirstInnings && match.firstInningsTotal != null && (
                     <span className="text-[#3ecc78] font-bold text-lg">TARGET {match.firstInningsTotal + 1}</span>
                 )}
-                 <Link href={`/matches/${match.matchId}`} className="text-xs hover:underline text-white">1st Innings Stats</Link>
+                 <Link href={`/matches/${match.matchId}`} className="text-xs hover:underline">1st Innings Stats</Link>
             </div>
 
             <div className="relative flex items-center h-10 bg-gray-800 rounded-full p-1 mx-auto max-w-lg shadow-lg">
