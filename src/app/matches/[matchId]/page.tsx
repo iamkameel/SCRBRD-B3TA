@@ -48,11 +48,10 @@ export default async function MatchDetailsPage({ params }: { params: { matchId: 
     return { ...team, abbreviation: school?.abbreviation };
   };
 
-  // Fetch lineups and ensure they are never null
   const fetchLineup = async (teamId: string | undefined): Promise<Lineup> => {
-      if (!teamId) return { playingXI: [], twelfthMan: null };
-      const lineup = await getMatchLineup(matchId, teamId);
-      return lineup || { playingXI: [], twelfthMan: null };
+    if (!teamId) return { playingXI: [], twelfthMan: null };
+    // The getMatchLineup function is now guaranteed to return a Lineup object.
+    return getMatchLineup(matchId, teamId);
   };
 
   const [

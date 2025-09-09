@@ -1,4 +1,5 @@
 
+
       
 'use server';
 
@@ -437,9 +438,9 @@ export async function acceptAssignmentAction(matchId: string, assignmentId: stri
     return { success: true };
 }
 
-export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup> => {
+export const getMatchLineup = cache(async (matchId: string, teamId: string): Promise<Lineup | null> => {
   const match = await getMatch(matchId);
-  if (!match || !teamId) return { playingXI: [], twelfthMan: null };
+  if (!match || !teamId) return null;
   
   try {
     const lineupDocRef = doc(db, 'matches', matchId, 'lineups', teamId);
@@ -451,10 +452,10 @@ export const getMatchLineup = cache(async (matchId: string, teamId: string): Pro
             twelfthMan: data.twelfthMan || null,
         }
     }
-    return { playingXI: [], twelfthMan: null };
+    return null;
   } catch (error) {
     console.error(`Error fetching lineup for match ${matchId}, team ${teamId}:`, error);
-    return { playingXI: [], twelfthMan: null };
+    return null;
   }
 });
 
