@@ -19,16 +19,18 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
     const handleClick = (e: React.MouseEvent<SVGSVGElement>) => {
         if (disabled || !svgRef.current) return;
         const rect = svgRef.current.getBoundingClientRect();
+        
+        const svgSize = rect.width;
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
 
-        const centerX = size / 2;
-        const centerY = size * 0.9;
+        const centerX = svgSize / 2;
+        const centerY = svgSize / 2;
         
         const deltaX = clickX - centerX;
         const deltaY = clickY - centerY;
         
-        const distanceRatio = Math.sqrt(deltaX*deltaX + deltaY*deltaY) / (size * 0.45);
+        const distanceRatio = Math.sqrt(deltaX*deltaX + deltaY*deltaY) / (svgSize / 2);
         if (distanceRatio > 1) return;
 
         let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
@@ -46,26 +48,17 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
         return "hsl(var(--muted-foreground))"; // Dot ball
     };
     
-    const runCounts = React.useMemo(() => {
-        const counts = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 6: 0 };
-        shots.forEach(shot => {
-            if (shot.runs in counts) {
-                counts[shot.runs as keyof typeof counts]++;
-            }
-        });
-        return counts;
-    }, [shots]);
+    const center = size / 2;
+    const radius = size / 2;
 
-     const legendItems = [
-        { label: '6', runs: 6, color: '#ef4444' },
-        { label: '4', runs: 4, color: '#3b82f6' },
-        { label: '2', runs: 2, color: '#a3e635' },
-        { label: '1', runs: 1, color: '#ec4899' },
-    ];
-
-
-    const center = { x: size / 2, y: size * 0.9 };
-    const ellipse = { rx: size / 2, ry: size / 4 };
+    const sectorLines = Array.from({ length: 4 }).map((_, i) => {
+        const angle = i * 45;
+        const startX = center + (radius * 0.4) * Math.cos(angle * Math.PI / 180);
+        const startY = center + (radius * 0.4) * Math.sin(angle * Math.PI / 180);
+        const endX = center + radius * Math.cos(angle * Math.PI / 180);
+        const endY = center + radius * Math.sin(angle * Math.PI / 180);
+        return { x1: startX, y1: startY, x2: endX, y2: endY };
+    });
 
     return (
        <div className="flex flex-col items-center">
@@ -73,31 +66,59 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
             ref={svgRef}
             width="100%"
             height="auto"
-            viewBox={`0 0 ${size} ${size * 0.8}`}
+            viewBox={`0 0 ${size} ${size}`}
             onClick={handleClick}
-            className={cn("bg-transparent", disabled ? "cursor-not-allowed opacity-70" : "cursor-crosshair")}
+            className={cn("bg-transparent rounded-full", disabled ? "cursor-not-allowed opacity-70" : "cursor-crosshair")}
         >
-            {/* Background and field markings */}
-            <ellipse cx={center.x} cy={center.y} rx={ellipse.rx} ry={ellipse.ry} fill="#006400" />
-            <ellipse cx={center.x} cy={center.y} rx={ellipse.rx * 0.95} ry={ellipse.ry * 0.95} fill="#008000" />
-            <ellipse cx={center.x} cy={center.y} rx={ellipse.rx * 0.6} ry={ellipse.ry * 0.6} stroke="white" strokeWidth="1" strokeDasharray="3 3" fill="none" strokeOpacity="0.5" />
+            <defs>
+                <pattern id="checkered" patternUnits="userSpaceOnUse" width="10" height="10">
+                    <rect x="0" y="0" width="5" height="5" fill="#15803d" />
+                    <rect x="5" y="0" width="5" height="5" fill="#16a34a" />
+                    <rect x="0" y="5" width="5" height="5" fill="#16a34a" />
+                    <rect x="5" y="5" width="5" height="5" fill="#15803d" />
+                </pattern>
+            </defs>
+
+            {/* Background */}
+            <circle cx={center} cy={center} r={radius} fill="#22c55e" />
+            <circle cx={center} cy={center} r={radius * 0.4} fill="url(#checkered)" />
+            
+            {/* Sector lines */}
+            {sectorLines.map((line, i) => (
+                <line key={i} {...line} stroke="white" strokeWidth="1" strokeOpacity="0.5" />
+            ))}
             
             {/* Pitch */}
-            <path d={`M ${center.x - 8} ${center.y - 70} L ${center.x - 8} ${center.y + 15} L ${center.x + 8} ${center.y + 15} L ${center.x + 8} ${center.y - 70} Z`} fill="#BCA48C" />
-            <line x1={center.x - 20} y1={center.y - 65} x2={center.x + 20} y2={center.y - 65} stroke="white" strokeWidth="1.5" />
-            <line x1={center.x - 4} y1={center.y - 68} x2={center.x + 4} y2={center.y - 68} stroke="white" strokeWidth="2.5" />
+            <rect x={center - 7} y={center - 50} width="14" height="100" fill="#BCA48C" />
             
+            {/* Creases */}
+            <line x1={center - 20} y1={center - 40} x2={center + 20} y2={center - 40} stroke="white" strokeWidth="1.5" />
+            <line x1={center - 20} y1={center + 40} x2={center + 20} y2={center + 40} stroke="white" strokeWidth="1.5" />
+            
+            {/* Stumps */}
+            <rect x={center - 4} y={center - 44} width="8" height="6" fill="white" />
+            <rect x={center - 4} y={center + 38} width="8" height="6" fill="white" />
+
+            {/* Labels */}
+            <text x={center - 30} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold uppercase">OFF</text>
+            <text x={center + 23} y={center + 5} fontSize="8" fill="white" className="font-sans font-bold uppercase">LEG</text>
+
             {/* Shots */}
             {shots.map((shot, index) => {
                 const angleRad = (shot.angle - 90) * (Math.PI / 180);
-                const endX = center.x + (ellipse.rx * shot.distance) * Math.cos(angleRad);
-                const endY = center.y + (ellipse.ry * shot.distance) * Math.sin(angleRad);
+                const startRadius = 6; 
+                const endRadius = radius * shot.distance;
+
+                const startX = center + startRadius * Math.cos(angleRad);
+                const startY = center + startRadius * Math.sin(angleRad);
+                const endX = center + endRadius * Math.cos(angleRad);
+                const endY = center + endRadius * Math.sin(angleRad);
 
                 return (
                     <line
                         key={index}
-                        x1={center.x}
-                        y1={center.y - 66}
+                        x1={startX}
+                        y1={startY}
                         x2={endX}
                         y2={endY}
                         stroke={getShotColor(shot.runs)}
@@ -107,14 +128,6 @@ export function WagonWheel({ shots = [], size = 300, disabled = false, onShotSel
                 );
             })}
         </svg>
-        <div className="flex items-center justify-center gap-x-6 gap-y-2 mt-4 flex-wrap">
-            {legendItems.map(item => (
-                <div key={item.label} className="flex items-center gap-1.5 text-xs text-white">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span>{item.label} x {runCounts[item.runs as keyof typeof runCounts]} = <strong>{item.runs * runCounts[item.runs as keyof typeof runCounts]}</strong></span>
-                </div>
-            ))}
-        </div>
        </div>
     );
 }

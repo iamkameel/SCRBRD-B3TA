@@ -946,11 +946,6 @@ export function LiveScoringInterface({
                                           <CardTitle className="text-white">Scoring Controls</CardTitle>
                                           <CardDescription className="text-slate-400">Select bowling angle, then tap the field where the ball was hit.</CardDescription>
                                       </div>
-                                      <div className="flex items-center p-1 rounded-md bg-slate-700">
-                                          <Button onClick={() => setWagonWheelView('team')} size="sm" variant={wagonWheelView === 'team' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Team</Button>
-                                          <Button onClick={() => setWagonWheelView('on-strike')} size="sm" variant={wagonWheelView === 'on-strike' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">On-strike</Button>
-                                          <Button onClick={() => setWagonWheelView('non-striker')} size="sm" variant={wagonWheelView === 'non-striker' ? 'secondary' : 'ghost'} className="h-7 px-2 text-xs">Non-striker</Button>
-                                      </div>
                                   </div>
                               </CardHeader>
                               <CardContent>
