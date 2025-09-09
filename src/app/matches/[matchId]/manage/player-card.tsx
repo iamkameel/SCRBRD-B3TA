@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -22,13 +23,21 @@ export const getPrimaryRole = (player: RosterMemberWithStats) => {
         return { label: 'Wicket-Keeper', icon: ShieldHalf, key: 'WK' };
     }
 
-    const battingScore = (stats.battingAverage > 20 ? 1 : 0) + (stats.totalRuns > 300 ? 1 : 0) + (stats.fifties > 1 ? 1 : 0);
-    const bowlingScore = (stats.wicketsTaken > 10 ? 1 : 0) + (stats.economyRate > 0 && stats.economyRate < 8.5 ? 1 : 0);
+    // A simple scoring system to determine primary role based on performance stats
+    const battingScore = (stats.battingAverage > 25 ? 1.5 : (stats.battingAverage > 15 ? 1 : 0)) 
+                       + (stats.totalRuns > 500 ? 1 : 0) 
+                       + (stats.fifties > 2 ? 1 : 0)
+                       + (stats.strikeRate > 130 ? 0.5 : 0);
 
-    if (battingScore >= 2 && bowlingScore >= 2) return { label: 'All-Rounder', icon: Swords, key: 'AR' };
-    if (battingScore >= 2) return { label: 'Batsman', icon: User, key: 'BAT' };
-    if (bowlingScore >= 2) return { label: 'Bowler', icon: ShieldHalf, key: 'BOWL' };
+    const bowlingScore = (stats.wicketsTaken > 15 ? 1.5 : (stats.wicketsTaken > 5 ? 1 : 0)) 
+                       + (stats.economyRate > 0 && stats.economyRate < 8 ? 1 : 0)
+                       + (stats.bowlingAverage > 0 && stats.bowlingAverage < 30 ? 1 : 0);
+
+    if (battingScore > 1.5 && bowlingScore > 1.5) return { label: 'All-Rounder', icon: Swords, key: 'AR' };
+    if (bowlingScore > battingScore && bowlingScore > 1) return { label: 'Bowler', icon: ShieldHalf, key: 'BOWL' };
+    if (battingScore > bowlingScore && battingScore > 1) return { label: 'Batsman', icon: User, key: 'BAT' };
     
+    // Default fallback
     return { label: 'Player', icon: User, key: 'BAT' };
 };
 
@@ -52,6 +61,7 @@ interface PlayerCardProps {
     isSelected: boolean;
     onSelect: (checked: boolean) => void;
     dragHandleProps?: any;
+    style?: React.CSSProperties;
 }
 
 const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note?: string }) => {
@@ -79,12 +89,12 @@ const AvailabilityBadge = ({ status, note }: { status?: AvailabilityStatus; note
 };
 
 export const PlayerCard = React.forwardRef<HTMLDivElement, PlayerCardProps>(
-    ({ player, index, isDragging, availability, isSelected, onSelect, dragHandleProps }, ref) => {
+    ({ player, index, isDragging, availability, isSelected, onSelect, dragHandleProps, style }, ref) => {
     const { label: roleLabel, icon: RoleIcon } = getPrimaryRole(player);
     const specialities = getPlayerSpecialities(player);
     
     return (
-        <div ref={ref} className={cn(
+        <div ref={ref} style={style} className={cn(
           "bg-card p-3 border rounded-lg shadow-sm w-full transition-shadow",
           isDragging ? "opacity-75 shadow-2xl z-50" : "hover:shadow-md",
           isSelected && "bg-primary/10 border-primary"
