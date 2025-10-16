@@ -3,6 +3,7 @@
 'use client';
 
 import * as React from "react";
+import dynamic from 'next/dynamic';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,7 +52,11 @@ import { ManhattanChart, WormChart, WagonWheelCard, RunMapCard } from "./match-c
 import { PlayerAvailabilityCard } from './player-availability-card';
 import { AvailabilityStatusCard } from "./availability-status-card";
 import { LineupManager } from "./manage/lineup-manager";
-import { MatchRecapCard } from './match-recap-card';
+
+const MatchRecapCard = dynamic(() => import('./match-recap-card').then(mod => mod.MatchRecapCard), {
+  ssr: false,
+  loading: () => <div className="h-64 animate-pulse bg-muted rounded-lg" />,
+});
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
