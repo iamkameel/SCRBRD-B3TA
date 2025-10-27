@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -46,10 +47,14 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, data.email, data.password);
         toast({ title: "Login Successful", description: "Welcome back!" });
         router.push('/dashboard');
-      } catch (error) {
+      } catch (error: any) {
+        let description = "Invalid email or password. Please try again.";
+        if (error.code === 'auth/user-not-found') {
+            description = "No user found with this email. Please sign up first.";
+        }
         toast({
           title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
+          description,
           variant: "destructive",
         });
       }

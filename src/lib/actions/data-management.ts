@@ -132,8 +132,8 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean; message: string }> {
-    const userId = await getUserId();
-    if (!userId) {
+    const actorId = await getUserId();
+    if (!actorId) {
         return { success: false, message: "Admin user not found. Please ensure an admin account exists or sign up before migrating data." };
     }
 
@@ -153,14 +153,16 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
         };
 
         const existingAdminsByEmail = new Map<string, string>();
-        const adminQuery = query(collection(db, 'people'), where('roles', 'array-contains', 'Admin'));
+        const godTierEmails = ['kameel@maverickdesign.co.za', 'admin@scrbrd.app'];
+        const adminQuery = query(collection(db, 'people'), where('email', 'in', godTierEmails));
         const adminSnapshot = await getDocs(adminQuery);
         adminSnapshot.forEach(doc => {
             existingAdminsByEmail.set(doc.data().email, doc.id);
         });
 
+        // Set the mapping for existing admins (especially the god-tier one)
         sampleData.people.forEach(person => {
-            if (person.roles.includes('Admin') && existingAdminsByEmail.has(person.email)) {
+            if (existingAdminsByEmail.has(person.email)) {
                 idMap.set(person.personId, existingAdminsByEmail.get(person.email)!);
             }
         });
@@ -183,13 +185,15 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 
                 const tempId = (item as any)[idKey as keyof typeof item];
 
-                if (collName === 'people' && (item as Person).roles.includes('Admin') && existingAdminsByEmail.has((item as Person).email)) {
+                // Skip adding admin users if they already exist from a previous step
+                if (collName === 'people' && existingAdminsByEmail.has((item as Person).email)) {
                     continue; 
                 }
                 
                 const { [idKey]: _, ...itemData } = item as any;
                 
-                const dataToSave: { [key: string]: any } = { ...itemData, userId };
+                // Use a consistent userId (the actor's ID) for created items.
+                const dataToSave: { [key: string]: any } = { ...itemData, userId: actorId };
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
                 if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
                 if (dataToSave.date) dataToSave.date = Timestamp.fromDate(new Date(dataToSave.date));
@@ -208,7 +212,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
         
         for (const item of sampleData.fields) {
             const { fieldId: tempId, ...itemData } = item;
-            const newFieldData: { [key: string]: any } = { ...itemData, userId };
+            const newFieldData: { [key: string]: any } = { ...itemData, userId: actorId };
             if (item.schoolId) {
                 const newSchoolId = idMap.get(item.schoolId);
                 if (newSchoolId) {
@@ -238,7 +242,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 
                 if (newParentId && newChildId) {
                     const linkDocRef = doc(collection(db, 'familyLinks'));
-                    batch.set(linkDocRef, { parentId: newParentId, childId: newChildId, userId });
+                    batch.set(linkDocRef, { parentId: newParentId, childId: newChildId, userId: actorId });
                     if (tempId) idMap.set(tempId, linkDocRef.id);
                     itemCount++;
                     await commitBatchIfNeeded();
@@ -257,7 +261,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 schoolName: sampleData.schools.find(s => s.schoolId === teamData.schoolId)?.name,
                 divisionName: sampleData.divisions.find(d => d.divisionId === teamData.divisionId)?.name,
                 seasonName: sampleData.seasons.find(s => s.seasonId === teamData.seasonId)?.name,
-                userId
+                userId: actorId
             };
 
             const teamDocRef = doc(collection(db, 'teams'));
@@ -294,7 +298,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 seasonName: sampleData.seasons.find(s => s.seasonId === compData.seasonId)?.name,
                 divisionName: sampleData.divisions.find(d => d.divisionId === compData.divisionId)?.name,
                 teamIds: compData.teamIds ? compData.teamIds.map(id => idMap.get(id)).filter(Boolean) : [],
-                userId
+                userId: actorId
             };
 
             if (winnerTeamId && winnerTeamName) {
@@ -335,7 +339,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 teamBName: matchData.teamBId ? sampleData.teams.find(t => t.teamId === matchData.teamBId)?.name : 'TBD',
                 fieldName: sampleData.fields.find(f => f.fieldId === matchData.fieldId)?.name,
                 dateTime: Timestamp.fromDate(new Date(matchData.dateTime)),
-                userId,
+                userId: actorId,
                 playerOfTheMatch: scorecardData ? scorecardData.playerOfTheMatch : null,
                 report: '',
                 preview: '',
@@ -366,13 +370,15 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             }
             
             if (lineupData) {
-                if (lineupData.teamA) {
-                    const lineupARef = doc(collection(db, matchDocRef.path, 'lineups'), idMap.get(lineupData.teamA.teamId));
+                const teamAId = idMap.get(lineupData.teamA.teamId);
+                const teamBId = idMap.get(lineupData.teamB.teamId);
+                if (lineupData.teamA && teamAId) {
+                    const lineupARef = doc(collection(db, matchDocRef.path, 'lineups'), teamAId);
                     batch.set(lineupARef, { playerIds: lineupData.teamA.playerIds.map(id => idMap.get(id)) });
                     itemCount++; await commitBatchIfNeeded();
                 }
-                if (lineupData.teamB) {
-                    const lineupBRef = doc(collection(db, matchDocRef.path, 'lineups'), idMap.get(lineupData.teamB.teamId));
+                if (lineupData.teamB && teamBId) {
+                    const lineupBRef = doc(collection(db, matchDocRef.path, 'lineups'), teamBId);
                     batch.set(lineupBRef, { playerIds: lineupData.teamB.playerIds.map(id => idMap.get(id)) });
                     itemCount++; await commitBatchIfNeeded();
                 }

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -6,6 +7,7 @@ import { db, auth } from '@/lib/firebase';
 import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { revalidatePath } from 'next/cache';
+import { getPersonByEmail } from './players';
 
 // Schemas for each role
 const baseSignupSchema = z.object({
@@ -53,12 +55,15 @@ export const signupActionSchema = z.discriminatedUnion("role", [
 export type SignupActionInput = z.infer<typeof signupActionSchema>;
 
 export async function signupUserAction(data: SignupActionInput): Promise<{ success: boolean; status: string }> {
-    // 1. Create user in Firebase Auth
+    // 1. Check if user data already exists in Firestore (for pre-seeded admins)
+    const existingPerson = await getPersonByEmail(data.email);
+
+    // 2. Create user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
     const user = userCredential.user;
     
-    // 2. Prepare profile data based on role
-    const profileData: any = {
+    // 3. Prepare profile data based on role
+    const profileData: any = existingPerson ? { ...existingPerson } : {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
@@ -67,14 +72,15 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
         status: (data.role === 'Player' || data.role === 'Spectator') ? 'active' : 'pending_review',
         notificationPreferences: { email: true, push: false },
         createdAt: Timestamp.now(),
-        userId: user.uid, // Add the Firebase Auth UID to the profile
     };
+    
+    // Always update/set the userId to the new Auth UID
+    profileData.userId = user.uid;
 
     if ((data.role === 'Player' || data.role === 'Coach') && data.schoolId) {
         profileData.assignedSchools = [data.schoolId];
     }
     
-    // Store details that may be needed for an admin to review the request
     if (data.role === 'School Admin' && data.schoolName) {
         profileData.requestedSchoolName = data.schoolName;
     }
@@ -85,7 +91,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
         profileData.requestedPlayerLink = data.playerId;
     }
 
-    // 3. Create profile in Firestore
+    // 4. Create/overwrite profile in Firestore using the Auth UID as the document ID
     await setDoc(doc(db, 'people', user.uid), profileData);
 
     revalidatePath('/people');
