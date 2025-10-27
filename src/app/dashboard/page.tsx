@@ -62,9 +62,10 @@ export default function DashboardPage() {
     case 'Physiotherapist':
       return <MedicalDashboard />;
     case 'Spectator':
+    case 'School Admin':
       return <SpectatorDashboard />;
     default:
-      // A safe default for any other roles, including School Admin for now
+      // A safe default for any other roles
       return <SpectatorDashboard />;
   }
 }

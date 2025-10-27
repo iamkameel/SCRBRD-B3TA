@@ -47,7 +47,6 @@ function RoleSwitcher() {
     const { person } = useAuth();
     const { toast } = useToast();
     const [isPending, startTransition] = React.useTransition();
-    const router = useRouter();
 
     if (!person || !person.roles || person.roles.length <= 1) {
         return <p className="text-sm font-medium">{person?.activeRole}</p>;
@@ -63,7 +62,6 @@ function RoleSwitcher() {
             try {
                 await updateActiveRoleAction(person.personId, role);
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
-                // We refresh the entire page to ensure all data and navigation is re-evaluated for the new role.
                 window.location.reload();
             } catch (error) {
                 toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });
