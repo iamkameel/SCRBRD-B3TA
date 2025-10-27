@@ -1,10 +1,12 @@
+
+'use server';
+
+import { getAuth } from 'firebase/auth';
+import { app } from './firebase';
 import { cache } from 'react';
 import { headers } from 'next/headers';
-import { getAuth as getClientAuth } from 'firebase/auth';
-import { app } from './firebase';
 import { adminApp } from './firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
-
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
 /**
  * Gets the current user's ID on the **server**.
@@ -19,7 +21,7 @@ export const getUserId = cache(async (): Promise<string | null> => {
       // No session cookie found, user is not logged in.
       return null;
     }
-    const auth = getAuth(adminApp);
+    const auth = getAdminAuth(adminApp);
     const decodedIdToken = await auth.verifySessionCookie(sessionCookie, true);
     return decodedIdToken.uid;
   } catch (error) {
@@ -36,6 +38,6 @@ export const getUserId = cache(async (): Promise<string | null> => {
  * @returns The user's UID, or null if not logged in.
  */
 export function getClientUserId(): string | null {
-  const auth = getClientAuth(app);
+  const auth = getAuth(app);
   return auth.currentUser?.uid || null;
 }

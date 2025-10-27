@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -29,8 +30,6 @@ const getDivisionRank = (divisionName: string): number => {
 
 // This function now fetches data from Firestore for the current user
 export async function getDivisions(): Promise<Division[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const divisionsCollection = collection(db, 'divisions');
     const q = query(divisionsCollection);
@@ -51,8 +50,6 @@ export async function getDivisions(): Promise<Division[]> {
 }
 
 export const getDivision = cache(async (divisionId: string): Promise<Division | null> => {
-  const userId = await getUserId();
-  if (!userId) return null;
   try {
     const divisionDocRef = doc(db, 'divisions', divisionId);
     const divisionSnap = await getDoc(divisionDocRef);

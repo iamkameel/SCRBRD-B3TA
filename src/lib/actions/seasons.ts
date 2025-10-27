@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -18,8 +19,6 @@ const checkManagementPermission = async (userId: string) => {
 }
 
 export async function getSeasons(): Promise<Season[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const seasonsCollection = collection(db, 'seasons');
     // Seasons are global, so no user-based query needed for reads.
@@ -42,8 +41,6 @@ export async function getSeasons(): Promise<Season[]> {
 }
 
 export const getSeason = cache(async (seasonId: string): Promise<Season | null> => {
-  const userId = await getUserId();
-  if (!userId) return null;
   try {
     const seasonDocRef = doc(db, 'seasons', seasonId);
     const seasonSnap = await getDoc(seasonDocRef);

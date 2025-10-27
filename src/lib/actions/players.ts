@@ -150,10 +150,10 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
         }
 
         const data = personSnap.data();
-        const roles = Array.isArray(data.roles) ? data.roles : [];
+        const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
         const activeRole = data.activeRole && roles.includes(data.activeRole) 
             ? data.activeRole 
-            : (roles.length > 0 ? roles[0] : 'Spectator');
+            : roles[0];
 
         return {
             personId: personSnap.id,
