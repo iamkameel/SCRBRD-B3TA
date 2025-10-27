@@ -17,7 +17,7 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!loading && !user && !isShellDisabledRoute) {
-      router.push('/login');
+      router.push('/home');
     }
   }, [user, loading, isShellDisabledRoute, router, pathname]);
 
