@@ -29,7 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      // If the user logs out, we can stop loading immediately.
       if (!firebaseUser) {
         setPerson(null);
         setLoading(false);
@@ -40,43 +39,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
-    if (user) {
+    if (user?.uid) {
       setLoading(true);
       const personRef = doc(db, "people", user.uid);
       const unsubscribePerson = onSnapshot(personRef, (doc) => {
         if (doc.exists()) {
             const data = doc.data();
-            const roles = Array.isArray(data.roles) ? data.roles : [];
+            const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
             const activeRole = data.activeRole && roles.includes(data.activeRole) 
                 ? data.activeRole 
-                : (roles.length > 0 ? roles[0] : 'Spectator');
+                : roles[0];
 
             setPerson({ 
                 personId: doc.id, 
-                ...data, 
+                ...data,
+                roles,
                 activeRole, 
                 dateOfBirth: data.dateOfBirth?.toDate() 
             } as Person);
         } else {
+            console.warn(`No person document found for UID: ${user.uid}. A new user may need to complete signup or an admin may need to create their profile.`);
             setPerson(null);
         }
         setLoading(false);
       }, (error) => {
         console.error("Error fetching user profile:", error);
-        // Fallback to getPersonByEmail for local dev if direct UID lookup fails
-        if (user.email) {
-            getPerson(user.uid).then(p => {
-                setPerson(p);
-                setLoading(false);
-            });
-        } else {
-            setPerson(null);
-            setLoading(false);
-        }
+        setPerson(null);
+        setLoading(false);
       });
       
       return () => unsubscribePerson();
 
+    } else if (!user) {
+        setLoading(false);
     }
   }, [user]);
 
