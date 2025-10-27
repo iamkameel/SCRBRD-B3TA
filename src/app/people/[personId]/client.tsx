@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from "react";
-import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle, User, BarChart2, Heart, Shield, Dumbbell, Briefcase, Mail, Phone, Target, Building, Calendar } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Trash2, Wand2, Edit, PlusCircle, User, BarChart2, Heart, Shield, Dumbbell, Briefcase, Mail, Phone, Target, Building, Calendar, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance, Team, PlayerTrackerData } from "@/lib/data";
+import type { Person, PlayerStats, PlayerTeamAssignment, PlayerMatchPerformance, Team, PlayerTrackerData, PersonSkills } from "@/lib/data";
 import { removePersonLinkAction, generateAndSavePlayerPortraitAction } from '@/lib/actions/players';
 import { addPlayerToRosterAction, updateRosterAssignmentAction, removeRosterAssignmentAction } from '@/lib/actions/teams';
 import { AddLinkDialog } from "./add-link-dialog";
@@ -40,6 +40,8 @@ import { useAuth } from "@/lib/auth-context";
 import { AssignTeamDialog, EditTeamAssignmentDialog } from "./team-assignment-dialogs";
 import { PlayerSkillsCard } from "./player-skills-card";
 import { PlayerTrackerTab } from "./player-tracker-tab";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface PersonDetailsClientProps {
     person: Person;
@@ -67,6 +69,83 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
         </div>
     );
 };
+
+const calculateOverallScore = (skills?: PersonSkills): number => {
+    if (!skills) return 0;
+
+    const allScores: number[] = [];
+    
+    const extractScores = (obj: any) => {
+        for (const key in obj) {
+            if (typeof obj[key] === 'number') {
+                allScores.push(obj[key]);
+            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                extractScores(obj[key]);
+            }
+        }
+    };
+    
+    extractScores(skills);
+
+    if (allScores.length === 0) return 0;
+    
+    const sum = allScores.reduce((acc, score) => acc + score, 0);
+    const average = sum / allScores.length;
+
+    // Normalize from a 1-20 scale to a 1-100 scale and round it
+    return Math.round((average / 20) * 100);
+}
+
+const OverallRatingCard = ({ score }: { score: number }) => {
+    const getRatingColor = (s: number) => {
+        if (s >= 85) return 'text-green-400';
+        if (s >= 70) return 'text-lime-400';
+        if (s >= 55) return 'text-yellow-400';
+        if (s >= 40) return 'text-orange-400';
+        return 'text-red-400';
+    }
+    
+    return (
+        <Card>
+            <CardHeader className="items-center pb-2">
+                <CardTitle>Overall Rating</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="relative h-28 w-28 mx-auto">
+                    <svg className="w-full h-full" viewBox="0 0 100 100">
+                        {/* Background circle */}
+                        <circle
+                            className="text-muted/20"
+                            strokeWidth="10"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="45"
+                            cx="50"
+                            cy="50"
+                        />
+                        {/* Progress circle */}
+                        <circle
+                            className={cn("transition-all duration-1000 ease-out", getRatingColor(score))}
+                            strokeWidth="10"
+                            strokeDasharray={`${2 * Math.PI * 45 * (score / 100)}, ${2 * Math.PI * 45}`}
+                            strokeDashoffset="0"
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="45"
+                            cx="50"
+                            cy="50"
+                            style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+                        />
+                    </svg>
+                     <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={cn("text-3xl font-bold", getRatingColor(score))}>{score}</span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function PersonDetailsClient({ person, playerStats, initialGuardians, initialChildren, availablePeople, teamAssignments, matchHistory, allTeams, canManage, trackerData }: PersonDetailsClientProps) {
   const { person: currentUser } = useAuth();
@@ -133,6 +212,7 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
   const canGeneratePortrait = canManage || person.personId === currentUser?.personId;
   const isPlayer = person.roles.includes('Player');
   const primaryTeam = teamAssignments[0];
+  const overallScore = calculateOverallScore(person.skills);
 
   return (
     <>
@@ -186,6 +266,7 @@ export default function PersonDetailsClient({ person, playerStats, initialGuardi
                         <InfoItem icon={Dumbbell} label="Weight" value={person.physicalAttributes?.weightKg ? `${person.physicalAttributes.weightKg} kg` : undefined} />
                     </CardContent>
                 </Card>
+                 {isPlayer && <OverallRatingCard score={overallScore} />}
                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-center">
