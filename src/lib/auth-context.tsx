@@ -4,10 +4,9 @@
 import * as React from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { query, collection, where, limit, getDocs, doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
-import { getPerson } from './actions/players';
 
 interface AuthContextType {
   user: User | null;
@@ -70,7 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return () => unsubscribePerson();
 
-    } else if (!user) {
+    } else if (user === null) {
+        // User is explicitly logged out, stop loading
         setLoading(false);
     }
   }, [user]);

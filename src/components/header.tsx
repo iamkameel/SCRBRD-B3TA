@@ -246,7 +246,7 @@ export function Header() {
                                                                 <Link
                                                                     href={item.href}
                                                                     className={cn(
-                                                                        "flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground/80 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                                                                         isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
                                                                     )}
                                                                 >
