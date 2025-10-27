@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -16,7 +15,6 @@ import { generateMatchCommentary } from '@/ai/flows/generate-match-commentary-fl
 import { selectLineup } from '@/ai/flows/select-lineup-flow';
 import { generateOppositionAnalysis } from '@/ai/flows/generate-opposition-analysis-flow';
 import { generateLiveMatchUpdate } from '@/ai/flows/generate-live-match-update-flow';
-import { getUserId } from '@/lib/auth';
 import { queryStats } from '@/ai/flows/stats-query-flow';
 import { generatePlayerPerformanceForecast } from '@/ai/flows/generate-player-performance-forecast-flow';
 import { scoutPlayer } from '@/ai/flows/scout-player-flow';
@@ -28,6 +26,7 @@ import type { MatchForecast, Person } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 import { getTeam } from './teams';
+import { getUserId } from '@/lib/firebase-admin';
 
 
 export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {

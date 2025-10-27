@@ -7,8 +7,8 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import type { Transaction, Person } from '@/lib/data';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
 import { getPerson } from './players';
+import { getUserId } from '@/lib/firebase-admin';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);

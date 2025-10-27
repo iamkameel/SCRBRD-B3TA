@@ -4,9 +4,9 @@
 import { getMatches } from './matches';
 import { getTeams } from './teams';
 import type { Match, Team } from '@/lib/data';
-import { getUserId } from '@/lib/auth';
 import { collection, getDocs, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from '../firebase';
+import { getUserId } from '@/lib/firebase-admin';
 
 export interface FixtureConflict {
     type: 'Field' | 'Team';

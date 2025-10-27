@@ -1,11 +1,10 @@
 
 'use server';
 
-import { initializeApp, getApps, getApp, type App } from 'firebase-admin/app';
-import { credential } from 'firebase-admin';
+import { initializeApp, getApps, getApp, type App, credential } from 'firebase-admin/app';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { cache } from 'react';
 import { headers } from 'next/headers';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
 const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
@@ -13,7 +12,6 @@ if (!serviceAccountKey) {
   throw new Error('The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please add it to your .env file.');
 }
 
-// Parse the service account key from the environment variable
 let serviceAccount;
 try {
   serviceAccount = JSON.parse(serviceAccountKey);
@@ -22,13 +20,21 @@ try {
   throw new Error("The FIREBASE_SERVICE_ACCOUNT_KEY is not a valid JSON string.");
 }
 
-
 const adminApp: App = !getApps().length
   ? initializeApp({
       credential: credential.cert(serviceAccount),
     })
   : getApp();
 
+export const verifySessionCookie = async (sessionCookie: string) => {
+    const auth = getAdminAuth(adminApp);
+    try {
+        const decodedIdToken = await auth.verifySessionCookie(sessionCookie, true);
+        return decodedIdToken;
+    } catch (error) {
+        return null;
+    }
+};
 
 /**
  * Gets the current user's ID on the **server**.
@@ -37,19 +43,15 @@ const adminApp: App = !getApps().length
  * This function should ONLY be used in Server Components and Server Actions.
  */
 export const getUserId = cache(async (): Promise<string | null> => {
-  try {
-    const sessionCookie = headers().get('__session')?.value;
-    if (!sessionCookie) {
-      // No session cookie found, user is not logged in.
-      return null;
-    }
-    const auth = getAdminAuth(adminApp);
-    const decodedIdToken = await auth.verifySessionCookie(sessionCookie, true);
-    return decodedIdToken.uid;
-  } catch (error) {
-    // Could not verify session cookie. User is likely not logged in or cookie is invalid.
+  const sessionCookie = headers().get('__session')?.value;
+  if (!sessionCookie) {
     return null;
   }
+  const decodedIdToken = await verifySessionCookie(sessionCookie);
+  if (!decodedIdToken) {
+    return null;
+  }
+  return decodedIdToken.uid;
 });
 
 

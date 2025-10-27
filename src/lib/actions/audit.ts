@@ -1,13 +1,13 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp, getDocs, query } from 'firebase/firestore';
-import { getUserId } from '@/lib/firebase-admin';
 import { getPerson } from './players';
 import type { Person, AuditLog } from '../data';
 import { revalidatePath } from 'next/cache';
+import { getUserId } from '@/lib/firebase-admin';
+
 
 interface LogAuditEventParams {
     actorId?: string;
@@ -45,8 +45,6 @@ export async function logAuditEvent(params: LogAuditEventParams) {
         revalidatePath('/audit-log');
     } catch (error) {
         console.error("Failed to write audit log:", error);
-        // We typically don't want to throw an error here to prevent the user's action from failing
-        // just because logging failed.
     }
 }
 
@@ -56,8 +54,6 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
     
     const actor = await getPerson(userId);
     if (!actor || !actor.roles.includes('Admin')) {
-        // In a real scenario, you might want to return an empty array for non-admins
-        // or throw an error. For this application, we'll restrict access.
         return [];
     }
 
