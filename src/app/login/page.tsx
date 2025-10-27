@@ -52,6 +52,9 @@ export default function LoginPage() {
         if (error.code === 'auth/user-not-found') {
             description = "No user found with this email. Please sign up first.";
         }
+        if (error.code === 'auth/invalid-credential') {
+          description = "The email or password you entered is incorrect. Please try again.";
+        }
         toast({
           title: "Login Failed",
           description,

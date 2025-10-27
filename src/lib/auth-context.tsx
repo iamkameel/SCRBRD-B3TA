@@ -26,14 +26,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
+        // The key fix: Use the user's UID to listen for their profile document.
         const personRef = doc(db, "people", firebaseUser.uid);
-        const docSnap = await getDoc(personRef);
-        
-        if (docSnap.exists()) {
+        const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
+          if (docSnap.exists()) {
             const data = docSnap.data();
             const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
             const activeRole = data.activeRole && roles.includes(data.activeRole) 
@@ -47,15 +47,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 activeRole, 
                 dateOfBirth: data.dateOfBirth?.toDate() 
             } as Person);
-        } else {
-            console.warn(`No person document found for UID: ${firebaseUser.uid}. This user needs a profile in Firestore.`);
+          } else {
+            console.warn(`No person document found for UID: ${firebaseUser.uid}. This might happen before profile creation.`);
             setPerson(null);
-        }
+          }
+          setLoading(false);
+        });
+        return () => unsubscribeSnapshot();
       } else {
         setUser(null);
         setPerson(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribeAuth();

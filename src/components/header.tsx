@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -42,6 +43,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { ROLE_GROUPS } from '@/lib/roles';
 import { getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 import { CommandSearch } from './command-search';
+
 
 function RoleSwitcher() {
     const { person } = useAuth();
@@ -107,6 +109,7 @@ function RoleSwitcher() {
         </DropdownMenu>
     );
 }
+
 
 function NotificationBell() {
     const [count, setCount] = React.useState(0);
@@ -242,7 +245,7 @@ export function Header() {
                                             <AccordionContent className="pt-1 pb-0 pl-8">
                                                 <div className="flex flex-col gap-1">
                                                     {visibleItems.map((item) => {
-                                                        const isActive = pathname.startsWith(item.href.split('?')[0]);
+                                                        const isActive = pathname.startsWith(item.href);
                                                         return (
                                                             <SheetClose asChild key={item.label}>
                                                                 <Link

@@ -4,8 +4,8 @@
 
 import { z } from 'zod';
 import { db, auth } from '@/lib/firebase';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { revalidatePath } from 'next/cache';
 import { getPersonByEmail } from './players';
 
@@ -74,6 +74,9 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
         createdAt: Timestamp.now(),
     };
     
+    // This is the crucial step: The Firestore document ID MUST match the Firebase Auth UID.
+    const userDocRef = doc(db, 'people', user.uid);
+    
     // Always update/set the userId to the new Auth UID
     profileData.userId = user.uid;
 
@@ -92,10 +95,13 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     }
 
     // 4. Create/overwrite profile in Firestore using the Auth UID as the document ID
-    await setDoc(doc(db, 'people', user.uid), profileData);
+    await setDoc(userDocRef, profileData, { merge: true }); // Use merge to preserve any existing fields not in profileData
 
     revalidatePath('/people');
     revalidatePath('/user-management');
+    
+    // 5. Sign the user in to create a session
+    await signInWithEmailAndPassword(auth, data.email, data.password);
     
     return { success: true, status: profileData.status };
 }
