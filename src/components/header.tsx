@@ -49,7 +49,7 @@ function RoleSwitcher() {
     const [isPending, startTransition] = React.useTransition();
 
     if (!person || !person.roles || person.roles.length <= 1) {
-        return <p className="text-sm font-medium">{person?.activeRole}</p>;
+        return <p className="text-sm font-medium text-primary-foreground/90">{person?.activeRole}</p>;
     }
 
     const handleRoleChange = (role: string) => {
@@ -74,8 +74,8 @@ function RoleSwitcher() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-auto p-0 disabled:opacity-100 hover:bg-white/20 text-primary-foreground hover:text-primary-foreground" disabled={isPending}>
-                    {person.activeRole}
+                <Button variant="ghost" className="h-auto p-1 rounded-md disabled:opacity-100 hover:bg-white/20 text-primary-foreground hover:text-primary-foreground" disabled={isPending}>
+                    <span className="text-sm font-medium">{person.activeRole}</span>
                     {isPending ? <Loader2 className="w-4 h-4 ml-1 animate-spin"/> : <ChevronDown className="w-4 h-4 ml-1" />}
                 </Button>
             </DropdownMenuTrigger>
@@ -240,7 +240,7 @@ export function Header() {
                                             <AccordionContent className="pt-1 pb-0 pl-8">
                                                 <div className="flex flex-col gap-1">
                                                     {visibleItems.map((item) => {
-                                                        const isActive = pathname.startsWith(item.href);
+                                                        const isActive = pathname.startsWith(item.href.split('?')[0]);
                                                         return (
                                                             <SheetClose asChild key={item.label}>
                                                                 <Link
@@ -279,40 +279,41 @@ export function Header() {
             </Button>
             <NotificationBell />
 
-            {person && <RoleSwitcher />}
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/20">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={person?.profileImageUrl} alt={person?.firstName} />
-                    <AvatarFallback>{person ? `${person.firstName?.[0]}${person.lastName?.[0]}` : '...'}</AvatarFallback>
-                  </Avatar>
-                  <span className="sr-only">Toggle user menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{person ? `${person.firstName} ${person.lastName}` : 'Guest'}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                 {person?.personId && (
+            <div className="flex items-center gap-2">
+                {person && <RoleSwitcher />}
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/20">
+                    <Avatar className="w-8 h-8">
+                        <AvatarImage src={person?.profileImageUrl} alt={person?.firstName} />
+                        <AvatarFallback>{person ? `${person.firstName?.[0]}${person.lastName?.[0]}` : '...'}</AvatarFallback>
+                    </Avatar>
+                    <span className="sr-only">Toggle user menu</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{person ? `${person.firstName} ${person.lastName}` : 'Guest'}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                    </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {person?.personId && (
+                        <DropdownMenuItem asChild>
+                            <Link href={`/people/${person.personId}`}><User className="mr-2"/>My Profile</Link>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
-                        <Link href={`/people/${person.personId}`}><User className="mr-2"/>My Profile</Link>
+                    <Link href="/settings"><Settings className="mr-2"/>Settings</Link>
                     </DropdownMenuItem>
-                )}
-                <DropdownMenuItem asChild>
-                  <Link href="/settings"><Settings className="mr-2"/>Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2"/>Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2"/>Log out
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </header>
     );
 }
