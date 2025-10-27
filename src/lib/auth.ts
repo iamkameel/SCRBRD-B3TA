@@ -1,9 +1,7 @@
 
-'use client';
 
 import { getAuth } from 'firebase/auth';
 import { app } from './firebase';
-
 
 /**
  * Gets the current user's ID on the client.

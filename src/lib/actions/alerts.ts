@@ -1,18 +1,15 @@
 
+
 'use server';
 
-import { getMatches } from './matches';
-import { getTeams } from './teams';
 import type { Match, Team } from '@/lib/data';
 import { collection, getDocs, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getUserId } from '@/lib/firebase-admin';
+import { getMatches } from './matches';
+import { getTeams } from './teams';
+import type { FixtureConflict, AssignmentRequest } from '../data';
 
-export interface FixtureConflict {
-    type: 'Field' | 'Team';
-    message: string;
-    matches: Match[];
-}
 
 export async function getFixtureConflicts(): Promise<FixtureConflict[]> {
     const userId = await getUserId();

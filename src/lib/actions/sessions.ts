@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -6,7 +7,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, addDoc, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import type { TrainingSession, Drill } from '@/lib/data';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { cache } from 'react';
 import { getTeam, isTeamManagerOrAdmin } from './teams';
 

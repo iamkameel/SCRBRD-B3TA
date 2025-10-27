@@ -1,4 +1,3 @@
-
 'use server';
 
 import { initializeApp, getApps, getApp, type App, credential } from 'firebase-admin/app';
@@ -29,16 +28,6 @@ const adminApp: App = !getApps().length
 export { adminApp };
 
 
-export const verifySessionCookie = async (sessionCookie: string) => {
-    const auth = getAdminAuth(adminApp);
-    try {
-        const decodedIdToken = await auth.verifySessionCookie(sessionCookie, true);
-        return decodedIdToken;
-    } catch (error) {
-        return null;
-    }
-};
-
 /**
  * Gets the current user's ID on the **server**.
  * This is the definitive, secure way to get the current user's UID on the server.
@@ -50,9 +39,11 @@ export const getUserId = cache(async (): Promise<string | null> => {
   if (!sessionCookie) {
     return null;
   }
-  const decodedIdToken = await verifySessionCookie(sessionCookie);
-  if (!decodedIdToken) {
+  const auth = getAdminAuth(adminApp);
+  try {
+    const decodedIdToken = await auth.verifySessionCookie(sessionCookie, true);
+    return decodedIdToken.uid;
+  } catch (error) {
     return null;
   }
-  return decodedIdToken.uid;
 });

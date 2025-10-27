@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,7 +10,7 @@ import type { Vehicle, Person, TransportAssignment, FullTransportAssignment } fr
 import { getMatch, getMatches } from './matches';
 import { getPerson } from './players';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { isTeamManagerOrAdmin } from './teams';
 
 const checkManagementPermission = async (userId: string) => {

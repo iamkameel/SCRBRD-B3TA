@@ -16,7 +16,7 @@ import { getFields, deleteFieldAction } from './fields';
 import { getCompetitions, deleteCompetitionAction } from './competitions';
 import { getEquipment, deleteEquipmentItemAction } from './equipment';
 import { getDrills, deleteDrillAction } from './drills';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { getSponsors } from './sponsors';
 import { getTransactions } from './financials';
 import type { Person } from '../data';
