@@ -7,6 +7,7 @@ import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { revalidatePath } from 'next/cache';
 import { getPersonByEmail } from './players';
+import { ROLE_GROUPS } from '../roles';
 
 // Schemas for each role
 const baseSignupSchema = z.object({
@@ -54,31 +55,39 @@ export const signupActionSchema = z.discriminatedUnion("role", [
 export type SignupActionInput = z.infer<typeof signupActionSchema>;
 
 export async function signupUserAction(data: SignupActionInput): Promise<{ success: boolean; status: string }> {
-    // 1. Check if user data already exists in Firestore (for pre-seeded admins)
-    const existingPerson = await getPersonByEmail(data.email);
-
-    // 2. Create user in Firebase Auth
+    // 1. Create user in Firebase Auth. This will throw an error if the email is already in use.
     const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
     const user = userCredential.user;
     
-    // 3. Prepare profile data based on role
+    // This is the crucial part: the Firestore document ID MUST match the Firebase Auth UID.
+    const userDocRef = doc(db, 'people', user.uid);
+    
+    // 2. Prepare profile data based on role
+    const isGodTierAdmin = data.email === 'kameel@maverickdesign.co.za';
+
+    let rolesToAssign: string[];
+    let activeRole: string;
+
+    if (isGodTierAdmin) {
+        rolesToAssign = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
+        activeRole = 'Admin';
+    } else {
+        rolesToAssign = [data.role];
+        activeRole = data.role;
+    }
+
     const profileData: any = {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        roles: [data.role],
-        activeRole: data.role,
-        status: (data.role === 'Player' || data.role === 'Spectator') ? 'active' : 'pending_review',
+        roles: rolesToAssign,
+        activeRole: activeRole,
+        status: (data.role === 'Player' || data.role === 'Spectator' || isGodTierAdmin) ? 'active' : 'pending_review',
         notificationPreferences: { email: true, push: false },
         createdAt: Timestamp.now(),
+        userId: user.uid, // Explicitly store the UID in the document as well
     };
     
-    // This is the crucial step: The Firestore document ID MUST match the Firebase Auth UID.
-    const userDocRef = doc(db, 'people', user.uid);
-    
-    // Always update/set the userId to the new Auth UID
-    profileData.userId = user.uid;
-
     if ((data.role === 'Player' || data.role === 'Coach') && data.schoolId) {
         profileData.assignedSchools = [data.schoolId];
     }
@@ -93,13 +102,13 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
         profileData.requestedPlayerLink = data.playerId;
     }
 
-    // 4. Create/overwrite profile in Firestore using the Auth UID as the document ID
-    await setDoc(userDocRef, profileData, { merge: true }); // Use merge to preserve any existing fields not in profileData
+    // 3. Create the Firestore document with the UID as the ID.
+    await setDoc(userDocRef, profileData);
 
     revalidatePath('/people');
     revalidatePath('/user-management');
     
-    // 5. Sign the user in to create a session
+    // 4. Sign the user in to create a session
     await signInWithEmailAndPassword(auth, data.email, data.password);
     
     return { success: true, status: profileData.status };

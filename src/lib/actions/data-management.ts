@@ -321,7 +321,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             const scorecardData = sampleScorecardData[tempMatchId as keyof typeof sampleScorecardData];
             const lineupData = sampleLineupData[tempMatchId as keyof typeof sampleLineupData];
 
-            const liveScoreData = matchData.status === 'live' ? (matchData as any).liveScore : { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] };
+            const liveScoreData = (matchData as any).status === 'live' ? (matchData as any).liveScore : { runs: 0, wickets: 0, overs: 0, balls: 0, currentOver: [], batsmenOut: [], liveInnings: 1, shots: [] };
 
             const newMatchData: { [key: string]: any } = {
                 ...matchData,
@@ -347,9 +347,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 lineupConfirmedByCaptainB: false,
             };
 
-            if (match.round) newMatchData.round = match.round;
-            if (match.winnerTeamId) newMatchData.winnerTeamId = idMap.get(match.winnerTeamId);
-            if (match.result) newMatchData.result = match.result;
+            if ((match as any).round) newMatchData.round = (match as any).round;
+            if ((match as any).winnerTeamId) newMatchData.winnerTeamId = idMap.get((match as any).winnerTeamId);
+            if ((match as any).result) newMatchData.result = (match as any).result;
 
             const matchDocRef = doc(collection(db, 'matches'));
             batch.set(matchDocRef, newMatchData);
@@ -374,12 +374,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 const teamBId = idMap.get(lineupData.teamB.teamId);
                 if (lineupData.teamA && teamAId) {
                     const lineupARef = doc(collection(db, matchDocRef.path, 'lineups'), teamAId);
-                    batch.set(lineupARef, { playerIds: lineupData.teamA.playerIds.map(id => idMap.get(id)) });
+                    batch.set(lineupARef, { playingXI: lineupData.teamA.playerIds.map(id => idMap.get(id)), twelfthMan: null });
                     itemCount++; await commitBatchIfNeeded();
                 }
                 if (lineupData.teamB && teamBId) {
                     const lineupBRef = doc(collection(db, matchDocRef.path, 'lineups'), teamBId);
-                    batch.set(lineupBRef, { playerIds: lineupData.teamB.playerIds.map(id => idMap.get(id)) });
+                    batch.set(lineupBRef, { playingXI: lineupData.teamB.playerIds.map(id => idMap.get(id)), twelfthMan: null });
                     itemCount++; await commitBatchIfNeeded();
                 }
             }
