@@ -2,9 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db, auth } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import { revalidatePath } from 'next/cache';
+import { auth } from '@/lib/firebase';
 import { signOut, sendPasswordResetEmail } from 'firebase/auth';
 
 

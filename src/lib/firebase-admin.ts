@@ -28,6 +28,7 @@ const adminApp: App = !getApps().length
 
 export { adminApp };
 
+
 export const verifySessionCookie = async (sessionCookie: string) => {
     const auth = getAdminAuth(adminApp);
     try {

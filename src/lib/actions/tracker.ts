@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -21,14 +20,14 @@ const calculateRunMap = (performances: PerformanceEntry[]): RunMapData => {
         totalRuns += shot.runs;
         const angle = shot.angle;
         
-        if (angle >= 337.5 || angle < 22.5) runMap.cover += shot.runs;
-        else if (angle >= 22.5 && angle < 67.5) runMap.longOff += shot.runs;
-        else if (angle >= 67.5 && angle < 112.5) runMap.longOn += shot.runs;
-        else if (angle >= 112.5 && angle < 157.5) runMap.midWicket += shot.runs;
-        else if (angle >= 157.5 && angle < 202.5) runMap.squareLeg += shot.runs;
-        else if (angle >= 202.5 && angle < 247.5) runMap.fineLeg += shot.runs;
-        else if (angle >= 247.5 && angle < 292.5) runMap.thirdMan += shot.runs;
-        else if (angle >= 292.5 && angle < 337.5) runMap.point += shot.runs;
+        if (angle >= 337.5 || angle < 22.5) runMap.point += shot.runs;
+        else if (angle >= 22.5 && angle < 67.5) runMap.cover += shot.runs;
+        else if (angle >= 67.5 && angle < 112.5) runMap.longOff += shot.runs;
+        else if (angle >= 112.5 && angle < 157.5) runMap.longOn += shot.runs;
+        else if (angle >= 157.5 && angle < 202.5) runMap.midWicket += shot.runs;
+        else if (angle >= 202.5 && angle < 247.5) runMap.squareLeg += shot.runs;
+        else if (angle >= 247.5 && angle < 292.5) runMap.fineLeg += shot.runs;
+        else if (angle >= 292.5 && angle < 337.5) runMap.thirdMan += shot.runs;
     });
 
     if (totalRuns > 0) {

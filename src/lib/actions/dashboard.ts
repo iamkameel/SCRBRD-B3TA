@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest, TrainingSession, Division } from '@/lib/data';
@@ -14,6 +13,7 @@ import { getSessionsByTeam } from './sessions';
 import { cache } from 'react';
 import { getSchools } from './schools';
 import { getMatchTransportAssignments, getVehicles } from './transport';
+import { getUserId } from '@/lib/firebase-admin';
 
 
 export async function getLeaderboards(filters: { divisionId?: string; teamClass?: string; seasonId?: string; competitionId?: string; teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
@@ -252,7 +252,7 @@ export async function getTeamManagerDashboardData(personId: string) {
     for (const match of upcomingMatches) {
         const lineupA = await getMatchLineup(match.matchId, match.teamAId);
         const lineupB = await getMatchLineup(match.matchId, match.teamBId);
-        const lineup = [...lineupA, ...lineupB];
+        const lineup = [...(lineupA?.playingXI || []), ...(lineupB?.playingXI || [])];
         
         const availabilityMap = match.availability || {};
         const respondedIds = new Set(Object.keys(availabilityMap));
@@ -367,9 +367,10 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
             let nextMatch: Match | null = null;
             if (primaryTeamAssignment) {
                 const teamMatches = await getTeamMatches(primaryTeamAssignment.teamId);
+                const now = new Date();
                 nextMatch = teamMatches
-                    .filter(m => m.status === 'scheduled' && m.dateTime >= new Date())
-                    .sort((a, b) => a.date.getTime() - b.date.getTime())[0] || null;
+                    .filter(m => m.status === 'scheduled' && m.dateTime >= now)
+                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0] || null;
             }
             
             return {

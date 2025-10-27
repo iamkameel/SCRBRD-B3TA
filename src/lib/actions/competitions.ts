@@ -341,7 +341,7 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
         teamAColor: teamA?.teamColors?.primary,
-        teamBColor: teamB?.teamColors?.primary,
+        teamBColor: teamB?.teamColors?.secondary,
         teamALogoUrl: teamA?.logoUrl,
         teamBLogoUrl: teamB?.logoUrl,
       } as Match;

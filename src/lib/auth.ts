@@ -4,6 +4,7 @@
 import { getAuth } from 'firebase/auth';
 import { app } from './firebase';
 
+
 /**
  * Gets the current user's ID on the client.
  * NOTE: This is not a secure way to check for authentication,
