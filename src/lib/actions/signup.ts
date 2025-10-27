@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { z } from 'zod';
@@ -63,7 +62,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     const user = userCredential.user;
     
     // 3. Prepare profile data based on role
-    const profileData: any = existingPerson ? { ...existingPerson } : {
+    const profileData: any = {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
