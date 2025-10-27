@@ -26,7 +26,7 @@ import type { MatchForecast, Person } from '@/lib/data';
 import { getMatch, getMatchLineup, saveScorecard, getScorecard } from './matches';
 import { getPerson } from './players';
 import { getTeam } from './teams';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 
 export async function runScoutingReportAction(input: ScoutingReportInput): Promise<ScoutingReportOutput> {

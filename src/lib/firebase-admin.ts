@@ -26,6 +26,8 @@ const adminApp: App = !getApps().length
     })
   : getApp();
 
+export { adminApp };
+
 export const verifySessionCookie = async (sessionCookie: string) => {
     const auth = getAdminAuth(adminApp);
     try {
@@ -53,6 +55,3 @@ export const getUserId = cache(async (): Promise<string | null> => {
   }
   return decodedIdToken.uid;
 });
-
-
-export { adminApp };
