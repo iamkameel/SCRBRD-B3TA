@@ -11,7 +11,7 @@ import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-de
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { logAuditEvent } from './audit';
 
 export async function getPlayers(): Promise<Person[]> {

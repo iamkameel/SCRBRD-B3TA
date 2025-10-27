@@ -4,7 +4,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp, getDocs, query } from 'firebase/firestore';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { getPerson } from './players';
 import type { Person, AuditLog } from '../data';
 import { revalidatePath } from 'next/cache';

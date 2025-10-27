@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -10,7 +9,8 @@ import { getPerson } from './players';
 import { getTeamRoster, addPlayerToRosterAction } from './teams';
 import type { AssignmentRequest } from '../data';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
+
 
 const requestSchema = z.object({
   targetId: z.string(),
