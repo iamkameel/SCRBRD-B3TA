@@ -4,41 +4,70 @@ import type { PlayerStats } from './data';
 
 // Interfaces
 
+export interface TechnicalSkills {
+  batting: {
+    timing: number;
+    shotSelection: number;
+    defense: number;
+    powerHitting: number;
+    footwork: number;
+    playingSpin: number;
+    runningBetweenWickets: number;
+    concentration: number;
+    patience: number;
+  };
+  bowling: {
+    paceSpeed: number;
+    accuracy: number;
+    spinVariation: number;
+    controlOfVariations: number;
+    movement: number;
+    bouncerShortBall: number;
+    staminaWorkload: number;
+    openingSpellImpact: number;
+    deathPowerplaySkills: number;
+  };
+  fielding: {
+    agilitySpeed: number;
+    catchingClose: number;
+    catchingOutfield: number;
+    throwingAccuracy: number;
+    throwingPower: number;
+    groundFielding: number;
+    reflexes: number;
+    stumpingRunOuts: number;
+    gatheringCollecting: number;
+  };
+}
+
+export interface MentalSkills {
+  composure: number;
+  aggression: number;
+  anticipation: number;
+  determination: number;
+  concentration: number;
+  decisions: number;
+  bravery: number;
+  leadership: number;
+  teamwork: number;
+  workRate: number;
+}
+
+export interface PhysicalSkills {
+  pace: number;
+  acceleration: number;
+  agility: number;
+  stamina: number;
+  strength: number;
+  balance: number;
+  naturalFitness: number;
+  jumpingReach: number;
+}
+
 export interface PersonSkills {
-  batting?: {
-    power?: number;
-    timing?: number;
-    running?: number;
-    defense?: number;
-    shotSelection?: number;
-  };
-  bowling?: {
-    pace?: number;
-    spin?: number;
-    accuracy?: number;
-    variation?: number;
-  };
-  fielding?: {
-    catching?: number;
-    throwing?: number;
-    agility?: number;
-    groundFielding?: number;
-  };
-  wicketkeeping?: {
-      glovework?: number;
-      footwork?: number;
-      anticipation?: number;
-  };
-  mental?: {
-      composure?: number;
-      resilience?: number;
-      coachability?: number;
-      leadership?: number;
-  };
-  tactical?: {
-      situationalAwareness?: number;
-      planExecution?: number;
-  };
+  technical: TechnicalSkills;
+  mental: MentalSkills;
+  physical: PhysicalSkills;
 }
 
 

@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup, arrayUnion, arrayRemove } from 'firebase/firestore';
-import type { Person, PlayerDevelopmentPlanOutput, Match, PersonSkills } from '@/lib/data';
+import type { Person, PlayerDevelopmentPlanOutput, Match, PersonSkills, TechnicalSkills, MentalSkills, PhysicalSkills } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
@@ -702,42 +702,16 @@ export async function assignPersonToSchoolAction(personId: string, schoolId: str
   revalidatePath(`/people/${personId}`);
 }
 
+const skillDetailSchema = z.object({}).catchall(z.number().min(1).max(20));
 
 const skillsSchema = z.object({
-  batting: z.object({
-    power: z.number().min(0).max(100).optional(),
-    timing: z.number().min(0).max(100).optional(),
-    running: z.number().min(0).max(100).optional(),
-    defense: z.number().min(0).max(100).optional(),
-    shotSelection: z.number().min(0).max(100).optional(),
-  }).optional(),
-  bowling: z.object({
-    pace: z.number().min(0).max(100).optional(),
-    spin: z.number().min(0).max(100).optional(),
-    accuracy: z.number().min(0).max(100).optional(),
-    variation: z.number().min(0).max(100).optional(),
-  }).optional(),
-  fielding: z.object({
-    catching: z.number().min(0).max(100).optional(),
-    throwing: z.number().min(0).max(100).optional(),
-    agility: z.number().min(0).max(100).optional(),
-    groundFielding: z.number().min(0).max(100).optional(),
-  }).optional(),
-  wicketkeeping: z.object({
-    glovework: z.number().min(0).max(100).optional(),
-    footwork: z.number().min(0).max(100).optional(),
-    anticipation: z.number().min(0).max(100).optional(),
-  }).optional(),
-  mental: z.object({
-    composure: z.number().min(0).max(100).optional(),
-    resilience: z.number().min(0).max(100).optional(),
-    coachability: z.number().min(0).max(100).optional(),
-    leadership: z.number().min(0).max(100).optional(),
-  }).optional(),
-  tactical: z.object({
-    situationalAwareness: z.number().min(0).max(100).optional(),
-    planExecution: z.number().min(0).max(100).optional(),
-  }).optional(),
+  technical: z.object({
+    batting: skillDetailSchema.optional(),
+    bowling: skillDetailSchema.optional(),
+    fielding: skillDetailSchema.optional(),
+  }),
+  mental: skillDetailSchema,
+  physical: skillDetailSchema,
 });
 export async function updatePlayerSkillsAction(personId: string, skills: PersonSkills) {
     const userId = await getUserId();
@@ -750,6 +724,7 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
     
     const validatedSkills = skillsSchema.safeParse(skills);
     if (!validatedSkills.success) {
+        console.error(validatedSkills.error.errors);
         throw new Error("Invalid skills data provided.");
     }
 
