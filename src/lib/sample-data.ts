@@ -1,5 +1,4 @@
 
-
 // This file contains a set of sample data to populate the Firestore database.
 // Temporary IDs are used here and will be replaced by real Firestore IDs during the migration process.
 
@@ -112,7 +111,7 @@ schoolData.forEach(school => {
 
 const adminAndStaff = [
     { personId: 'p_admin', firstName: 'Admin', lastName: 'User', email: 'admin@scrbrd.app', roles: ['Admin'], activeRole: 'Admin', notificationPreferences: { email: true, push: false } },
-    { personId: 'p_kameel', firstName: 'Kameel', lastName: 'Kalyan', email: 'kameel@maverickdesign.co.za', roles: ['Admin', 'Sportsmaster', 'Umpire', 'School Admin', 'Coach', 'Assistant Coach'], activeRole: 'Admin', assignedSchools: ['MHS', 'HC'], notificationPreferences: { email: true, push: false } },
+    { personId: 'p_kameel', firstName: 'Kameel', lastName: 'Kalyan', email: 'kameel@maverickdesign.co.za', roles: ['Admin', 'Sportsmaster', 'Umpire', 'Scorer', 'School Admin', 'Coach', 'Assistant Coach'], activeRole: 'Admin', assignedSchools: ['MHS', 'HC'], notificationPreferences: { email: true, push: false } },
     { personId: 'staff_5', firstName: 'Paddy', lastName: 'Upton', email: 'paddy.upton@schooladmin.com', roles: ['School Admin'], activeRole: 'School Admin', assignedSchools: ['MHS'], notificationPreferences: { email: true, push: false } },
     { personId: 'staff_1', firstName: 'John', lastName: 'Doe', email: 'john.doe@umpire.com', roles: ['Umpire', 'Scorer'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },
     { personId: 'staff_2', firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@umpire.com', roles: ['Umpire'], activeRole: 'Umpire', notificationPreferences: { email: true, push: false } },

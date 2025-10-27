@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -177,10 +176,10 @@ export const getPersonByEmail = cache(async (email: string): Promise<Person | nu
         if (snapshot.empty) {
             return null;
         }
-        const doc = snapshot.docs[0];
-        const data = doc.data();
+        const docSnap = snapshot.docs[0];
+        const data = docSnap.data();
         return { 
-            personId: doc.id, 
+            personId: docSnap.id, 
             ...data,
             dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
         } as Person;
@@ -652,11 +651,9 @@ export async function updateActiveRoleAction(personId: string, role: string) {
 }
 
 export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
-    const q = query(peopleCollection, where("userId", "==", userId), where("assignedSchools", "array-contains", schoolId));
+    const q = query(peopleCollection, where("assignedSchools", "array-contains", schoolId));
     const staffSnapshot = await getDocs(q);
     const staffList = staffSnapshot.docs.map(doc => ({
       personId: doc.id,
@@ -738,4 +735,3 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
         throw new Error("Could not update player skills.");
     }
 }
-

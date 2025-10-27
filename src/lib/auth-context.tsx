@@ -7,6 +7,7 @@ import { auth, db } from '@/lib/firebase';
 import { query, collection, where, limit, getDocs, doc, onSnapshot } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
+import { getPerson } from './actions/players';
 
 interface AuthContextType {
   user: User | null;
@@ -62,8 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }, (error) => {
         console.error("Error fetching user profile:", error);
-        setPerson(null);
-        setLoading(false);
+        // Fallback to getPersonByEmail for local dev if direct UID lookup fails
+        if (user.email) {
+            getPerson(user.uid).then(p => {
+                setPerson(p);
+                setLoading(false);
+            });
+        } else {
+            setPerson(null);
+            setLoading(false);
+        }
       });
       
       return () => unsubscribePerson();
