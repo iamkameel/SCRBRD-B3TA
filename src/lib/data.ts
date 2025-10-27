@@ -1,4 +1,5 @@
 
+
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -449,6 +450,7 @@ export interface TransportAssignment {
   assignmentId: string;
   vehicleId: string;
   vehicleName: string;
+s
   vehicleType: Vehicle['type'];
   driverId: string;
   driverName: string;
@@ -727,3 +729,4 @@ export interface LiveMatchUpdateOutput {
     summary: string;
     tacticalSuggestions?: string[];
 }
+

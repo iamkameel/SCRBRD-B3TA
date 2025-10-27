@@ -1,9 +1,11 @@
+
+
 'use client';
 
 import * as React from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { query, collection, where, limit, getDocs } from 'firebase/firestore';
+import { query, collection, where, limit, getDocs, doc, onSnapshot } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
 
@@ -39,29 +41,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (user) {
-      const fetchPerson = async () => {
-        setLoading(true);
-        const q = query(collection(db, "people"), where("email", "==", user.email), limit(1));
-        try {
-          const snapshot = await getDocs(q);
-          if (!snapshot.empty) {
-            const userDoc = snapshot.docs[0];
-            setPerson({ personId: userDoc.id, ...userDoc.data() } as Person);
-          } else {
-            // This can happen if a user is created in Auth but not yet in Firestore,
-            // or if they were deleted from Firestore but not Auth.
-            setPerson(null);
-          }
-        } catch (error) {
-            console.error("Error fetching user profile:", error);
+      setLoading(true);
+      const personRef = doc(db, "people", user.uid);
+      const unsubscribePerson = onSnapshot(personRef, (doc) => {
+        if (doc.exists()) {
+            const data = doc.data();
+            const roles = Array.isArray(data.roles) ? data.roles : [];
+            const activeRole = data.activeRole && roles.includes(data.activeRole) 
+                ? data.activeRole 
+                : (roles.length > 0 ? roles[0] : 'Spectator');
+
+            setPerson({ 
+                personId: doc.id, 
+                ...data, 
+                activeRole, 
+                dateOfBirth: data.dateOfBirth?.toDate() 
+            } as Person);
+        } else {
             setPerson(null);
         }
-        finally {
-          setLoading(false);
-        }
-      };
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching user profile:", error);
+        setPerson(null);
+        setLoading(false);
+      });
       
-      fetchPerson();
+      return () => unsubscribePerson();
+
     }
   }, [user]);
 
@@ -73,3 +80,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => React.useContext(AuthContext);
+
