@@ -1,5 +1,4 @@
 
-
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -10,16 +9,35 @@ export interface PersonSkills {
     power?: number;
     timing?: number;
     running?: number;
+    defense?: number;
+    shotSelection?: number;
   };
   bowling?: {
     pace?: number;
     spin?: number;
     accuracy?: number;
+    variation?: number;
   };
   fielding?: {
     catching?: number;
     throwing?: number;
     agility?: number;
+    groundFielding?: number;
+  };
+  wicketkeeping?: {
+      glovework?: number;
+      footwork?: number;
+      anticipation?: number;
+  };
+  mental?: {
+      composure?: number;
+      resilience?: number;
+      coachability?: number;
+      leadership?: number;
+  };
+  tactical?: {
+      situationalAwareness?: number;
+      planExecution?: number;
   };
 }
 
