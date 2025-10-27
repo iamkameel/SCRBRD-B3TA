@@ -46,10 +46,11 @@ import { CommandSearch } from './command-search';
 function RoleSwitcher() {
     const { person } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
     const [isPending, startTransition] = React.useTransition();
 
     if (!person || !person.roles || person.roles.length <= 1) {
-        return <p className="text-sm font-medium text-primary-foreground/90">{person?.activeRole}</p>;
+        return <p className="text-sm font-medium text-primary-foreground/90">{person?.activeRole || 'User'}</p>;
     }
 
     const handleRoleChange = (role: string) => {
@@ -62,6 +63,7 @@ function RoleSwitcher() {
             try {
                 await updateActiveRoleAction(person.personId, role);
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
+                // Full page reload to ensure all server components and data are re-fetched for the new role.
                 window.location.reload();
             } catch (error) {
                 toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });

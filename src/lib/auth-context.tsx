@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
 
@@ -26,54 +26,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      if (!firebaseUser) {
-        setPerson(null);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribeAuth();
-  }, []);
-
-  React.useEffect(() => {
-    if (user?.uid) {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
-      const personRef = doc(db, "people", user.uid);
-      const unsubscribePerson = onSnapshot(personRef, (doc) => {
-        if (doc.exists()) {
-            const data = doc.data();
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        const personRef = doc(db, "people", firebaseUser.uid);
+        const docSnap = await getDoc(personRef);
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
             const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
             const activeRole = data.activeRole && roles.includes(data.activeRole) 
                 ? data.activeRole 
                 : roles[0];
 
             setPerson({ 
-                personId: doc.id, 
+                personId: docSnap.id, 
                 ...data,
                 roles,
                 activeRole, 
                 dateOfBirth: data.dateOfBirth?.toDate() 
             } as Person);
         } else {
-            console.warn(`No person document found for UID: ${user.uid}. A new user may need to complete signup or an admin may need to create their profile.`);
+            console.warn(`No person document found for UID: ${firebaseUser.uid}. This user needs a profile in Firestore.`);
             setPerson(null);
         }
-        setLoading(false);
-      }, (error) => {
-        console.error("Error fetching user profile:", error);
+      } else {
+        setUser(null);
         setPerson(null);
-        setLoading(false);
-      });
-      
-      return () => unsubscribePerson();
+      }
+      setLoading(false);
+    });
 
-    } else if (user === null) {
-        // User is explicitly logged out, stop loading
-        setLoading(false);
-    }
-  }, [user]);
+    return () => unsubscribeAuth();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, person, loading }}>
