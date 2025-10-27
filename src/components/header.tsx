@@ -54,6 +54,7 @@ function RoleSwitcher() {
     }
 
     const handleRoleChange = (role: string) => {
+        if (role === person.activeRole) return;
         startTransition(async () => {
             if (!person?.personId) {
                 toast({ title: "Error", description: "User profile ID not found.", variant: "destructive" });
@@ -62,7 +63,8 @@ function RoleSwitcher() {
             try {
                 await updateActiveRoleAction(person.personId, role);
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
-                router.refresh();
+                // We refresh the entire page to ensure all data and navigation is re-evaluated for the new role.
+                window.location.reload();
             } catch (error) {
                 toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });
             }
@@ -76,7 +78,7 @@ function RoleSwitcher() {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-auto p-0 disabled:opacity-100 hover:bg-white/20 text-primary-foreground hover:text-primary-foreground" disabled={isPending}>
                     {person.activeRole}
-                    <ChevronDown className="w-4 h-4 ml-1" />
+                    {isPending ? <Loader2 className="w-4 h-4 ml-1 animate-spin"/> : <ChevronDown className="w-4 h-4 ml-1" />}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
