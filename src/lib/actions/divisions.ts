@@ -60,7 +60,7 @@ export const getDivision = cache(async (divisionId: string): Promise<Division | 
       name: divisionSnap.data().name,
     };
   } catch (error) {
-    console.error(\`Error fetching division with ID \${divisionId}:\`, error);
+    console.error(`Error fetching division with ID ${divisionId}:`, error);
     return null;
   }
 });
