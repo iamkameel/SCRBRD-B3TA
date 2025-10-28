@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -16,7 +15,7 @@ import { getFields, deleteFieldAction } from './fields';
 import { getCompetitions, deleteCompetitionAction } from './competitions';
 import { getEquipment, deleteEquipmentItemAction } from './equipment';
 import { getDrills, deleteDrillAction } from './drills';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 import { getSponsors } from './sponsors';
 import { getTransactions } from './financials';
 import type { Person } from '../data';
@@ -573,4 +572,3 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
         return { error: `Failed to export ${subsetName} data.` };
     }
 }
-

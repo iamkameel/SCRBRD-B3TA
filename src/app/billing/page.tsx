@@ -1,4 +1,6 @@
 
+'use server';
+
 import BillingClient from './client';
 import { getInvoices } from '@/lib/actions/billing';
 import { getSchools } from '@/lib/actions/schools';

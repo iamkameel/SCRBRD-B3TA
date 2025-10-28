@@ -165,7 +165,7 @@ export async function getMatchTransportAssignments(matchId: string): Promise<Tra
 
     return (await Promise.all(assignmentsPromises)).filter((a): a is TransportAssignment => a !== null);
   } catch (error) {
-    console.error(`Error fetching transport assignments for match ${matchId}:`, error);
+    console.error('Error fetching transport assignments for match ${matchId}:', error);
     return [];
   }
 }

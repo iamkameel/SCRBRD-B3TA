@@ -11,7 +11,7 @@ import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-de
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
 
 export async function getPlayers(): Promise<Person[]> {
@@ -163,7 +163,7 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
         } as Person;
 
     } catch (error) {
-        console.error(`Error fetching person with ID ${personId}:`, error);
+        console.error('Error fetching person with ID ${personId}:', error);
         return null;
     }
 });
@@ -208,7 +208,7 @@ export async function getPersonLinks(personId: string): Promise<{ guardians: Per
         const children = (await Promise.all(childrenPromises)).filter(doc => doc.exists()).map(doc => ({ personId: doc.id, ...doc.data() } as Person));
         return { guardians, children };
     } catch (error) {
-        console.error(`Error fetching links for person ${personId}:`, error);
+        console.error('Error fetching links for person ${personId}:', error);
         return { guardians: [], children: [] };
     }
 }
@@ -661,7 +661,7 @@ export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
     } as Person));
     return staffList;
   } catch (error) {
-    console.error(`Error fetching staff for school ${schoolId}:`, error);
+    console.error('Error fetching staff for school ${schoolId}:', error);
     return [];
   }
 }
