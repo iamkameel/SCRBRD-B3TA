@@ -151,21 +151,20 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 batch = writeBatch(db);
             }
         };
+        
+        // This is the key change: ensure the actorId (the UID of the logged-in admin) is used for the special 'p_kameel' user.
+        // This links the Firebase Auth user to the Firestore document.
+        const kameelTempId = 'p_kameel';
+        const kameelData = sampleData.people.find(p => p.personId === kameelTempId);
+        if (kameelData) {
+            idMap.set(kameelTempId, actorId);
+            const adminDocRef = doc(db, 'people', actorId);
+            const { personId, ...adminData } = kameelData;
+            batch.set(adminDocRef, { ...adminData, userId: actorId });
+            itemCount++;
+            await commitBatchIfNeeded();
+        }
 
-        const existingAdminsByEmail = new Map<string, string>();
-        const godTierEmails = ['kameel@maverickdesign.co.za', 'admin@scrbrd.app'];
-        const adminQuery = query(collection(db, 'people'), where('email', 'in', godTierEmails));
-        const adminSnapshot = await getDocs(adminQuery);
-        adminSnapshot.forEach(doc => {
-            existingAdminsByEmail.set(doc.data().email, doc.id);
-        });
-
-        // Set the mapping for existing admins (especially the god-tier one)
-        sampleData.people.forEach(person => {
-            if (existingAdminsByEmail.has(person.email)) {
-                idMap.set(person.personId, existingAdminsByEmail.get(person.email)!);
-            }
-        });
 
         const idKeyMap: { [key: string]: string } = {
             schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', fields: 'fieldId',
@@ -186,7 +185,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
                 const tempId = (item as any)[idKey as keyof typeof item];
 
                 // Skip adding admin users if they already exist from a previous step
-                if (collName === 'people' && existingAdminsByEmail.has((item as Person).email)) {
+                if (collName === 'people' && tempId === kameelTempId) {
                     continue; 
                 }
                 
@@ -271,9 +270,11 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean; mes
             await commitBatchIfNeeded();
 
             for (const member of roster) {
+                const personId = idMap.get(member.personId);
+                if (!personId) continue;
                 const rosterMemberData = {
                     ...member,
-                    personId: idMap.get(member.personId)
+                    personId: personId,
                 };
                 const rosterDocRef = doc(collection(db, 'teams', teamDocRef.id, 'roster'));
                 batch.set(rosterDocRef, rosterMemberData);
@@ -572,3 +573,4 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
         return { error: `Failed to export ${subsetName} data.` };
     }
 }
+
