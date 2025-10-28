@@ -1,15 +1,8 @@
 
-
 'use client';
-'use server';
 
 import { getAuth } from "firebase/auth";
 import { app } from './firebase';
-import { cache } from 'react';
-import { headers } from 'next/headers';
-import { adminApp } from './firebase-admin';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
-
 
 /**
  * Gets the current user's ID on the **client**.

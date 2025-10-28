@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import FinancialsClient from './client';

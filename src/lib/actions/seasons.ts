@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -57,7 +56,7 @@ export const getSeason = cache(async (seasonId: string): Promise<Season | null> 
       active: data.active,
     };
   } catch (error) {
-    console.error(`Error fetching season with ID ${seasonId}:`, error);
+    console.error(\`Error fetching season with ID \${seasonId}:\`, error);
     return null;
   }
 });

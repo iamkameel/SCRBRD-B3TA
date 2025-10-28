@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import UserManagementClient from './client';
@@ -24,7 +23,7 @@ export default async function UserManagementPage() {
                     <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
                     <CardTitle className="mt-4">Access Denied</CardTitle>
                     <CardDescription>
-                        You do not have the required permissions to view this page. Please contact an administrator if you believe this is an error.
+                        You do not have the required permissions to view this page. Please contact an administrator.
                     </CardDescription>
                 </CardHeader>
             </Card>

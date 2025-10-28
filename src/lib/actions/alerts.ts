@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type { Match, Team } from '@/lib/data';

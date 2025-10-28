@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getSeasons } from '@/lib/actions/seasons';

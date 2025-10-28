@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -83,7 +82,7 @@ export async function addInvoiceAction(data: InvoiceFormValues) {
   const total = subtotal + tax;
 
   const invoiceCountSnap = await getDocs(collection(db, 'invoices'));
-  const invoiceNumber = `INV-${(invoiceCountSnap.size + 1).toString().padStart(4, '0')}`;
+  const invoiceNumber = \`INV-\${(invoiceCountSnap.size + 1).toString().padStart(4, '0')}\`;
 
   try {
     await addDoc(collection(db, 'invoices'), {

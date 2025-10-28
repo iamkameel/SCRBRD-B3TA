@@ -11,7 +11,7 @@ import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-de
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { logAuditEvent } from './audit';
 
 export async function getPlayers(): Promise<Person[]> {
@@ -135,7 +135,7 @@ export async function getPeopleByRole(role: string): Promise<Person[]> {
       personId: doc.id, ...doc.data()
     } as Person));
   } catch (error) {
-    console.error(`Error fetching people with role ${role}:`, error);
+    console.error(\`Error fetching people with role \${role}:\`, error);
     return [];
   }
 }
@@ -163,7 +163,7 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
         } as Person;
 
     } catch (error) {
-        console.error(`Error fetching person with ID ${personId}:`, error);
+        console.error(\`Error fetching person with ID \${personId}:\`, error);
         return null;
     }
 });
@@ -208,7 +208,7 @@ export async function getPersonLinks(personId: string): Promise<{ guardians: Per
         const children = (await Promise.all(childrenPromises)).filter(doc => doc.exists()).map(doc => ({ personId: doc.id, ...doc.data() } as Person));
         return { guardians, children };
     } catch (error) {
-        console.error(`Error fetching links for person ${personId}:`, error);
+        console.error(\`Error fetching links for person \${personId}:\`, error);
         return { guardians: [], children: [] };
     }
 }
@@ -232,8 +232,8 @@ export async function addPersonLinkAction(currentPersonId: string, linkedPersonI
     console.error("Error adding family link:", error);
     throw new Error("Could not create the link.");
   }
-  revalidatePath(`/people/${currentPersonId}`);
-  revalidatePath(`/people/${linkedPersonId}`);
+  revalidatePath(\`/people/\${currentPersonId}\`);
+  revalidatePath(\`/people/\${linkedPersonId}\`);
 }
 
 const removeLinkSchema = z.object({
@@ -260,8 +260,8 @@ export async function removePersonLinkAction(currentPersonId: string, linkedPers
         console.error("Error removing family link:", error);
         throw new Error("Could not remove link.");
     }
-    revalidatePath(`/people/${currentPersonId}`);
-    revalidatePath(`/people/${linkedPersonId}`);
+    revalidatePath(\`/people/\${currentPersonId}\`);
+    revalidatePath(\`/people/\${linkedPersonId}\`);
 }
 
 const personObjectSchema = z.object({
@@ -372,7 +372,7 @@ export async function addPlayerAction(data: z.infer<typeof personSchema>) {
 
     await logAuditEvent({
         action: 'person.create',
-        target: { type: 'Person', id: docRef.id, name: `${restOfData.firstName} ${restOfData.lastName}` },
+        target: { type: 'Person', id: docRef.id, name: \`\${restOfData.firstName} \${restOfData.lastName}\` },
         details: { roles: restOfData.roles }
     });
 
@@ -418,7 +418,7 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
     await updateDoc(personRef, updatePayload);
     await logAuditEvent({
         action: 'person.update',
-        target: { type: 'Person', id: personId, name: `${updateData.firstName} ${updateData.lastName}` },
+        target: { type: 'Person', id: personId, name: \`\${updateData.firstName} \${updateData.lastName}\` },
         details: { updatedFields: Object.keys(updateData) }
     });
 
@@ -426,7 +426,7 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
     console.error("Error updating person:", error);
     throw new Error("Could not update person.");
   }
-  revalidatePath('/people'); revalidatePath(`/people/${personId}`);
+  revalidatePath('/people'); revalidatePath(\`/people/\${personId}\`);
   revalidatePath('/settings');
 }
 
@@ -442,7 +442,7 @@ export async function deletePlayerAction(personId: string) {
   if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
 
   const personData = personSnap.data();
-  const personName = `${personData.firstName} ${personData.lastName}`;
+  const personName = \`\${personData.firstName} \${personData.lastName}\`;
   
   const batch = writeBatch(db);
   
@@ -507,7 +507,7 @@ export async function generateAndSavePlayerPortraitAction(personId: string) {
         const personRef = doc(db, 'people', personId);
         await updateDoc(personRef, { profileImageUrl: imageUrl });
 
-        revalidatePath(`/people/${personId}`);
+        revalidatePath(\`/people/\${personId}\`);
         revalidatePath('/people');
 
         return { success: true, message: "AI Portrait generated and saved successfully!" };
@@ -606,7 +606,7 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
     }));
     
     const promptInput = {
-        playerName: `${person.firstName} ${person.lastName}`,
+        playerName: \`\${person.firstName} \${person.lastName}\`,
         playerStats: simplifiedStats,
         recentPerformances,
     };
@@ -619,7 +619,7 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
             developmentPlan: plan,
             developmentPlanGeneratedAt: Timestamp.now(),
         });
-        revalidatePath(`/people/${personId}`);
+        revalidatePath(\`/people/\${personId}\`);
 
         return plan;
     } catch (error) {
@@ -661,7 +661,7 @@ export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
     } as Person));
     return staffList;
   } catch (error) {
-    console.error(`Error fetching staff for school ${schoolId}:`, error);
+    console.error(\`Error fetching staff for school \${schoolId}:\`, error);
     return [];
   }
 }
@@ -697,7 +697,7 @@ export async function assignPersonToSchoolAction(personId: string, schoolId: str
   }
 
   revalidatePath('/people');
-  revalidatePath(`/people/${personId}`);
+  revalidatePath(\`/people/\${personId}\`);
 }
 
 const skillDetailSchema = z.object({}).catchall(z.number().min(1).max(20));
@@ -729,7 +729,7 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
     try {
         const personRef = doc(db, 'people', personId);
         await updateDoc(personRef, { skills: validatedSkills.data });
-        revalidatePath(`/people/${personId}`);
+        revalidatePath(\`/people/\${personId}\`);
     } catch (error) {
         console.error("Error updating player skills:", error);
         throw new Error("Could not update player skills.");
