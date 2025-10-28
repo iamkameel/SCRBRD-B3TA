@@ -5,10 +5,10 @@
 import type { Match, Team } from '@/lib/data';
 import { collection, getDocs, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from '../firebase';
-import { getUserId } from '@/lib/firebase-admin';
 import { getMatches } from './matches';
 import { getTeams } from './teams';
 import type { FixtureConflict, AssignmentRequest } from '../data';
+import { getUserId } from '../auth';
 
 
 export async function getFixtureConflicts(): Promise<FixtureConflict[]> {

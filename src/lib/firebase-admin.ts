@@ -1,9 +1,4 @@
-'use server';
-
 import { initializeApp, getApps, getApp, type App, credential } from 'firebase-admin/app';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
-import { cache } from 'react';
-import { headers } from 'next/headers';
 
 const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
@@ -26,24 +21,3 @@ const adminApp: App = !getApps().length
   : getApp();
 
 export { adminApp };
-
-
-/**
- * Gets the current user's ID on the **server**.
- * This is the definitive, secure way to get the current user's UID on the server.
- * It inspects the session cookie provided by Firebase Hosting.
- * This function should ONLY be used in Server Components and Server Actions.
- */
-export const getUserId = cache(async (): Promise<string | null> => {
-  const sessionCookie = headers().get('__session')?.value;
-  if (!sessionCookie) {
-    return null;
-  }
-  const auth = getAdminAuth(adminApp);
-  try {
-    const decodedIdToken = await auth.verifySessionCookie(sessionCookie, true);
-    return decodedIdToken.uid;
-  } catch (error) {
-    return null;
-  }
-});

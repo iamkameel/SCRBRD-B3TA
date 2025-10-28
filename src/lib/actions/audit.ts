@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -7,7 +6,7 @@ import { collection, addDoc, Timestamp, getDocs, query } from 'firebase/firestor
 import { getPerson } from './players';
 import type { Person, AuditLog } from '../data';
 import { revalidatePath } from 'next/cache';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '../auth';
 
 
 interface LogAuditEventParams {
