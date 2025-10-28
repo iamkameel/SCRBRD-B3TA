@@ -6,7 +6,7 @@ import { collection, addDoc, Timestamp, getDocs, query } from 'firebase/firestor
 import { getPerson } from './players';
 import type { Person, AuditLog } from '../data';
 import { revalidatePath } from 'next/cache';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 
 interface LogAuditEventParams {
@@ -29,7 +29,7 @@ export async function logAuditEvent(params: LogAuditEventParams) {
     
     const actor = await getPerson(actorId);
     if (!actor) {
-        console.warn("Could not find person record for actorId: " + actorId + ". Skipping log.");
+        console.warn(`Could not find person record for actorId: ${actorId}. Skipping log.`);
         return;
     }
 

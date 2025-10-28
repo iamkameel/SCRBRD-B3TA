@@ -4,7 +4,7 @@
 import { getSeasons } from '@/lib/actions/seasons';
 import SeasonsClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 export default async function SeasonsPage() {
   const seasons = await getSeasons();

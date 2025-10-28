@@ -4,7 +4,7 @@
 import { getDrills } from '@/lib/actions/drills';
 import DrillsClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 export default async function DrillsPage() {
   const [drills, userId] = await Promise.all([

@@ -4,7 +4,7 @@
 import { getSchools } from '@/lib/actions/schools';
 import SchoolsClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 export default async function SchoolsPage() {
   const [schools, userId] = await Promise.all([

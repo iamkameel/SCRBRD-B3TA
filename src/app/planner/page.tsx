@@ -3,7 +3,7 @@
 
 import PlannerClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 import { getCoachDashboardData } from '@/lib/actions/dashboard';
 import { getSessionsByTeam } from '@/lib/actions/sessions';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

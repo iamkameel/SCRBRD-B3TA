@@ -4,7 +4,7 @@
 import { getEquipment, getAllEquipmentAssignments } from '@/lib/actions/equipment';
 import { getPeopleByRole, getPerson } from '@/lib/actions/players';
 import EquipmentClient from './client';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 export default async function EquipmentPage() {
   const [inventory, assignments, players, userId] = await Promise.all([

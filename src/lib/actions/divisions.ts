@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Division } from '@/lib/data';
 import { cache } from 'react';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);
@@ -60,7 +60,7 @@ export const getDivision = cache(async (divisionId: string): Promise<Division | 
       name: divisionSnap.data().name,
     };
   } catch (error) {
-    console.error("Error fetching division with ID " + divisionId + ":", error);
+    console.error(`Error fetching division with ID ${divisionId}:`, error);
     return null;
   }
 });

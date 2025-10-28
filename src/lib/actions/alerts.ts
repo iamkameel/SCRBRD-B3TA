@@ -7,7 +7,7 @@ import { db } from '../firebase';
 import { getMatches } from './matches';
 import { getTeams } from './teams';
 import type { FixtureConflict, AssignmentRequest } from '../data';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 
 export async function getFixtureConflicts(): Promise<FixtureConflict[]> {

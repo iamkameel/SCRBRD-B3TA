@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Invoice } from '@/lib/data';
 import { getPerson } from './players';
 import { getSchool } from './schools';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 const checkBillingPermission = async (userId: string) => {
     const user = await getPerson(userId);

@@ -6,7 +6,7 @@ import { getPlayers } from '@/lib/actions/players';
 import { getPerson } from '@/lib/actions/players';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/auth';
 
 
 export default async function UserManagementPage() {
@@ -23,7 +23,7 @@ export default async function UserManagementPage() {
                     <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
                     <CardTitle className="mt-4">Access Denied</CardTitle>
                     <CardDescription>
-                        You do not have the required permissions to view this page. Please contact an administrator.
+                        You do not have the required permissions to view this page.
                     </CardDescription>
                 </CardHeader>
             </Card>
