@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -27,7 +26,7 @@ export async function getPlayerStats(personId: string, filters: { seasonId?: str
 
     const matchesCollection = collection(db, 'matches');
     
-    let q = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"));
+    let q = query(matchesCollection, where("status", "==", "completed"));
     if (filters.seasonId) {
         q = query(q, where("seasonId", "==", filters.seasonId));
     }
@@ -127,7 +126,7 @@ export async function getPlayerMatchHistory(personId: string): Promise<PlayerMat
     const personName = `${person.firstName} ${person.lastName}`;
 
     const matchesCollection = collection(db, 'matches');
-    const q = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"));
+    const q = query(matchesCollection, where("status", "==", "completed"));
     const completedMatchesSnapshot = await getDocs(q);
 
     const playerMatchPerformances: PlayerMatchPerformance[] = [];

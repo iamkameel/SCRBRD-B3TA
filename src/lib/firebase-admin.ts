@@ -26,8 +26,11 @@ const adminApp: App = !getApps().length
     })
   : getApp();
 
-export { adminApp };
-
+/**
+ * Gets the current user's ID on the server.
+ * This function is cached per request.
+ * @returns The user's UID from the session cookie, or null if not authenticated.
+ */
 export const getUserId = cache(async (): Promise<string | null> => {
   const sessionCookie = headers().get('__session')?.value;
   if (!sessionCookie) {
@@ -41,3 +44,6 @@ export const getUserId = cache(async (): Promise<string | null> => {
     return null;
   }
 });
+
+
+export { adminApp };

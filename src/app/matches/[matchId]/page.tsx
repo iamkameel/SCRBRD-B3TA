@@ -1,4 +1,5 @@
 
+'use server';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ import { getTeamRoster, isTeamManagerOrAdmin, getTeam } from '@/lib/actions/team
 import { getVehicles, getMatchTransportAssignments } from '@/lib/actions/transport';
 import type { RosterMember, PlayerStats, RosterMemberWithStats, Lineup, Team, School } from '@/lib/data';
 import { getPlayerStats } from '@/lib/actions/stats';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { getMatchForecast } from '@/lib/actions/analysis';
 import { getSchool } from '@/lib/actions/schools';
 

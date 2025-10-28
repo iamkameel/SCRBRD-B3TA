@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -143,7 +142,7 @@ export async function generateMatchReportAction(matchId: string) {
         const matchRef = doc(db, 'matches', matchId);
         await updateDoc(matchRef, { report: reportText });
     } catch (error) {
-        console.error(`Error saving report for match ${matchId}:`, error);
+        console.error("Error saving report for match " + matchId + ":", error);
         throw new Error("Could not save match report.");
     }
 
@@ -165,7 +164,7 @@ export async function getMatchForecastAction(matchId: string): Promise<MatchFore
         return forecast;
     } catch (error) {
         const message = error instanceof Error ? error.message : "An unexpected error occurred.";
-        console.error(`Error getting forecast for match ${matchId}:`, error);
+        console.error("Error getting forecast for match " + matchId + ":", error);
         return { error: message };
     }
 }
@@ -187,7 +186,7 @@ export async function generateMatchPreviewAction(matchId: string) {
         const matchRef = doc(db, 'matches', matchId);
         await updateDoc(matchRef, { preview: previewText });
     } catch (error) {
-        console.error(`Error saving preview for match ${matchId}:`, error);
+        console.error("Error saving preview for match " + matchId + ":", error);
         throw new Error("Could not save match preview.");
     }
 
@@ -222,7 +221,7 @@ export async function generateMatchCommentaryAction(matchId: string) {
         return { success: true, message: "Audio commentary generated successfully!" };
 
     } catch (error) {
-        console.error(`Error generating commentary for match ${matchId}:`, error);
+        console.error("Error generating commentary for match " + matchId + ":", error);
         if (error instanceof Error) throw error;
         throw new Error("Could not generate audio commentary.");
     }
@@ -266,7 +265,7 @@ export async function generateOppositionAnalysisAction(teamId: string): Promise<
         return analysisText;
 
     } catch (error) {
-        console.error(`Error generating opposition analysis for team ${teamId}:`, error);
+        console.error("Error generating opposition analysis for team " + teamId + ":", error);
         if (error instanceof Error) throw error;
         throw new Error("Could not generate opposition analysis.");
     }

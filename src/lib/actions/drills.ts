@@ -12,7 +12,7 @@ import { getUserId } from '@/lib/firebase-admin';
 
 export async function getDrills(): Promise<Drill[]> {
     // Drills are considered a shared resource for now, visible to all authenticated users.
-    // A check for \`userId\` could be added here if drills should be private.
+    // A check for `userId` could be added here if drills should be private.
     try {
         const snapshot = await getDocs(collection(db, 'drills'));
         const drills = snapshot.docs.map(doc => ({

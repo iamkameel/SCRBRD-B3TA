@@ -1,4 +1,5 @@
 
+'use server';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -8,7 +9,7 @@ import { getPerson, getPersonLinks, getPlayers } from '@/lib/actions/players';
 import { getPersonTeamAssignments, getTeams } from '@/lib/actions/teams';
 import { getPlayerStats, getPlayerMatchHistory } from '@/lib/actions/stats';
 import { Button } from '@/components/ui/button';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { getPlayerTrackerData } from '@/lib/actions/tracker';
 
 export default async function PersonDetailsPage({ params }: { params: { personId: string } }) {

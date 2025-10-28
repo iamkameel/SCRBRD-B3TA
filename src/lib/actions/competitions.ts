@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -71,7 +70,7 @@ export const getCompetition = cache(async (competitionId: string): Promise<Compe
       ...competitionSnap.data(),
     } as Competition;
   } catch (error) {
-    console.error(`Error fetching competition with ID ${competitionId}:`, error);
+    console.error("Error fetching competition with ID " + competitionId + ":", error);
     return null;
   }
 });
@@ -349,7 +348,7 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
     });
     return matchesList.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   } catch (error) {
-    console.error(`Error fetching matches for competition ${competitionId}:`, error);
+    console.error("Error fetching matches for competition " + competitionId + ":", error);
     return [];
   }
 }

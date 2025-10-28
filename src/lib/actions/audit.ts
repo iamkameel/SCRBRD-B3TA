@@ -29,7 +29,7 @@ export async function logAuditEvent(params: LogAuditEventParams) {
     
     const actor = await getPerson(actorId);
     if (!actor) {
-        console.warn(`Could not find person record for actorId: ${actorId}. Skipping log.`);
+        console.warn("Could not find person record for actorId: " + actorId + ". Skipping log.");
         return;
     }
 

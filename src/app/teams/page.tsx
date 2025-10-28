@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getTeams } from '@/lib/actions/teams';
