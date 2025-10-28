@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, Timesta
 import type { Season } from '@/lib/data';
 import { cache } from 'react';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/server-auth';
 
 
 const checkManagementPermission = async (userId: string) => {
@@ -56,7 +56,7 @@ export const getSeason = cache(async (seasonId: string): Promise<Season | null> 
       active: data.active,
     };
   } catch (error) {
-    console.error(`Error fetching season with ID ${seasonId}:`, error);
+    console.error("Error fetching season with ID " + seasonId + ":", error);
     return null;
   }
 });

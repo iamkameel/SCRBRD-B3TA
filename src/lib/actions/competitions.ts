@@ -13,7 +13,7 @@ import { getPlayerStats } from './stats';
 import { cache } from 'react';
 import { getPerson } from './players';
 import { getFields } from './fields';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);
@@ -348,7 +348,7 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
     });
     return matchesList.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
   } catch (error) {
-    console.error("Error fetching matches for competition " + competitionId + ":", error);
+    console.error(`Error fetching matches for competition ${competitionId}:`, error);
     return [];
   }
 }

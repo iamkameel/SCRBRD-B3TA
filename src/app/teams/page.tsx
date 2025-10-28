@@ -7,7 +7,7 @@ import { getDivisions } from '@/lib/actions/divisions';
 import { getSeasons } from '@/lib/actions/seasons';
 import TeamsClient from './client';
 import { getPerson, getPeopleByRole } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/server-auth';
 import type { Person } from '@/lib/data';
 
 export default async function TeamsPage() {

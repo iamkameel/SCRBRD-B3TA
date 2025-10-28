@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, Timestamp, doc, getDoc, limit } from 'firebase/firestore';
 import type { PlayerStats, PlayerMatchPerformance, Innings } from '@/lib/data';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 export async function getPlayerStats(personId: string, filters: { seasonId?: string, competitionId?: string } = {}): Promise<PlayerStats> {
     const userId = await getUserId();

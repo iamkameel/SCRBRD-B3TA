@@ -1,11 +1,11 @@
 
-
 'use server';
 
 import { z } from 'zod';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth } from 'firebase-admin/auth';
+import { adminApp } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { getPersonByEmail } from './players';
 import { ROLE_GROUPS } from '../roles';
@@ -57,8 +57,12 @@ export type SignupActionInput = z.infer<typeof signupActionSchema>;
 
 export async function signupUserAction(data: SignupActionInput): Promise<{ success: boolean; status: string }> {
     // 1. Create user in Firebase Auth. This will throw an error if the email is already in use.
-    const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-    const user = userCredential.user;
+    const userCredential = await getAuth(adminApp).createUser({
+        email: data.email,
+        password: data.password,
+        displayName: `${data.firstName} ${data.lastName}`,
+    });
+    const user = userCredential;
     
     // This is the crucial part: the Firestore document ID MUST match the Firebase Auth UID.
     const userDocRef = doc(db, 'people', user.uid);
@@ -109,8 +113,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     revalidatePath('/people');
     revalidatePath('/user-management');
     
-    // 4. Sign the user in to create a session
-    await signInWithEmailAndPassword(auth, data.email, data.password);
+    // 4. Sign the user in to create a session - THIS CANNOT BE DONE ON THE SERVER. The client will handle sign-in.
     
     return { success: true, status: profileData.status };
 }

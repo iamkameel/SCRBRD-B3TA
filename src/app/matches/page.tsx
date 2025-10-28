@@ -7,7 +7,7 @@ import { getTeams } from '@/lib/actions/teams';
 import { getFields } from '@/lib/actions/fields';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { getPerson, getPeopleByRole } from '@/lib/actions/players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 import type { Person } from '@/lib/data';
 
 export default async function MatchesPage() {

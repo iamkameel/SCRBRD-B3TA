@@ -9,7 +9,7 @@ import type { Vehicle, Person, TransportAssignment, FullTransportAssignment } fr
 import { getMatch, getMatches } from './matches';
 import { getPerson } from './players';
 import { cache } from 'react';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 import { isTeamManagerOrAdmin } from './teams';
 
 const checkManagementPermission = async (userId: string) => {

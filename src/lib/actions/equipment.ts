@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, writeBatch, Timestamp } from 'firebase/firestore';
 import type { EquipmentItem, FullEquipmentAssignment, Person } from '@/lib/data';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 export async function getEquipment(): Promise<EquipmentItem[]> {
   const userId = await getUserId();
