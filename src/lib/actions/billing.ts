@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Invoice } from '@/lib/data';
 import { getPerson } from './players';
 import { getSchool } from './schools';
-import { getUserId } from '../auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 const checkBillingPermission = async (userId: string) => {
     const user = await getPerson(userId);

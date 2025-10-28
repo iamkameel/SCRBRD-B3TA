@@ -1,8 +1,10 @@
 
+'use server';
+
 import { getAuditLogs } from '@/lib/actions/audit';
 import AuditLogClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 

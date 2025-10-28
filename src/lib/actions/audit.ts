@@ -6,7 +6,7 @@ import { collection, addDoc, Timestamp, getDocs, query } from 'firebase/firestor
 import { getPerson } from './players';
 import type { Person, AuditLog } from '../data';
 import { revalidatePath } from 'next/cache';
-import { getUserId } from '../auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 
 interface LogAuditEventParams {

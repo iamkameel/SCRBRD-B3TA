@@ -1,4 +1,5 @@
 
+'use server';
 
 import { getMatches } from '@/lib/actions/matches';
 import MatchesClient from './client';
@@ -6,7 +7,8 @@ import { getTeams } from '@/lib/actions/teams';
 import { getFields } from '@/lib/actions/fields';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { getPerson, getPeopleByRole } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
+import type { Person } from '@/lib/data';
 
 export default async function MatchesPage() {
   const [matches, teams, fields, competitions, userId] = await Promise.all([

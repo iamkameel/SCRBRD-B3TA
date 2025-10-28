@@ -1,7 +1,9 @@
 
+'use server';
+
 import StrategicCalendarClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { collection, getDocs, query, Timestamp } from 'firebase/firestore';
@@ -39,7 +41,7 @@ async function getAllMatches(): Promise<Match[]> {
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
         teamAColor: teamA?.teamColors?.primary,
-        teamBColor: teamB?.teamColors?.primary,
+        teamBColor: teamB?.teamColors?.secondary,
         teamALogoUrl: teamA?.logoUrl,
         teamBLogoUrl: teamB?.logoUrl,
         competitionType: data.competitionId ? competitionTypeMap.get(data.competitionId) : 'Friendlies',

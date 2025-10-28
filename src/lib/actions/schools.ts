@@ -9,7 +9,7 @@ import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage'
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch, Timestamp } from 'firebase/firestore';
 import type { School, Person, Team, Match } from '@/lib/data';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { getPerson } from './players';
 import { getPersonTeamAssignments, getTeams, getTeamsBySchool } from './teams';
 
@@ -31,13 +31,14 @@ export async function getSchools(): Promise<School[]> {
   let q;
 
   const activeRole = currentUser.activeRole;
-
+  
   if (activeRole === 'Admin') {
     q = query(schoolsCollection);
   } else if (activeRole === 'Sportsmaster' && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
     q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
   } else if (['Coach', 'Player', 'Team Manager'].includes(activeRole)) {
       const assignments = await getPersonTeamAssignments(userId);
+      const allTeams = await getTeams();
       
       // If the user has specific team assignments, only return those schools.
       if (assignments.length > 0) {
@@ -359,13 +360,14 @@ export async function getMatchesBySchool(schoolId: string): Promise<Match[]> {
       const teamA = teamInfoMap.get(data.teamAId);
       const teamB = teamInfoMap.get(data.teamBId);
       
-      uniqueMatchesMap.set(doc.id, {
+      const match = {
         matchId: doc.id,
         ...data,
         dateTime: (data.dateTime as Timestamp).toDate(),
         teamALogoUrl: teamA?.logoUrl,
         teamBLogoUrl: teamB?.logoUrl,
-      } as Match);
+      } as Match;
+      uniqueMatchesMap.set(doc.id, match);
   });
 
   return Array.from(uniqueMatchesMap.values()).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());

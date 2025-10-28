@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, Timesta
 import type { Season } from '@/lib/data';
 import { cache } from 'react';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 
 const checkManagementPermission = async (userId: string) => {

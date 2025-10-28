@@ -1,9 +1,10 @@
 
+'use server';
 
 import { getSeasons } from '@/lib/actions/seasons';
 import SeasonsClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 export default async function SeasonsPage() {
   const seasons = await getSeasons();

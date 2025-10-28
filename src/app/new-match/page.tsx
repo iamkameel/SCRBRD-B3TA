@@ -1,4 +1,5 @@
 
+'use server';
 
 import { getTeams } from '@/lib/actions/teams';
 import { getCompetitions } from '@/lib/actions/competitions';

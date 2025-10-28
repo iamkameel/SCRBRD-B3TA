@@ -1,7 +1,9 @@
 
+'use server';
+
 import { getPlayers, getPerson } from '@/lib/actions/players';
 import PeopleClient from './client';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 import { getSchools } from '@/lib/actions/schools';
 import { getTeams } from '@/lib/actions/teams';
 import { getDivisions } from '@/lib/actions/divisions';

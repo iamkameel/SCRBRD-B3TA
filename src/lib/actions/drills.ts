@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Drill } from '@/lib/data';
 import { cache } from 'react';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 export async function getDrills(): Promise<Drill[]> {
     // Drills are considered a shared resource for now, visible to all authenticated users.

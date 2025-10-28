@@ -1,10 +1,12 @@
 
+'use server';
+
 import UserManagementClient from './client';
 import { getPlayers } from '@/lib/actions/players';
 import { getPerson } from '@/lib/actions/players';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 
 export default async function UserManagementPage() {

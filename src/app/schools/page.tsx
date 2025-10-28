@@ -1,9 +1,10 @@
 
+'use server';
 
 import { getSchools } from '@/lib/actions/schools';
 import SchoolsClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 export default async function SchoolsPage() {
   const [schools, userId] = await Promise.all([

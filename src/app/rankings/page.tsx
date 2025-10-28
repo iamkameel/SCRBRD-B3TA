@@ -1,4 +1,5 @@
 
+'use server';
 
 import { getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
 import { getDivisions } from '@/lib/actions/divisions';
