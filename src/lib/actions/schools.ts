@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,9 +8,9 @@ import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage'
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch, Timestamp } from 'firebase/firestore';
 import type { School, Person, Team, Match } from '@/lib/data';
 import { cache } from 'react';
-import { getUserId } from '@/lib/firebase-admin';
 import { getPerson } from './players';
 import { getPersonTeamAssignments, getTeams, getTeamsBySchool } from './teams';
+import { getUserId } from '@/lib/server-auth';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);
