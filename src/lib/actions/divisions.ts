@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Division } from '@/lib/data';
 import { cache } from 'react';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/server-auth';
+import { getUserId } from '@/lib/firebase-admin';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);
