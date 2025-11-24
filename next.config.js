@@ -4,12 +4,9 @@ const withPWAInit = require('@ducanh2912/next-pwa').default;
 const withPWA = withPWAInit({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
 });
 
 const nextConfig = {
-  /* config options here */
   experimental: {
     serverComponentsExternalPackages: ['genkit'],
   },
@@ -21,12 +18,12 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'placehold.co', port: '', pathname: '/**' },
-      { protocol: 'https', hostname: 'firebasestorage.googleapis.com', port: '', pathname: '/**' },
-      { protocol: 'https', hostname: 'maverickdesign.co.za', port: '', pathname: '/**' },
-      { protocol: 'https', hostname: 'firebasestudio-hosting.web.app', port: '', pathname: '/**' },
-      { protocol: 'https', hostname: 'picsum.photos', port: '', pathname: '/**' },
-      { protocol: 'https', hostname: 'tile.openstreetmap.org', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'placehold.co' },
+      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
+      { protocol: 'https', hostname: 'maverickdesign.co.za' },
+      { protocol: 'https', hostname: 'firebasestudio-hosting.web.app' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: 'tile.openstreetmap.org' },
     ],
   },
 };
