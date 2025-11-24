@@ -1,8 +1,10 @@
 
+
 export const ROLE_GROUPS = [
   { 
     group: "Administrative", 
     roles: [ 
+      { id: "System Architect", label: "System Architect", description: "The primary architect of the system with unparalleled access and control over all system functionalities, including administrative and user management settings." },
       { id: "Admin", label: "Admin", description: "Has full system access. Can manage all data including users, schools, and system-wide settings. Intended for the highest level of control." }, 
       { id: "Sportsmaster", label: "Sportsmaster", description: "Oversees multiple schools or a district. Manages competitions, teams, and personnel within their assigned scope. Reviews and approves assignment requests." },
       { id: "School Admin", label: "School Admin", description: "Manages all aspects of a single school, including assigning coaches and managing teams associated with that school." } 
