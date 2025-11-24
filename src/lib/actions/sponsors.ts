@@ -18,8 +18,6 @@ const checkManagementPermission = async (userId: string) => {
 }
 
 export async function getSponsors(): Promise<Sponsor[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const sponsorsCollection = collection(db, 'sponsors');
     const q = query(sponsorsCollection);

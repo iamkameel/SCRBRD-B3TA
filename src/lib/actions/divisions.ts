@@ -8,7 +8,7 @@ import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, 
 import type { Division } from '@/lib/data';
 import { cache } from 'react';
 import { getPerson } from './players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);
@@ -87,7 +87,6 @@ export async function addDivisionAction(data: DivisionFormValues) {
   try {
     await addDoc(collection(db, 'divisions'), {
       name: name,
-      userId: userId,
     });
   } catch (error) {
     console.error("Error adding document: ", error);

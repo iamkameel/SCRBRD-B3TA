@@ -18,8 +18,6 @@ const checkManagementPermission = async (userId: string) => {
 }
 
 export async function getTransactions(): Promise<Transaction[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const transactionsCollection = collection(db, 'financials');
     const q = query(transactionsCollection);

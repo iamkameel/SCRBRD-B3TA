@@ -10,8 +10,6 @@ import { getPerson } from './players';
 import { getUserId } from '@/lib/server-auth';
 
 export async function getEquipment(): Promise<EquipmentItem[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const q = query(collection(db, 'equipment'));
     const snapshot = await getDocs(q);
@@ -165,8 +163,6 @@ export async function returnEquipmentAction(assignmentId: string) {
 }
 
 export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignment[]> {
-    const userId = await getUserId();
-    if (!userId) return [];
     try {
         const q = query(collection(db, 'equipmentAssignments'));
         const snapshot = await getDocs(q);

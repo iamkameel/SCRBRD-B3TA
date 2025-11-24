@@ -1,5 +1,5 @@
 
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
 import { headers } from 'next/headers';
 import { cache } from 'react';
@@ -11,9 +11,11 @@ import { cache } from 'react';
 const appName = 'firebase-admin-app-scrbd';
 
 function getAdminApp(): admin.app.App {
-    const existingApp = admin.apps.find(app => app?.name === appName);
-    if (existingApp) {
-        return existingApp;
+    if (admin.apps.length > 0) {
+        const existingApp = admin.apps.find(app => app?.name === appName);
+        if (existingApp) {
+            return existingApp;
+        }
     }
     const options: admin.AppOptions = {
         credential: admin.credential.applicationDefault(),
