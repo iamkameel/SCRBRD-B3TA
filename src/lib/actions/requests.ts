@@ -9,7 +9,7 @@ import { getPerson } from './players';
 import { getTeamRoster, addPlayerToRosterAction } from './teams';
 import type { AssignmentRequest } from '../data';
 import { cache } from 'react';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 
 const requestSchema = z.object({
