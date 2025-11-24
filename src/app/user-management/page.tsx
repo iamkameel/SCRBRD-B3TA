@@ -6,7 +6,7 @@ import { getPlayers } from '@/lib/actions/players';
 import { getPerson } from '@/lib/actions/players';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 
 export default async function UserManagementPage() {

@@ -4,7 +4,7 @@
 import SettingsClient from './client';
 import { getPersonByEmail, getPerson } from '@/lib/actions/players';
 import type { Person } from '@/lib/data';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 export default async function SettingsPage() {
   // In a real app, you would fetch the currently logged-in user.

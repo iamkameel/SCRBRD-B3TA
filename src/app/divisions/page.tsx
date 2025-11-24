@@ -4,7 +4,7 @@
 import { getDivisions } from '@/lib/actions/divisions';
 import DivisionsClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 export default async function DivisionsPage() {
   const divisions = await getDivisions();

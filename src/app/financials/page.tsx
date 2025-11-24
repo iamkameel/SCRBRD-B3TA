@@ -4,7 +4,7 @@
 import FinancialsClient from './client';
 import { getTransactions } from '@/lib/actions/financials';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/firebase-admin';
+import { getUserId } from '@/lib/server-auth';
 
 export default async function FinancialsPage() {
   const transactions = await getTransactions();
