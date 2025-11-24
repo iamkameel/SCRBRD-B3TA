@@ -5,7 +5,6 @@ import * as admin from 'firebase-admin';
 
 // This file is intended for server-side Firebase Admin SDK initialization only.
 // Do not export anything other than the `adminApp` instance.
-// Functions that need to use this should be in their own 'use server' files.
 
 const appName = 'firebase-admin-app-scrbd';
 

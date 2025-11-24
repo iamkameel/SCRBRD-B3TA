@@ -3,7 +3,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { db, app } from '@/lib/firebase';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { Person, PlayerDevelopmentPlanOutput, Match, PersonSkills, TechnicalSkills, MentalSkills, PhysicalSkills } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
