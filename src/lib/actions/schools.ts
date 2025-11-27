@@ -247,7 +247,7 @@ export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
     } as Person));
     return staffList;
   } catch (error) {
-    console.error(`Error fetching staff for school ${schoolId}:`, error);
+    console.error('Error fetching staff for school ${schoolId}:', error);
     return [];
   }
 }
