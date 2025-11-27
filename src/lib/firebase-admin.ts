@@ -15,8 +15,23 @@ function getAdminApp(): admin.app.App {
             return existingApp;
         }
     }
+
+    let credential;
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        try {
+            const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+            credential = admin.credential.cert(serviceAccount);
+        } catch (error) {
+            console.error('Error parsing GOOGLE_APPLICATION_CREDENTIALS_JSON:', error);
+            // Fallback to application default if parsing fails
+            credential = admin.credential.applicationDefault();
+        }
+    } else {
+        credential = admin.credential.applicationDefault();
+    }
+    
     const options: admin.AppOptions = {
-        credential: admin.credential.applicationDefault(),
+        credential,
     };
     return admin.initializeApp(options, appName);
 }
