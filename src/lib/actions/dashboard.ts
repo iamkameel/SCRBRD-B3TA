@@ -2,114 +2,32 @@
 
 'use server';
 
-import type { Person, Team, PlayerStats, TeamStats, LeaderboardPlayer, StandingTeam, Match, Field, Competition, AssignmentRequest, TrainingSession, Division } from '@/lib/data';
-import { getPlayers, getPerson, getPersonLinks } from './players';
-import { getTeams, getTeamStats, getTeamRoster, getPersonTeamAssignments, getTeamMatches, getTeamsByDivision } from './teams';
-import { getPlayerStats } from './stats';
-import { getFieldsForGroundskeeper, getFields } from './fields';
+import { getLeaderboards as getLeaderboardsFromService, getTeamStandings as getTeamStandingsFromService } from '@/lib/services/stats-service';
+import type { StandingTeam, LeaderboardPlayer, Team, Match, Field, Competition, AssignmentRequest, TrainingSession, Person } from '@/lib/data';
+import { getTeams } from './teams';
 import { getMatches, getMatchLineup } from './matches';
+import { getFieldsForGroundskeeper, getFields } from './fields';
 import { getCompetitions } from './competitions';
 import { getPendingAssignmentRequests } from './requests';
 import { getSessionsByTeam } from './sessions';
 import { cache } from 'react';
-import { getSchools } from './schools';
-import { getMatchTransportAssignments, getVehicles } from './transport';
-import { getUserId } from '@/lib/firebase-admin';
+import { getPlayers, getPersonTeamAssignments, getPerson } from './players';
+import { getVehicles } from './transport';
+import { getUserId } from '@/lib/server-auth';
 
-
+// Wrapper functions to maintain the existing public API for the dashboard
 export async function getLeaderboards(filters: { divisionId?: string; teamClass?: string; seasonId?: string; competitionId?: string; teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
-    let players: Person[];
-
-    if (filters.teamId) {
-        const roster = await getTeamRoster(filters.teamId);
-        const playerPromises = roster.filter(m => m.role === 'Player').map(m => getPerson(m.personId));
-        players = (await Promise.all(playerPromises)).filter((p): p is Person => p !== null);
-    } else {
-        const teams = await getTeamsByDivision(filters.divisionId);
-        const teamsToConsider = filters.teamClass ? teams.filter(t => t.teamClass === filters.teamClass) : teams;
-
-        const playerIds = new Set<string>();
-        for(const team of teamsToConsider) {
-            const roster = await getTeamRoster(team.teamId);
-            roster.forEach(member => {
-                if(member.role === 'Player') playerIds.add(member.personId);
-            });
-        }
-        
-        if (playerIds.size === 0) {
-            return { topRunScorers: [], topWicketTakers: [] };
-        }
-
-        const playerPromises = Array.from(playerIds).map(id => getPerson(id));
-        players = (await Promise.all(playerPromises)).filter((p): p is Person => p !== null);
-    }
-    
-    const playersWithStats: LeaderboardPlayer[] = await Promise.all(
-        players.map(async (player) => {
-            const stats = await getPlayerStats(player.personId, { seasonId: filters.seasonId, competitionId: filters.competitionId });
-            return { ...player, stats };
-        })
-    );
-
-    const topRunScorers = [...playersWithStats]
-        .filter(p => p.stats.totalRuns > 0)
-        .sort((a, b) => b.stats.totalRuns - a.stats.totalRuns)
-        .slice(0, 5);
-
-    const topWicketTakers = [...playersWithStats]
-        .filter(p => p.stats.wicketsTaken > 0)
-        .sort((a, b) => b.stats.wicketsTaken - a.stats.wicketsTaken || a.stats.bowlingAverage - b.stats.bowlingAverage)
-        .slice(0, 5);
-        
-    return { topRunScorers, topWicketTakers };
+    return getLeaderboardsFromService(filters);
 }
 
 export async function getTeamStandings(divisionId?: string, teamClass?: string): Promise<StandingTeam[]> {
-    const teamsInDivision = divisionId ? await getTeamsByDivision(divisionId) : await getTeams();
-    const teams = teamClass ? teamsInDivision.filter(t => t.teamClass === teamClass) : teamsInDivision;
-
-    const teamsWithStats: StandingTeam[] = await Promise.all(
-        teams.map(async (team) => {
-            const stats = await getTeamStats(team.teamId);
-            return { ...team, stats };
-        })
-    );
-
-    const sortedStandings = teamsWithStats.sort((a, b) => {
-        if (b.stats.matchesWon !== a.stats.matchesWon) {
-            return b.stats.matchesWon - a.stats.matchesWon;
-        }
-        return b.stats.netRunRate - a.stats.netRunRate;
-    });
-
-    return sortedStandings;
+    return getTeamStandingsFromService(divisionId, teamClass);
 }
 
 export async function getTeamLeaderboard(teamId: string): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
-    const roster = await getTeamRoster(teamId);
-    const playersInRoster = await Promise.all(
-        roster.filter(m => m.role === 'Player').map(m => getPerson(m.personId))
-    );
-
-    const playersWithStats: LeaderboardPlayer[] = await Promise.all(
-        playersInRoster.filter((p): p is Person => p !== null).map(async (player) => {
-            const stats = await getPlayerStats(player.personId);
-            return { ...player, stats };
-        })
-    );
-
-    const topRunScorers = [...playersWithStats]
-        .filter(p => p.stats.totalRuns > 0)
-        .sort((a, b) => b.stats.totalRuns - a.stats.totalRuns)
-        .slice(0, 5);
-
-    const topWicketTakers = [...playersWithStats]
-        .filter(p => p.stats.wicketsTaken > 0)
-        .sort((a, b) => b.stats.wicketsTaken - a.stats.wicketsTaken || a.stats.bowlingAverage - b.stats.bowlingAverage)
-        .slice(0, 5);
-        
-    return { topRunScorers, topWicketTakers };
+    return getLeaderboardsFromService({ teamId });
 }
+
 
 export async function getAdminDashboardData() {
     const [

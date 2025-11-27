@@ -3,7 +3,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getLeaderboards, getTeamStandings } from '@/lib/actions/dashboard';
+import { getLeaderboards, getTeamStandings } from '@/lib/services/stats-service';
 import { getSeasons } from '@/lib/actions/seasons';
 import { getCompetitions } from '@/lib/actions/competitions';
 import { getTeams } from '@/lib/actions/teams';
