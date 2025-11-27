@@ -2,7 +2,7 @@
 'use server';
 
 import { getCompetitions } from './competitions';
-import { getLeaderboards } from './dashboard';
+import { getLeaderboards } from '../services/stats-service';
 import type { Competition, LeaderboardPlayer, AwardsData } from '@/lib/data';
 
 export async function getAwardsData(): Promise<AwardsData> {

@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getLeaderboards as getLeaderboardsFromService, getTeamStandings as getTeamStandingsFromService } from '@/lib/services/stats-service';
@@ -12,7 +11,7 @@ import { getPendingAssignmentRequests } from './requests';
 import { getSessionsByTeam } from './sessions';
 import { cache } from 'react';
 import { getPlayers, getPersonTeamAssignments, getPerson } from './players';
-import { getVehicles } from './transport';
+import { getVehicles, getMatchTransportAssignments } from './transport';
 import { getUserId } from '@/lib/server-auth';
 
 // Wrapper functions to maintain the existing public API for the dashboard

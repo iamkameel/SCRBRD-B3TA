@@ -163,3 +163,4 @@ export async function deleteDivisionAction(divisionId: string) {
   revalidatePath('/divisions');
   revalidatePath('/teams');
 }
+

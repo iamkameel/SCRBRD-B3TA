@@ -116,3 +116,4 @@ export async function deleteDrillAction(drillId: string) {
 
   revalidatePath('/drills');
 }
+

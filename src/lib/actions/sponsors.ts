@@ -120,3 +120,4 @@ export async function deleteSponsorAction(sponsorId: string) {
 
   revalidatePath('/sponsors');
 }
+

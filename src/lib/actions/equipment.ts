@@ -195,3 +195,4 @@ export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignm
         return [];
     }
 }
+
