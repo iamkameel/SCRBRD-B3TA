@@ -3,7 +3,7 @@
 
 import { getLeaderboards as getLeaderboardsFromService, getTeamStandings as getTeamStandingsFromService } from '@/lib/services/stats-service';
 import type { StandingTeam, LeaderboardPlayer, Team, Match, Field, Competition, AssignmentRequest, TrainingSession, Person } from '@/lib/data';
-import { getTeams } from './teams';
+import { getTeams, isTeamManagerOrAdmin } from './teams';
 import { getMatches, getMatchLineup } from './matches';
 import { getFieldsForGroundskeeper, getFields } from './fields';
 import { getCompetitions } from './competitions';
@@ -13,6 +13,7 @@ import { cache } from 'react';
 import { getPlayers, getPersonTeamAssignments, getPerson } from './players';
 import { getVehicles, getMatchTransportAssignments } from './transport';
 import { getUserId } from '@/lib/server-auth';
+import { getSchools } from './schools';
 
 // Wrapper functions to maintain the existing public API for the dashboard
 export async function getLeaderboards(filters: { divisionId?: string; teamClass?: string; seasonId?: string; competitionId?: string; teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
@@ -288,7 +289,7 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
                 const now = new Date();
                 nextMatch = teamMatches
                     .filter(m => m.status === 'scheduled' && m.dateTime >= now)
-                    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0] || null;
+                    .sort((a, b) => a.date.getTime() - b.date.getTime())[0] || null;
             }
             
             return {

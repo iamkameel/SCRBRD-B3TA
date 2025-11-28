@@ -10,7 +10,7 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, 
 import type { Team, RosterMember, TeamStats, Match, Innings, PlayerTeamAssignment, Person, Division, School } from '@/lib/data';
 import { getPlayers, getPerson } from './players';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/server-auth';
 import { getDivisions } from './divisions';
 import { logAuditEvent } from './audit';
 import { getSchool } from './schools';

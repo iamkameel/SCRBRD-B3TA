@@ -14,11 +14,19 @@ The SCRBRD platform integrates a dynamic and interactive Wagon Wheel component t
 
 ### 2.1. Interactive Live Scoring
 
-The most innovative aspect of SCRBRD's Wagon Wheel is its role in the **Live Scoring Interface**. Instead of manually typing in scoring regions, umpires and scorers can simply **tap on the wheel** where the ball was hit.
+The most innovative aspect of SCRBRD's Wagon Wheel is its role in the **Live Scoring Interface** (`src/app/matches/[matchId]/live-scoring-interface.tsx`). Instead of manually typing in scoring regions, umpires and scorers can simply **tap on the wheel** where the ball was hit. This interaction creates a seamless and intuitive data entry workflow.
 
--   **Intuitive Data Entry**: Tapping a location on the field instantly records the shot's angle and distance.
--   **Scoring Dialog**: After the location is tapped, a dialog appears allowing the scorer to input the result of that specific shot (e.g., 1 run, 4 runs, Wicket).
--   **Real-time Visualization**: As each shot is recorded, a corresponding line appears on the wheel, building the visualization ball-by-ball. This provides immediate visual feedback and a richer scoring experience.
+-   **1. User Interaction**: The scorer taps a location on the interactive `<WagonWheel>` component. The component is configured to listen for these click/tap events.
+
+-   **2. Data Capture**: Upon a tap, the component's `onShotSelect` handler calculates the precise `angle` and `distance` of the tap relative to the center of the wheel. This data represents the shot's placement.
+
+-   **3. State Update**: The `live-scoring-interface` component receives this shot data and stores it in its local state. This action triggers the opening of the `<ScoringDialog>`.
+
+-   **4. Scoring Dialog**: The scoring dialog appears, allowing the scorer to input the result of that specific shot (e.g., 1 run, 4 runs, Wicket, No Ball).
+
+-   **5. Data Submission**: When the scorer confirms the outcome in the dialog, the complete event data (including the angle, distance, and run/dismissal details) is sent to a server action (`recordBallAction`) for processing and saving to the database.
+
+-   **6. Real-time Visualization**: As each shot is recorded and the page data is updated, a corresponding line appears on the wheel, building the visualization ball-by-ball. This provides immediate visual feedback and a richer scoring experience.
 
 This method is not only faster and more intuitive than traditional scoring but also captures precise shot-placement data that is crucial for advanced analysis.
 
