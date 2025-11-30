@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -99,16 +98,22 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
       if (mode === 'edit' && person) {
         form.reset({
           ...person,
-          phone: person.phone ?? '',
-          profileImageUrl: person.profileImageUrl ?? '',
+          displayName: person.displayName || '',
+          phone: person.phone || '',
+          profileImageUrl: person.profileImageUrl || '',
           assignedSchoolId: person.assignedSchools?.[0] || undefined,
           qualifications: person.qualifications || [],
           physicalAttributes: person.physicalAttributes || {},
+          biography: person.biography || '',
+          emergencyContact: person.emergencyContact || { name: '', relation: '', phone: '' },
           dateOfBirth: person.dateOfBirth ? new Date(person.dateOfBirth) : undefined,
         });
       } else {
         form.reset({
-          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: undefined, dateOfBirth: undefined
+          firstName: "", lastName: "", email: "", phone: "", profileImageUrl: "", roles: ["Player"], activeRole: "Player", assignedSchoolId: undefined, dateOfBirth: undefined,
+          displayName: '', biography: '', qualifications: [],
+          physicalAttributes: { battingHand: undefined, bowlingHand: undefined, bowlingStyles: [], heightCm: undefined, weightKg: undefined },
+          emergencyContact: { name: '', relation: '', phone: '' },
         });
       }
     }
@@ -182,9 +187,9 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                                 <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
                                   <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
                                     <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
-                                        const newRoles = checked ? [...field.value, item.id] : field.value?.filter((v) => v !== item.id);
+                                        const newRoles = checked ? [...(field.value || []), item.id] : (field.value || []).filter((v) => v !== item.id);
                                         field.onChange(newRoles);
-                                        if (newRoles && !newRoles.includes(form.getValues('activeRole'))) { form.setValue('activeRole', newRoles[0]); }
+                                        if (newRoles && !newRoles.includes(form.getValues('activeRole') || '')) { form.setValue('activeRole', newRoles[0]); }
                                     }} disabled={isDisabled} /></FormControl>
                                     <FormLabel className="font-normal">{item.label}</FormLabel>
                                   </FormItem>

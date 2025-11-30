@@ -66,7 +66,16 @@ export function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add'
       if (mode === 'edit' && school) {
         form.reset({
             ...school,
+            abbreviation: school.abbreviation || '',
+            motto: school.motto || '',
+            principal: school.principal || '',
+            website: school.website || '',
+            phone: school.phone || '',
+            location: school.location || '',
+            logoUrl: school.logoUrl || '',
             establishmentYear: school.establishmentYear || '',
+            socialMedia: school.socialMedia || { facebook: '', twitter: '', instagram: '', youtube: '' },
+            brandColors: school.brandColors || { primary: '#000000', secondary: '#ffffff' },
         });
         setLogoPreview(school.logoUrl || null);
       } else {
@@ -131,7 +140,7 @@ export function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add'
               <div className="p-1">
                 <TabsContent value="general" className="space-y-4">
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>School Name</FormLabel><FormControl><Input placeholder="e.g. Greenwood High" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="abbreviation" render={({ field }) => (<FormItem><FormLabel>Abbreviation (Optional)</FormLabel><FormControl><Input placeholder="e.g. GHS" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="principal" render={({ field }) => (<FormItem><FormLabel>Principal / Headmaster (Optional)</FormLabel><FormControl><Input placeholder="e.g. Mr. John Smith" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="establishmentYear" render={({ field }) => (<FormItem><FormLabel>Year Established (Optional)</FormLabel><FormControl><Input type="number" placeholder="e.g. 1955" {...field} value={field.value ?? ''} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                 </TabsContent>
@@ -173,8 +182,8 @@ export function SchoolDialog({ mode, school, open, onOpenChange }: { mode: 'add'
                   <Separator />
 
                   <div className="grid grid-cols-2 gap-4">
-                      <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? ''} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? ''} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="brandColors.primary" render={({ field }) => (<FormItem><FormLabel>Primary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? '#000000'} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="brandColors.secondary" render={({ field }) => (<FormItem><FormLabel>Secondary Color</FormLabel><FormControl><Input type="color" {...field} value={field.value ?? '#ffffff'} disabled={isPending} className="p-1 h-10" /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                 </TabsContent>
               </div>
