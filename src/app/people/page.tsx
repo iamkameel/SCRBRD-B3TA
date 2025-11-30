@@ -7,7 +7,7 @@ import { getUserId } from '@/lib/server-auth';
 import { getSchools } from '@/lib/actions/schools';
 import { getTeams } from '@/lib/actions/teams';
 import { getDivisions } from '@/lib/actions/divisions';
-import { collection, getDocs, query, where, documentId } from 'firebase/firestore';
+import { collection, getDocs, query, where, documentId, collectionGroup } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { differenceInYears } from 'date-fns';
 import type { Person, Team } from '@/lib/data';
