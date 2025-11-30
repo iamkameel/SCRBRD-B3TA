@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -107,4 +106,3 @@ export async function addInvoiceAction(data: InvoiceFormValues) {
   
   revalidatePath('/billing');
 }
-

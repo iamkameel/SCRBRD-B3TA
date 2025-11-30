@@ -1,4 +1,5 @@
 
+
 import {
     LayoutDashboard, Users, User, Bus, CalendarDays, MapPin, Building, Trophy, ClipboardList, Database,
     Shield, UserCog, GitCompareArrows, Medal, Camera, Handshake, Landmark, Backpack,
@@ -262,6 +263,7 @@ const spectatorNavGroups = [
 
 export function getNavConfig(role: string) {
     switch (role) {
+        case 'System Architect':
         case 'Admin':
             return { topLevel: topLevelNavItems, groups: adminNavGroups };
         case 'Sportsmaster':
