@@ -27,7 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
       setUser(firebaseUser);
       if (firebaseUser) {
         // Direct fetch to ensure profile is loaded on initial login or page refresh
