@@ -211,7 +211,7 @@ export function Header() {
                         </Link>
                     </div>
                     <ScrollArea className="flex-1">
-                        <nav className="grid gap-1 p-4 text-base font-medium">
+                        <nav className="grid gap-1 p-2 text-base font-medium">
                             {topLevelNavItems.map((item) => {
                                 const isActive = pathname === item.href;
                                 return (
@@ -232,8 +232,14 @@ export function Header() {
                             
                             <Accordion type="multiple" defaultValue={defaultOpenItems} className="w-full">
                                 {navGroups.map((group) => {
-                                    if (group.adminOnly && activeRole !== 'Admin') return null;
-                                    const visibleItems = group.items.filter(item => !(item.adminOnly && activeRole !== 'Admin'));
+                                    const isAdminRole = activeRole === 'Admin' || activeRole === 'System Architect';
+                                    const isSportsmaster = activeRole === 'Sportsmaster';
+                                    if (group.adminOnly && !isAdminRole) return null;
+                                    
+                                    const visibleItems = group.items.filter(item => {
+                                        if (item.adminOnly && !isAdminRole && !isSportsmaster) return false;
+                                        return true;
+                                    });
                                     if (visibleItems.length === 0) return null;
                                     
                                     return (

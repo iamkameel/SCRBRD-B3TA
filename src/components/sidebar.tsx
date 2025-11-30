@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -61,10 +62,18 @@ export function Sidebar() {
           
           <Accordion type="multiple" defaultValue={defaultOpenItems} className="w-full">
               {navGroups.map((group) => {
-                  if (group.adminOnly && activeRole !== 'Admin') {
+                  const isAdminRole = activeRole === 'Admin' || activeRole === 'System Architect';
+                  const isSportsmaster = activeRole === 'Sportsmaster';
+
+                  if (group.adminOnly && !isAdminRole && !isSportsmaster) {
                       return null;
                   }
-                  const visibleItems = group.items.filter(item => !(item.adminOnly && activeRole !== 'Admin'));
+                  
+                  const visibleItems = group.items.filter(item => {
+                      if (item.adminOnly && !isAdminRole && !isSportsmaster) return false;
+                      return true;
+                  });
+
                   if (visibleItems.length === 0) return null;
 
                   return (
