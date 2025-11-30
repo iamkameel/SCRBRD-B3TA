@@ -27,35 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setLoading(true);
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        // The key fix: Use the user's UID to listen for their profile document.
-        const personRef = doc(db, "people", firebaseUser.uid);
-        const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
-            const activeRole = data.activeRole && roles.includes(data.activeRole) 
-                ? data.activeRole 
-                : roles[0];
-
-            setPerson({ 
-                personId: docSnap.id, 
-                ...data,
-                roles,
-                activeRole, 
-                dateOfBirth: data.dateOfBirth?.toDate() 
-            } as Person);
-          } else {
-            console.warn(`No person document found for UID: ${firebaseUser.uid}. This might happen before profile creation.`);
-            setPerson(null);
-          }
-          setLoading(false);
-        });
-        return () => unsubscribeSnapshot();
-      } else {
-        setUser(null);
+      setUser(firebaseUser);
+      if (!firebaseUser) {
         setPerson(null);
         setLoading(false);
       }
@@ -63,6 +36,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => unsubscribeAuth();
   }, []);
+
+  React.useEffect(() => {
+    if (user === undefined) return;
+
+    let unsubscribeSnapshot: () => void = () => {};
+
+    if (user) {
+      const personRef = doc(db, 'people', user.uid);
+      unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+           const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
+           const activeRole = data.activeRole && roles.includes(data.activeRole) 
+                ? data.activeRole 
+                : roles[0];
+          setPerson({ 
+            personId: docSnap.id, 
+            ...data, 
+            roles,
+            activeRole,
+            dateOfBirth: data.dateOfBirth?.toDate() 
+          } as Person);
+        } else {
+          setPerson(null);
+        }
+        setLoading(false);
+      });
+    } else {
+      setPerson(null);
+      setLoading(false);
+    }
+
+    return () => unsubscribeSnapshot();
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, person, loading }}>
