@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -130,7 +131,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 }
 
 
-export async function migrateSampleDataAction(): Promise<{ success: boolean; message: string }> {
+export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
     const actorId = await getUserId();
     if (!actorId) {
         return { success: false, message: "Admin user not found. Please ensure an admin account exists or sign up before migrating data." };
@@ -573,3 +574,4 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
     }
 }
 
+    

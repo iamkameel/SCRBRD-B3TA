@@ -131,7 +131,7 @@ export const getField = cache(async (fieldId: string): Promise<Field | null> => 
     return field;
 
   } catch (error) {
-    console.error(`Error fetching field with ID ${fieldId}:`, error);
+    console.error("Error fetching field with ID " + fieldId + ":", error);
     return null;
   }
 });
@@ -353,3 +353,5 @@ export async function updateFieldStatusAction(fieldId: string, status: z.infer<t
         throw new Error("Could not update field status.");
     }
 }
+
+    
