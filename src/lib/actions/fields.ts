@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -7,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
 import type { Field, FieldAssignment, Person } from '@/lib/data';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/server-auth';
 import { getPerson } from './players';
 
 const checkManagementPermission = async (userId: string) => {
@@ -319,7 +320,7 @@ export async function getFieldsForGroundskeeper(personId: string): Promise<Field
 const fieldStatusSchema = z.enum(['Available', 'Maintenance', 'Closed']);
 export async function updateFieldStatusAction(fieldId: string, status: z.infer<typeof fieldStatusSchema>) {
     const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
+    if (!userId) throw new Error("User not authenticated.");
 
     const person = await getPerson(userId);
     if (!person || !person.roles.includes('Grounds-Keeper')) {
