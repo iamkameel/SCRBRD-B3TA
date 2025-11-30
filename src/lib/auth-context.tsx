@@ -26,47 +26,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       setUser(firebaseUser);
-      if (!firebaseUser) {
+      if (firebaseUser) {
+        // Direct fetch to ensure profile is loaded on initial login or page refresh
+        const personRef = doc(db, 'people', firebaseUser.uid);
+        const personSnap = await getDoc(personRef);
+        if (personSnap.exists()) {
+          const data = personSnap.data();
+          const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
+          const activeRole = data.activeRole && roles.includes(data.activeRole) 
+                ? data.activeRole 
+                : roles[0];
+          setPerson({
+            personId: personSnap.id,
+            ...data,
+            roles,
+            activeRole,
+            dateOfBirth: data.dateOfBirth?.toDate()
+          } as Person);
+        } else {
+          // This can happen briefly after signup before the Firestore document is created
+          console.warn("User authenticated but no Firestore profile found. Waiting for creation...");
+          setPerson(null);
+        }
+      } else {
         setPerson(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribeAuth();
   }, []);
 
   React.useEffect(() => {
-    if (user === undefined) return;
+    if (!user) {
+        setPerson(null);
+        return;
+    }
 
-    let unsubscribeSnapshot: () => void = () => {};
-
-    if (user) {
-      const personRef = doc(db, 'people', user.uid);
-      unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
+    // Set up a real-time listener for profile updates after the initial fetch
+    const personRef = doc(db, 'people', user.uid);
+    const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
         if (docSnap.exists()) {
-          const data = docSnap.data();
-           const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
-           const activeRole = data.activeRole && roles.includes(data.activeRole) 
+            const data = docSnap.data();
+            const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
+            const activeRole = data.activeRole && roles.includes(data.activeRole) 
                 ? data.activeRole 
                 : roles[0];
-          setPerson({ 
-            personId: docSnap.id, 
-            ...data, 
-            roles,
-            activeRole,
-            dateOfBirth: data.dateOfBirth?.toDate() 
-          } as Person);
+
+            setPerson(prevPerson => {
+                const newPerson = { 
+                    personId: docSnap.id, 
+                    ...data,
+                    roles,
+                    activeRole,
+                    dateOfBirth: data.dateOfBirth?.toDate() 
+                } as Person;
+
+                // Avoid unnecessary state updates if the core data hasn't changed.
+                if (JSON.stringify(prevPerson) === JSON.stringify(newPerson)) {
+                    return prevPerson;
+                }
+                return newPerson;
+            });
         } else {
-          setPerson(null);
+            setPerson(null);
         }
-        setLoading(false);
-      });
-    } else {
-      setPerson(null);
-      setLoading(false);
-    }
+        setLoading(false); // Ensure loading is false after snapshot updates
+    });
 
     return () => unsubscribeSnapshot();
   }, [user]);
