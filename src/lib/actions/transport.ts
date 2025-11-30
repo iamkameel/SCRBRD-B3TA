@@ -21,8 +21,6 @@ const checkManagementPermission = async (userId: string) => {
 }
 
 export async function getVehicles(): Promise<Vehicle[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const vehiclesCollection = collection(db, 'vehicles');
     const q = query(vehiclesCollection);
@@ -134,7 +132,6 @@ export async function deleteVehicleAction(vehicleId: string) {
 
 // TRANSPORT ASSIGNMENT ACTIONS
 export async function getMatchTransportAssignments(matchId: string): Promise<TransportAssignment[]> {
-  const userId = await getUserId();
   const match = await getMatch(matchId);
   if (!match) return [];
 
@@ -172,9 +169,6 @@ export async function getMatchTransportAssignments(matchId: string): Promise<Tra
 }
 
 export async function getAllTransportAssignments(): Promise<FullTransportAssignment[]> {
-    const userId = await getUserId();
-    if (!userId) return [];
-    
     const allMatches = await getMatches();
     const allAssignments: FullTransportAssignment[] = [];
     

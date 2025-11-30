@@ -23,40 +23,41 @@ const checkManagementPermission = async (userId: string) => {
 
 export async function getSchools(): Promise<School[]> {
   const userId = await getUserId();
-  if (!userId) return [];
-  
-  const currentUser = await getPerson(userId);
-  if (!currentUser) return [];
-
   const schoolsCollection = collection(db, 'schools');
   let q;
 
-  const activeRole = currentUser.activeRole;
-  
-  if (activeRole === 'Admin') {
-    q = query(schoolsCollection);
-  } else if (activeRole === 'Sportsmaster' && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
-    q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
-  } else if (['Coach', 'Player', 'Team Manager'].includes(activeRole)) {
-      const assignments = await getPersonTeamAssignments(userId);
-      const allTeams = await getTeams();
-      
-      // If the user has specific team assignments, only return those schools.
-      if (assignments.length > 0) {
-        const schoolIds = [...new Set(assignments.map(a => allTeams.find(t => t.teamId === a.teamId)?.schoolId).filter(Boolean))];
-        if (schoolIds.length > 0) {
-            q = query(schoolsCollection, where(documentId(), 'in', schoolIds));
-        } else {
-            return []; // No schools to show if their teams aren't linked to schools
-        }
-      } else if (currentUser.assignedSchools && currentUser.assignedSchools.length > 0) { // If no teams, but they are a school admin/staff, show those schools
-        q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
-    } else { // If no assignments at all, show all schools so they can make a request
-        q = query(schoolsCollection);
-    }
+  if (userId) {
+      const currentUser = await getPerson(userId);
+      if (currentUser) {
+          const activeRole = currentUser.activeRole;
+          if (activeRole === 'Admin') {
+              q = query(schoolsCollection);
+          } else if (activeRole === 'Sportsmaster' && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
+              q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
+          } else if (['Coach', 'Player', 'Team Manager'].includes(activeRole)) {
+              const assignments = await getPersonTeamAssignments(userId);
+              if (assignments.length > 0) {
+                  const allTeams = await getTeams();
+                  const schoolIds = [...new Set(assignments.map(a => allTeams.find(t => t.teamId === a.teamId)?.schoolId).filter(Boolean))];
+                  if (schoolIds.length > 0) {
+                      q = query(schoolsCollection, where(documentId(), 'in', schoolIds));
+                  } else {
+                      return [];
+                  }
+              } else if (currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
+                  q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
+              } else {
+                  q = query(schoolsCollection);
+              }
+          } else {
+              q = query(schoolsCollection);
+          }
+      } else {
+          q = query(schoolsCollection);
+      }
   } else {
-    // Default for other roles (spectators, etc.) is to see all teams
-    q = query(schoolsCollection);
+      // If no user is logged in, show all schools (for public pages like signup)
+      q = query(schoolsCollection);
   }
 
   try {
@@ -237,8 +238,6 @@ export async function deleteSchoolAction(schoolId: string) {
 }
 
 export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const peopleCollection = collection(db, 'people');
     const q = query(peopleCollection, where("assignedSchools", "array-contains", schoolId));

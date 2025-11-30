@@ -122,7 +122,7 @@ export async function assignEquipmentAction(itemId: string, personId: string) {
     status: 'Assigned',
     currentAssignmentId: assignmentRef.id,
     currentHolderId: personId,
-    currentHolderName: `${'${person.firstName}'} ${'${person.lastName}'}`
+    currentHolderName: `${person.firstName} ${person.lastName}`
   });
 
   try {
@@ -182,7 +182,7 @@ export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignm
                 ...data,
                 itemName: item.data().name,
                 itemType: item.data().type,
-                personName: `${'${person.data().firstName}'} ${'${person.data().lastName}'}`,
+                personName: `${person.data().firstName} ${person.data().lastName}`,
                 assignedDate: (data.assignedDate as Timestamp).toDate(),
                 returnedDate: data.returnedDate ? (data.returnedDate as Timestamp).toDate() : undefined,
             } as FullEquipmentAssignment;
@@ -196,5 +196,3 @@ export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignm
         return [];
     }
 }
-
-

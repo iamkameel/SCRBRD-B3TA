@@ -128,5 +128,3 @@ export async function deleteTransactionAction(transactionId: string) {
 
   revalidatePath('/financials');
 }
-
-

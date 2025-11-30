@@ -17,60 +17,52 @@ import { getSchool } from './schools';
 
 export const getTeams = cache(async (): Promise<Team[]> => {
   const userId = await getUserId();
-  if (!userId) return [];
-  
-  const currentUser = await getPerson(userId);
-  if (!currentUser) return [];
-
   const teamsCollection = collection(db, 'teams');
-  
-  const activeRole = currentUser.activeRole;
-  
-  if (activeRole === 'Admin') {
-     const q = query(teamsCollection);
-     const teamSnapshot = await getDocs(q);
-     return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
-  } 
-  
-  if (activeRole === 'Sportsmaster') {
-    if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
-      return [];
-    }
-    const q = query(teamsCollection, where("schoolId", "in", currentUser.assignedSchools));
-    const teamSnapshot = await getDocs(q);
-    return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
-  }
-  
-  if (['Coach', 'Assistant Coach', 'Team Manager', 'Player', 'Captain', 'Vice-Captain'].includes(activeRole)) {
-      const assignments = await getPersonTeamAssignments(userId);
-      
-      // If the user has specific team assignments, only return those teams.
-      if (assignments.length > 0) {
-        const teamIds = assignments.map(a => a.teamId);
-        
-        const teamIdChunks: string[][] = [];
-        for (let i = 0; i < teamIds.length; i += 30) {
-          teamIdChunks.push(teamIds.slice(i, i + 30));
-        }
-        
-        const teams: Team[] = [];
-        for (const chunk of teamIdChunks) {
-            if (chunk.length === 0) continue;
-            const q = query(teamsCollection, where(documentId(), 'in', chunk));
-            const teamSnapshot = await getDocs(q);
-            teamSnapshot.forEach(doc => {
-                teams.push({ teamId: doc.id, ...doc.data() } as Team);
-            });
-        }
-        return teams;
+  let q;
+
+  if (userId) {
+      const currentUser = await getPerson(userId);
+      if (currentUser) {
+          const activeRole = currentUser.activeRole;
+          if (activeRole === 'Admin') {
+              q = query(teamsCollection);
+          } else if (activeRole === 'Sportsmaster') {
+              if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
+                  return [];
+              }
+              q = query(teamsCollection, where("schoolId", "in", currentUser.assignedSchools));
+          } else if (['Coach', 'Assistant Coach', 'Team Manager', 'Player', 'Captain', 'Vice-Captain'].includes(activeRole)) {
+              const assignments = await getPersonTeamAssignments(userId);
+              if (assignments.length > 0) {
+                  const teamIds = assignments.map(a => a.teamId);
+                  const teamIdChunks: string[][] = [];
+                  for (let i = 0; i < teamIds.length; i += 30) {
+                      teamIdChunks.push(teamIds.slice(i, i + 30));
+                  }
+                  
+                  const teams: Team[] = [];
+                  for (const chunk of teamIdChunks) {
+                      if (chunk.length === 0) continue;
+                      const teamQuery = query(teamsCollection, where(documentId(), 'in', chunk));
+                      const teamSnapshot = await getDocs(teamQuery);
+                      teamSnapshot.forEach(doc => {
+                          teams.push({ teamId: doc.id, ...doc.data() } as Team);
+                      });
+                  }
+                  return teams;
+              } else {
+                   q = query(teamsCollection);
+              }
+          } else {
+              q = query(teamsCollection);
+          }
+      } else {
+           q = query(teamsCollection);
       }
-      // If the user is a staff member (like Coach/Manager) but has no assignments,
-      // they need to see all teams to request an assignment. We let them "fall through"
-      // to the default logic below.
+  } else {
+      q = query(teamsCollection);
   }
   
-  // Default for other roles (spectators, etc.) and unassigned staff is to see all teams
-  const q = query(teamsCollection);
   const teamSnapshot = await getDocs(q);
   return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
 });
@@ -92,7 +84,7 @@ export const getTeam = cache(async (teamId: string): Promise<Team & { schoolAbbr
     } as Team & { schoolAbbreviation?: string };
 
   } catch (error) {
-    console.error(`Error fetching team with ID ${'${teamId}'}:`, error);
+    console.error(`Error fetching team with ID ${teamId}:`, error);
     return null;
   }
 });
@@ -106,13 +98,13 @@ export const getTeamRoster = cache(async (teamId: string): Promise<RosterMember[
         const personSnap = await getDoc(doc(db, 'people', rosterDoc.data().personId));
         if (!personSnap.exists()) return null;
         return {
-            assignmentId: rosterDoc.id, personName: `${'${personSnap.data().firstName}'} ${'${personSnap.data().lastName}'}`,
+            assignmentId: rosterDoc.id, personName: `${personSnap.data().firstName} ${personSnap.data().lastName}`,
             ...rosterDoc.data()
         } as RosterMember;
     });
     return (await Promise.all(rosterPromises)).filter((m): m is RosterMember => m !== null);
   } catch (error) {
-    console.error(`Error fetching roster for team ${'${teamId}'}:`, error);
+    console.error(`Error fetching roster for team ${teamId}:`, error);
     return [];
   }
 });
@@ -123,15 +115,12 @@ export const getTeamStats = cache(async (teamId: string): Promise<TeamStats> => 
         totalRunsScored: 0, totalWicketsTaken: 0, netRunRate: 0.0
     };
 
-    const userId = await getUserId();
-    if (!userId) return defaultStats;
-
     const team = await getTeam(teamId);
     if (!team) return defaultStats;
 
     const matchesCollection = collection(db, 'matches');
-    const teamAQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamAId", "==", teamId));
-    const teamBQuery = query(matchesCollection, where("userId", "==", userId), where("status", "==", "completed"), where("teamBId", "==", teamId));
+    const teamAQuery = query(matchesCollection, where("status", "==", "completed"), where("teamAId", "==", teamId));
+    const teamBQuery = query(matchesCollection, where("status", "==", "completed"), where("teamBId", "==", teamId));
     
     const [teamAMatchesSnapshot, teamBMatchesSnapshot] = await Promise.all([getDocs(teamAQuery), getDocs(teamBQuery)]);
     const allMatches = [...teamAMatchesSnapshot.docs, ...teamBMatchesSnapshot.docs];
@@ -227,8 +216,8 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
     if (error instanceof Error) { throw error; }
     throw new Error("Could not add player to roster.");
   }
-  revalidatePath(`/teams/${'${teamId}'}`);
-  revalidatePath(`/people/${'${data.personId}'}`);
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath(`/people/${data.personId}`);
 }
 
 const bulkAddPlayersSchema = z.object({
@@ -270,7 +259,7 @@ export async function bulkAddPlayersToRosterAction(teamId: string, data: z.infer
     }
     
     await batch.commit();
-    revalidatePath(`/teams/${'${teamId}'}`);
+    revalidatePath(`/teams/${teamId}`);
 }
 
 export async function removeRosterAssignmentAction(teamId: string, assignmentId: string) {
@@ -297,8 +286,8 @@ export async function removeRosterAssignmentAction(teamId: string, assignmentId:
         console.error("Error removing roster assignment:", error);
         throw new Error("Could not remove player from roster.");
     }
-    revalidatePath(`/teams/${'${teamId}'}`);
-    revalidatePath(`/people/${'${personId}'}`);
+    revalidatePath(`/teams/${teamId}`);
+    revalidatePath(`/people/${personId}`);
 }
 
 const updateAssignmentSchema = z.object({
@@ -339,8 +328,8 @@ export async function updateRosterAssignmentAction(data: z.infer<typeof updateAs
     throw new Error("Could not update roster assignment.");
   }
   
-  revalidatePath(`/teams/${'${teamId}'}`);
-  revalidatePath(`/people/${'${personId}'}`);
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath(`/people/${personId}`);
 }
 
 const teamSchema = z.object({
@@ -458,7 +447,7 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
     throw new Error("Could not update team.");
   }
   revalidatePath('/teams');
-  revalidatePath(`/teams/${'${teamId}'}`);
+  revalidatePath(`/teams/${teamId}`);
 }
 
 export async function deleteTeamAction(teamId: string) {
@@ -563,7 +552,7 @@ export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => 
     
     return sortedMatches;
   } catch (error) {
-    console.error(`Error fetching matches for team ${'${teamId}'}:`, error);
+    console.error(`Error fetching matches for team ${teamId}:`, error);
     return [];
   }
 });
@@ -600,7 +589,7 @@ export const getPersonTeamAssignments = cache(async (personId: string): Promise<
         return results.filter((a): a is PlayerTeamAssignment => a !== null);
 
     } catch (error) {
-        console.error(`Error fetching team assignments for person ${'${personId}'}:`, error);
+        console.error(`Error fetching team assignments for person ${personId}:`, error);
         return [];
     }
 });
@@ -667,7 +656,7 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
                 continue;
             }
 
-            let eligibilityContext = `From ${'${playerTeam.name}'}`;
+            let eligibilityContext = `From ${playerTeam.name}`;
             if (playerDivisionRank < targetDivisionRank) {
                 eligibilityContext += ` (can play up)`;
             }
@@ -683,11 +672,9 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
 
 
 export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> => {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const teamsCollection = collection(db, 'teams');
-    const q = query(teamsCollection, where("userId", "==", userId), where("schoolId", "==", schoolId));
+    const q = query(teamsCollection, where("schoolId", "==", schoolId));
     const teamSnapshot = await getDocs(q);
     const teamsList = teamSnapshot.docs.map(doc => ({
       teamId: doc.id,
@@ -695,7 +682,7 @@ export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> 
     } as Team));
     return teamsList;
   } catch (error) {
-    console.error(`Error fetching teams for school ${'${schoolId}'}:`, error);
+    console.error(`Error fetching teams for school ${schoolId}:`, error);
     return [];
   }
 });
@@ -705,8 +692,6 @@ export const getTeamsByDivision = cache(async (divisionId: string | undefined): 
     return getTeams();
   }
   
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const teamsCollection = collection(db, 'teams');
     const q = query(teamsCollection, where("divisionId", "==", divisionId));
@@ -717,7 +702,7 @@ export const getTeamsByDivision = cache(async (divisionId: string | undefined): 
     } as Team));
     return teamsList;
   } catch (error) {
-    console.error(`Error fetching teams for division ${'${divisionId}'}:`, error);
+    console.error(`Error fetching teams for division ${divisionId}:`, error);
     return [];
   }
 });

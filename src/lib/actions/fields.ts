@@ -19,11 +19,9 @@ const checkManagementPermission = async (userId: string) => {
 }
 
 export async function getFields(): Promise<Field[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const fieldsCollection = collection(db, 'fields');
-    const q = query(fieldsCollection, where("userId", "==", userId));
+    const q = query(fieldsCollection);
     const fieldSnapshot = await getDocs(q);
 
     const fieldsList = await Promise.all(fieldSnapshot.docs.map(async (docSnapshot) => {
@@ -78,13 +76,11 @@ export async function getFields(): Promise<Field[]> {
 }
 
 export const getField = cache(async (fieldId: string): Promise<Field | null> => {
-  const userId = await getUserId();
-  if (!userId) return null;
   try {
     const fieldDocRef = doc(db, 'fields', fieldId);
     const fieldSnap = await getDoc(fieldDocRef);
 
-    if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) {
+    if (!fieldSnap.exists()) {
       return null;
     }
 
@@ -131,7 +127,7 @@ export const getField = cache(async (fieldId: string): Promise<Field | null> => 
     return field;
 
   } catch (error) {
-    console.error("Error fetching field with ID " + fieldId + ":", error);
+    console.error(`Error fetching field with ID ${fieldId}:`, error);
     return null;
   }
 });
@@ -198,7 +194,7 @@ export async function addFieldAction(data: FieldFormValues) {
   let schoolName = '';
   if (fieldData.schoolId) {
       const schoolSnap = await getDoc(doc(db, 'schools', fieldData.schoolId));
-      if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) throw new Error("Selected school not found.");
+      if (!schoolSnap.exists()) throw new Error("Selected school not found.");
       schoolName = schoolSnap.data().name;
   }
   
@@ -242,14 +238,14 @@ export async function updateFieldAction(data: z.infer<typeof updateFieldSchema>)
     const fieldDocRef = doc(db, 'fields', fieldId);
 
     const fieldSnap = await getDoc(fieldDocRef);
-    if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) {
+    if (!fieldSnap.exists()) {
         throw new Error("Field not found or you do not have permission to edit it.");
     }
     
     let schoolName = '';
     if (updateData.schoolId && updateData.schoolId !== ' ') {
         const schoolSnap = await getDoc(doc(db, 'schools', updateData.schoolId));
-        if (!schoolSnap.exists() || schoolSnap.data().userId !== userId) throw new Error("Selected school not found.");
+        if (!schoolSnap.exists()) throw new Error("Selected school not found.");
         schoolName = schoolSnap.data().name;
     }
     
@@ -284,7 +280,7 @@ export async function deleteFieldAction(fieldId: string) {
   
   const fieldDocRef = doc(db, 'fields', fieldId);
   const fieldSnap = await getDoc(fieldDocRef);
-  if (!fieldSnap.exists() || fieldSnap.data().userId !== userId) {
+  if (!fieldSnap.exists()) {
     throw new Error("Field not found or you do not have permission to delete it.");
   }
   
@@ -306,9 +302,6 @@ export async function deleteFieldAction(fieldId: string) {
 }
 
 export async function getFieldsForGroundskeeper(personId: string): Promise<Field[]> {
-    const userId = await getUserId();
-    if (!userId) return [];
-    
     const allUserFields = await getFields();
     
     return allUserFields.filter(field => 
@@ -353,5 +346,3 @@ export async function updateFieldStatusAction(fieldId: string, status: z.infer<t
         throw new Error("Could not update field status.");
     }
 }
-
-    

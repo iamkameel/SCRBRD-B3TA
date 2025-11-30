@@ -30,14 +30,14 @@ export async function logAuditEvent(params: LogAuditEventParams) {
     
     const actor = await getPerson(actorId);
     if (!actor) {
-        console.warn("Could not find person record for actorId: " + actorId + ". Skipping log.");
+        console.warn(`Could not find person record for actorId: ${actorId}. Skipping log.`);
         return;
     }
 
     try {
         await addDoc(collection(db, 'auditLogs'), {
             actorId: actor.personId,
-            actorName: `${'${actor.firstName}'} ${'${actor.lastName}'}`,
+            actorName: `${actor.firstName} ${actor.lastName}`,
             action: params.action,
             target: params.target,
             details: params.details || {},
@@ -71,5 +71,3 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
         return [];
     }
 }
-
-

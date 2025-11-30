@@ -22,7 +22,6 @@ const checkManagementPermission = async (userId: string) => {
 export async function getSeasons(): Promise<Season[]> {
   try {
     const seasonsCollection = collection(db, 'seasons');
-    // Seasons are global, so no user-based query needed for reads.
     const q = query(seasonsCollection);
     const seasonSnapshot = await getDocs(q);
     const seasonsList = seasonSnapshot.docs.map(doc => {
@@ -57,7 +56,7 @@ export const getSeason = cache(async (seasonId: string): Promise<Season | null> 
       active: data.active,
     };
   } catch (error) {
-    console.error("Error fetching season with ID " + seasonId + ":", error);
+    console.error(`Error fetching season with ID ${seasonId}:`, error);
     return null;
   }
 });

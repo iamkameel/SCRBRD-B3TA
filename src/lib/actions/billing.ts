@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -18,8 +19,6 @@ const checkBillingPermission = async (userId: string) => {
 };
 
 export async function getInvoices(): Promise<Invoice[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const invoicesCollection = collection(db, 'invoices');
     const q = query(invoicesCollection);
