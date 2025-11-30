@@ -29,7 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        // Direct fetch to ensure profile is loaded on initial login or page refresh
+        // Use a direct fetch to ensure the profile is loaded on initial auth state change.
+        // This is more reliable on first load than relying solely on the snapshot listener.
         const personRef = doc(db, 'people', firebaseUser.uid);
         const personSnap = await getDoc(personRef);
         if (personSnap.exists()) {
@@ -46,13 +47,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             dateOfBirth: data.dateOfBirth?.toDate()
           } as Person);
         } else {
-          // This can happen briefly after signup before the Firestore document is created
-          console.warn("User authenticated but no Firestore profile found. Waiting for creation...");
+          // This can happen briefly after signup or if the profile document is missing.
+          // The snapshot listener below will pick it up if it gets created.
+          console.warn("User authenticated but no Firestore profile found on initial load.");
           setPerson(null);
         }
       } else {
         setPerson(null);
       }
+      // Set loading to false only after the initial user and person state are determined.
       setLoading(false);
     });
 
@@ -61,11 +64,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!user) {
-        setPerson(null);
+        // If the user logs out, we don't need to do anything else.
+        // The onAuthStateChanged handler has already set the user and person to null.
         return;
     }
 
-    // Set up a real-time listener for profile updates after the initial fetch
+    // Set up a real-time listener for profile updates after the initial fetch.
+    // This handles role changes or profile updates made in other browser tabs.
     const personRef = doc(db, 'people', user.uid);
     const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -75,25 +80,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 ? data.activeRole 
                 : roles[0];
 
-            setPerson(prevPerson => {
-                const newPerson = { 
-                    personId: docSnap.id, 
-                    ...data,
-                    roles,
-                    activeRole,
-                    dateOfBirth: data.dateOfBirth?.toDate() 
-                } as Person;
-
-                // Avoid unnecessary state updates if the core data hasn't changed.
-                if (JSON.stringify(prevPerson) === JSON.stringify(newPerson)) {
-                    return prevPerson;
-                }
-                return newPerson;
-            });
+            setPerson({ 
+                personId: docSnap.id, 
+                ...data,
+                roles,
+                activeRole,
+                dateOfBirth: data.dateOfBirth?.toDate() 
+            } as Person);
         } else {
+            console.warn("Real-time listener could not find user profile. They may have been deleted.");
             setPerson(null);
         }
-        setLoading(false); // Ensure loading is false after snapshot updates
+    }, (error) => {
+      console.error("Error with profile snapshot listener:", error);
+      setPerson(null);
     });
 
     return () => unsubscribeSnapshot();
