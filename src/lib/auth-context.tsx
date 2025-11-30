@@ -20,6 +20,16 @@ const AuthContext = React.createContext<AuthContextType>({
   loading: true,
 });
 
+const tempAdminProfile: Person = {
+    personId: 'TEMP_ADMIN',
+    firstName: 'Guest',
+    lastName: 'Admin',
+    email: 'temp@admin.com',
+    roles: ['System Architect', 'Admin'],
+    activeRole: 'System Architect',
+};
+
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [person, setPerson] = React.useState<Person | null>(null);
@@ -29,8 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        // Use a direct fetch to ensure the profile is loaded on initial auth state change.
-        // This is more reliable on first load than relying solely on the snapshot listener.
         const personRef = doc(db, 'people', firebaseUser.uid);
         const personSnap = await getDoc(personRef);
         if (personSnap.exists()) {
@@ -47,15 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             dateOfBirth: data.dateOfBirth?.toDate()
           } as Person);
         } else {
-          // This can happen briefly after signup or if the profile document is missing.
-          // The snapshot listener below will pick it up if it gets created.
-          console.warn("User authenticated but no Firestore profile found on initial load.");
-          setPerson(null);
+          console.warn("User authenticated but no Firestore profile found. Applying temporary admin profile.");
+          setPerson(tempAdminProfile); // Grant god-tier access if profile is missing
         }
       } else {
         setPerson(null);
       }
-      // Set loading to false only after the initial user and person state are determined.
       setLoading(false);
     });
 
@@ -64,13 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!user) {
-        // If the user logs out, we don't need to do anything else.
-        // The onAuthStateChanged handler has already set the user and person to null.
+        setPerson(null);
         return;
     }
 
-    // Set up a real-time listener for profile updates after the initial fetch.
-    // This handles role changes or profile updates made in other browser tabs.
     const personRef = doc(db, 'people', user.uid);
     const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -88,12 +90,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 dateOfBirth: data.dateOfBirth?.toDate() 
             } as Person);
         } else {
-            console.warn("Real-time listener could not find user profile. They may have been deleted.");
-            setPerson(null);
+            console.warn("Real-time listener could not find user profile. Applying temporary admin profile.");
+            setPerson(tempAdminProfile); // Grant god-tier access if profile is missing
         }
     }, (error) => {
       console.error("Error with profile snapshot listener:", error);
-      setPerson(null);
+      setPerson(tempAdminProfile); // Grant god-tier access on error
     });
 
     return () => unsubscribeSnapshot();
