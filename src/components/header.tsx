@@ -177,7 +177,7 @@ export function Header() {
     const { user, person } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const activeRole = person?.activeRole || 'Player';
+    const activeRole = person?.activeRole || 'Player'; // Default to a non-admin role
 
     const { topLevel: topLevelNavItems, groups: navGroups } = getNavConfig(activeRole);
 
@@ -239,13 +239,13 @@ export function Header() {
                                     return (
                                         <AccordionItem value={group.title} key={group.title} className="border-b-0">
                                             <AccordionTrigger className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:no-underline [&[data-state=open]]:bg-sidebar-accent [&[data-state=open]]:text-sidebar-accent-foreground">
-                                                <group.icon className="w-4 h-4" />
-                                                <span className="flex-1 text-left font-normal">{group.title}</span>
+                                               <group.icon className="w-4 h-4" />
+                                               <span className="flex-1 text-left font-normal">{group.title}</span>
                                             </AccordionTrigger>
                                             <AccordionContent className="pt-1 pb-0 pl-8">
                                                 <div className="flex flex-col gap-1">
                                                     {visibleItems.map((item) => {
-                                                        const isActive = pathname.startsWith(item.href);
+                                                        const isActive = pathname.startsWith(item.href.split('?')[0]);
                                                         return (
                                                             <SheetClose asChild key={item.label}>
                                                                 <Link
