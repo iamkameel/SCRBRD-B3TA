@@ -245,7 +245,7 @@ export function Header() {
                                             <AccordionContent className="pt-1 pb-0 pl-8">
                                                 <div className="flex flex-col gap-1">
                                                     {visibleItems.map((item) => {
-                                                        const isActive = pathname.startsWith(item.href.split('?')[0]);
+                                                        const isActive = pathname.startsWith(item.href);
                                                         return (
                                                             <SheetClose asChild key={item.label}>
                                                                 <Link
