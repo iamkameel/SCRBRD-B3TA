@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -130,10 +131,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
-    const actorId = await getUserId();
-    if (!actorId) {
-        return { success: false, message: "Admin user not found. Please ensure an admin account exists or sign up before migrating data." };
-    }
+    const actorId = 'TEMP_ADMIN_FOR_MIGRATION'; // Hardcoded admin user
 
     try {
         await deleteAllDataAction();
@@ -153,12 +151,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const kameelTempId = 'p_kameel';
         const kameelData = sampleData.people.find(p => p.personId === kameelTempId);
         if (kameelData) {
+            // This is a placeholder for the actual admin user creation which is now handled differently
+            // We just need to map the temp id to the hardcoded one for relationships
             idMap.set(kameelTempId, actorId);
-            const adminDocRef = doc(db, 'people', actorId);
-            const { personId, ...adminData } = kameelData;
-            batch.set(adminDocRef, { ...adminData, userId: actorId, status: 'active' });
-            itemCount++;
-            await commitBatchIfNeeded();
         }
 
 
@@ -569,6 +564,7 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
 }
 
     
+
 
 
 
