@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -120,4 +121,5 @@ export async function deleteSponsorAction(sponsorId: string) {
 
   revalidatePath('/sponsors');
 }
+
 

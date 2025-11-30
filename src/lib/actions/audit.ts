@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -36,7 +37,7 @@ export async function logAuditEvent(params: LogAuditEventParams) {
     try {
         await addDoc(collection(db, 'auditLogs'), {
             actorId: actor.personId,
-            actorName: `${actor.firstName} ${actor.lastName}`,
+            actorName: `${'${actor.firstName}'} ${'${actor.lastName}'}`,
             action: params.action,
             target: params.target,
             details: params.details || {},
@@ -70,4 +71,5 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
         return [];
     }
 }
+
 

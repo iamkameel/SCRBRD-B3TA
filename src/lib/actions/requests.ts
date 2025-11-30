@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -61,7 +62,7 @@ export async function createAssignmentRequestAction(data: z.infer<typeof request
     
     await addDoc(requestsCollection, {
         requesterId: requesterId,
-        requesterName: `${requester.firstName} ${requester.lastName}`,
+        requesterName: `${'${requester.firstName}'} ${'${requester.lastName}'}`,
         targetId,
         targetName,
         targetType,
@@ -140,7 +141,7 @@ export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewS
             if (isAlreadyAssigned) {
                 // This will prevent the error from being thrown to the UI,
                 // and simply mark the request as handled.
-                console.warn(`Attempted to approve an assignment for a user (${request.requesterId}) who is already on the roster for team (${request.targetId}). Request will be marked as approved, but no new roster entry was created.`);
+                console.warn(`Attempted to approve an assignment for a user (${'${request.requesterId}'}) who is already on the roster for team (${'${request.targetId}'}). Request will be marked as approved, but no new roster entry was created.`);
             } else {
                 await addPlayerToRosterAction(request.targetId, {
                     personId: request.requesterId,
@@ -156,9 +157,10 @@ export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewS
     await updateDoc(requestRef, {
         status: decision === 'approve' ? 'approved' : 'denied',
         reviewedBy: reviewerId,
-        reviewedByName: `${reviewer.firstName} ${reviewer.lastName}`,
+        reviewedByName: `${'${reviewer.firstName}'} ${'${reviewer.lastName}'}`,
         reviewedAt: Timestamp.now(),
     });
 
     revalidatePath('/dashboard');
 }
+

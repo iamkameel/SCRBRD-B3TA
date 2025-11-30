@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getCompetitions } from './competitions';
@@ -21,3 +22,4 @@ export async function getAwardsData(): Promise<AwardsData> {
         topWicketTaker,
     };
 }
+

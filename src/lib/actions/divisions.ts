@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -60,7 +61,7 @@ export const getDivision = cache(async (divisionId: string): Promise<Division | 
       name: divisionSnap.data().name,
     };
   } catch (error) {
-    console.error("Error fetching division with ID " + divisionId + ":", error);
+    console.error(`Error fetching division with ID ${divisionId}:`, error);
     return null;
   }
 });
@@ -163,4 +164,3 @@ export async function deleteDivisionAction(divisionId: string) {
   revalidatePath('/divisions');
   revalidatePath('/teams');
 }
-

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -137,4 +138,3 @@ export async function deleteSeasonAction(seasonId: string) {
   }
   revalidatePath('/seasons'); revalidatePath('/teams'); revalidatePath('/new-match');
 }
-

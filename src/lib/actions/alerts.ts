@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { Match, Team } from '@/lib/data';
@@ -49,7 +50,7 @@ export async function getFixtureConflicts(): Promise<FixtureConflict[]> {
                 if (matchA.fieldId === matchB.fieldId) {
                     conflicts.push({
                         type: 'Field',
-                        message: `Field "${matchA.fieldName}" is double-booked for matches at ${matchA.dateTime.toLocaleTimeString()} and ${matchB.dateTime.toLocaleTimeString()}.`,
+                        message: `Field "${'${matchA.fieldName}'}" is double-booked for matches at ${'${matchA.dateTime.toLocaleTimeString()}'} and ${'${matchB.dateTime.toLocaleTimeString()}'}.`,
                         matches: [matchA, matchB]
                     });
                     conflictPairs.add(pairKey);
@@ -65,7 +66,7 @@ export async function getFixtureConflicts(): Promise<FixtureConflict[]> {
                     const teamName = teamMap.get(conflictingTeamId)?.name || 'A team';
                     conflicts.push({
                         type: 'Team',
-                        message: `Team "${teamName}" has overlapping fixtures scheduled.`,
+                        message: `Team "${'${teamName}'}" has overlapping fixtures scheduled.`,
                         matches: [matchA, matchB]
                     });
                     conflictPairs.add(pairKey);
@@ -96,4 +97,5 @@ export async function getUnconfirmedAssignmentsCount(personId: string): Promise<
         return 0;
     }
 }
+
 

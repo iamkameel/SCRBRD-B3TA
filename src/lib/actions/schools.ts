@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -11,6 +12,7 @@ import { cache } from 'react';
 import { getPerson } from './players';
 import { getPersonTeamAssignments, getTeams, getTeamsBySchool } from './teams';
 import { getUserId } from '@/lib/server-auth';
+import { getTeamRoster } from './teams';
 
 const checkManagementPermission = async (userId: string) => {
     const user = await getPerson(userId);
@@ -53,7 +55,7 @@ export async function getSchools(): Promise<School[]> {
         q = query(schoolsCollection);
     }
   } else {
-    // Default for other roles (spectators, etc.) is to see all schools
+    // Default for other roles (spectators, etc.) is to see all teams
     q = query(schoolsCollection);
   }
 
@@ -247,7 +249,7 @@ export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
     } as Person));
     return staffList;
   } catch (error) {
-    console.error('Error fetching staff for school ${schoolId}:', error);
+    console.error(`Error fetching staff for school ${schoolId}:`, error);
     return [];
   }
 }
@@ -371,4 +373,3 @@ export async function getMatchesBySchool(schoolId: string): Promise<Match[]> {
 
   return Array.from(uniqueMatchesMap.values()).sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime());
 }
-

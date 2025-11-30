@@ -92,7 +92,7 @@ export const getTeam = cache(async (teamId: string): Promise<Team & { schoolAbbr
     } as Team & { schoolAbbreviation?: string };
 
   } catch (error) {
-    console.error(`Error fetching team with ID ${teamId}:`, error);
+    console.error(`Error fetching team with ID ${'${teamId}'}:`, error);
     return null;
   }
 });
@@ -106,13 +106,13 @@ export const getTeamRoster = cache(async (teamId: string): Promise<RosterMember[
         const personSnap = await getDoc(doc(db, 'people', rosterDoc.data().personId));
         if (!personSnap.exists()) return null;
         return {
-            assignmentId: rosterDoc.id, personName: `${personSnap.data().firstName} ${personSnap.data().lastName}`,
+            assignmentId: rosterDoc.id, personName: `${'${personSnap.data().firstName}'} ${'${personSnap.data().lastName}'}`,
             ...rosterDoc.data()
         } as RosterMember;
     });
     return (await Promise.all(rosterPromises)).filter((m): m is RosterMember => m !== null);
   } catch (error) {
-    console.error(`Error fetching roster for team ${teamId}:`, error);
+    console.error(`Error fetching roster for team ${'${teamId}'}:`, error);
     return [];
   }
 });
@@ -227,8 +227,8 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
     if (error instanceof Error) { throw error; }
     throw new Error("Could not add player to roster.");
   }
-  revalidatePath(`/teams/${teamId}`);
-  revalidatePath(`/people/${data.personId}`);
+  revalidatePath(`/teams/${'${teamId}'}`);
+  revalidatePath(`/people/${'${data.personId}'}`);
 }
 
 const bulkAddPlayersSchema = z.object({
@@ -270,7 +270,7 @@ export async function bulkAddPlayersToRosterAction(teamId: string, data: z.infer
     }
     
     await batch.commit();
-    revalidatePath(`/teams/${teamId}`);
+    revalidatePath(`/teams/${'${teamId}'}`);
 }
 
 export async function removeRosterAssignmentAction(teamId: string, assignmentId: string) {
@@ -297,8 +297,8 @@ export async function removeRosterAssignmentAction(teamId: string, assignmentId:
         console.error("Error removing roster assignment:", error);
         throw new Error("Could not remove player from roster.");
     }
-    revalidatePath(`/teams/${teamId}`);
-    revalidatePath(`/people/${personId}`);
+    revalidatePath(`/teams/${'${teamId}'}`);
+    revalidatePath(`/people/${'${personId}'}`);
 }
 
 const updateAssignmentSchema = z.object({
@@ -339,8 +339,8 @@ export async function updateRosterAssignmentAction(data: z.infer<typeof updateAs
     throw new Error("Could not update roster assignment.");
   }
   
-  revalidatePath(`/teams/${teamId}`);
-  revalidatePath(`/people/${personId}`);
+  revalidatePath(`/teams/${'${teamId}'}`);
+  revalidatePath(`/people/${'${personId}'}`);
 }
 
 const teamSchema = z.object({
@@ -458,7 +458,7 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
     throw new Error("Could not update team.");
   }
   revalidatePath('/teams');
-  revalidatePath(`/teams/${teamId}`);
+  revalidatePath(`/teams/${'${teamId}'}`);
 }
 
 export async function deleteTeamAction(teamId: string) {
@@ -563,7 +563,7 @@ export const getTeamMatches = cache(async (teamId: string): Promise<Match[]> => 
     
     return sortedMatches;
   } catch (error) {
-    console.error(`Error fetching matches for team ${teamId}:`, error);
+    console.error(`Error fetching matches for team ${'${teamId}'}:`, error);
     return [];
   }
 });
@@ -600,7 +600,7 @@ export const getPersonTeamAssignments = cache(async (personId: string): Promise<
         return results.filter((a): a is PlayerTeamAssignment => a !== null);
 
     } catch (error) {
-        console.error(`Error fetching team assignments for person ${personId}:`, error);
+        console.error(`Error fetching team assignments for person ${'${personId}'}:`, error);
         return [];
     }
 });
@@ -667,7 +667,7 @@ export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(
                 continue;
             }
 
-            let eligibilityContext = `From ${playerTeam.name}`;
+            let eligibilityContext = `From ${'${playerTeam.name}'}`;
             if (playerDivisionRank < targetDivisionRank) {
                 eligibilityContext += ` (can play up)`;
             }
@@ -695,7 +695,7 @@ export const getTeamsBySchool = cache(async (schoolId: string): Promise<Team[]> 
     } as Team));
     return teamsList;
   } catch (error) {
-    console.error(`Error fetching teams for school ${schoolId}:`, error);
+    console.error(`Error fetching teams for school ${'${schoolId}'}:`, error);
     return [];
   }
 });
@@ -717,7 +717,7 @@ export const getTeamsByDivision = cache(async (divisionId: string | undefined): 
     } as Team));
     return teamsList;
   } catch (error) {
-    console.error(`Error fetching teams for division ${divisionId}:`, error);
+    console.error(`Error fetching teams for division ${'${divisionId}'}:`, error);
     return [];
   }
 });
@@ -736,3 +736,4 @@ export async function isTeamManagerOrAdmin(teamId: string, userId: string | null
 
     return isManagerOrCoach;
 }
+

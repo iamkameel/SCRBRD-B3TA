@@ -13,7 +13,7 @@ import { getPerson } from './players';
 import { getCompetition } from './competitions';
 import { getTeamRoster, getTeams, isTeamManagerOrAdmin, getTeam } from './teams';
 import { cache } from 'react';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/server-auth';
 import { getTopPerformers } from '@/ai/flows/generate-player-of-the-match-flow';
 import { logAuditEvent } from './audit';
 import { getSchool } from './schools';
@@ -572,7 +572,7 @@ export const getScorecard = cache(async (matchId: string): Promise<{ innings1: I
     return null;
   } catch (error) {
     console.error(`Error fetching scorecard for match ${matchId}:`, error);
-    return [];
+    return null;
   }
 });
 
@@ -1291,7 +1291,7 @@ export async function savePlayerOfTheMatchAction(matchId: string, player: Player
       
     
 
-    
+
 
 
 

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -28,7 +29,7 @@ export async function getSessionsByTeam(teamId: string): Promise<TrainingSession
         });
         return sessions.sort((a,b) => b.date.getTime() - a.date.getTime());
     } catch (error) {
-        console.error(`Error fetching sessions for team ${teamId}:`, error);
+        console.error(`Error fetching sessions for team ${'${teamId}'}:`, error);
         return [];
     }
 }
@@ -92,7 +93,7 @@ export const getSession = cache(async (sessionId: string): Promise<TrainingSessi
             date: (data.date as Timestamp).toDate(),
         } as TrainingSession;
     } catch (error) {
-        console.error(`Error fetching session with ID ${sessionId}:`, error);
+        console.error(`Error fetching session with ID ${'${sessionId}'}:`, error);
         return null;
     }
 });
@@ -153,7 +154,7 @@ export async function addDrillToSessionAction(data: z.infer<typeof addDrillSchem
         throw new Error("Could not add drill to session.");
     }
     
-    revalidatePath(`/planner/${sessionId}`);
+    revalidatePath(`/planner/${'${sessionId}'}`);
 }
 
 export async function removeDrillFromSessionAction(sessionId: string, drillIdToRemove: string) {
@@ -184,7 +185,7 @@ export async function removeDrillFromSessionAction(sessionId: string, drillIdToR
         throw new Error("Could not remove drill from session.");
     }
     
-    revalidatePath(`/planner/${sessionId}`);
+    revalidatePath(`/planner/${'${sessionId}'}`);
 }
 
 const updateDrillsOrderSchema = z.object({
@@ -226,5 +227,6 @@ export async function updateSessionDrillsOrderAction(data: z.infer<typeof update
         throw new Error("Could not update session plan order.");
     }
 
-    revalidatePath(`/planner/${sessionId}`);
+    revalidatePath(`/planner/${'${sessionId}'}`);
 }
+
