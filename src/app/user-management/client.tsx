@@ -53,7 +53,7 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
   const [isRoleDialogOpen, setIsRoleDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
-  const canAddUsers = currentUser?.roles.includes('Admin') ?? false;
+  const canAddUsers = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect');
 
   const filteredUsers = React.useMemo(() => {
     return users.filter(user => {

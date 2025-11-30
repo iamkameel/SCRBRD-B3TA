@@ -25,7 +25,7 @@ export async function getPlayers(): Promise<Person[]> {
   const peopleCollection = collection(db, 'people');
   
   // Admin sees all people.
-  if (currentUser.activeRole === 'Admin') {
+  if (currentUser.activeRole === 'Admin' || currentUser.activeRole === 'System Architect') {
       try {
         const peopleSnapshot = await getDocs(peopleCollection);
         return peopleSnapshot.docs.map(doc => {
@@ -314,20 +314,17 @@ type PersonFormValues = z.infer<typeof personSchema>;
 function hasPermissionToAssign(assigner: Person, targetRoles: string[], originalTargetRoles: string[] = []): boolean {
     const assignerRoles = new Set(assigner.roles);
 
-    // Rule 1: Admins can do anything.
-    if (assignerRoles.has('Admin')) {
+    if (assignerRoles.has('System Architect') || assignerRoles.has('Admin')) {
         return true;
     }
 
-    // Rule 2: Non-admins cannot grant or revoke the 'Admin' role.
-    const isTryingToGrantAdmin = targetRoles.includes('Admin') && !originalTargetRoles.includes('Admin');
-    const isTryingToRevokeAdmin = !targetRoles.includes('Admin') && originalTargetRoles.includes('Admin');
+    const isTryingToGrantAdmin = targetRoles.some(r => (r === 'Admin' || r === 'System Architect') && !originalTargetRoles.includes(r));
+    const isTryingToRevokeAdmin = originalTargetRoles.some(r => (r === 'Admin' || r === 'System Architect') && !targetRoles.includes(r));
 
     if (isTryingToGrantAdmin || isTryingToRevokeAdmin) {
-        return false; // Only Admins can do this, and we already checked for that.
+        return false;
     }
     
-    // Rule 3: Hierarchical role assignment.
     const permissions: { [key: string]: string[] } = {
         'Sportsmaster': ['School Admin', 'Umpire', 'Scorer'],
         'School Admin': ['Coach', 'Assistant Coach', 'Trainer', 'Physiotherapist', 'Doctor', 'Chiropractor', 'Nutritionist', 'First Aid', 'Grounds-Keeper', 'Driver', 'Player', 'Guardian', 'Spectator', 'Team Manager', 'Captain', 'Vice-Captain'],
@@ -342,7 +339,6 @@ function hasPermissionToAssign(assigner: Person, targetRoles: string[], original
         }
     });
 
-    // Check if any of the newly added roles are not in the allowed set.
     const newRoles = targetRoles.filter(r => !originalTargetRoles.includes(r));
     return newRoles.every(target => allowedToAssign.has(target));
 }
@@ -434,7 +430,7 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
 export async function deletePlayerAction(personId: string) {
   const currentUserId = await getUserId();
   const currentUser = currentUserId ? await getPerson(currentUserId) : null;
-  if (!currentUser || !currentUser.roles.includes('Admin')) {
+  if (!currentUser || !(currentUser.roles.includes('Admin') || currentUser.roles.includes('System Architect'))) {
     throw new Error("Only administrators can delete people.");
   }
   
@@ -736,4 +732,3 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
         throw new Error("Could not update player skills.");
     }
 }
-

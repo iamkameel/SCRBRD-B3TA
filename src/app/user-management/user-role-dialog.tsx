@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -141,7 +140,8 @@ export function UserRoleDialog({ users, currentUser, open, onOpenChange }: { use
                             <h4 className="font-medium text-sm text-muted-foreground mb-2 mt-4">{group.group}</h4>
                             <div className="grid grid-cols-2 gap-2 border p-4 rounded-md">
                                 {group.roles.map((item) => {
-                                const isDisabled = (item.id === 'Admin' && !(currentUser?.roles.includes('Admin')));
+                                const isSystemRole = item.id === 'Admin' || item.id === 'System Architect';
+                                const isDisabled = isSystemRole && !(currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect'));
                                 return (
                                     <FormField
                                     key={item.id}

@@ -89,8 +89,8 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
   const selectedRoles = form.watch('roles');
   const hasPlayerRole = selectedRoles?.includes('Player');
 
-  const canAssignRoles = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster') || currentUser?.roles.includes('School Admin');
-  const isCurrentUserAdmin = currentUser?.roles.includes('Admin') ?? false;
+  const canAssignRoles = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster') || currentUser?.roles.includes('System Architect');
+  const isCurrentUserAdmin = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect') ?? false;
 
 
   React.useEffect(() => {
@@ -128,7 +128,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
           toast({ title: "Person Updated", description: `${data.firstName} ${data.lastName} has been updated.` });
         } else {
           await addPlayerAction(payload);
-          toast({ title: "Person Added", description: `${data.firstName} ${data.lastName} has been added.` });
+          toast({ title: "Person Added", description: `${data.firstName} ${data.lastName} has been created.` });
         }
         onOpenChange(false);
       } catch (error) {
@@ -181,7 +181,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
                             <h4 className="font-medium text-sm text-muted-foreground mb-2">{group.group}</h4>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border p-4 rounded-md">
                               {group.roles.map((item) => {
-                                const isAdminRole = item.id === 'Admin';
+                                const isAdminRole = item.id === 'Admin' || item.id === 'System Architect';
                                 const isDisabled = isPending || !canAssignRoles || (isAdminRole && !isCurrentUserAdmin);
                                 return (
                                 <FormField key={item.id} control={form.control} name="roles" render={({ field }) => (
