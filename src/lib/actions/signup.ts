@@ -68,7 +68,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     const userDocRef = doc(db, 'people', user.uid);
     
     // 2. Prepare profile data based on role
-    const isGodTierAdmin = data.email === 'kameel@maverickdesign.co.za';
+    const isGodTierAdmin = ['kameel@maverickdesign.co.za', 'kameel@scrbrd.com'].includes(data.email);
 
     let rolesToAssign: string[];
     let activeRole: string;
