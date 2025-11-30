@@ -24,7 +24,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'maverickdesign.co.za', port: '', pathname: '/**' },
       { protocol: 'https', hostname: 'firebasestudio-hosting.web.app', port: '', pathname: '/**' },
       { protocol: 'https', hostname: 'picsum.photos', port: '', pathname: '/**' },
-      { protocol: 'https://tile.openstreetmap.org', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'tile.openstreetmap.org', port: '', pathname: '/**' },
     ],
   },
 };

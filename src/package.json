@@ -13,10 +13,10 @@
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
-    "@ducanh2912/next-pwa": "^10.2.8",
-    "@genkit-ai/google-genai": "^1.22.0",
-    "@genkit-ai/next": "^1.22.0",
-    "@hookform/resolvers": "^3.9.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "genkit": "1.22.0",
+    "@genkit-ai/googleai": "1.22.0",
+    "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -47,16 +47,15 @@
     "firebase": "^10.12.3",
     "firebase-admin": "^12.2.0",
     "framer-motion": "^11.3.2",
-    "genkit": "^1.22.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.408.0",
     "next": "14.2.5",
-    "next-themes": "^0.3.0",
-    "react": "^18.3.1",
+    "next-themes": "0.5.0",
+    "react": "18.3.1",
     "react-day-picker": "^8.10.1",
-    "react-dom": "^18.3.1",
-    "react-hook-form": "^7.52.1",
-    "react-leaflet": "^4.2.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "^7.55.1",
+    "react-leaflet": "4.2.1",
     "recharts": "^2.12.7",
     "swr": "^2.2.5",
     "tailwind-merge": "^2.4.0",
@@ -80,5 +79,9 @@
     "tailwindcss": "^3.4.4",
     "ts-jest": "^29.2.2",
     "typescript": "^5.5.3"
+  },
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   }
 }

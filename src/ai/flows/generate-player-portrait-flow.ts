@@ -35,7 +35,7 @@ const generatePlayerPortraitFlow = ai.defineFlow(
   async (input) => {
     // 1. Generate the image with AI
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      model: 'googleai/gemini-3-pro-image-preview',
       prompt: `Generate a photorealistic headshot portrait of a fictional cricket player named ${input.firstName} ${input.lastName}. The background should be a simple, neutral studio setting. The player should have a determined and professional expression.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],

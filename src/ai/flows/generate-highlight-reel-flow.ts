@@ -46,7 +46,7 @@ Return your response in the specified JSON format.
 
 const generateHighlightImage = async (description: string, matchId: string, index: number): Promise<string> => {
     const { media } = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        model: 'googleai/gemini-3-pro-image-preview',
         prompt: `Generate a dynamic, cinematic, photorealistic image of a cricket match moment described as: "${description}". The image should look like a professional sports photograph.`,
         config: {
             responseModalities: ['TEXT', 'IMAGE'],
