@@ -68,15 +68,17 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     const userDocRef = doc(db, 'people', user.uid);
     
     // 2. Prepare profile data based on role
-    const GOD_TIER_EMAILS = ['kameel@maverickdesign.co.za', 'kameel@scrbrd.com'];
+    const GOD_TIER_EMAILS = ['kameel@maverickdesign.co.za', 'kameel@scrbrd.com', 'admin@scrbrd.app'];
     const isGodTierAdmin = GOD_TIER_EMAILS.includes(data.email);
 
     let rolesToAssign: string[];
     let activeRole: string;
+    let status: 'active' | 'pending_review' = (data.role === 'Player' || data.role === 'Spectator') ? 'active' : 'pending_review';
 
     if (isGodTierAdmin) {
         rolesToAssign = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
         activeRole = 'System Architect';
+        status = 'active'; // This is the critical fix.
     } else {
         rolesToAssign = [data.role];
         activeRole = data.role;
@@ -88,7 +90,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
         email: data.email,
         roles: rolesToAssign,
         activeRole: activeRole,
-        status: (data.role === 'Player' || data.role === 'Spectator' || isGodTierAdmin) ? 'active' : 'pending_review',
+        status: status,
         notificationPreferences: { email: true, push: false },
         createdAt: Timestamp.now(),
         userId: user.uid, // Explicitly store the UID in the document as well

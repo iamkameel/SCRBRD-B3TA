@@ -152,15 +152,13 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
             }
         };
         
-        // This is the key change: ensure the actorId (the UID of the logged-in admin) is used for the special 'p_kameel' user.
-        // This links the Firebase Auth user to the Firestore document.
         const kameelTempId = 'p_kameel';
         const kameelData = sampleData.people.find(p => p.personId === kameelTempId);
         if (kameelData) {
             idMap.set(kameelTempId, actorId);
             const adminDocRef = doc(db, 'people', actorId);
             const { personId, ...adminData } = kameelData;
-            batch.set(adminDocRef, { ...adminData, userId: actorId });
+            batch.set(adminDocRef, { ...adminData, userId: actorId, status: 'active' });
             itemCount++;
             await commitBatchIfNeeded();
         }
@@ -184,14 +182,12 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 
                 const tempId = (item as any)[idKey as keyof typeof item];
 
-                // Skip adding admin users if they already exist from a previous step
                 if (collName === 'people' && tempId === kameelTempId) {
                     continue; 
                 }
                 
                 const { [idKey]: _, ...itemData } = item as any;
                 
-                // Use a consistent userId (the actor's ID) for created items.
                 const dataToSave: { [key: string]: any } = { ...itemData, userId: actorId };
                 if (dataToSave.startDate) dataToSave.startDate = Timestamp.fromDate(new Date(dataToSave.startDate));
                 if (dataToSave.endDate) dataToSave.endDate = Timestamp.fromDate(new Date(dataToSave.endDate));
