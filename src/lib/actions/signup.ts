@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { z } from 'zod';
@@ -69,7 +68,8 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     const userDocRef = doc(db, 'people', user.uid);
     
     // 2. Prepare profile data based on role
-    const isGodTierAdmin = ['kameel@maverickdesign.co.za', 'kameel@scrbrd.com'].includes(data.email);
+    const GOD_TIER_EMAILS = ['kameel@maverickdesign.co.za', 'kameel@scrbrd.com'];
+    const isGodTierAdmin = GOD_TIER_EMAILS.includes(data.email);
 
     let rolesToAssign: string[];
     let activeRole: string;
@@ -100,9 +100,9 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     
     if (data.role === 'School Admin' && data.schoolName) {
         // Prevent non-admins from assigning themselves as admins of existing schools
-        const canAssign = isGodTierAdmin;
-        if (!canAssign) {
-            profileData.requestedSchoolName = data.schoolName;
+        // For a new signup, they are always pending unless they are god tier
+        if (!isGodTierAdmin) {
+             profileData.requestedSchoolName = data.schoolName;
         } else {
             // For simplicity, we assume an admin creating another school admin is valid.
             // In a real app, you'd check if the school exists.
