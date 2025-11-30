@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const role = person.activeRole || person.roles[0] || 'Spectator';
 
   switch (role) {
+    case 'System Architect':
     case 'Admin':
       return <AdminDashboard />;
     case 'Sportsmaster':

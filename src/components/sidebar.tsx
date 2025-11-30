@@ -65,12 +65,12 @@ export function Sidebar() {
                   const isAdminRole = activeRole === 'Admin' || activeRole === 'System Architect';
                   const isSportsmaster = activeRole === 'Sportsmaster';
 
-                  if (group.adminOnly && !isAdminRole && !isSportsmaster) {
+                  if (group.adminOnly && !isAdminRole) {
                       return null;
                   }
                   
                   const visibleItems = group.items.filter(item => {
-                      if (item.adminOnly && !isAdminRole && !isSportsmaster) return false;
+                      if (item.adminOnly && !isAdminRole) return false;
                       return true;
                   });
 
