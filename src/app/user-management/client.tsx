@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -176,9 +175,9 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
             <TableBody>
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => {
-                  const isTargetAdmin = user.roles.includes('Admin');
-                  const canCurrentUserEdit = currentUser.roles.includes('Admin') || !isTargetAdmin;
-                  const canCurrentUserDelete = currentUser.roles.includes('Admin') && currentUser.personId !== user.personId;
+                  const isTargetAdmin = user.roles.includes('Admin') || user.roles.includes('System Architect');
+                  const canCurrentUserEdit = currentUser.roles.includes('Admin') || currentUser.roles.includes('System Architect') || !isTargetAdmin;
+                  const canCurrentUserDelete = (currentUser.roles.includes('Admin') || currentUser.roles.includes('System Architect')) && currentUser.personId !== user.personId;
 
                   return (
                     <TableRow key={user.personId}>
@@ -203,7 +202,7 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
                           <DropdownMenu>
                               <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                {canCurrentUserEdit && <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setDialogMode('edit'); setIsPersonDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit Profile & Roles</DropdownMenuItem>}
+                                {canCurrentUserEdit && <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setIsPersonDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" />Edit Profile & Roles</DropdownMenuItem>}
                                 {canCurrentUserDelete && <DropdownMenuSeparator />}
                                 {canCurrentUserDelete && <DropdownMenuItem onSelect={() => { setSelectedPerson(user); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete User</DropdownMenuItem>}
                               </DropdownMenuContent>
@@ -233,7 +232,7 @@ export default function UserManagementClient({ users, currentUser }: { users: Pe
             </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
-    {isPersonDialogOpen && <PersonDialog mode={dialogMode} person={selectedPerson ?? undefined} currentUser={currentUser} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} schools={[]}/>}
+    {isPersonDialogOpen && <PersonDialog mode="edit" person={selectedPerson ?? undefined} currentUser={currentUser} open={isPersonDialogOpen} onOpenChange={setIsPersonDialogOpen} schools={[]}/>}
     {canAddUsers && <UserRoleDialog users={users} currentUser={currentUser} open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen} />}
     </>
   );
