@@ -90,7 +90,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
   const hasPlayerRole = selectedRoles?.includes('Player');
 
   const canAssignRoles = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('Sportsmaster') || currentUser?.roles.includes('System Architect');
-  const isCurrentUserAdmin = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect') ?? false;
+  const isCurrentUserAdmin = (currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect')) ?? false;
 
 
   React.useEffect(() => {
@@ -140,10 +140,7 @@ export function PersonDialog({ mode, person, currentUser, open, onOpenChange, sc
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{mode === 'edit' ? 'Edit Person' : 'Add New Person'}</DialogTitle>
-          <DialogDescription>Use the tabs to enter the details for the person.</DialogDescription>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>{mode === 'edit' ? 'Edit Person' : 'Add New Person'}</DialogTitle><DialogDescription>Use the tabs to enter the details for the person.</DialogDescription></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Tabs defaultValue="basic-info" className="space-y-4">
