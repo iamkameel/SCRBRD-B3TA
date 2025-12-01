@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, SlidersHorizontal, List, LayoutGrid, ArrowDown, ArrowUp, ChevronDown, User, Calendar } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, SlidersHorizontal, List, LayoutGrid, ArrowUp, ArrowDown, ChevronDown, User, Calendar } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

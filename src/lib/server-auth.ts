@@ -7,9 +7,9 @@ import { adminApp } from './firebase-admin';
 
 // This function is NOT cached. It must run on every request to get the current user.
 export const getUserId = async (): Promise<string | null> => {
-    const authHeader = (await headers()).get('Authorization');
+    const authHeader = headers().get('Authorization');
     if (!authHeader) {
-        console.warn("Authorization header missing. User cannot be authenticated on the server.");
+        // This is a common case for public pages, so we don't log an error.
         return null;
     }
 
@@ -18,7 +18,8 @@ export const getUserId = async (): Promise<string | null> => {
         const decodedToken = await getAuth(adminApp).verifyIdToken(token);
         return decodedToken.uid;
     } catch (error) {
-        console.error("Error verifying auth token in getUserId:", error);
+        // This can happen if the token is expired or invalid. It's not necessarily an "error"
+        // in the traditional sense, just an unauthenticated user.
         return null;
     }
 };

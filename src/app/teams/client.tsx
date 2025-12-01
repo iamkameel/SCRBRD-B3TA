@@ -457,4 +457,3 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
     </>
   );
 }
-

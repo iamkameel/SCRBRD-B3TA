@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -12,12 +13,31 @@ import { getPersonTeamAssignments, getTeams, getTeamsBySchool } from './teams';
 import { getUserId } from '@/lib/server-auth';
 import { getTeamRoster } from './teams';
 
-const checkManagementPermission = async (userId: string) => {
+const checkManagementPermission = async (userId: string, schoolId?: string) => {
     if (userId === 'TEMP_ADMIN') return;
     const user = await getPerson(userId);
-    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster') && !user.roles.includes('System Architect'))) {
-        throw new Error("You do not have permission to manage schools.");
+    if (!user) {
+        throw new Error("You do not have permission to perform this action.");
     }
+    // System Architect and Admin have global permission
+    if (user.roles.includes('System Architect') || user.roles.includes('Admin')) {
+        return;
+    }
+    // Sportsmaster can manage their assigned schools
+    if (user.roles.includes('Sportsmaster') && schoolId && user.assignedSchools?.includes(schoolId)) {
+        return;
+    }
+    // School Admin can manage their single assigned school
+    if (user.roles.includes('School Admin') && schoolId && user.assignedSchools?.includes(schoolId)) {
+        return;
+    }
+    
+    // If it's a create action, a sportsmaster/school admin can proceed without a schoolId yet
+    if (!schoolId && (user.roles.includes('Sportsmaster') || user.roles.includes('School Admin'))) {
+      return;
+    }
+
+    throw new Error("You do not have permission to manage this school's data.");
 }
 
 export async function getSchools(): Promise<School[]> {
@@ -31,7 +51,7 @@ export async function getSchools(): Promise<School[]> {
           const activeRole = currentUser.activeRole;
           if (activeRole === 'Admin' || activeRole === 'System Architect') {
               q = query(schoolsCollection);
-          } else if (activeRole === 'Sportsmaster' && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
+          } else if ((activeRole === 'Sportsmaster' || activeRole === 'School Admin') && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
               q = query(schoolsCollection, where(documentId(), 'in', currentUser.assignedSchools));
           } else if (['Coach', 'Player', 'Team Manager'].includes(activeRole)) {
               const assignments = await getPersonTeamAssignments(userId);
@@ -168,14 +188,16 @@ const updateSchoolSchema = schoolSchema.extend({
 export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
-    await checkManagementPermission(userId);
+    
+    const { schoolId, logoDataUri, ...updateData } = data;
+    await checkManagementPermission(userId, schoolId);
+
     const validatedFields = updateSchoolSchema.safeParse(data);
 
     if (!validatedFields.success) {
         throw new Error('Invalid school data.');
     }
     
-    const { schoolId, logoDataUri, ...updateData } = validatedFields.data;
     const schoolDocRef = doc(db, 'schools', schoolId);
 
     const schoolSnap = await getDoc(schoolDocRef);
@@ -212,7 +234,7 @@ export async function updateSchoolAction(data: z.infer<typeof updateSchoolSchema
 export async function deleteSchoolAction(schoolId: string) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  await checkManagementPermission(userId);
+  await checkManagementPermission(userId, schoolId);
   
   if (!schoolId) {
     throw new Error("School ID is required.");
@@ -288,7 +310,7 @@ export async function updateSchoolStaffAssignmentsAction(schoolId: string, staff
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
-    await checkManagementPermission(userId);
+    await checkManagementPermission(userId, schoolId);
 
     const batch = writeBatch(db);
     const peopleCollection = collection(db, 'people');
