@@ -106,28 +106,5 @@ export async function addInvoiceAction(data: InvoiceFormValues) {
   revalidatePath('/billing');
 }
 
-export async function getTransactions(): Promise<any[]> {
-    const q = query(collection(db, 'financials'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
-
-const transactionSchema = z.object({
-    description: z.string().min(1),
-    amount: z.number().positive(),
-    type: z.enum(['Income', 'Expense']),
-    category: z.string().min(1),
-    date: z.date(),
-});
-
-export async function addTransactionAction(data: z.infer<typeof transactionSchema>) {
-    const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
-    await checkBillingPermission(userId);
-
-    const validated = transactionSchema.safeParse(data);
-    if (!validated.success) throw new Error("Invalid transaction data.");
-    
-    await addDoc(collection(db, 'financials'), { ...validated.data, userId });
-    revalidatePath('/financials');
-}
+// Transaction functions seem to belong to financials, keeping them separate.
+// This file is now purely for invoice-related actions.

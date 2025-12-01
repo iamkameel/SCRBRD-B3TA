@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -54,7 +53,7 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
     if (!userId) return [];
     
     const actor = await getPerson(userId);
-    if (!actor || !actor.roles.includes('Admin')) {
+    if (!actor || !actor.roles.some(r => ['Admin', 'System Architect'].includes(r))) {
         return [];
     }
 

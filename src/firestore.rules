@@ -157,7 +157,12 @@ service cloud.firestore {
     match /assignmentRequests/{reqId} {
       allow read: if isOwner(resource.data.userId) || isOwner(resource.data.requesterId);
       allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.userId); // Only the reviewer can update the status
+      allow update: if canManageData(); // Only admins/sportsmasters can approve/deny
+    }
+    
+    match /auditLogs/{logId} {
+        allow read: if canManageData();
+        allow create: if isSignedIn(); // Logged by server actions
     }
   }
 }

@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -85,7 +84,7 @@ export const getPendingAssignmentRequests = cache(async (): Promise<AssignmentRe
     const requestsCollection = collection(db, 'assignmentRequests');
     let q;
 
-    if (currentUser.roles.some(r => ['Admin', 'Sportsmaster'].includes(r))) {
+    if (currentUser.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r))) {
         // Admins/Sportsmasters see all pending requests
         q = query(requestsCollection, where("status", "==", "pending"));
     } else {
@@ -113,7 +112,7 @@ export async function reviewAssignmentRequestAction(data: z.infer<typeof reviewS
     if (!reviewerId) throw new Error("User not authenticated.");
 
     const reviewer = await getPerson(reviewerId);
-    if (!reviewer || !reviewer.roles.some(r => ['Admin', 'Sportsmaster'].includes(r))) {
+    if (!reviewer || !reviewer.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r))) {
         throw new Error("You do not have permission to review requests.");
     }
     

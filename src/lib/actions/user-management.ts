@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { getPerson } from './players';
 import { revalidatePath } from 'next/cache';
 import { getUserId } from '@/lib/server-auth';
@@ -20,7 +20,7 @@ const checkRoleManagementPermission = async (adminId: string, targetUserId: stri
     }
     
     // Prevent a non-System-Architect from modifying an Admin or Architect
-    if (admin.activeRole !== 'System Architect' && target?.roles.some(r => ['Admin', 'System Architect'].includes(r))) {
+    if (!admin.roles.includes('System Architect') && target?.roles.some(r => ['Admin', 'System Architect'].includes(r))) {
         throw new Error("You do not have permission to modify this user's roles.");
     }
 };
