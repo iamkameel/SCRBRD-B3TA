@@ -3,6 +3,9 @@
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
+// --- God Tier User ---
+export const GOD_TIER_UID = '0o2nS9M8g4N2wL4E1bB3t6xYv5Z2'; // A consistent, hardcoded UID for the super admin
+
 // Interfaces
 
 export interface TechnicalSkills {
@@ -729,4 +732,3 @@ export interface LiveMatchUpdateOutput {
     summary: string;
     tacticalSuggestions?: string[];
 }
-

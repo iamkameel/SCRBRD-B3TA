@@ -12,8 +12,9 @@ import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-de
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
-import { getUserId, GOD_TIER_UID } from '@/lib/server-auth';
+import { getUserId } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
+import { GOD_TIER_UID } from '../data';
 
 export async function getPlayers(): Promise<Person[]> {
   const userId = await getUserId();
@@ -641,9 +642,8 @@ export async function updateActiveRoleAction(personId: string, role: string) {
   
   if (personId === GOD_TIER_UID) {
     // This is the System Architect user. We can't update a non-existent document,
-    // but the client-side context will handle the state change.
-    // We'll log the attempt and return success to the client.
-    console.log(`System Architect role switch to "${role}" handled on client.`);
+    // but we can revalidate the path to force a UI refresh with the new (client-side) context.
+    console.log(`System Architect role switch to "${role}" triggered server revalidation.`);
     revalidatePath('/', 'layout');
     return;
   }
