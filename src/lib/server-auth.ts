@@ -8,7 +8,8 @@ import { adminApp } from './firebase-admin';
 // This function is NOT cached. It must run on every request to get the current user.
 export const getUserId = async (): Promise<string | null> => {
     // Correctly await the headers object before accessing its properties.
-    const authorization = headers().get('Authorization');
+    const headersList = await headers();
+    const authorization = headersList.get('Authorization');
     
     if (!authorization) {
         // This is a common case for public pages, so we don't log an error.
