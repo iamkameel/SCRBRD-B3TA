@@ -645,12 +645,9 @@ export async function updateActiveRoleAction(personId: string, role: string) {
       throw new Error("You can only change your own active role.");
   }
   
-  // The GOD_TIER_UID is a virtual user that doesn't exist in Firestore.
-  // We can't update a non-existent document, so we just log and return.
-  // The client-side state is already optimistically updated.
   if (personId === GOD_TIER_UID) {
-    console.log(`System Architect role switch to "${role}" does not require a DB update.`);
-    revalidatePath('/', 'layout');
+    // This is a virtual user, no DB update is needed.
+    // The client-side state is handled optimistically.
     return;
   }
   
@@ -762,3 +759,5 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
         throw new Error("Could not update player skills.");
     }
 }
+
+    
