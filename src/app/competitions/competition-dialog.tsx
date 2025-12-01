@@ -32,6 +32,7 @@ const competitionSchema = z.object({
   teamIds: z.array(z.string()).optional(),
   sponsorIds: z.array(z.string()).optional(),
 });
+
 type CompetitionFormValues = z.infer<typeof competitionSchema>;
 
 const CLASS_DIVISION_MAP: { [key: string]: string[] } = {
@@ -72,6 +73,9 @@ const COMPETITION_TYPE_DEFINITIONS = [
 
 const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 
+// Define a constant for "No Winner" to avoid magic strings and state mismatch
+const NO_WINNER_VALUE = "no-winner";
+
 export function CompetitionDialog({ mode, competition, seasons, divisions, teams, sponsors, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], sponsors: Sponsor[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
@@ -86,11 +90,12 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
       seasonId: competition.seasonId,
       divisionId: competition.divisionId,
       status: competition.status,
-      winnerTeamId: competition.winnerTeamId || "",
+      // Default to NO_WINNER_VALUE if null/undefined, otherwise the actual ID
+      winnerTeamId: competition.winnerTeamId || NO_WINNER_VALUE,
       teamIds: competition.teamIds || [],
       sponsorIds: competition.sponsorIds || [],
     } : {
-      name: "", competitionClass: " ", type: "League", status: "Draft", winnerTeamId: "", teamIds: [], sponsorIds: [],
+      name: "", competitionClass: " ", type: "League", status: "Draft", winnerTeamId: NO_WINNER_VALUE, teamIds: [], sponsorIds: [],
     },
   });
   
@@ -106,6 +111,7 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
   const eligibleSchools = React.useMemo(() => {
       const schoolMap = new Map<string, { schoolId: string, schoolName: string }>();
       eligibleTeams.forEach(team => {
+          // Added optional chaining check for team.schoolId/Name just in case
           if (team.schoolId && team.schoolName && !schoolMap.has(team.schoolId)) {
               schoolMap.set(team.schoolId, { schoolId: team.schoolId, schoolName: team.schoolName });
           }
@@ -128,13 +134,19 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
   React.useEffect(() => {
     if (open) {
       if (mode === 'edit' && competition) {
-        form.reset({ ...competition, winnerTeamId: competition.winnerTeamId || "", competitionClass: competition.competitionClass || " ", teamIds: competition.teamIds || [], sponsorIds: competition.sponsorIds || [] });
+        form.reset({ 
+            ...competition, 
+            winnerTeamId: competition.winnerTeamId || NO_WINNER_VALUE, 
+            competitionClass: competition.competitionClass || " ", 
+            teamIds: competition.teamIds || [], 
+            sponsorIds: competition.sponsorIds || [] 
+        });
       } else {
         const activeSeason = seasons.find(s => {
             const now = new Date();
             return s.active && now >= s.startDate && now <= s.endDate;
         });
-        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: activeSeason?.seasonId, divisionId: undefined, winnerTeamId: "", teamIds: [], sponsorIds: [] });
+        form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: activeSeason?.seasonId, divisionId: undefined, winnerTeamId: NO_WINNER_VALUE, teamIds: [], sponsorIds: [] });
       }
       setSchoolFilters([]);
     }
@@ -155,7 +167,7 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
 
   React.useEffect(() => {
     if (form.getValues('status') !== 'Completed') {
-      form.setValue('winnerTeamId', '');
+      form.setValue('winnerTeamId', NO_WINNER_VALUE);
     }
   }, [status, form]);
 
@@ -165,6 +177,8 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
         const payload = {
           ...data,
           competitionClass: data.competitionClass?.trim(),
+          // Convert the "no-winner" placeholder back to null/undefined or empty string for the backend
+          winnerTeamId: data.winnerTeamId === NO_WINNER_VALUE ? "" : data.winnerTeamId,
         };
 
         if (mode === 'edit' && competition) {
@@ -183,7 +197,7 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh]">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === 'edit' ? 'Edit Competition' : 'Add New Competition'}</DialogTitle>
           <DialogDescription>Follow the steps to setup your competition.</DialogDescription>
@@ -260,7 +274,8 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
                                                 <Checkbox
                                                     checked={formField.value?.includes(team.teamId)}
                                                     onCheckedChange={(checked) => {
-                                                        return checked
+                                                        // Ensure 'checked' is boolean to satisfy TS and Radix
+                                                        return checked === true
                                                             ? formField.onChange([...(formField.value || []), team.teamId])
                                                             : formField.onChange(formField.value?.filter((id) => id !== team.teamId))
                                                     }}
@@ -287,7 +302,7 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
                                                     <Checkbox
                                                         checked={formField.value?.includes(sponsor.sponsorId)}
                                                         onCheckedChange={(checked) => {
-                                                            return checked
+                                                            return checked === true
                                                                 ? formField.onChange([...(formField.value || []), sponsor.sponsorId])
                                                                 : formField.onChange(formField.value?.filter((id) => id !== sponsor.sponsorId))
                                                         }}
@@ -308,7 +323,7 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
             <Card className="border-none shadow-none pt-4">
               <CardHeader className="p-0 mb-4">
                 <CardTitle className="text-lg">Step 4: Set Status</CardTitle>
-                <CardDescription>Define the current status of the competition. If 'Completed', you can select a winner.</CardDescription>
+                <CardDescription>Define the current status of the competition. If &apos;Completed&apos;, you can select a winner.</CardDescription>
               </CardHeader>
               <CardContent className="p-0 space-y-4">
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -319,14 +334,15 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
                               <Select onValueChange={field.onChange} value={field.value}>
                                   <FormControl><SelectTrigger><SelectValue placeholder="Select a winner" /></SelectTrigger></FormControl>
                                   <SelectContent>
-                                      <SelectItem value=" ">-- No Winner --</SelectItem>
+                                      <SelectItem value={NO_WINNER_VALUE}>-- No Winner --</SelectItem>
                                       {eligibleTeams.map((team) => (
                                           <SelectItem key={team.teamId} value={team.teamId}>{team.name}</SelectItem>
                                       ))}
                                   </SelectContent>
                               </Select>
+                              <FormMessage />
                           </FormItem>
-                      )}
+                      )} />
                   )}
               </CardContent>
             </Card>
