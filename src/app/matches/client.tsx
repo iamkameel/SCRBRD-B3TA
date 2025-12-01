@@ -51,7 +51,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import type { Match, Team, Competition, Field, Person, MatchStatus } from "@/lib/data";
+import type { Match, Team, Competition, Field, Person, MatchStatus, Season, Division } from "@/lib/data";
 import { deleteMatchAction, assignOfficialToMatchAction } from '@/lib/actions/matches';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -157,7 +157,7 @@ function AssignOfficialDialog({ match, people, open, onOpenChange }: { match: Ma
   );
 }
 
-export default function MatchesClient({ matches, teams, fields, competitions, isAdmin, scorers, canAssignScorer }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], isAdmin: boolean, scorers: Person[], canAssignScorer: boolean }) {
+export default function MatchesClient({ matches, teams, fields, competitions, seasons, divisions, isAdmin, scorers, canAssignScorer }: { matches: Match[], teams: Team[], fields: Field[], competitions: Competition[], seasons: Season[], divisions: Division[], isAdmin: boolean, scorers: Person[], canAssignScorer: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedMatch, setSelectedMatch] = React.useState<Match | null>(null);
@@ -262,7 +262,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Matches</h1><p className="text-muted-foreground">Manage your match fixtures and results.</p></div>
-          <NewMatchClient teams={teams} competitions={competitions} fields={fields} isAdmin={isAdmin}/>
+          <NewMatchClient teams={teams} competitions={competitions} fields={fields} seasons={seasons} divisions={divisions} isAdmin={isAdmin}/>
         </header>
 
         <Card>
