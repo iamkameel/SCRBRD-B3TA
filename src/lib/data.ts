@@ -455,7 +455,6 @@ export interface TransportAssignment {
   assignmentId: string;
   vehicleId: string;
   vehicleName: string;
-s
   vehicleType: Vehicle['type'];
   driverId: string;
   driverName: string;

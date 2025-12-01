@@ -32,7 +32,7 @@ const competitionSchema = z.object({
   teamIds: z.array(z.string()).optional(),
   sponsorIds: z.array(z.string()).optional(),
 });
-type CompetitionFormValues = z.infer;
+type CompetitionFormValues = z.infer<typeof competitionSchema>;
 
 const CLASS_DIVISION_MAP: { [key: string]: string[] } = {
     'Open': ['1st XI', '2nd XI', '3rd XI', '4th XI'],
@@ -75,9 +75,11 @@ const COMPETITION_STATUSES = ['Draft', 'In Progress', 'Completed'] as const;
 export function CompetitionDialog({ mode, competition, seasons, divisions, teams, sponsors, open, onOpenChange }: { mode: 'add' | 'edit', competition?: Competition, seasons: Season[], divisions: Division[], teams: Team[], sponsors: Sponsor[], open: boolean, onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
-  const [schoolFilters, setSchoolFilters] = React.useState([]);
+  const [schoolFilters, setSchoolFilters] = React.useState<string[]>([]);
 
-  const form = useForm {
+  const form = useForm<CompetitionFormValues>({
+    resolver: zodResolver(competitionSchema),
+    defaultValues: mode === 'edit' && competition ? {
       name: competition.name,
       competitionClass: competition.competitionClass || " ",
       type: competition.type,
@@ -102,7 +104,7 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
   }, [teams, divisionId, seasonId]);
 
   const eligibleSchools = React.useMemo(() => {
-      const schoolMap = new Map();
+      const schoolMap = new Map<string, { schoolId: string, schoolName: string }>();
       eligibleTeams.forEach(team => {
           if (team.schoolId && team.schoolName && !schoolMap.has(team.schoolId)) {
               schoolMap.set(team.schoolId, { schoolId: team.schoolId, schoolName: team.schoolName });
@@ -130,7 +132,7 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
       } else {
         const activeSeason = seasons.find(s => {
             const now = new Date();
-            return s.active && now >= s.startDate && now  s.endDate);
+            return s.active && now >= s.startDate && now <= s.endDate;
         });
         form.reset({ name: "", competitionClass: " ", type: "League", status: "Draft", seasonId: activeSeason?.seasonId, divisionId: undefined, winnerTeamId: "", teamIds: [], sponsorIds: [] });
       }
@@ -182,175 +184,162 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
   }
 
   return (
-    
-      
-        
-          {mode === 'edit' ? 'Edit Competition' : 'Add New Competition'}
-          Follow the steps to setup your competition.
-        
-        
-          
-            
-                
-                    Step 1: Define Scope
-                    Select the season and division. This will determine which teams are eligible to participate.
-                
-                
-                  
-                  
-                  
-                
-            
-            
-                
-                    
-                        Step 2: Competition Details
-                        Provide a name, format, and optional class for the competition.
-                    
-                    
-                      
-                      
-                        
-                      
-                      
-                      
-                        
-                          
-                            
-                              
-                              
-                                {COMPETITION_TYPE_DEFINITIONS.map(typeDef => (
-                                  
-                                  
-                                    
-                                    
-                                      {typeDef.label}
-                                      {typeDef.description}
-                                    
-                                  
-                                ))}
-                              
-                            
-                          
-                        
-                      
-                      
-                    
-                
-            
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>{mode === 'edit' ? 'Edit Competition' : 'Add New Competition'}</DialogTitle>
+          <DialogDescription>Follow the steps to setup your competition.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+            <Card className="border-none shadow-none">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg">Step 1: Define Scope</CardTitle>
+                <CardDescription>Select the season and division. This will determine which teams are eligible to participate.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 space-y-4">
+                <FormField control={form.control} name="seasonId" render={({ field }) => (<FormItem><FormLabel>Season</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a season" /></SelectTrigger></FormControl><SelectContent>{seasons.map((s) => (<SelectItem key={s.seasonId} value={s.seasonId}>{s.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="divisionId" render={({ field }) => (<FormItem><FormLabel>Division</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a division" /></SelectTrigger></FormControl><SelectContent>{divisions.map((d) => (<SelectItem key={d.divisionId} value={d.divisionId}>{d.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+              </CardContent>
+            </Card>
 
-            
-                
-                    Step 3: Assign Teams & Sponsors
-                    Select participating teams and official sponsors for this competition.
-                
-                
-                     
-                        
-                            
-                                Participating Teams
-                            
-                            {eligibleTeams.length > 0 && (
-                                
-                                    
-                                        
-                                            {schoolFilters.length === 0 && "Filter by School..."}{schoolFilters.length === 1 && eligibleSchools.find(s => s.schoolId === schoolFilters[0])?.schoolName}{schoolFilters.length > 1 && `${schoolFilters.length} schools selected`}
-                                            
-                                        
-                                        
-                                            
-                                                Filter by School
-                                                
-                                                    
-                                                    
-                                                        {school.schoolName}
-                                                    
-                                                ))}
-                                                
-                                                    Clear filters
-                                                
-                                            
-                                        
-                                    
-                                
-                            )}
-                            
-                                {filteredTeams.length > 0 ? (
-                                    filteredTeams.map((team) => (
-                                         
-                                            
-                                                
-                                                    
-                                                    
-                                                        
-                                                        {team.name}
-                                                    
-                                                
-                                            
-                                        
-                                    ))
-                                ) : (  eligibleTeams.length === 0 ? "No teams available for the selected division and season." : "No teams found for the selected school filter."}
-                            
-                            
-                        
-                    
-                    
-                        
-                            Sponsors (Optional)
-                            
-                                
+            <Card className="border-none shadow-none pt-4">
+                <CardHeader className="p-0 mb-4">
+                    <CardTitle className="text-lg">Step 2: Competition Details</CardTitle>
+                    <CardDescription>Provide a name, format, and optional class for the competition.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                      <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Competition Name</FormLabel><FormControl><Input placeholder="e.g. KZN Open League" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="type" render={({ field }) => (<FormItem className="space-y-3"><FormLabel>Competition Format</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                            {COMPETITION_TYPE_DEFINITIONS.map(typeDef => (
+                              <FormItem key={typeDef.id}>
+                                <FormControl>
+                                    <RadioGroupItem value={typeDef.id} id={typeDef.id} className="peer sr-only" />
+                                </FormControl>
+                                <FormLabel htmlFor={typeDef.id} className="flex flex-col gap-2 rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full">
+                                    <h4 className="font-semibold">{typeDef.label}</h4>
+                                    <p className="text-xs text-muted-foreground">{typeDef.description}</p>
+                                </FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="competitionClass" render={({ field }) => (<FormItem><FormLabel>Class / Level (Optional)</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!divisionId || eligibleClasses.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!divisionId ? "Select a division first" : "Select a class"} /></SelectTrigger></FormControl><SelectContent>{eligibleClasses.map((cls) => (<SelectItem key={cls} value={cls}>{cls}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-none pt-4">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg">Step 3: Assign Teams & Sponsors</CardTitle>
+                <CardDescription>Select participating teams and official sponsors for this competition.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <FormField control={form.control} name="teamIds" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Participating Teams</FormLabel>
+                        {eligibleTeams.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="w-full h-8 justify-between font-normal"><span className="truncate">
+                                        {schoolFilters.length === 0 && "Filter by School..."}{schoolFilters.length === 1 && eligibleSchools.find(s => s.schoolId === schoolFilters[0])?.schoolName}{schoolFilters.length > 1 && `${schoolFilters.length} schools selected`}
+                                    </span><ChevronDown className="h-4 w-4 opacity-50" /></Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                    <DropdownMenuLabel>Filter by School</DropdownMenuLabel><DropdownMenuSeparator />
+                                        {eligibleSchools.map(school => (<DropdownMenuCheckboxItem key={school.schoolId} checked={schoolFilters.includes(school.schoolId)} onSelect={(e) => e.preventDefault()} onCheckedChange={checked => setSchoolFilters(prev => checked ? [...prev, school.schoolId] : prev.filter(id => id !== school.schoolId))}>
+                                            {school.schoolName}
+                                        </DropdownMenuCheckboxItem>))}
+                                        {schoolFilters.length > 0 && (<><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => setSchoolFilters([])} className="justify-center text-sm">Clear filters</DropdownMenuItem></>)}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                        <ScrollArea className="h-48 rounded-md border p-2">
+                            {filteredTeams.length > 0 ? (
+                                filteredTeams.map((team) => (
+                                    <FormField key={team.teamId} control={form.control} name="teamIds" render={({ field: formField }) => (
+                                        <FormItem key={team.teamId} className="flex flex-row items-center space-x-3 space-y-0 px-2 py-1.5 rounded-md hover:bg-muted/50">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={formField.value?.includes(team.teamId)}
+                                                    onCheckedChange={(checked) => {
+                                                        return checked
+                                                            ? formField.onChange([...(formField.value || []), team.teamId])
+                                                            : formField.onChange(formField.value?.filter((id) => id !== team.teamId))
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormLabel className="font-normal w-full cursor-pointer">{team.name}</FormLabel>
+                                        </FormItem>
+                                    )} />
+                                ))
+                            ) : (  <p className="text-center text-sm text-muted-foreground py-4">{eligibleTeams.length === 0 ? "No teams available for the selected division and season." : "No teams found for the selected school filter."}</p>)}
+                        </ScrollArea>
+                        <FormMessage />
+                    </FormItem>
+                  )} />
+                   <FormField control={form.control} name="sponsorIds" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Sponsors (Optional)</FormLabel>
+                            <ScrollArea className="h-48 rounded-md border p-2">
                                 {sponsors.length > 0 ? (
                                     sponsors.map((sponsor) => (
-                                         
-                                            
-                                                
-                                                    
-                                                    
-                                                        
-                                                        {sponsor.name}
-                                                    
-                                                
-                                            
-                                        
+                                        <FormField key={sponsor.sponsorId} control={form.control} name="sponsorIds" render={({ field: formField }) => (
+                                            <FormItem key={sponsor.sponsorId} className="flex flex-row items-center space-x-3 space-y-0 px-2 py-1.5 rounded-md hover:bg-muted/50">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={formField.value?.includes(sponsor.sponsorId)}
+                                                        onCheckedChange={(checked) => {
+                                                            return checked
+                                                                ? formField.onChange([...(formField.value || []), sponsor.sponsorId])
+                                                                : formField.onChange(formField.value?.filter((id) => id !== sponsor.sponsorId))
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel className="font-normal w-full cursor-pointer">{sponsor.name}</FormLabel>
+                                            </FormItem>
+                                        )} />
                                     ))
-                                ) : (  Add them on the Sponsors page.}
-                            
-                            
-                            
-                        
-                    
-                
-            
+                                ) : (  <p className="text-center text-sm text-muted-foreground py-4">No sponsors have been created. Add them on the Sponsors page.</p>)}
+                            </ScrollArea>
+                            <FormMessage />
+                        </FormItem>
+                  )} />
+                </CardContent>
+            </Card>
 
-            
-                
-                    Step 4: Set Status
-                    Define the current status of the competition. If 'Completed', you can select a winner.
-                
-                
-                  
-                  
-                  
-                    {status === 'Completed' && (
-                        
-                            
-                            
-                                
-                                    -- No Winner --
-                                    {eligibleTeams.map((team) => (
-                                        {team.name}
-                                    ))}
-                                
-                            
-                        
-                    )}
-                
-            
+            <Card className="border-none shadow-none pt-4">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg">Step 4: Set Status</CardTitle>
+                <CardDescription>Define the current status of the competition. If 'Completed', you can select a winner.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 space-y-4">
+                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl><SelectContent>{COMPETITION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                  {status === 'Completed' && (
+                      <FormField control={form.control} name="winnerTeamId" render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Winner</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl><SelectTrigger><SelectValue placeholder="Select a winner" /></SelectTrigger></FormControl>
+                                  <SelectContent>
+                                      <SelectItem value=" ">-- No Winner --</SelectItem>
+                                      {eligibleTeams.map((team) => (
+                                          <SelectItem key={team.teamId} value={team.teamId}>{team.name}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                          </FormItem>
+                      )}
+                  )}
+              </CardContent>
+            </Card>
 
-            
-          
-        
-      
-    
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" disabled={isPending}>{isPending ? 'Saving...' : 'Save Competition'}</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
