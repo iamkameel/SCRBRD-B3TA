@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db, app } from '@/lib/firebase';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, documentId, writeBatch } from 'firebase/firestore';
 import type { School, Person, Team, Match } from '@/lib/data';
 import { cache } from 'react';
 import { getPerson } from './players';
