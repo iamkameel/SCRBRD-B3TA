@@ -30,12 +30,13 @@ export default async function TeamsPage() {
 
   // Coaches list still needs to be filtered based on the schools the current user can see.
   let coaches: Person[];
-  if (user?.activeRole === 'Sportsmaster' || user?.activeRole === 'Coach') {
-    const visibleSchoolIds = new Set(schools.map(s => s.schoolId));
+  if (user?.activeRole === 'Sportsmaster' && user.assignedSchools && user.assignedSchools.length > 0) {
+    const visibleSchoolIds = new Set(user.assignedSchools);
     coaches = allCoaches.filter(c => c.assignedSchools?.some(sId => visibleSchoolIds.has(sId)));
-  } else {
-    // Admins and others see all coaches
+  } else if (canManage) { // Admins and System Architects see all coaches
     coaches = allCoaches;
+  } else {
+    coaches = [];
   }
   
   return <TeamsClient teams={teams} schools={schools} divisions={divisions} seasons={seasons} canManage={canManage} coaches={coaches} />;

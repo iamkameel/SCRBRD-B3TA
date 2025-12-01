@@ -62,6 +62,7 @@ interface NewMatchClientProps {
 
 export default function NewMatchClient({ teams, competitions, fields, seasons, divisions, isAdmin }: NewMatchClientProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [open, setOpen] = React.useState(false);
 

@@ -298,9 +298,9 @@ export default function MatchesClient({ matches, teams, fields, competitions, se
                     </PopoverContent>
                 </Popover>
                  <div className="flex items-center rounded-md bg-muted p-1">
-                  <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4"/>List</Button>
-                  <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4"/>Card</Button>
-                  <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('calendar')} className="gap-1"><Calendar className="h-4 w-4"/>Calendar</Button>
+                  <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4"/> List</Button>
+                  <Button variant={view === 'card' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('card')} className="gap-1"><LayoutGrid className="h-4 w-4"/> Card</Button>
+                  <Button variant={view === 'calendar' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('calendar')} className="gap-1"><Calendar className="h-4 w-4"/> Calendar</Button>
                 </div>
               </div>
             </div>

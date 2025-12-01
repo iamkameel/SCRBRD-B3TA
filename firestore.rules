@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -20,9 +21,13 @@ service cloud.firestore {
     function hasRole(role) {
       return role in getUserData().roles;
     }
+
+    function isSystemArchitect() {
+      return hasRole('System Architect');
+    }
     
     function isAdmin() {
-      return hasRole('Admin');
+      return hasRole('Admin') || isSystemArchitect();
     }
     
     function isSportsmaster() {
@@ -37,7 +42,7 @@ service cloud.firestore {
     match /people/{personId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn(); // User creation is handled by a server action, but allow for signup.
-      allow update: if isOwner(personId) || isAdmin();
+      allow update: if isOwner(personId) || canManageData();
       allow delete: if isAdmin();
     }
     
@@ -152,7 +157,12 @@ service cloud.firestore {
     match /assignmentRequests/{reqId} {
       allow read: if isOwner(resource.data.userId) || isOwner(resource.data.requesterId);
       allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.userId); // Only the reviewer can update the status
+      allow update: if canManageData(); // Only admins/sportsmasters can approve/deny
+    }
+    
+    match /auditLogs/{logId} {
+        allow read: if canManageData();
+        allow create: if isSignedIn(); // Logged by server actions
     }
   }
 }

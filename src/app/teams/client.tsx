@@ -141,8 +141,8 @@ export default function TeamsClient({ teams, schools, divisions, seasons, canMan
   
   const getSortIcon = (column: SortableColumn) => {
     if (sortConfig.key !== column) return null;
-    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />;
-    return <ArrowDown className="ml-2 h-4 w-4" />;
+    if (sortConfig.direction === 'ascending') return <ArrowUp className="ml-2 h-4 w-4" />
+    return <ArrowDown className="ml-2 h-4 w-4" />
   };
 
   const SortableHeader = ({ column, children, className }: { column: SortableColumn, children: React.ReactNode, className?: string }) => (

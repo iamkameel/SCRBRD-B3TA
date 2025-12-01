@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -14,6 +13,7 @@ import { getUserId } from '@/lib/server-auth';
 import { getDivisions } from './divisions';
 import { logAuditEvent } from './audit';
 import { getSchool } from './schools';
+import { getSeasons } from './seasons';
 
 export const getTeams = cache(async (): Promise<Team[]> => {
   const userId = await getUserId();
@@ -24,7 +24,7 @@ export const getTeams = cache(async (): Promise<Team[]> => {
       const currentUser = await getPerson(userId);
       if (currentUser) {
           const activeRole = currentUser.activeRole;
-          if (activeRole === 'Admin') {
+          if (activeRole === 'Admin' || activeRole === 'System Architect') {
               q = query(teamsCollection);
           } else if (activeRole === 'Sportsmaster') {
               if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
@@ -51,7 +51,7 @@ export const getTeams = cache(async (): Promise<Team[]> => {
                   }
                   return teams;
               } else {
-                   q = query(teamsCollection);
+                   q = query(teamsCollection); // Default to all if no assignments, though maybe should be empty.
               }
           } else {
               q = query(teamsCollection);
@@ -67,7 +67,7 @@ export const getTeams = cache(async (): Promise<Team[]> => {
   return teamSnapshot.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as Team));
 });
 
-export const getTeam = cache(async (teamId: string): Promise<Team & { schoolAbbreviation?: string } | null> => {
+export const getTeam = cache(async (teamId: string): Promise<(Team & { schoolAbbreviation?: string }) | null> => {
   if (!teamId) return null;
   try {
     const teamDocRef = doc(db, 'teams', teamId);
@@ -193,9 +193,9 @@ export async function addPlayerToRosterAction(teamId: string, data: z.infer<type
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
 
-  const user = await getPerson(userId);
-  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster') && !user.roles.includes('Team Manager'))) {
-      throw new Error("You do not have permission to modify team rosters.");
+  const hasPermission = await isTeamManagerOrAdmin(teamId, userId);
+  if (!hasPermission) {
+    throw new Error("You do not have permission to modify this team's roster.");
   }
   
   if (!await getTeam(teamId)) throw new Error("Team not found or permission denied.");
@@ -266,9 +266,9 @@ export async function removeRosterAssignmentAction(teamId: string, assignmentId:
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
 
-    const user = await getPerson(userId);
-    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster') && !user.roles.includes('Team Manager'))) {
-        throw new Error("You do not have permission to modify team rosters.");
+    const hasPermission = await isTeamManagerOrAdmin(teamId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to modify this team's roster.");
     }
     
     const team = await getTeam(teamId);
@@ -303,9 +303,9 @@ export async function updateRosterAssignmentAction(data: z.infer<typeof updateAs
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   
-  const user = await getPerson(userId);
-  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster') && !user.roles.includes('Team Manager'))) {
-      throw new Error("You do not have permission to modify team rosters.");
+  const hasPermission = await isTeamManagerOrAdmin(data.teamId, userId);
+  if (!hasPermission) {
+      throw new Error("You do not have permission to modify this team's roster.");
   }
 
   const validated = updateAssignmentSchema.safeParse(data);
@@ -361,7 +361,7 @@ export async function addTeamAction(data: z.infer<typeof teamSchema>) {
   if (!userId) throw new Error("User not authenticated");
 
   const user = await getPerson(userId);
-  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster') && !user.roles.includes('System Architect'))) {
       throw new Error("You do not have permission to add teams.");
   }
   
@@ -408,7 +408,7 @@ export async function updateTeamAction(data: z.infer<typeof updateTeamSchema>) {
   if (!userId) throw new Error("User not authenticated");
 
   const user = await getPerson(userId);
-  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+  if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster') && !user.roles.includes('System Architect'))) {
       throw new Error("You do not have permission to update teams.");
   }
 
@@ -455,7 +455,7 @@ export async function deleteTeamAction(teamId: string) {
     if (!userId) throw new Error("User not authenticated");
 
     const user = await getPerson(userId);
-    if (!user?.roles.includes('Admin') && !user?.roles.includes('Sportsmaster')) {
+    if (!user?.roles.includes('Admin') && !user?.roles.includes('Sportsmaster') && !user?.roles.includes('System Architect')) {
         throw new Error("You do not have permission to delete teams.");
     }
     
@@ -594,28 +594,6 @@ export const getPersonTeamAssignments = cache(async (personId: string): Promise<
     }
 });
 
-// Helper function for ranking
-const getDivisionRank = (divisionName: string | undefined): number => {
-    if (!divisionName) return 0;
-    const name = divisionName.toLowerCase();
-    if (name.includes('open')) return 5;
-    if (name.includes('u16')) return 4;
-    if (name.includes('u15')) return 3;
-    if (name.includes('u14')) return 2;
-    if (name.includes('u13')) return 1;
-    return 0;
-}
-
-// Helper function for class ranking
-const getClassRank = (className: string | undefined): number => {
-    if (!className) return 0;
-    const name = className.toUpperCase();
-    if (name.includes('A') || name.includes('1ST')) return 3;
-    if (name.includes('B') || name.includes('2ND')) return 2;
-    if (name.includes('C') || name.includes('3RD')) return 1;
-    return 0;
-}
-
 export const getEligiblePlayersForTeam = cache(async (teamId: string): Promise<(Person & { eligibilityContext: string })[]> => {
     const [targetTeam, allTeams, allPeople] = await Promise.all([
         getTeam(teamId),
@@ -712,7 +690,7 @@ export async function isTeamManagerOrAdmin(teamId: string, userId: string | null
     const user = await getPerson(userId);
     if (!user) return false;
 
-    if (user.roles.includes('Admin') || user.roles.includes('Sportsmaster')) {
+    if (user.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r))) {
         return true;
     }
     
@@ -722,3 +700,13 @@ export async function isTeamManagerOrAdmin(teamId: string, userId: string | null
     return isManagerOrCoach;
 }
 
+const getDivisionRank = (divisionName: string | undefined): number => {
+    if (!divisionName) return 0;
+    const name = divisionName.toLowerCase();
+    if (name.includes('open')) return 5;
+    if (name.includes('u16')) return 4;
+    if (name.includes('u15')) return 3;
+    if (name.includes('u14')) return 2;
+    if (name.includes('u13')) return 1;
+    return 0;
+}

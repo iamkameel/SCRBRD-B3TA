@@ -22,13 +22,13 @@ export default async function CompetitionDetailsPage({ params }: { params: { com
   ]);
 
   return (
-    
+    <CompetitionDetailsClient
       competition={competition}
       standings={standings}
       matches={matches}
       leaderboards={leaderboards}
       seasons={seasons}
       sponsors={sponsors}
-    
+    />
   );
 }
