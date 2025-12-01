@@ -10,11 +10,11 @@ This document outlines the critical tasks required to stabilize the application 
     -   **Goal**: Ensure the 'System Architect' role has the same permissions as 'Admin' across the entire application.
     -   **Action**: Review all server actions in `src/lib/actions/` and all page components in `src/app/` to verify that permission checks correctly include all administrative roles (`System Architect`, `Admin`, `Sportsmaster`).
 
--   [ ] **1.2: Finalize Server-Side Authentication**:
+-   [x] **1.2: Finalize Server-Side Authentication**:
     -   **Goal**: Guarantee the `getUserId()` function is robust and error-free.
     -   **Action**: Correct the implementation in `src/lib/server-auth.ts` to properly `await headers()` and remove any temporary workarounds to ensure it reliably retrieves the authenticated user's ID on the server.
 
--   [ ] **1.3: Fix Global Layout Constraint**:
+-   [x] **1.3: Fix Global Layout Constraint**:
     -   **Goal**: Resolve the issue causing content to be centered with empty space on the sides.
     -   **Action**: Remove the global `container` class from the `<body>` tag in `src/app/layout.tsx` to allow page content to fill the full width of the viewport.
 
