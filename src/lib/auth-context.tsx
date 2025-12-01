@@ -11,6 +11,7 @@ import { ROLE_GROUPS } from './roles';
 
 const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
 const GOD_TIER_EMAIL = 'kameel@maverickdesign.co.za';
+const GOD_TIER_UID = '0o2nS9M8g4N2wL4E1bB3t6xYv5Z2'; // Must match the one in server-auth.ts
 
 interface AuthContextType {
   user: User | null;
@@ -35,9 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
       if (firebaseUser) {
         if (firebaseUser.email === GOD_TIER_EMAIL) {
-            // God-tier user found, create the profile client-side.
             setPerson({
-                personId: firebaseUser.uid,
+                personId: GOD_TIER_UID,
                 firstName: 'Kameel',
                 lastName: 'Kalyan',
                 displayName: 'System Architect',
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 activeRole: 'System Architect',
             });
             setLoading(false);
-            return; // Skip Firestore lookup for this special user
+            return;
         }
 
         const personRef = doc(db, 'people', firebaseUser.uid);
