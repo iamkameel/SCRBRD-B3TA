@@ -79,7 +79,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
     if (isGodTierAdmin) {
         rolesToAssign = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
         activeRole = 'System Architect';
-        status = 'active'; // This is the critical fix.
+        status = 'active';
     } else {
         rolesToAssign = [data.role];
         activeRole = data.role;

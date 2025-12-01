@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -636,6 +637,15 @@ export async function updateActiveRoleAction(personId: string, role: string) {
   }
   if (personId !== userId) {
       throw new Error("You can only change your own active role.");
+  }
+  
+  if (personId === GOD_TIER_UID) {
+    // This is the System Architect user. We can't update a non-existent document,
+    // but the client-side context will handle the state change.
+    // We'll log the attempt and return success to the client.
+    console.log(`System Architect role switch to "${role}" handled on client.`);
+    revalidatePath('/', 'layout');
+    return;
   }
   
   const personRef = doc(db, 'people', personId);
