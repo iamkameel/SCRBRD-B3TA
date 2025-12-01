@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
@@ -9,7 +8,7 @@ import { GOD_TIER_UID } from './data';
 
 // This function is NOT cached. It must run on every request to get the current user.
 export const getUserId = async (): Promise<string | null> => {
-    const authHeader = headers().get('Authorization');
+    const authHeader = (await headers()).get('Authorization');
     if (!authHeader) {
         // This is a fallback for development where the auth header might not be present.
         // In a real production environment, you might want to throw an error here.
