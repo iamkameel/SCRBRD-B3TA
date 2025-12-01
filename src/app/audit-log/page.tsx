@@ -12,7 +12,7 @@ export default async function AuditLogPage() {
     const userId = await getUserId();
     const user = userId ? await getPerson(userId) : null;
     
-    if (!user || !user.roles.includes('Admin')) {
+    if (!user || !user.roles.some(r => ['Admin', 'System Architect'].includes(r))) {
         return (
             <Card className="w-full max-w-md mx-auto mt-16">
                 <CardHeader className="text-center">

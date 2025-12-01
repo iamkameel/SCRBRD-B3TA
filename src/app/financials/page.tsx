@@ -12,7 +12,7 @@ export default async function FinancialsPage() {
 
   const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'System Architect'].includes(r)) ?? false;
 
   return <FinancialsClient transactions={transactions} isAdmin={isAdmin} />;
 }

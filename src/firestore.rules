@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -41,7 +42,7 @@ service cloud.firestore {
     match /people/{personId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn(); // User creation is handled by a server action, but allow for signup.
-      allow update: if isOwner(personId) || isAdmin();
+      allow update: if isOwner(personId) || canManageData();
       allow delete: if isAdmin();
     }
     

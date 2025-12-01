@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -13,7 +14,7 @@ const checkRoleManagementPermission = async (adminId: string, targetUserId: stri
         throw new Error("Your user profile could not be found.");
     }
     
-    const isAdmin = admin.roles.includes('Admin') || admin.roles.includes('System Architect');
+    const isAdmin = admin.roles.some(r => ['Admin', 'System Architect'].includes(r));
     if (!isAdmin) {
         throw new Error("You do not have permission to manage user roles.");
     }

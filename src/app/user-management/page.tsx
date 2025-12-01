@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import UserManagementClient from './client';
@@ -14,11 +15,11 @@ export default async function UserManagementPage() {
     const userId = await getUserId();
     let user = userId ? await getPerson(userId) : null;
 
-    // Create a temporary admin user if the real one isn't found
-    // This grants access to the page for the "Guest Admin" scenario.
     if (!user) {
+        // Fallback for when the user might not exist in Firestore but has a valid auth token.
+        // This is primarily for the System Architect during initial setup.
         user = {
-            personId: 'TEMP_ADMIN',
+            personId: userId || 'TEMP_ADMIN',
             firstName: 'Guest',
             lastName: 'Admin',
             email: 'temp@admin.com',

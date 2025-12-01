@@ -22,7 +22,7 @@ export default async function MatchesPage() {
   
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
-  const canAssignScorer = user?.roles.some(r => ['Admin', 'Sportsmaster', 'Coach', 'Umpire', 'Scorer'].includes(r)) ?? false;
+  const canAssignScorer = user?.roles.some(r => ['Admin', 'Sportsmaster', 'Coach', 'Umpire', 'Scorer', 'System Architect'].includes(r)) ?? false;
 
   const allScorers = await getPeopleByRole('Scorer');
   
