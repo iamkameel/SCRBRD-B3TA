@@ -1,5 +1,4 @@
 
-
 import { notFound } from 'next/navigation';
 import { getCompetition, getCompetitionStandings, getCompetitionLeaderboards, getMatchesByCompetition } from '@/lib/actions/competitions';
 import CompetitionDetailsClient from './client';
@@ -13,6 +12,7 @@ export default async function CompetitionDetailsPage({ params }: { params: { com
     notFound();
   }
 
+  // Fetch all data in parallel
   const [standings, matches, leaderboards, seasons, sponsors] = await Promise.all([
     getCompetitionStandings(params.competitionId),
     getMatchesByCompetition(params.competitionId),
@@ -22,13 +22,13 @@ export default async function CompetitionDetailsPage({ params }: { params: { com
   ]);
 
   return (
-    <CompetitionDetailsClient
+    
       competition={competition}
       standings={standings}
       matches={matches}
       leaderboards={leaderboards}
       seasons={seasons}
       sponsors={sponsors}
-    />
+    
   );
 }

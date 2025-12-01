@@ -33,7 +33,7 @@ export async function getCompetitions(): Promise<Competition[]> {
         getTeams()
     ]);
 
-    const teamLogoMap = new Map<string, string>();
+    const teamLogoMap = new Map();
     teamsSnapshot.forEach(team => {
         if (team.logoUrl) {
             teamLogoMap.set(team.teamId, team.logoUrl);
@@ -56,7 +56,7 @@ export async function getCompetitions(): Promise<Competition[]> {
   }
 }
 
-export const getCompetition = cache(async (competitionId: string): Promise<Competition | null> => {
+export const getCompetition = cache(async (competitionId: string): Promise {
   const userId = await getUserId();
   if (!userId) return null;
   try {
@@ -87,7 +87,7 @@ const competitionSchema = z.object({
   sponsorIds: z.array(z.string()).optional(),
 });
 
-type CompetitionFormValues = z.infer<typeof competitionSchema>;
+type CompetitionFormValues = z.infer;
 
 export async function addCompetitionAction(data: CompetitionFormValues) {
   const userId = await getUserId();
@@ -136,7 +136,7 @@ const updateCompetitionSchema = competitionSchema.extend({
   competitionId: z.string(),
 });
 
-export async function updateCompetitionAction(data: z.infer<typeof updateCompetitionSchema>) {
+export async function updateCompetitionAction(data: z.infer) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     await checkManagementPermission(userId);
@@ -218,7 +218,7 @@ export async function deleteCompetitionAction(competitionId: string) {
 }
 
 
-export async function getCompetitionStandings(competitionId: string): Promise<StandingTeam[]> {
+export async function getCompetitionStandings(competitionId: string): Promise {
     const competition = await getCompetition(competitionId);
     if (!competition) return [];
 
@@ -226,7 +226,7 @@ export async function getCompetitionStandings(competitionId: string): Promise<St
     if (matches.length === 0) return [];
     
     // Get unique team IDs from the matches
-    const teamIds = new Set<string>();
+    const teamIds = new Set();
     matches.forEach(match => {
         teamIds.add(match.teamAId);
         if (match.teamBId) teamIds.add(match.teamBId);
@@ -257,14 +257,14 @@ export async function getCompetitionStandings(competitionId: string): Promise<St
 }
 
 
-export async function getCompetitionLeaderboards(competitionId: string): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
+export async function getCompetitionLeaderboards(competitionId: string): Promise {
     const matches = await getMatchesByCompetition(competitionId);
     if (matches.length === 0) return { topRunScorers: [], topWicketTakers: [] };
 
-    const playerIds = new Set<string>();
+    const playerIds = new Set();
     for (const match of matches) {
         const lineupADocRef = doc(db, 'matches', match.matchId, 'lineups', match.teamAId);
-        const lineupPromises: Promise<any>[] = [getDoc(lineupADocRef)];
+        const lineupPromises: Promise[] = [getDoc(lineupADocRef)];
 
         if (match.teamBId) {
             const lineupBref = doc(db, 'matches', match.matchId, 'lineups', match.teamBId);
@@ -314,7 +314,7 @@ export async function getCompetitionLeaderboards(competitionId: string): Promise
 }
 
 
-export async function getMatchesByCompetition(competitionId: string): Promise<Match[]> {
+export async function getMatchesByCompetition(competitionId: string): Promise {
   const userId = await getUserId();
   if (!userId) return [];
   if (!competitionId) return [];
@@ -327,7 +327,7 @@ export async function getMatchesByCompetition(competitionId: string): Promise<Ma
       getDocs(q),
     ]);
     
-    const teamInfoMap = new Map<string, Team>();
+    const teamInfoMap = new Map();
     teams.forEach(team => {
       teamInfoMap.set(team.teamId, team);
     });
@@ -367,7 +367,7 @@ export async function autoScheduleFixturesAction(competitionId: string, startDat
     }
 
     const teamIds = competition.teamIds;
-    if (!teamIds || teamIds.length < 2) {
+    if (!teamIds || teamIds.length {
         throw new Error("Competition must have at least two teams assigned to schedule fixtures.");
     }
 
@@ -378,7 +378,7 @@ export async function autoScheduleFixturesAction(competitionId: string, startDat
     ]);
 
     if (!season) throw new Error("Season not found for this competition.");
-    if (startDate < season.startDate || endDate > season.endDate) {
+    if (startDate  season.startDate || endDate > season.endDate) {
         throw new Error("The selected date range must be within the season's start and end dates.");
     }
     if (fields.length === 0) throw new Error("No available fields to schedule matches on.");
@@ -404,8 +404,7 @@ export async function autoScheduleFixturesAction(competitionId: string, startDat
         matchDate.setDate(matchDate.getDate() + 1);
     }
 
-    for (let round = 0; round < numRounds; round++) {
-        for (let i = 0; i < matchesPerRound; i++) {
+    for (let round = 0; round  matchesPerRound; i++) {
             const teamA = localTeams[i];
             const teamB = localTeams[numTeams - 1 - i];
 
