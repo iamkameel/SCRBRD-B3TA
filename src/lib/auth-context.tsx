@@ -20,16 +20,6 @@ const AuthContext = React.createContext<AuthContextType>({
   loading: true,
 });
 
-const tempAdminProfile: Person = {
-    personId: 'TEMP_ADMIN',
-    firstName: 'Guest',
-    lastName: 'Admin',
-    email: 'temp@admin.com',
-    roles: ['System Architect', 'Admin'],
-    activeRole: 'System Architect',
-};
-
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [person, setPerson] = React.useState<Person | null>(null);
@@ -37,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       setUser(firebaseUser);
       if (firebaseUser) {
         const personRef = doc(db, 'people', firebaseUser.uid);
@@ -55,14 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             dateOfBirth: data.dateOfBirth?.toDate()
           } as Person);
         } else {
-          console.warn("User authenticated but no Firestore profile found. Applying temporary admin profile.");
-          setPerson(tempAdminProfile);
+          setPerson(null);
         }
       } else {
-        // If no firebase user, but we are in the app, grant temp admin access.
-        // This is a temporary measure to unblock development.
-        console.warn("No authenticated user. Applying temporary admin profile for full access.");
-        setPerson(tempAdminProfile);
+        setPerson(null);
       }
       setLoading(false);
     });
@@ -91,13 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 activeRole,
                 dateOfBirth: data.dateOfBirth?.toDate() 
             } as Person);
-        } else {
-            console.warn("Real-time listener could not find user profile. Applying temporary admin profile.");
-            setPerson(tempAdminProfile);
         }
     }, (error) => {
       console.error("Error with profile snapshot listener:", error);
-      setPerson(tempAdminProfile);
     });
 
     return () => unsubscribeSnapshot();

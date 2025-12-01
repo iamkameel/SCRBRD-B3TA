@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -32,8 +31,10 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
-    // This action is now hardcoded to run as an admin to resolve the user's lockout issue.
-    const actorId = 'TEMP_ADMIN_FOR_DELETION';
+    const actorId = await getUserId();
+    if (!actorId) {
+        return { success: false, message: "User not authenticated." };
+    }
     
     try {
         const BATCH_LIMIT = 490; // Stay safely under the 500 limit
@@ -115,7 +116,6 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
         await logAuditEvent({
             action: 'data.delete_all',
-            actorId: 'TEMP_ADMIN_FOR_DELETION',
             target: { type: 'System', id: 'all_data' },
             details: { itemsDeleted: deletedCount }
         });
@@ -131,7 +131,8 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
-    const actorId = 'TEMP_ADMIN_FOR_MIGRATION'; // Hardcoded admin user
+    const actorId = await getUserId();
+    if (!actorId) throw new Error("User not authenticated");
 
     try {
         await deleteAllDataAction();
@@ -151,8 +152,6 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const kameelTempId = 'p_kameel';
         const kameelData = sampleData.people.find(p => p.personId === kameelTempId);
         if (kameelData) {
-            // This is a placeholder for the actual admin user creation which is now handled differently
-            // We just need to map the temp id to the hardcoded one for relationships
             idMap.set(kameelTempId, actorId);
         }
 
@@ -562,9 +561,3 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
         return { error: `Failed to export ${subsetName} data.` };
     }
 }
-
-    
-
-
-
-
