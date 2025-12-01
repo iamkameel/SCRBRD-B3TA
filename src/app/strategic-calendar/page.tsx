@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import StrategicCalendarClient from './client';
@@ -79,8 +78,10 @@ async function getAllDivisions(): Promise<Division[]> {
 export default async function StrategicCalendarPage() {
     const userId = await getUserId();
     const user = userId ? await getPerson(userId) : null;
+    
+    const authorizedRoles = ['Admin', 'Sportsmaster', 'System Architect', 'School Admin'];
 
-    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r))) {
+    if (!user || !user.roles.some(r => authorizedRoles.includes(r))) {
         return (
             <Card className="w-full max-w-md mx-auto mt-16">
                 <CardHeader className="text-center">
