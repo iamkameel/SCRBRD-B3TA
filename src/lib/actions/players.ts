@@ -645,10 +645,11 @@ export async function updateActiveRoleAction(personId: string, role: string) {
       throw new Error("You can only change your own active role.");
   }
   
+  // The GOD_TIER_UID is a virtual user that doesn't exist in Firestore.
+  // We can't update a non-existent document, so we just log and return.
+  // The client-side state is already optimistically updated.
   if (personId === GOD_TIER_UID) {
-    // This is the System Architect user. We can't update a non-existent document,
-    // but we can revalidate the path to force a UI refresh with the new (client-side) context.
-    console.log(`System Architect role switch to "${role}" triggered server revalidation.`);
+    console.log(`System Architect role switch to "${role}" does not require a DB update.`);
     revalidatePath('/', 'layout');
     return;
   }
@@ -667,6 +668,9 @@ export async function updateActiveRoleAction(personId: string, role: string) {
 
   try {
     await updateDoc(personRef, { activeRole: role });
+    // Revalidate the root layout to ensure the sidebar and all server components
+    // that depend on the user's role are re-rendered.
+    revalidatePath('/', 'layout');
   } catch (error) {
     console.error("Error updating active role:", error);
     throw new Error("Could not update active role.");

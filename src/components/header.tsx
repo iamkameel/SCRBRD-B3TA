@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -48,6 +47,7 @@ import { CommandSearch } from './command-search';
 function RoleSwitcher() {
     const { person, setPerson } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
     const [isPending, startTransition] = React.useTransition();
 
     if (!person || !person.roles || person.roles.length <= 1) {
@@ -63,8 +63,14 @@ function RoleSwitcher() {
             }
             try {
                 // Optimistically update the client-side state
+                const oldPersonState = person;
                 setPerson({ ...person, activeRole: role });
+                
                 await updateActiveRoleAction(person.personId, role);
+                
+                // Force a reload to ensure all server components re-render with the new role context
+                router.refresh();
+                
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
             } catch (error) {
                 // Revert on failure
