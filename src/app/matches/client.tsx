@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import * as React from "react";
-import Link from 'next/link';
+import Link from "next/link";
 import { format } from "date-fns";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, User, Link as LinkIcon, Calendar, Clock, Trophy, MapPin, SlidersHorizontal, List, LayoutGrid, ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
 
@@ -60,6 +59,7 @@ import * as z from "zod";
 import { EditMatchDialog } from "./edit-match-dialog";
 import { MatchCard } from './match-card';
 import { MatchCalendar } from './match-calendar';
+import NewMatchClient from "../new-match/client";
 
 const officialAssignmentSchema = z.object({
   personId: z.string({ required_error: "Please select a person." }),
@@ -262,7 +262,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, is
       <div className="flex flex-col gap-8">
         <header className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Matches</h1><p className="text-muted-foreground">Manage your match fixtures and results.</p></div>
-          {isAdmin && <Button asChild><Link href="/new-match"><PlusCircle className="mr-2" />New Match</Link></Button>}
+          <NewMatchClient teams={teams} competitions={competitions} fields={fields} isAdmin={isAdmin}/>
         </header>
 
         <Card>
