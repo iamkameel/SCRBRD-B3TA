@@ -29,8 +29,8 @@ export const getMatches = cache(async (): Promise<Match[]> => {
   let q;
 
   // Admins and Sportsmasters should see all matches
-  if (currentUser.roles.includes('Admin') || currentUser.roles.includes('Sportsmaster')) {
-    q = query(matchesCollection);
+  if (currentUser.activeRole === 'Admin' || currentUser.activeRole === 'System Architect') {
+      q = query(matchesCollection);
   } else {
     // Other users see matches they created
     q = query(matchesCollection, where("userId", "==", userId));
@@ -1288,8 +1288,50 @@ export async function savePlayerOfTheMatchAction(matchId: string, player: Player
 
     revalidatePath(`/matches/${matchId}`);
 }
+
+const tossSchema = z.object({
+  tossWinnerId: z.string(),
+  tossDecision: z.enum(['Bat', 'Bowl']),
+});
+
+export async function startMatchAction(matchId: string, tossWinnerId: string, tossDecision: 'Bat' | 'Bowl') {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
+    
+    const validatedFields = tossSchema.safeParse({ tossWinnerId, tossDecision });
+    if (!validatedFields.success) {
+        throw new Error("Invalid toss data.");
+    }
+    
+    const matchRef = doc(db, 'matches', matchId);
+    const matchSnap = await getDoc(matchRef);
+    if (!matchSnap.exists()) {
+        throw new Error("Match not found.");
+    }
+
+    const hasPermission = await checkScoringPermission(matchId, userId);
+    if (!hasPermission) {
+        throw new Error("You do not have permission to start this match.");
+    }
+    
+    const match = matchSnap.data() as Match;
+
+    const teamABatsFirst = (match.teamAId === tossWinnerId && tossDecision === 'Bat') || (match.teamBId === tossWinnerId && tossDecision === 'Bowl');
+
+    const updateData: Partial<Match> = {
+        status: 'live',
+        tossWinnerId,
+        tossDecision,
+        'liveScore.liveInnings': 1,
+        'liveScore.teamABatsFirst': teamABatsFirst,
+    };
+    
+    await updateDoc(matchRef, updateData);
+    revalidatePath(`/matches/${matchId}`);
+}
       
     
+
 
 
 

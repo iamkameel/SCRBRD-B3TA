@@ -1,6 +1,4 @@
-Here is the fixed code. I have addressed potential runtime errors regarding Date serialization (common in Next.js client components) and inserted strategic image tags to help users visualize the cricket-specific data representations.
 
-```tsx
 'use client';
 
 import * as React from "react";
@@ -8,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal, Edit, Lock, EyeOff } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Calendar, Clock, Trash2, RefreshCcw, ArrowLeft, Sun, Cloudy, CloudRain, Wind, Thermometer, Loader2, Bus, BarChart, Settings, ClipboardList, Download, Award, PlayCircle, Wand2, RadioTower, Users, Trophy, MapPin, BrainCircuit, CheckCircle, HelpCircle, Film, BarChartHorizontal, Edit, Lock, EyeOff, Play as PlayIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -41,7 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { assignOfficialToMatchAction, removeOfficialFromMatchAction } from '@/lib/actions/matches';
+import { assignOfficialToMatchAction, removeOfficialFromMatchAction, startMatchAction } from '@/lib/actions/matches';
 import { generateAndSaveScorecardAction, generateMatchReportAction, getMatchForecastAction, generateMatchPreviewAction, generateMatchCommentaryAction, generateOppositionAnalysisAction, generatePlayerPerformanceForecastAction, generateHighlightReelAction } from '@/lib/actions/analysis';
 import { assignVehicleToMatchAction, removeVehicleFromMatchAction } from '@/lib/actions/transport';
 import type { Match, Person, Official, Innings, MatchForecast, Vehicle, TransportAssignment, PlayerPerformanceForecast, HighlightReelOutput, RosterMemberWithStats, Lineup } from "@/lib/data";
@@ -53,6 +51,103 @@ import { ManhattanChart, WormChart, WagonWheelCard, RunMapCard } from "./match-c
 import { PlayerAvailabilityCard } from './player-availability-card';
 import { AvailabilityStatusCard } from "./availability-status-card";
 import { LineupManager } from "./manage/lineup-manager";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+const tossSchema = z.object({
+  tossWinnerId: z.string({ required_error: "Please select the team that won the toss." }),
+  tossDecision: z.enum(['Bat', 'Bowl'], { required_error: "Please select the toss decision." }),
+});
+
+function StartMatchDialog({ match, open, onOpenChange }: { match: Match, open: boolean, onOpenChange: (open: boolean) => void }) {
+    const { toast } = useToast();
+    const [isPending, startTransition] = React.useTransition();
+    const form = useForm<z.infer<typeof tossSchema>>({
+        resolver: zodResolver(tossSchema),
+    });
+
+    const onSubmit = (data: z.infer<typeof tossSchema>) => {
+        startTransition(async () => {
+            try {
+                await startMatchAction(match.matchId, data.tossWinnerId, data.tossDecision);
+                toast({ title: "Match Started!", description: "The match is now live." });
+                onOpenChange(false);
+            } catch (error) {
+                toast({ title: "Error", description: error instanceof Error ? error.message : "Could not start match.", variant: "destructive" });
+            }
+        });
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Start Match & Record Toss</DialogTitle>
+                    <DialogDescription>
+                        Record the toss result to officially start the match.
+                    </DialogDescription>
+                </DialogHeader>
+                 <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="tossWinnerId"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Who won the toss?</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger><SelectValue placeholder="Select a team" /></SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value={match.teamAId}>{match.teamAName}</SelectItem>
+                                        <SelectItem value={match.teamBId}>{match.teamBName}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="tossDecision"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>What did they decide?</FormLabel>
+                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                                        <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="Bat" id="bat" className="peer sr-only" />
+                                            </FormControl>
+                                            <FormLabel htmlFor="bat" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                                Bat
+                                            </FormLabel>
+                                        </FormItem>
+                                        <FormItem>
+                                            <FormControl>
+                                                <RadioGroupItem value="Bowl" id="bowl" className="peer sr-only" />
+                                            </FormControl>
+                                            <FormLabel htmlFor="bowl" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                                Bowl
+                                            </FormLabel>
+                                        </FormItem>
+                                    </RadioGroup>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isPending}>
+                                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Start Match
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 const MatchRecapCard = dynamic(() => import('./match-recap-card').then(mod => mod.MatchRecapCard), {
   ssr: false,
@@ -281,7 +376,9 @@ export default function MatchDetailsClient({
   const [forecastedPlayer, setForecastedPlayer] = React.useState<string>('');
   const [forecastResult, setForecastResult] = React.useState<PlayerPerformanceForecast | null>(null);
   
-  const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster');
+  const [isStartMatchDialogOpen, setIsStartMatchDialogOpen] = React.useState(false);
+  
+  const isAdmin = person?.roles.includes('Admin') || person?.roles.includes('Sportsmaster') || person?.roles.includes('System Architect');
   
   const isPlayerInMatch = [...(teamALineup?.playingXI || []), teamALineup?.twelfthMan, ...(teamBLineup?.playingXI || []), teamBLineup?.twelfthMan].filter(Boolean).includes(person?.personId || '');
   const canLiveScore = isAdmin || isOfficialForMatch;
@@ -469,6 +566,7 @@ export default function MatchDetailsClient({
   const firstInnings = innings1?.teamName === match.teamAName ? innings1 : (innings2?.teamName === match.teamAName ? innings2 : undefined);
   const secondInnings = innings1?.teamName === match.teamBName ? innings1 : (innings2?.teamName === match.teamBName ? innings2 : undefined);
   const canGenerateScorecard = teamALineup?.playingXI?.length === 11 && teamBLineup?.playingXI?.length === 11;
+  const canStartMatch = canGenerateScorecard && match.status === 'scheduled';
 
   const firstInningsData = match.liveScore?.liveInnings === 1 ? match.liveScore : match.firstInningsLiveScore;
   const secondInningsData = match.liveScore?.liveInnings === 2 ? match.liveScore : null;
@@ -491,6 +589,15 @@ export default function MatchDetailsClient({
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="flex items-center gap-2">
+                        {isAdmin && match.status === 'scheduled' && (
+                            <Button onClick={() => setIsStartMatchDialogOpen(true)} disabled={!canStartMatch}>
+                                <PlayIcon className="mr-2 h-4 w-4" />
+                                Start Match
+                            </Button>
+                        )}
+                        <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize h-fit">{match.status}</Badge>
+                    </div>
                     {match.statusReason && <p className="text-xs text-muted-foreground">{match.statusReason}</p>}
                 </div>
             </div>
@@ -605,10 +712,6 @@ export default function MatchDetailsClient({
             </TabsContent>
             
             <TabsContent value="lineups" className="mt-4">
-                
-
-[Image of cricket fielding positions diagram]
-
                 <LineupManager
                     match={match}
                     teamARoster={teamARosterWithStats}
@@ -630,17 +733,9 @@ export default function MatchDetailsClient({
                         <TabsContent value="innings1" className="mt-4">
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <div>
-                                    
-
-[Image of cricket manhattan chart]
-
                                     <ManhattanChart data={firstInningsData || innings1} />
                                 </div>
                                 <div>
-                                    
-
-[Image of cricket wagon wheel diagram]
-
                                     <WagonWheelCard data={firstInningsData || innings1} />
                                 </div>
                                 <RunMapCard data={firstInningsData || innings1} roster={teamARosterWithStats} />
@@ -649,11 +744,9 @@ export default function MatchDetailsClient({
                         <TabsContent value="innings2" className="mt-4">
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 <div>
-                                    
                                     <ManhattanChart data={secondInningsData || innings2} />
                                 </div>
                                 <div>
-                                    
                                     <WagonWheelCard data={secondInningsData || innings2} />
                                 </div>
                                 <RunMapCard data={secondInningsData || innings2} roster={teamBRosterWithStats} />
@@ -921,7 +1014,8 @@ export default function MatchDetailsClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {isAdmin && <StartMatchDialog match={match} open={isStartMatchDialogOpen} onOpenChange={setIsStartMatchDialogOpen} />}
     </>
   )
 }
-```
