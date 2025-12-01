@@ -341,4 +341,3 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
     </Dialog>
   );
 }
-    

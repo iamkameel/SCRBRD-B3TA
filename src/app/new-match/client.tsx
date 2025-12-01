@@ -144,12 +144,11 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {isAdmin && (
+    isAdmin && (
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button><PlusCircle className="mr-2" />New Match</Button>
         </DialogTrigger>
-      )}
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Create New Match</DialogTitle>
@@ -191,5 +190,6 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
           </Form>
       </DialogContent>
     </Dialog>
+    )
   );
 }
