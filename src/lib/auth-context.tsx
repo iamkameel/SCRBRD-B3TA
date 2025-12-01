@@ -8,21 +8,23 @@ import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
 import { ROLE_GROUPS } from './roles';
+import { GOD_TIER_EMAIL, GOD_TIER_UID } from './data';
 
 const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
-const GOD_TIER_EMAIL = 'kameel@maverickdesign.co.za';
-const GOD_TIER_UID = '0o2nS9M8g4N2wL4E1bB3t6xYv5Z2'; // Must match the one in server-auth.ts
+
 
 interface AuthContextType {
   user: User | null;
   person: Person | null;
   loading: boolean;
+  setPerson: React.Dispatch<React.SetStateAction<Person | null>>;
 }
 
 const AuthContext = React.createContext<AuthContextType>({
   user: null,
   person: null,
   loading: true,
+  setPerson: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -43,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 displayName: 'System Architect',
                 email: GOD_TIER_EMAIL,
                 roles: ALL_ROLES,
-                activeRole: 'System Architect',
+                activeRole: person?.activeRole || 'System Architect', // Persist role switch across reloads
             });
             setLoading(false);
             return;
@@ -82,10 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribeAuth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, person, loading }}>
+    <AuthContext.Provider value={{ user, person, loading, setPerson }}>
       {loading ? <DashboardSkeleton /> : children}
     </AuthContext.Provider>
   );
