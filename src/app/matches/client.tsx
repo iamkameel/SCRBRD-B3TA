@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -294,8 +293,8 @@ export default function MatchesClient({ matches, teams, fields, competitions, se
                                   <DropdownMenuContent><DropdownMenuLabel>Statuses</DropdownMenuLabel><DropdownMenuSeparator />{['scheduled', 'live', 'completed', 'postponed'].map(status => (<DropdownMenuCheckboxItem key={status} checked={statusFilter.includes(status as MatchStatus)} onCheckedChange={checked => setStatusFilter(prev => checked ? [...prev, status as MatchStatus] : prev.filter(s => s !== status))}>{status}</DropdownMenuCheckboxItem>))}{statusFilter.length > 0 && <><DropdownMenuSeparator /><DropdownMenuItem onClick={() => setStatusFilter([])}>Clear</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu>
                                 </div>
                             </div>
-                        </div>
-                    </PopoverContent>
+                            </div>
+                        </PopoverContent>
                 </Popover>
                  <div className="flex items-center rounded-md bg-muted p-1">
                   <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')} className="gap-1"><List className="h-4 w-4"/> List</Button>

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -55,12 +54,12 @@ interface NewMatchClientProps {
   teams: Team[];
   competitions: Competition[];
   fields: Field[];
-  seasons: Season[];
-  divisions: Division[];
+  seasons?: Season[];
+  divisions?: Division[];
   isAdmin: boolean;
 }
 
-export default function NewMatchClient({ teams, competitions, fields, seasons, divisions, isAdmin }: NewMatchClientProps) {
+export default function NewMatchClient({ teams, competitions, fields, seasons = [], divisions = [], isAdmin }: NewMatchClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -168,7 +167,7 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
                         <Info className="h-4 w-4" />
                         <AlertTitle>Friendly Mode</AlertTitle>
                         <AlertDescription>
-                            You’ve selected a Friendly match. Opponents, age divisions, and classifications can be mixed.
+                            You’ve selected a Friendly match. All teams are available for selection, regardless of division or season.
                         </AlertDescription>
                     </Alert>
                 )}
