@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getSeasons } from '@/lib/actions/seasons';
@@ -11,7 +12,7 @@ export default async function SeasonsPage() {
   
   const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
 
   return <SeasonsClient seasons={seasons} isAdmin={isAdmin} />;
 }

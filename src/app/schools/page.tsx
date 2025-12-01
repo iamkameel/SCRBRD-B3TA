@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getSchools } from '@/lib/actions/schools';
@@ -13,7 +14,7 @@ export default async function SchoolsPage() {
   ]);
   
   const user = userId ? await getPerson(userId) : null;
-  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
+  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
 
   return <SchoolsClient schools={schools} canManage={canManage} />;
 }

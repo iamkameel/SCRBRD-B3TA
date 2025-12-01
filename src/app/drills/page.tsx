@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getDrills } from '@/lib/actions/drills';
@@ -12,7 +13,7 @@ export default async function DrillsPage() {
     getUserId()
   ]);
   const user = userId ? await getPerson(userId) : null;
-  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster', 'Coach'].includes(r)) ?? false;
+  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster', 'Coach', 'System Architect'].includes(r)) ?? false;
 
   return <DrillsClient initialDrills={drills} canManage={canManage} />;
 }

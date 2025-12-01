@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getVehicles, getAllTransportAssignments } from '@/lib/actions/transport';
@@ -15,7 +16,7 @@ export default async function TransportPage() {
   ]);
 
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
 
   return <TransportClient vehicles={vehicles} assignments={assignments} drivers={drivers} isAdmin={isAdmin} />;
 }

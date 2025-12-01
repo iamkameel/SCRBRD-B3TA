@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getEquipment, getAllEquipmentAssignments } from '@/lib/actions/equipment';
@@ -15,7 +16,7 @@ export default async function EquipmentPage() {
   ]);
   
   const user = userId ? await getPerson(userId) : null;
-  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster'].includes(r)) ?? false;
+  const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
   
   return <EquipmentClient inventory={inventory} assignments={assignments} players={players} isAdmin={isAdmin} />;
 }
