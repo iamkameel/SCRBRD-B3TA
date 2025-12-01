@@ -26,10 +26,18 @@ export async function getSeasons(): Promise<Season[]> {
     const seasonSnapshot = await getDocs(q);
     const seasonsList = seasonSnapshot.docs.map(doc => {
       const data = doc.data();
+      // Ensure that startDate and endDate exist and have a toDate method before calling it
+      const startDate = data.startDate && typeof data.startDate.toDate === 'function' 
+        ? (data.startDate as Timestamp).toDate() 
+        : new Date(); // Fallback to current date if invalid
+      const endDate = data.endDate && typeof data.endDate.toDate === 'function' 
+        ? (data.endDate as Timestamp).toDate() 
+        : new Date(); // Fallback to current date if invalid
+
       return {
         seasonId: doc.id, name: data.name,
-        startDate: (data.startDate as Timestamp).toDate(),
-        endDate: (data.endDate as Timestamp).toDate(),
+        startDate: startDate,
+        endDate: endDate,
         active: data.active,
       };
     });
