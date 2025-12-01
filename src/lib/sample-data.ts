@@ -210,9 +210,9 @@ const matches = [
     { matchId: 'match_2', teamAId: 'DHS_open_1xi', teamBId: 'WBHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_3', dateTime: pastDate(7), status: 'completed', winnerTeamId: 'DHS_open_1xi', result: 'DHS won by 25 runs', tossWinnerId: 'DHS_open_1xi', tossDecision: 'Bat' },
     { matchId: 'match_3', teamAId: 'MHS_open_1xi', teamBId: 'DHS_open_1xi', competitionId: 'comp_1', fieldId: 'field_1', dateTime: futureDate(7), status: 'scheduled' },
     { 
-      matchId: 'match_live_test', 
+      matchId: 'live_scoring_demo', 
       teamAId: 'WBHS_open_1xi', 
-      teamBId: 'DHS_open_1xi', 
+      teamBId: 'MHS_open_1xi', 
       competitionId: 'comp_1', 
       fieldId: 'field_4', 
       dateTime: new Date().toISOString(), 
@@ -220,29 +220,23 @@ const matches = [
       tossWinnerId: 'WBHS_open_1xi',
       tossDecision: 'Bat',
       liveScore: {
-        runs: 24,
-        wickets: 1,
-        overs: 3,
-        balls: 2,
-        currentOver: ['.', '1', 'W', '4', '1'],
-        batsmenOut: ['WBHS_open_1xi_01'],
-        onStrikeBatsmanId: 'WBHS_open_1xi_03',
-        nonStrikerBatsmanId: 'WBHS_open_1xi_02',
-        bowlerId: 'DHS_open_1xi_11',
+        runs: 0,
+        wickets: 0,
+        overs: 0,
+        balls: 0,
+        currentOver: [],
+        batsmenOut: [],
+        onStrikeBatsmanId: null,
+        nonStrikerBatsmanId: null,
+        bowlerId: null,
         liveInnings: 1,
-        shots: [
-            { angle: 90, runs: 1, distance: 0.5 },
-            { angle: 270, runs: 4, distance: 0.9 },
-            { angle: 45, runs: 1, distance: 0.6 }
-        ],
-        batsmanStats: {
-            'WBHS_open_1xi_01': { runs: 5, balls: 4 },
-            'WBHS_open_1xi_02': { runs: 10, balls: 8 },
-            'WBHS_open_1xi_03': { runs: 8, balls: 6 },
-        },
-        bowlerStats: {
-            'DHS_open_1xi_11': { wickets: 1, runsConceded: 15, overs: 1, balls: 2, maidens: 0 },
-        },
+        shots: [],
+        batsmanStats: {},
+        bowlerStats: {},
+        extras: { total: 0, wides: 0, noBalls: 0, byes: 0, legByes: 0, partnership: 0 },
+        bowlingAngle: 'Over the Wicket',
+        partnerships: [],
+        fallOfWickets: []
       }
     },
 ];
@@ -250,6 +244,8 @@ const matches = [
 const officials = [
     { assignmentId: 'off_1', matchId: 'match_3', personId: 'staff_1', role: 'Umpire', confirmed: true },
     { assignmentId: 'off_2', matchId: 'match_3', personId: 'staff_2', role: 'Scorer', confirmed: false },
+    { assignmentId: 'off_live_demo_1', matchId: 'live_scoring_demo', personId: 'staff_1', role: 'Umpire', confirmed: true },
+    { assignmentId: 'off_live_demo_2', matchId: 'live_scoring_demo', personId: 'staff_2', role: 'Scorer', confirmed: true },
 ];
 
 export const sampleData = {
@@ -270,6 +266,16 @@ export const sampleLineupData = {
         teamB: {
             teamId: 'DHS_open_1xi',
             playerIds: Array.from({length: 11}, (_, i) => `DHS_open_1xi_${(i + 1).toString().padStart(2, '0')}`)
+        }
+    },
+    "live_scoring_demo": {
+        teamA: {
+            teamId: 'WBHS_open_1xi',
+            playerIds: Array.from({length: 11}, (_, i) => `WBHS_open_1xi_${(i + 1).toString().padStart(2, '0')}`)
+        },
+        teamB: {
+            teamId: 'MHS_open_1xi',
+            playerIds: Array.from({length: 11}, (_, i) => `MHS_open_1xi_${(i + 1).toString().padStart(2, '0')}`)
         }
     }
 }
