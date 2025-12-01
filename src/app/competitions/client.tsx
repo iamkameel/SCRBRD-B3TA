@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -41,7 +40,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { Competition, Season, Division, Team, Sponsor } from "@/lib/data";
-import { deleteCompetitionAction, autoScheduleFixturesAction } from '@/lib/actions/competitions';
+import { deleteCompetitionAction, autoScheduleFixturesAction } from "@/lib/actions/competitions";
 import { CompetitionCard } from "./competition-card";
 import { CompetitionDialog } from './competition-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -182,7 +181,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
   const [dialogMode, setDialogMode] = React.useState<'add' | 'edit'>('add');
   const [isCompetitionDialogOpen, setIsCompetitionDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const [competitionToSchedule, setCompetitionToSchedule] = React.useState<Competition | null>(null);
+  const [isSchedulingDialogOpen, setIsSchedulingDialogOpen] = React.useState(false);
 
 
   // View and Pagination state
@@ -433,7 +432,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => setCompetitionToSchedule(comp)} disabled={comp.status === 'Completed'}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => setIsSchedulingDialogOpen(true)} disabled={comp.status === 'Completed'}><Wand2 className="mr-2 h-4 w-4" /> Auto-Schedule</DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -457,7 +456,7 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
                                 competition={comp} 
                                 onEdit={() => { setSelectedCompetition(comp); setDialogMode('edit'); setIsCompetitionDialogOpen(true); }}
                                 onDelete={() => { setSelectedCompetition(comp); setIsDeleteDialogOpen(true); }}
-                                onAutoSchedule={() => setCompetitionToSchedule(comp)}
+                                onAutoSchedule={() => { setSelectedCompetition(comp); setIsSchedulingDialogOpen(true); }}
                                 isAdmin={isAdmin}
                             />
                         ))
@@ -479,12 +478,12 @@ export default function CompetitionsClient({ competitions, seasons, divisions, t
       
       {isAdmin && <CompetitionDialog mode={dialogMode} competition={selectedCompetition ?? undefined} seasons={seasons} divisions={divisions} teams={teams} sponsors={sponsors} open={isCompetitionDialogOpen} onOpenChange={setIsCompetitionDialogOpen} />}
       
-      {competitionToSchedule && (
+      {selectedCompetition && (
         <AutoScheduleDialog
-          competition={competitionToSchedule}
-          season={seasons.find(s => s.seasonId === competitionToSchedule.seasonId)!}
-          open={!!competitionToSchedule}
-          onOpenChange={() => setCompetitionToSchedule(null)}
+          competition={selectedCompetition}
+          season={seasons.find(s => s.seasonId === selectedCompetition.seasonId)!}
+          open={isSchedulingDialogOpen}
+          onOpenChange={() => { setIsSchedulingDialogOpen(false); setSelectedCompetition(null); }}
         />
       )}
 

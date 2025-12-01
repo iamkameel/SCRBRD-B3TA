@@ -173,7 +173,7 @@ const BracketMatch = React.forwardRef<HTMLDivElement, { match: Match }>(({ match
   return (
     <div ref={ref} className="border p-3 rounded-lg bg-background w-64 shadow-sm z-10">
       <div className="flex justify-between items-center text-xs text-muted-foreground mb-2">
-        <p>{isClient ? format(match.dateTime, "dd MMM, p") : '...'}</p>
+        <p>{isClient ? format(new Date(match.dateTime), "dd MMM, p") : '...'}</p>
         {!isTBD && <Link href={`/matches/${match.matchId}`} className="hover:underline">Details</Link>}
       </div>
       <div className="space-y-1.5 text-sm">
@@ -220,8 +220,11 @@ function TournamentBracket({ rounds }: { rounds: { round: number; matches: Match
 
                 currentRoundMatches.forEach((match, matchIndex) => {
                     const match1Div = matchRefs.current.get(match.matchId);
-                    const nextMatch = nextRoundMatches[Math.floor(matchIndex / 2)];
-                    if (!match1Div || !nextMatch) return;
+                    if (!match1Div) return;
+                    const nextMatchIndex = Math.floor(matchIndex / 2);
+                    if (nextMatchIndex >= nextRoundMatches.length) return;
+                    const nextMatch = nextRoundMatches[nextMatchIndex];
+                    if (!nextMatch) return;
 
                     const match2Div = matchRefs.current.get(nextMatch.matchId);
                     if (!match2Div) return;
@@ -246,7 +249,6 @@ function TournamentBracket({ rounds }: { rounds: { round: number; matches: Match
             setLines(newLines);
         };
         
-        // Timeout to ensure DOM is fully painted
         const timeoutId = setTimeout(calculateLines, 100);
         
         window.addEventListener('resize', calculateLines);
@@ -305,7 +307,7 @@ export default function CompetitionDetailsClient({ competition, standings, match
         });
         return Object.entries(grouped).map(([round, matchesInRound]) => ({
             round: parseInt(round, 10),
-            matches: matchesInRound.sort((a,b) => a.dateTime.getTime() - b.dateTime.getTime()),
+            matches: matchesInRound.sort((a,b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()),
         })).sort((a, b) => a.round - b.round);
     }, [matches]);
     
@@ -482,7 +484,7 @@ export default function CompetitionDetailsClient({ competition, standings, match
                                                 </div>
                                             </Link>
                                         </TableCell>
-                                        <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                                        <TableCell>{isClient ? format(new Date(match.dateTime), "PPP p") : '\u00A0'}</TableCell>
                                         <TableCell>{match.fieldName}</TableCell>
                                         <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
                                     </TableRow>
