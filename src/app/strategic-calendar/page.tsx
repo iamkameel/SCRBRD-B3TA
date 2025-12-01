@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import StrategicCalendarClient from './client';
@@ -79,7 +80,7 @@ export default async function StrategicCalendarPage() {
     const userId = await getUserId();
     const user = userId ? await getPerson(userId) : null;
 
-    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r))) {
         return (
             <Card className="w-full max-w-md mx-auto mt-16">
                 <CardHeader className="text-center">
