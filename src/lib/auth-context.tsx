@@ -7,6 +7,10 @@ import { auth, db } from '@/lib/firebase';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
+import { ROLE_GROUPS } from './roles';
+
+const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
+const GOD_TIER_EMAIL = 'kameel@maverickdesign.co.za';
 
 interface AuthContextType {
   user: User | null;
@@ -30,61 +34,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setUser(firebaseUser);
       if (firebaseUser) {
-        const personRef = doc(db, 'people', firebaseUser.uid);
-        const personSnap = await getDoc(personRef);
-        if (personSnap.exists()) {
-          const data = personSnap.data();
-          const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
-          const activeRole = data.activeRole && roles.includes(data.activeRole) 
-                ? data.activeRole 
-                : roles[0];
-          setPerson({
-            personId: personSnap.id,
-            ...data,
-            roles,
-            activeRole,
-            dateOfBirth: data.dateOfBirth?.toDate()
-          } as Person);
-        } else {
-          setPerson(null);
+        if (firebaseUser.email === GOD_TIER_EMAIL) {
+            // God-tier user found, create the profile client-side.
+            setPerson({
+                personId: firebaseUser.uid,
+                firstName: 'Kameel',
+                lastName: 'Kalyan',
+                displayName: 'System Architect',
+                email: GOD_TIER_EMAIL,
+                roles: ALL_ROLES,
+                activeRole: 'System Architect',
+            });
+            setLoading(false);
+            return; // Skip Firestore lookup for this special user
         }
+
+        const personRef = doc(db, 'people', firebaseUser.uid);
+        const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
+            const activeRole = data.activeRole && roles.includes(data.activeRole) 
+                  ? data.activeRole 
+                  : roles[0];
+            setPerson({
+              personId: docSnap.id,
+              ...data,
+              roles,
+              activeRole,
+              dateOfBirth: data.dateOfBirth?.toDate()
+            } as Person);
+          } else {
+            setPerson(null);
+          }
+          setLoading(false);
+        }, (error) => {
+          console.error("Error with profile snapshot listener:", error);
+          setPerson(null);
+          setLoading(false);
+        });
+        
+        return () => unsubscribeSnapshot();
       } else {
         setPerson(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribeAuth();
   }, []);
-
-  React.useEffect(() => {
-    if (!user) {
-        return;
-    }
-
-    const personRef = doc(db, 'people', user.uid);
-    const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
-            const activeRole = data.activeRole && roles.includes(data.activeRole) 
-                ? data.activeRole 
-                : roles[0];
-
-            setPerson({ 
-                personId: docSnap.id, 
-                ...data,
-                roles,
-                activeRole,
-                dateOfBirth: data.dateOfBirth?.toDate() 
-            } as Person);
-        }
-    }, (error) => {
-      console.error("Error with profile snapshot listener:", error);
-    });
-
-    return () => unsubscribeSnapshot();
-  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, person, loading }}>
