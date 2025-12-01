@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -221,6 +220,9 @@ const addLinkSchema = z.object({
 });
 
 export async function addPersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
+  const userId = await getUserId();
+  if (!userId) throw new Error("User not authenticated.");
+
   if (!addLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
   if (!await getPerson(currentPersonId) || !await getPerson(linkedPersonId)) throw new Error("One or both people could not be found.");
 
@@ -230,7 +232,7 @@ export async function addPersonLinkAction(currentPersonId: string, linkedPersonI
   if (!(await getDocs(q)).empty) throw new Error("This link already exists.");
   
   try {
-    await addDoc(linksCollection, { parentId, childId });
+    await addDoc(linksCollection, { parentId, childId, userId });
   } catch (error) {
     console.error("Error adding family link:", error);
     throw new Error("Could not create the link.");
@@ -244,6 +246,8 @@ const removeLinkSchema = z.object({
 });
 
 export async function removePersonLinkAction(currentPersonId: string, linkedPersonId: string, relationship: 'guardian' | 'child') {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated.");
     if (!removeLinkSchema.safeParse({ currentPersonId, linkedPersonId, relationship }).success) throw new Error('Invalid link data.');
     
     const [currentPerson, linkedPerson] = await Promise.all([getPerson(currentPersonId), getPerson(linkedPersonId)]);
@@ -691,7 +695,7 @@ export async function assignPersonToSchoolAction(personId: string, schoolId: str
   if (!currentUserId) throw new Error("You must be logged in to perform this action.");
 
   const currentUser = await getPerson(currentUserId);
-  const permittedRoles = ['Admin', 'Sportsmaster', 'Team Manager'];
+  const permittedRoles = ['Admin', 'Sportsmaster', 'Team Manager', 'System Architect'];
   if (!currentUser || !currentUser.roles.some(role => permittedRoles.includes(role))) {
       throw new Error("You do not have permission to perform this action.");
   }
