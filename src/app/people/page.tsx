@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getPlayers, getPerson } from '@/lib/actions/players';
@@ -23,6 +22,8 @@ export default async function PeoplePage() {
   ]);
   
   const user = userId ? await getPerson(userId) : null;
+  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster', 'Team Manager', 'System Architect'].includes(r)) ?? false;
+  const canEditUsers = user?.roles.includes('Admin') || user?.roles.includes('System Architect') || false;
 
   const teamToDivisionMap = new Map<string, string>();
   teams.forEach(team => {
@@ -85,5 +86,5 @@ export default async function PeoplePage() {
     };
   });
 
-  return <PeopleClient people={augmentedPeople} user={user} schools={schools} teams={teams} divisions={divisions} />;
+  return <PeopleClient people={augmentedPeople} user={user} schools={schools} teams={teams} divisions={divisions} canManage={canManage} canEditUsers={canEditUsers} />;
 }

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from "react";
@@ -127,7 +126,7 @@ function BulkAssignTeamDialog({
   function onSubmit(data: z.infer<typeof bulkAssignTeamSchema>) {
     startTransition(async () => {
       try {
-        await bulkAddPlayersToRosterAction(data.teamId, personIds);
+        await bulkAddPlayersToRosterAction(data.teamId, { playerIds, status: 'active' });
         toast({ title: "Assignment Successful", description: `${personIds.length} people have been added to the team.` });
         onSuccess();
         onOpenChange(false);
@@ -233,7 +232,7 @@ function BulkAssignTeamDialog({
 
 
 
-export default function PeopleClient({ people, user, schools, teams, divisions }: { people: AugmentedPerson[], user: Person | null, schools: School[], teams: Team[], divisions: Division[] }) {
+export default function PeopleClient({ people, user, schools, teams, divisions, canManage, canEditUsers }: { people: AugmentedPerson[], user: Person | null, schools: School[], teams: Team[], divisions: Division[], canManage: boolean, canEditUsers: boolean }) {
   const { toast } = useToast();
   const [isPending, startTransition] = React.useTransition();
   const [selectedPerson, setSelectedPerson] = React.useState<AugmentedPerson | null>(null);
@@ -254,9 +253,6 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
   const [assignmentFilter, setAssignmentFilter] = React.useState<'all' | 'assigned' | 'unassigned'>('all');
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableColumn; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   
-  const canManage = user?.roles.some(role => ['Admin', 'Sportsmaster', 'Team Manager'].includes(role)) ?? false;
-  const canEditUsers = user?.roles.includes('Admin') ?? false;
-
   const [selectedRowKeys, setSelectedRowKeys] = React.useState<string[]>([]);
   const [isBulkAssignTeamDialogOpen, setIsBulkAssignTeamDialogOpen] = React.useState(false);
 
@@ -731,12 +727,9 @@ export default function PeopleClient({ people, user, schools, teams, divisions }
 
       {canEditUsers && <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+          <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>
               This action cannot be undone. This will permanently delete <strong>{selectedPerson?.firstName} {selectedPerson?.lastName}</strong>, remove them from all team rosters, and delete their associated family links. They will not be removed from completed match scorecards.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedPerson(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })} disabled={isPending}>{isPending ? "Deleting..." : "Delete Person"}</AlertDialogAction>
