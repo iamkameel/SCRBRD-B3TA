@@ -71,7 +71,7 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
   const isFriendly = selectedCompetitionId === 'friendly';
 
   const availableCompetitions = React.useMemo(() => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !seasons) return [];
     const activeSeason = seasons.find(s => 
         s.active && selectedDate >= s.startDate && selectedDate <= s.endDate
     );
@@ -96,7 +96,7 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
   }, [isFriendly, selectedCompetitionId, competitions, teams]);
   
   const autoSelectedSeason = React.useMemo(() => {
-    if (isFriendly || !selectedDate) return null;
+    if (isFriendly || !selectedDate || !seasons) return null;
     return seasons.find(s => s.active && selectedDate >= s.startDate && selectedDate <= s.endDate) || null;
   }, [isFriendly, selectedDate, seasons]);
 

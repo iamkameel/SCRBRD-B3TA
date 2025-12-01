@@ -50,7 +50,7 @@ interface NewMatchPageClientProps {
   divisions: Division[];
 }
 
-export default function NewMatchPageClient({ teams, competitions, fields, seasons = [], divisions = [] }: NewMatchPageClientProps) {
+export default function NewMatchPageClient({ teams, competitions, fields, seasons, divisions }: NewMatchPageClientProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
@@ -70,7 +70,7 @@ export default function NewMatchPageClient({ teams, competitions, fields, season
   const isFriendly = selectedCompetitionId === 'friendly';
 
   const availableCompetitions = React.useMemo(() => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !seasons) return [];
     const activeSeason = seasons.find(s => 
         s.active && selectedDate >= s.startDate && selectedDate <= s.endDate
     );
@@ -95,7 +95,7 @@ export default function NewMatchPageClient({ teams, competitions, fields, season
   }, [isFriendly, selectedCompetitionId, competitions, teams]);
   
   const autoSelectedSeason = React.useMemo(() => {
-    if (isFriendly || !selectedDate) return null;
+    if (isFriendly || !selectedDate || !seasons) return null;
     return seasons.find(s => s.active && selectedDate >= s.startDate && selectedDate <= s.endDate) || null;
   }, [isFriendly, selectedDate, seasons]);
 
@@ -142,7 +142,6 @@ export default function NewMatchPageClient({ teams, competitions, fields, season
       }
     });
   }
-
 
   return (
     <div className="flex flex-col gap-8">
