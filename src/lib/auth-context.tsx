@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 displayName: 'System Architect',
                 email: GOD_TIER_EMAIL,
                 roles: ALL_ROLES,
-                activeRole: person?.activeRole || 'System Architect',
+                activeRole: 'System Architect',
             });
             setLoading(false);
             // Crucially, we return here to stop the Firestore lookup for the god-tier user.
