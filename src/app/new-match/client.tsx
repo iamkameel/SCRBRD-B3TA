@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -142,53 +143,55 @@ export default function NewMatchClient({ teams, competitions, fields, seasons = 
     });
   }
 
+  if (!isAdmin) {
+    return null;
+  }
+
   return (
-    isAdmin && (
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button><PlusCircle className="mr-2" />New Match</Button>
-        </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Create New Match</DialogTitle>
-          <DialogDescription>Follow the steps to schedule a new fixture.</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <FormField control={form.control} name="dateTime" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>1. Match Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : (<span>Pick a date</span>)}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="time" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>2. Match Time</FormLabel><FormControl><Input type="time" className="w-full" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-                
-                 <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>3. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDate}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDate ? "Select a date first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent><SelectItem value="friendly">-- Friendly Match --</SelectItem>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.divisionName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                 
-                {isFriendly && (
-                    <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>Friendly Mode</AlertTitle>
-                        <AlertDescription>
-                            You’ve selected a Friendly match. All teams are available for selection, regardless of division or season.
-                        </AlertDescription>
-                    </Alert>
-                )}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button><PlusCircle className="mr-2" />New Match</Button>
+      </DialogTrigger>
+    <DialogContent className="sm:max-w-xl">
+      <DialogHeader>
+        <DialogTitle>Create New Match</DialogTitle>
+        <DialogDescription>Follow the steps to schedule a new fixture.</DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  <FormField control={form.control} name="dateTime" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>1. Match Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : (<span>Pick a date</span>)}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="time" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>2. Match Time</FormLabel><FormControl><Input type="time" className="w-full" {...field} disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+              </div>
+              
+               <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>3. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDate}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDate ? "Select a date first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent><SelectItem value="friendly">-- Friendly Match --</SelectItem>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.divisionName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+               
+              {isFriendly && (
+                  <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertTitle>Friendly Mode</AlertTitle>
+                      <AlertDescription>
+                          You’ve selected a Friendly match. All teams are available for selection, regardless of division or season.
+                      </AlertDescription>
+                  </Alert>
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>4. Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>5. Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>4. Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>5. Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+              </div>
 
-                 <FormField control={form.control} name="fieldId" render={({ field }) => (<FormItem><FormLabel>6. Venue / Field</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger></FormControl><SelectContent>{fields.map((field) => (<SelectItem key={field.fieldId} value={field.fieldId}>{field.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+               <FormField control={form.control} name="fieldId" render={({ field }) => (<FormItem><FormLabel>6. Venue / Field</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending}><FormControl><SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger></FormControl><SelectContent>{fields.map((field) => (<SelectItem key={field.fieldId} value={field.fieldId}>{field.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
 
-                <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button type="submit" disabled={isPending}>
-                        {isPending ? "Creating Match..." : "Create Fixture"}
-                    </Button>
-                </DialogFooter>
-            </form>
-          </Form>
-      </DialogContent>
-    </Dialog>
-    )
+              <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="submit" disabled={isPending}>
+                      {isPending ? "Creating Match..." : "Create Fixture"}
+                  </Button>
+              </DialogFooter>
+          </form>
+        </Form>
+    </DialogContent>
+  </Dialog>
   );
 }
