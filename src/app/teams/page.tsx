@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getTeams } from '@/lib/actions/teams';
@@ -18,7 +19,7 @@ export default async function TeamsPage() {
   ]);
   
   const user = userId ? await getPerson(userId) : null;
-  const canManage = (user?.roles.includes('Admin') || user?.roles.includes('Sportsmaster')) ?? false;
+  const canManage = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
 
   // These functions are now role-aware and will fetch the appropriate data.
   const [teams, schools, allCoaches] = await Promise.all([

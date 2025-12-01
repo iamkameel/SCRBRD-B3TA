@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getPlayers, getPerson } from '@/lib/actions/players';
@@ -52,6 +53,7 @@ export default async function PeoplePage() {
       }
 
       for (const chunk of teamIdChunks) {
+          if (chunk.length === 0) continue;
           const teamsQuery = query(collection(db, 'teams'), where(documentId(), 'in', chunk));
           const teamsSnapshot = await getDocs(teamsQuery);
           teamsSnapshot.forEach(doc => {
