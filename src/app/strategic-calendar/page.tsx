@@ -3,7 +3,7 @@
 
 import StrategicCalendarClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/auth';
+import { getUserId } from '@/lib/server-auth';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { collection, getDocs, query, Timestamp } from 'firebase/firestore';
