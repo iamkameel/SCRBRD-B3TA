@@ -5,7 +5,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
@@ -140,14 +140,12 @@ export function CompetitionDialog({ mode, competition, seasons, divisions, teams
     }
   }, [competition, mode, open, form, seasons]);
   
-  // When season changes, reset division, class, and teams
   React.useEffect(() => {
     form.resetField('divisionId');
     form.resetField('competitionClass');
     form.resetField('teamIds');
   }, [seasonId, form]);
 
-  // When division changes, reset class and teams
   React.useEffect(() => {
     form.resetField('competitionClass');
     form.resetField('teamIds');
