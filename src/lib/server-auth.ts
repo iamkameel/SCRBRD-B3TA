@@ -1,4 +1,3 @@
-
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
@@ -9,7 +8,8 @@ import { adminApp } from './firebase-admin';
 const GOD_TIER_UID = '0o2nS9M8g4N2wL4E1bB3t6xYv5Z2'; // A consistent, hardcoded UID for the super admin
 
 export const getUserId = cache(async (): Promise<string | null> => {
-    const authorization = headers().get("Authorization");
+    const headerObj = headers();
+    const authorization = headerObj.get("Authorization");
     if (authorization?.startsWith("Bearer ")) {
         const idToken = authorization.split("Bearer ")[1];
         try {
