@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -5,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import DashboardSkeleton from '@/app/loading';
 
 const SHELL_DISABLED_ROUTES = ['/home', '/login', '/signup'];
 
@@ -13,7 +15,7 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isShellDisabledRoute = SHELL_DISABLED_ROUTES.includes(pathname);
+  const isShellDisabledRoute = SHELL_DISABLED_ROUTES.some(path => pathname.startsWith(path));
 
   React.useEffect(() => {
     if (!loading && !user && !isShellDisabledRoute) {
@@ -21,30 +23,25 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, isShellDisabledRoute, router, pathname]);
 
-  if (loading && !isShellDisabledRoute) {
-    return null; // The loading skeleton is already handled by AuthProvider for shell routes
-  }
-  
   if (isShellDisabledRoute) {
     return <>{children}</>;
   }
-  
-  if (user) {
-      return (
-        <div className="flex min-h-screen w-full">
-            <Sidebar />
-            <div className="flex flex-col flex-1 md:pl-64">
-                <Header />
-                <main className="flex-1 bg-background p-4 md:p-8">
-                {children}
-                </main>
-            </div>
-        </div>
-      );
-  }
 
-  // If not logged in and trying to access a protected route,
-  // the useEffect above will trigger a redirect.
-  // We can show a skeleton or nothing while redirecting.
-  return null;
+  // While loading, or if the user is not logged in yet (and a redirect is pending), show a skeleton.
+  if (loading || !user) {
+    return <DashboardSkeleton />;
+  }
+  
+  // If the user is logged in, render the main app layout.
+  return (
+    <div className="flex min-h-screen w-full">
+        <Sidebar />
+        <div className="flex flex-col flex-1 md:pl-64">
+            <Header />
+            <main className="flex-1 bg-background p-4 md:p-8">
+            {children}
+            </main>
+        </div>
+    </div>
+  );
 }
