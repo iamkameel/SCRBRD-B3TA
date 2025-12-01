@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -646,8 +647,7 @@ export async function updateActiveRoleAction(personId: string, role: string) {
   }
   
   if (personId === GOD_TIER_UID) {
-    // This is a virtual user, no DB update is needed.
-    // The client-side state is handled optimistically.
+    // This is a virtual user, no DB update is needed. The client-side state is handled optimistically.
     return;
   }
   
@@ -665,9 +665,6 @@ export async function updateActiveRoleAction(personId: string, role: string) {
 
   try {
     await updateDoc(personRef, { activeRole: role });
-    // Revalidate the root layout to ensure the sidebar and all server components
-    // that depend on the user's role are re-rendered.
-    revalidatePath('/', 'layout');
   } catch (error) {
     console.error("Error updating active role:", error);
     throw new Error("Could not update active role.");
@@ -759,5 +756,3 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
         throw new Error("Could not update player skills.");
     }
 }
-
-    

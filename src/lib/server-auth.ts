@@ -6,7 +6,7 @@ import { headers } from 'next/headers';
 import { adminApp } from './firebase-admin';
 
 // This function is NOT cached. It must run on every request to get the current user.
-export const getUserId = async (): Promise<string | null> => {
+export async function getUserId(): Promise<string | null> {
     // Correctly await the headers object before accessing its properties.
     const headersList = await headers();
     const authorization = headersList.get('Authorization');

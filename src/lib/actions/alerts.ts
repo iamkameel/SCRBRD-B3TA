@@ -97,5 +97,3 @@ export async function getUnconfirmedAssignmentsCount(personId: string): Promise<
         return 0;
     }
 }
-
-
