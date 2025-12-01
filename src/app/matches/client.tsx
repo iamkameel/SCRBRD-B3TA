@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, User, Link as LinkIcon, Calendar, Clock, Trophy, MapPin, SlidersHorizontal, List, LayoutGrid, ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, SlidersHorizontal, List, LayoutGrid, ArrowDown, ArrowUp, ChevronDown, User, Calendar } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,23 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -200,12 +185,12 @@ export default function MatchesClient({ matches, teams, fields, competitions, se
         const lowercasedQuery = searchQuery.toLowerCase();
         const matchesSearch = searchQuery === '' || 
             match.teamAName.toLowerCase().includes(lowercasedQuery) || 
-            match.teamBName.toLowerCase().includes(lowercasedQuery) ||
-            match.competitionName?.toLowerCase().includes(lowercasedQuery);
+            (match.teamBName && match.teamBName.toLowerCase().includes(lowercasedQuery)) ||
+            (match.competitionName && match.competitionName.toLowerCase().includes(lowercasedQuery));
             
         const matchesCompetition = competitionFilter.length === 0 || competitionFilter.includes(match.competitionId || 'friendly');
         const matchesVenue = venueFilter.length === 0 || venueFilter.includes(match.fieldId);
-        const matchesTeam = teamFilter.length === 0 || teamFilter.includes(match.teamAId) || teamFilter.includes(match.teamBId);
+        const matchesTeam = teamFilter.length === 0 || teamFilter.includes(match.teamAId) || (match.teamBId && teamFilter.includes(match.teamBId));
         const matchesStatus = statusFilter.length === 0 || statusFilter.includes(match.status);
 
         return matchesSearch && matchesCompetition && matchesVenue && matchesTeam && matchesStatus;
@@ -337,7 +322,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, se
                   {paginatedMatches.length > 0 ? (
                     paginatedMatches.map((match) => (
                       <TableRow key={match.matchId}>
-                        <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName}</Link></TableCell>
+                        <TableCell className="font-medium"><Link href={`/matches/${match.matchId}`} className="hover:underline">{match.teamAName} vs {match.teamBName || 'TBD'}</Link></TableCell>
                         <TableCell className="hidden lg:table-cell">{match.competitionName}</TableCell>
                         <TableCell className="hidden md:table-cell">{match.fieldName}</TableCell>
                         <TableCell>{format(match.dateTime, "PPP p")}</TableCell>

@@ -14,7 +14,6 @@ import Link from 'next/link';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,6 +22,15 @@ import { useToast } from "@/hooks/use-toast";
 import type { Team, Competition, Field, Season, Division } from "@/lib/data";
 import { addMatchAction } from '@/lib/actions/matches';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const fixtureSchema = z.object({
   competitionId: z.string({ required_error: "Please select a competition or 'Friendly'." }),
@@ -54,7 +62,6 @@ interface NewMatchClientProps {
 
 export default function NewMatchClient({ teams, competitions, fields, seasons, divisions, isAdmin }: NewMatchClientProps) {
   const { toast } = useToast();
-  const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [open, setOpen] = React.useState(false);
 
@@ -97,18 +104,6 @@ export default function NewMatchClient({ teams, competitions, fields, seasons, d
     return teams.filter(t => t.seasonId === competition.seasonId && t.divisionId === competition.divisionId);
   }, [isFriendly, selectedCompetitionId, competitions, teams]);
   
-  const autoSelectedSeason = React.useMemo(() => {
-    if (isFriendly || !selectedDate || !seasons) return null;
-    return seasons.find(s => s.active && selectedDate >= s.startDate && selectedDate <= s.endDate) || null;
-  }, [isFriendly, selectedDate, seasons]);
-
-  const autoSelectedDivisionName = React.useMemo(() => {
-    if (isFriendly || !selectedCompetitionId) return null;
-    const competition = competitions.find(c => c.competitionId === selectedCompetitionId);
-    return competition ? competition.divisionName : null;
-  }, [isFriendly, selectedCompetitionId, competitions]);
-
-
   React.useEffect(() => {
     form.resetField('competitionId');
   }, [selectedDate, form]);

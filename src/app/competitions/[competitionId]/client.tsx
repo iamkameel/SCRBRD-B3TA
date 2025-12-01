@@ -286,7 +286,9 @@ function TournamentBracket({ rounds }: { rounds: { round: number; matches: Match
 }
 
 export default function CompetitionDetailsClient({ competition, standings, matches, leaderboards, seasons, sponsors }: CompetitionDetailsClientProps) {
-    const [isClient, setIsClient(false); }, []);
+    const [isClient, setIsClient] = React.useState(false);
+    React.useEffect(() => { setIsClient(true); }, []);
+    
     const [isSchedulingDialogOpen, setIsSchedulingDialogOpen] = React.useState(false);
     
     const { topRunScorers, topWicketTakers } = leaderboards;
@@ -316,237 +318,217 @@ export default function CompetitionDetailsClient({ competition, standings, match
 
     return (
         <>
-        
-            
-                Back to Competitions
-            
-            
-                
-                    
-                        
+        <div className="flex flex-col gap-8">
+            <header>
+                <Link href="/competitions" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />Back to Competitions
+                </Link>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">{competition.name}</h1>
+                        <p className="text-muted-foreground mt-1">
                             {competition.divisionName} &bull; {competition.seasonName}
-                        
-                    
-                    
+                        </p>
+                    </div>
+                    <div>
                          {competition.status !== 'Completed' && matches.length === 0 && (
-                            
-                                
+                            <Button onClick={() => setIsSchedulingDialogOpen(true)}>
+                                <Wand2 className="mr-2" />
                                 Auto-Schedule Fixtures
-                            
+                            </Button>
                          )}
-                    
-                
+                    </div>
+                </div>
                 {competition.winnerTeamName && (
-                    
-                        
-                        Winner: {competition.winnerTeamName}
-                    
+                    <div className="mt-4 flex items-center gap-2">
+                        <Trophy className="h-6 w-6 text-amber-500" />
+                        <span className="font-semibold text-lg">Winner: {competition.winnerTeamName}</span>
+                    </div>
                 )}
-            
+            </header>
 
             {linkedSponsors.length > 0 && (
-                
-                    
-                        
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Handshake />
                             Sponsors
-                        
-                    
-                    
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap items-center gap-6">
                         {linkedSponsors.map(sponsor => (
-                            
-                                
-                                    
-                                        
-                                    
-                                
-                            
+                            <a href={sponsor.website} key={sponsor.sponsorId} target="_blank" rel="noopener noreferrer" className="grayscale hover:grayscale-0 transition-all opacity-80 hover:opacity-100">
+                                <Avatar className="h-20 w-auto rounded-md">
+                                    <AvatarImage src={sponsor.logoUrl} alt={sponsor.name} className="object-contain" />
+                                    <AvatarFallback>{sponsor.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </a>
                         ))}
-                    
-                
+                    </CardContent>
+                </Card>
             )}
 
-            
-                
-                    {isLeague ? (
-                        Standings
-                    ) : (
-                        Bracket
-                    )}
-                    Matches
-                    Players
-                
+            <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="overview">
+                        {isLeague ? (
+                            "Standings"
+                        ) : (
+                            "Bracket"
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger value="matches">Matches</TabsTrigger>
+                    <TabsTrigger value="players">Players</TabsTrigger>
+                </TabsList>
 
-                {isLeague && (
+                <TabsContent value="overview" className="mt-4">
+                {isLeague ? (
                     
-                        
-                            
-                                Team Standings
-                                Current leaderboard for the {competition.name}.
-                            
-                            
-                                 
-                                    
-                                        Pos
-                                        Team
-                                        Played
-                                        Won
-                                        Lost
-                                        NRR
-                                    
-                                    
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Team Standings</CardTitle>
+                                <CardDescription>Current leaderboard for the {competition.name}.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[50px]">Pos</TableHead>
+                                            <TableHead>Team</TableHead>
+                                            <TableHead className="text-right">Played</TableHead>
+                                            <TableHead className="text-right">Won</TableHead>
+                                            <TableHead className="text-right">Lost</TableHead>
+                                            <TableHead className="text-right">NRR</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
                                     {standings.length > 0 ? (
                                         standings.map((team, index) => (
-                                        
-                                            {index + 1}
-                                            
-                                                 
-                                                    
+                                        <TableRow key={team.teamId}>
+                                            <TableCell className="font-medium">{index + 1}</TableCell>
+                                            <TableCell>
+                                                <Link href={`/teams/${team.teamId}`} className="font-medium hover:underline flex items-center gap-2">
+                                                    <Avatar className="h-6 w-6"><AvatarImage src={team.logoUrl} /><AvatarFallback>{team.name[0]}</AvatarFallback></Avatar>
                                                     {team.name}
-                                                
-                                            
-                                            {team.stats.matchesPlayed}
-                                            {team.stats.matchesWon}
-                                            {team.stats.matchesLost}
-                                            {team.stats.netRunRate.toFixed(2)}
-                                        
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell className="text-right">{team.stats.matchesPlayed}</TableCell>
+                                            <TableCell className="text-right">{team.stats.matchesWon}</TableCell>
+                                            <TableCell className="text-right">{team.stats.matchesLost}</TableCell>
+                                            <TableCell className="text-right">{team.stats.netRunRate.toFixed(2)}</TableCell>
+                                        </TableRow>
                                         ))
                                     ) : (
-                                        
-                                            No team stats available yet.
-                                        
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="h-24 text-center">No team stats available yet.</TableCell>
+                                        </TableRow>
                                     )}
-                                    
-                                
-                            
-                        
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
                     
+                ) : (
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Tournament Bracket</CardTitle>
+                            <CardDescription>A visual overview of the tournament matchups.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {bracketRounds.length > 0 ? (
+                                <ScrollArea className="w-full whitespace-nowrap">
+                                    <TournamentBracket rounds={bracketRounds} />
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                            ) : (
+                                <div className="h-48 flex items-center justify-center text-center text-muted-foreground">
+                                    <p>No matches scheduled for this competition yet.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 )}
-                {!isLeague && (
-                     
-                        
-                            
-                                Tournament Bracket
-                                A visual overview of the tournament matchups.
-                            
-                            
-                                {bracketRounds.length > 0 ? (
-                                    
-                                        
-                                        
-                                    
-                                ) : (
-                                    
-                                        No matches scheduled for this competition yet.
-                                    
-                                )}
-                            
-                        
-                    
-                )}
-                
-                    
-                        
-                            Match List
-                            All matches scheduled for this competition.
-                        
-                        
-                            
-                                
-                                    Match
-                                    Date
-                                    Venue
-                                    Status
-                                
-                                
+                </TabsContent>
+                <TabsContent value="matches" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Match List</CardTitle>
+                            <CardDescription>All matches scheduled for this competition.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Match</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Venue</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                 {matches.length > 0 ? (
                                     matches.map((match) => (
-                                    
-                                        
-                                             
-                                                
-                                                    
-                                                    {match.teamAName}
-                                                
-                                                
-                                                
-                                                    
-                                                    {match.teamBName || 'TBD'}
-                                                
-                                            
-                                        
-                                        {isClient ? format(match.dateTime, "PPP p") : '\u00A0'}
-                                        {match.fieldName}
-                                        
-                                    
+                                    <TableRow key={match.matchId}>
+                                        <TableCell className="font-medium">
+                                            <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Avatar className="h-5 w-5"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
+                                                    <span>{match.teamAName}</span>
+                                                </div>
+                                                <span className="text-muted-foreground text-xs">vs</span>
+                                                <div className="flex items-center gap-2">
+                                                    <Avatar className="h-5 w-5"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
+                                                    <span>{match.teamBName || 'TBD'}</span>
+                                                </div>
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{isClient ? format(match.dateTime, "PPP p") : '\u00A0'}</TableCell>
+                                        <TableCell>{match.fieldName}</TableCell>
+                                        <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
+                                    </TableRow>
                                 ))
                                 ) : (
-                                
-                                    No matches found for this competition.
-                                
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">No matches found for this competition.</TableCell>
+                                </TableRow>
                                 )}
-                            
-                        
-                    
-                
-                
-                    
-                        
-                            
-                                Top Run Scorers
-                                Batting leaders in this competition.
-                            
-                            
-                                
-                                {topRunScorers.length > 0 ? topRunScorers.map((player) => (
-                                    
-                                         
-                                            
-                                                {player.firstName} {player.lastName}
-                                                Avg: {player.stats.battingAverage.toFixed(2)}
-                                            
-                                            
-                                                {player.stats.totalRuns}
-                                                Runs
-                                            
-                                        
-                                    
-                                )) : No batting stats yet.}
-                            
-                        
-                         
-                            
-                                Top Wicket Takers
-                                Bowling leaders in this competition.
-                            
-                             
-                                
-                                {topWicketTakers.length > 0 ? topWicketTakers.map((player) => (
-                                    
-                                         
-                                            
-                                                {player.firstName} {player.lastName}
-                                                Econ: {player.stats.economyRate.toFixed(2)}
-                                            
-                                            
-                                                {player.stats.wicketsTaken}
-                                                Wickets
-                                            
-                                        
-                                    
-                                )) : No bowling stats yet.}
-                            
-                        
-                    
-                
-            
-        
+                            </TableBody>
+                        </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="players" className="mt-4">
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Top Run Scorers</CardTitle>
+                                <CardDescription>Batting leaders in this competition.</CardDescription>
+                            </CardHeader>
+                             <CardContent>
+                                {topRunScorers.length > 0 ? <TopRunScorersChart data={topRunScorers} /> : <p className="text-center text-sm text-muted-foreground py-8">No batting stats yet.</p>}
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Top Wicket Takers</CardTitle>
+                                <CardDescription>Bowling leaders in this competition.</CardDescription>
+                            </CardHeader>
+                             <CardContent>
+                                {topWicketTakers.length > 0 ? <TopWicketTakersChart data={topWicketTakers} /> : <p className="text-center text-sm text-muted-foreground py-8">No bowling stats yet.</p>}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
         {competitionSeason && (
-            
-                
-                
-                
-            
+            <AutoScheduleDialog
+                competition={competition}
+                season={competitionSeason}
+                open={isSchedulingDialogOpen}
+                onOpenChange={setIsSchedulingDialogOpen}
+            />
         )}
-        
+        </>
     );
 }
