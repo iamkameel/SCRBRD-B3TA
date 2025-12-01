@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -12,7 +11,7 @@ import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-de
 import { getPlayerStats, getPlayerMatchHistory } from './stats';
 import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
-import { getUserId } from '@/lib/server-auth';
+import { getUserId, GOD_TIER_UID } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
 
 export async function getPlayers(): Promise<Person[]> {
@@ -314,8 +313,12 @@ type PersonFormValues = z.infer<typeof personSchema>;
 function hasPermissionToAssign(assigner: Person, targetRoles: string[], originalTargetRoles: string[] = []): boolean {
     const assignerRoles = new Set(assigner.roles);
 
-    if (assignerRoles.has('System Architect') || assignerRoles.has('Admin')) {
+    if (assignerRoles.has('System Architect')) {
         return true;
+    }
+    if (assignerRoles.has('Admin')) {
+        const isTryingToModifyArchitect = targetRoles.includes('System Architect') || originalTargetRoles.includes('System Architect');
+        return !isTryingToModifyArchitect;
     }
 
     const isTryingToGrantAdmin = targetRoles.some(r => (r === 'Admin' || r === 'System Architect') && !originalTargetRoles.includes(r));
@@ -627,6 +630,14 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
 }
 
 export async function updateActiveRoleAction(personId: string, role: string) {
+  const userId = await getUserId();
+  if (!userId) {
+    throw new Error("User not authenticated.");
+  }
+  if (personId !== userId) {
+      throw new Error("You can only change your own active role.");
+  }
+  
   const personRef = doc(db, 'people', personId);
   const personSnap = await getDoc(personRef);
   

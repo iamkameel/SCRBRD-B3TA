@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -37,7 +35,7 @@ const drillSchema = z.object({
 const checkManagementPermission = async (userId: string) => {
     if (userId === 'TEMP_ADMIN') return;
     const user = await getPerson(userId);
-    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'Coach'].includes(r))) {
+    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'Coach', 'System Architect'].includes(r))) {
         throw new Error("You do not have permission to manage drills.");
     }
 }

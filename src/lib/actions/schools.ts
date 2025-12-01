@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -17,7 +15,7 @@ import { getTeamRoster } from './teams';
 const checkManagementPermission = async (userId: string) => {
     if (userId === 'TEMP_ADMIN') return;
     const user = await getPerson(userId);
-    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster') && !user.roles.includes('System Architect'))) {
         throw new Error("You do not have permission to manage schools.");
     }
 }
@@ -221,7 +219,6 @@ export async function deleteSchoolAction(schoolId: string) {
   }
   
   const schoolDocRef = doc(db, 'schools', schoolId);
-
   const schoolSnap = await getDoc(schoolDocRef);
   if (!schoolSnap.exists()) {
     throw new Error("School not found or you do not have permission to delete it.");

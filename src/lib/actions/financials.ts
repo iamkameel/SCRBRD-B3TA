@@ -1,131 +1,132 @@
-
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
-import type { Transaction, Person } from '@/lib/data';
-import { cache } from 'react';
+import type { Invoice } from '@/lib/data';
 import { getPerson } from './players';
+import { getSchool } from './schools';
 import { getUserId } from '@/lib/server-auth';
 
-const checkManagementPermission = async (userId: string) => {
+const checkBillingPermission = async (userId: string) => {
     if (userId === 'TEMP_ADMIN') return;
     const user = await getPerson(userId);
-    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('Sportsmaster'))) {
-        throw new Error("You do not have permission to manage financials.");
+    if (!user || (!user.roles.includes('Admin') && !user.roles.includes('System Architect'))) {
+        throw new Error("You do not have permission to manage billing.");
     }
-}
+};
 
-export async function getTransactions(): Promise<Transaction[]> {
+export async function getInvoices(): Promise<Invoice[]> {
   try {
-    const transactionsCollection = collection(db, 'financials');
-    const q = query(transactionsCollection);
-    const transactionSnapshot = await getDocs(q);
-    const transactionsList = transactionSnapshot.docs.map(doc => {
+    const invoicesCollection = collection(db, 'invoices');
+    const q = query(invoicesCollection);
+    const invoiceSnapshot = await getDocs(q);
+    const invoiceList = invoiceSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
-            transactionId: doc.id,
+            invoiceId: doc.id,
             ...data,
-            date: (data.date as Timestamp).toDate(),
-        } as Transaction;
+            issueDate: (data.issueDate as Timestamp).toDate(),
+            dueDate: (data.dueDate as Timestamp).toDate(),
+        } as Invoice;
     });
-    return transactionsList.sort((a,b) => b.date.getTime() - a.date.getTime());
+    return invoiceList.sort((a,b) => b.issueDate.getTime() - a.issueDate.getTime());
   } catch (error) {
-    console.error("Error fetching transactions:", error);
+    console.error("Error fetching invoices:", error);
     return [];
   }
 }
 
-const transactionSchema = z.object({
-  description: z.string().min(1, { message: "Description is required." }),
-  amount: z.coerce.number().positive({ message: "Amount must be positive." }),
-  type: z.enum(['Income', 'Expense']),
-  category: z.enum(['Registration Fee', 'Sponsorship', 'Venue Hire', 'Equipment', 'Umpire Fees', 'Other']),
-  date: z.date(),
+const lineItemSchema = z.object({
+  description: z.string().min(1, 'Description is required'),
+  quantity: z.coerce.number().min(1, 'Quantity must be at least 1'),
+  unitPrice: z.coerce.number().min(0, 'Unit price must be positive'),
 });
 
-type TransactionFormValues = z.infer<typeof transactionSchema>;
+const invoiceSchema = z.object({
+  clientId: z.string().min(1, "Client is required"),
+  issueDate: z.date(),
+  dueDate: z.date(),
+  lineItems: z.array(lineItemSchema).min(1, "At least one line item is required."),
+  notes: z.string().optional(),
+});
 
-export async function addTransactionAction(data: TransactionFormValues) {
+type InvoiceFormValues = z.infer<typeof invoiceSchema>;
+
+export async function addInvoiceAction(data: InvoiceFormValues) {
   const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  await checkManagementPermission(userId);
-  const validatedFields = transactionSchema.safeParse(data);
+  await checkBillingPermission(userId);
 
+  const validatedFields = invoiceSchema.safeParse(data);
   if (!validatedFields.success) {
-    throw new Error('Invalid transaction data.');
+    throw new Error('Invalid invoice data.');
   }
   
+  const { clientId, issueDate, dueDate, lineItems, notes } = validatedFields.data;
+
+  const client = await getSchool(clientId);
+  if(!client) throw new Error("Client school not found.");
+
+  let subtotal = 0;
+  const finalLineItems = lineItems.map(item => {
+      const total = item.quantity * item.unitPrice;
+      subtotal += total;
+      return { ...item, id: doc(collection(db, 'invoices')).id, total };
+  });
+
+  const tax = subtotal * 0.15; // Example 15% tax
+  const total = subtotal + tax;
+
+  const invoiceCountSnap = await getDocs(collection(db, 'invoices'));
+  const invoiceNumber = `INV-${(invoiceCountSnap.size + 1).toString().padStart(4, '0')}`;
+
   try {
-    await addDoc(collection(db, 'financials'), {
-      ...validatedFields.data,
-      date: Timestamp.fromDate(validatedFields.data.date),
+    await addDoc(collection(db, 'invoices'), {
+      invoiceNumber,
+      clientId,
+      clientName: client.name,
+      issueDate: Timestamp.fromDate(issueDate),
+      dueDate: Timestamp.fromDate(dueDate),
+      status: 'Draft',
+      lineItems: finalLineItems,
+      subtotal,
+      tax,
+      total,
+      notes: notes || '',
       userId,
     });
   } catch (error) {
-    console.error("Error adding transaction: ", error);
-    throw new Error("Could not add transaction.");
+    console.error("Error adding invoice: ", error);
+    throw new Error("Could not add invoice.");
   }
   
-  revalidatePath('/financials');
+  revalidatePath('/billing');
 }
 
-const updateTransactionSchema = transactionSchema.extend({
-  transactionId: z.string(),
+export async function getTransactions(): Promise<any[]> {
+    const q = query(collection(db, 'financials'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+const transactionSchema = z.object({
+    description: z.string().min(1),
+    amount: z.number().positive(),
+    type: z.enum(['Income', 'Expense']),
+    category: z.string().min(1),
+    date: z.date(),
 });
 
-export async function updateTransactionAction(data: z.infer<typeof updateTransactionSchema>) {
+export async function addTransactionAction(data: z.infer<typeof transactionSchema>) {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
-    await checkManagementPermission(userId);
-    const validatedFields = updateTransactionSchema.safeParse(data);
+    await checkBillingPermission(userId);
 
-    if (!validatedFields.success) {
-        throw new Error('Invalid transaction data.');
-    }
-
-    const { transactionId, ...updateData } = validatedFields.data;
-    const transactionDocRef = doc(db, 'financials', transactionId);
-
-    const transactionSnap = await getDoc(transactionDocRef);
-    if (!transactionSnap.exists()) {
-        throw new Error("Transaction not found or you do not have permission to edit it.");
-    }
-
-    try {
-        await updateDoc(transactionDocRef, {
-            ...updateData,
-            date: Timestamp.fromDate(updateData.date)
-        });
-    } catch (error) {
-        console.error("Error updating transaction:", error);
-        throw new Error("Could not update transaction.");
-    }
-
+    const validated = transactionSchema.safeParse(data);
+    if (!validated.success) throw new Error("Invalid transaction data.");
+    
+    await addDoc(collection(db, 'financials'), { ...validated.data, userId });
     revalidatePath('/financials');
-}
-
-export async function deleteTransactionAction(transactionId: string) {
-  const userId = await getUserId();
-  if (!userId) throw new Error("User not authenticated");
-  await checkManagementPermission(userId);
-  if (!transactionId) throw new Error("Transaction ID is required.");
-  
-  const transactionDocRef = doc(db, 'financials', transactionId);
-  const transactionSnap = await getDoc(transactionDocRef);
-  if (!transactionSnap.exists()) {
-    throw new Error("Transaction not found or you do not have permission to delete it.");
-  }
-  
-  try {
-    await deleteDoc(transactionDocRef);
-  } catch (error) {
-    console.error("Error deleting transaction:", error);
-    throw new Error("Could not delete transaction.");
-  }
-
-  revalidatePath('/financials');
 }
