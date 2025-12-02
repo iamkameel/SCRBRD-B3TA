@@ -1,5 +1,5 @@
-import { PublicHeader } from '@/components/public-header';
 
+// This special layout removes the PageShell for public pages.
 export default function AuthLayout({
   children,
 }: {
@@ -7,7 +7,6 @@ export default function AuthLayout({
 }) {
   return (
     <>
-      <PublicHeader />
       <main>{children}</main>
     </>
   );

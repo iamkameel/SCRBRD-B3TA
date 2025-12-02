@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/lib/auth-context';
+import PageShell from '@/components/page-shell';
 
 export const metadata: Metadata = {
   title: 'SCRBRD - Cricket Scorer',
@@ -36,7 +37,9 @@ export default function RootLayout({
             disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
+            <PageShell>
+              {children}
+            </PageShell>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

@@ -47,15 +47,15 @@ function WelcomeCard() {
 
 
 export default function DashboardPage() {
-  const { person, loading } = useAuth();
+  const { person } = useAuth();
 
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  // The loading state is now handled by the PageShell component,
+  // so we can assume `person` is loaded here.
 
   if (!person) {
-    // This case should now be handled by PageShell, but as a fallback:
-    return <DashboardSkeleton />;
+    // This case should ideally not be hit if the user is on the dashboard
+    // as PageShell would have redirected them. But as a fallback:
+    return <WelcomeCard />;
   }
 
   // Check for incomplete profile
