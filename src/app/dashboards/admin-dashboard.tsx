@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import * as React from 'react';
@@ -14,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { reviewAssignmentRequestAction } from '@/lib/actions/requests';
-import type { AssignmentRequest } from '@/lib/data';
+import type { AssignmentRequest, Match } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { TeamDialog } from '@/app/teams/team-dialog';
 import { CompetitionDialog } from '@/app/competitions/competition-dialog';
@@ -32,6 +30,7 @@ import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
 import type { Team, School, Division, Season, Person, Field, Competition } from '@/lib/data';
 import { UserRoleDialog } from '@/app/user-management/user-role-dialog';
 import { cn } from '@/lib/utils';
+import { FixtureCentreCard } from '@/components/fixture-centre-card';
 
 
 const PersonDialog = dynamic(() => import('@/app/people/person-dialog').then(mod => mod.PersonDialog), {
@@ -78,6 +77,9 @@ interface AdminDashboardData {
         awards: number;
     };
     pendingRequests: AssignmentRequest[];
+    liveMatches: Match[];
+    upcomingFixtures: Match[];
+    recentResults: Match[];
 }
 
 interface DialogData {
@@ -204,7 +206,7 @@ export default function AdminDashboard() {
     return <DashboardSkeleton />;
   }
 
-  const { kpis, pendingRequests } = data;
+  const { kpis, pendingRequests, liveMatches, upcomingFixtures, recentResults } = data;
 
   const managementLinks = [
     { href: "/people", title: "Player Management", description: "Manage all player profiles, stats, and roles.", icon: GradientUserIcon, onAddClick: () => setDialogState(s => ({ ...s, person: true })) },
@@ -273,38 +275,48 @@ export default function AdminDashboard() {
             </Card>
         )}
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Global Overview</CardTitle>
-                <CardDescription>High-level metrics across the entire system. Click a card to navigate.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} href="/competitions" description="active this season" />
-                <StatCard title="Schools" value={kpis.schools} icon={Building} href="/schools" description="registered in system" />
-                <StatCard title="Teams" value={kpis.teams} icon={Users} href="/teams" description="across all divisions"/>
-                <StatCard title="Players" value={kpis.players} icon={User} href="/people" description="active players" />
-                <StatCard title="Staff" value={kpis.staff} icon={UserCog} href="/people" description="coaches & officials" />
-                <StatCard title="Medical & Support" value={kpis.medicalSupport} icon={HeartPulse} href="/people" description="all support staff" />
-                <StatCard title="Fields & Venues" value={kpis.fieldsVenues} icon={MapPin} href="/fields" description="available for booking" />
-                <StatCard title="Officials" value={kpis.officials} icon={Users} href="/people" description="umpires & scorers" />
-                <StatCard title="Ground Staff" value={kpis.groundStaff} icon={Wrench} href="/people" description="assigned groundskeepers" />
-                <StatCard title="Fixtures" value={kpis.fixtures} icon={ClipboardList} href="/matches" description="total matches" />
-                <StatCard title="Transport" value={kpis.transport} icon={Bus} href="/transport" description="vehicles in fleet" />
-                <StatCard title="Awards" value={kpis.awards} icon={Medal} href="/awards" description="trophies & accolades" />
-            </CardContent>
-        </Card>
-      
-        <Card>
-            <CardHeader>
-                <CardTitle>Management Hub</CardTitle>
-                <CardDescription>Quick access to key management areas where you can add and assign resources.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-               {managementLinks.map(link => (
-                   <ManagementLink key={link.title} {...link} />
-               ))}
-            </CardContent>
-        </Card>
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2 space-y-8">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Global Overview</CardTitle>
+                        <CardDescription>High-level metrics across the entire system. Click a card to navigate.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                        <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} href="/competitions" description="active this season" />
+                        <StatCard title="Schools" value={kpis.schools} icon={Building} href="/schools" description="registered in system" />
+                        <StatCard title="Teams" value={kpis.teams} icon={Users} href="/teams" description="across all divisions"/>
+                        <StatCard title="Players" value={kpis.players} icon={User} href="/people" description="active players" />
+                        <StatCard title="Staff" value={kpis.staff} icon={UserCog} href="/people" description="coaches & officials" />
+                        <StatCard title="Medical & Support" value={kpis.medicalSupport} icon={HeartPulse} href="/people" description="all support staff" />
+                        <StatCard title="Fields & Venues" value={kpis.fieldsVenues} icon={MapPin} href="/fields" description="available for booking" />
+                        <StatCard title="Officials" value={kpis.officials} icon={Users} href="/people" description="umpires & scorers" />
+                        <StatCard title="Ground Staff" value={kpis.groundStaff} icon={Wrench} href="/people" description="assigned groundskeepers" />
+                        <StatCard title="Fixtures" value={kpis.fixtures} icon={ClipboardList} href="/matches" description="total matches" />
+                        <StatCard title="Transport" value={kpis.transport} icon={Bus} href="/transport" description="vehicles in fleet" />
+                        <StatCard title="Awards" value={kpis.awards} icon={Medal} href="/awards" description="trophies & accolades" />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Management Hub</CardTitle>
+                        <CardDescription>Quick access to key management areas where you can add and assign resources.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {managementLinks.map(link => (
+                        <ManagementLink key={link.title} {...link} />
+                    ))}
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-1">
+                 <FixtureCentreCard
+                    liveMatches={liveMatches}
+                    upcomingFixtures={upcomingFixtures}
+                    recentResults={recentResults}
+                />
+            </div>
+        </div>
     </div>
 
     {dialogData && (

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -18,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { FixtureCentreCard } from '@/components/fixture-centre-card';
 
 function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
@@ -42,82 +42,9 @@ interface SportsmasterDashboardData {
         fields: number;
     };
     pendingRequests: AssignmentRequest[];
-    matches: Match[];
-}
-
-function FixturesCard({ matches }: { matches: Match[] }) {
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const [statusFilter, setStatusFilter] = React.useState<MatchStatus | 'all'>('scheduled');
-
-    const filteredMatches = React.useMemo(() => {
-        return matches.filter(match => {
-            const searchMatch = `${match.teamAName} ${match.teamBName} ${match.competitionName} ${match.fieldName}`.toLowerCase().includes(searchTerm.toLowerCase());
-            const statusMatch = statusFilter === 'all' || match.status === statusFilter;
-            return searchMatch && statusMatch;
-        });
-    }, [matches, searchTerm, statusFilter]);
-    
-    return (
-        <Card className="flex flex-col h-full">
-            <CardHeader>
-                <CardTitle>Fixtures Overview</CardTitle>
-                <CardDescription>A list of all fixtures across your assigned schools.</CardDescription>
-                <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search fixtures..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                    </div>
-                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                            <SelectValue placeholder="Filter by status..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="scheduled">Scheduled</SelectItem>
-                            <SelectItem value="live">Live</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="postponed">Postponed</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </CardHeader>
-            <CardContent className="flex-1">
-                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Match</TableHead>
-                            <TableHead>Date</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredMatches.length > 0 ? (
-                            filteredMatches.map((match) => (
-                            <TableRow key={match.matchId}>
-                                <TableCell className="font-medium">
-                                    <Link href={`/matches/${match.matchId}`} className="hover:underline flex items-center gap-2">
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-2">
-                                                <Avatar className="h-5 w-5"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
-                                                <span>{match.teamAName}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Avatar className="h-5 w-5"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName[0]}</AvatarFallback></Avatar>
-                                                <span>{match.teamBName}</span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </TableCell>
-                                <TableCell>{format(match.dateTime, "dd MMM, p")}</TableCell>
-                            </TableRow>
-                            ))
-                        ) : (
-                            <TableRow><TableCell colSpan={4} className="h-24 text-center">No fixtures found matching your criteria.</TableCell></TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-    );
+    liveMatches: Match[];
+    upcomingFixtures: Match[];
+    recentResults: Match[];
 }
 
 export default function SportsmasterDashboard() {
@@ -159,11 +86,7 @@ export default function SportsmasterDashboard() {
     return <DashboardSkeleton />;
   }
 
-  const {
-    kpis,
-    pendingRequests,
-    matches,
-  } = data;
+  const { kpis, pendingRequests, liveMatches, upcomingFixtures, recentResults } = data;
   
   return (
     <div className="flex flex-col gap-8">
@@ -273,7 +196,11 @@ export default function SportsmasterDashboard() {
                 </Card>
             </div>
             <div className="lg:col-span-1">
-                <FixturesCard matches={matches} />
+                <FixtureCentreCard
+                    liveMatches={liveMatches}
+                    upcomingFixtures={upcomingFixtures}
+                    recentResults={recentResults}
+                />
             </div>
         </div>
     </div>

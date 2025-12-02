@@ -1,4 +1,3 @@
-
 'use server';
 
 import { getLeaderboards as getLeaderboardsFromService, getTeamStandings as getTeamStandingsFromService } from '@/lib/services/stats-service';
@@ -80,6 +79,12 @@ export async function getAdminDashboardData() {
     });
 
     const awardsCount = competitions.filter(c => c.status === 'Completed' && c.winnerTeamId).length;
+    
+    const now = new Date();
+    const liveMatches = matches.filter(m => m.status === 'live');
+    const upcomingFixtures = matches.filter(m => m.status === 'scheduled' && m.dateTime > now).slice(0, 5);
+    const recentResults = matches.filter(m => m.status === 'completed').slice(0, 5);
+
 
     return {
         kpis: {
@@ -97,6 +102,9 @@ export async function getAdminDashboardData() {
             awards: awardsCount,
         },
         pendingRequests,
+        liveMatches,
+        upcomingFixtures,
+        recentResults,
     };
 }
 
@@ -118,6 +126,11 @@ export async function getSportsmasterDashboardData() {
         getMatches(),
     ]);
 
+    const now = new Date();
+    const liveMatches = matches.filter(m => m.status === 'live');
+    const upcomingFixtures = matches.filter(m => m.status === 'scheduled' && m.dateTime > now).slice(0, 5);
+    const recentResults = matches.filter(m => m.status === 'completed').slice(0, 5);
+
     return {
        kpis: {
             competitions: competitions.length,
@@ -127,6 +140,9 @@ export async function getSportsmasterDashboardData() {
         },
         pendingRequests,
         matches,
+        liveMatches,
+        upcomingFixtures,
+        recentResults,
     };
 }
 
