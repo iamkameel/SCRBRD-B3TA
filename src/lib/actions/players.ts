@@ -638,37 +638,36 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
 }
 
 export async function updateActiveRoleAction(personId: string, role: string) {
-  const userId = await getUserId();
-  if (!userId) {
-    throw new Error("User not authenticated.");
-  }
-  if (personId !== userId) {
-      throw new Error("You can only change your own active role.");
-  }
-  
-  if (personId === GOD_TIER_UID) {
-    // This is a virtual user, no DB update is needed. The client-side state is handled optimistically.
-    return;
-  }
-  
-  const personRef = doc(db, 'people', personId);
-  const personSnap = await getDoc(personRef);
-  
-  if (!personSnap.exists()) {
-    throw new Error("Person not found or you do not have permission.");
-  }
+    const userId = await getUserId();
+    if (!userId || personId !== userId) {
+        throw new Error("You can only change your own active role.");
+    }
 
-  const personData = personSnap.data() as Person;
-  if (!personData.roles.includes(role)) {
-    throw new Error("Cannot switch to a role the user does not have.");
-  }
+    if (personId === GOD_TIER_UID) {
+        // This is a virtual user, no DB update is needed. 
+        // The client-side state is handled optimistically.
+        return;
+    }
 
-  try {
-    await updateDoc(personRef, { activeRole: role });
-  } catch (error) {
-    console.error("Error updating active role:", error);
-    throw new Error("Could not update active role.");
-  }
+    const personRef = doc(db, 'people', personId);
+    const personSnap = await getDoc(personRef);
+
+    if (!personSnap.exists()) {
+        throw new Error("Person not found.");
+    }
+
+    const personData = personSnap.data() as Person;
+    if (!personData.roles.includes(role)) {
+        throw new Error("Cannot switch to a role the user does not have.");
+    }
+
+    try {
+        await updateDoc(personRef, { activeRole: role });
+        // The revalidation will be handled by the client-side router.refresh()
+    } catch (error) {
+        console.error("Error updating active role:", error);
+        throw new Error("Could not update active role.");
+    }
 }
 
 export async function getSchoolStaff(schoolId: string): Promise<Person[]> {

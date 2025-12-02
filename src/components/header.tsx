@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -56,25 +57,25 @@ function RoleSwitcher() {
 
     const handleRoleChange = (role: string) => {
         if (role === person.activeRole) return;
+        
+        // Optimistically update the client-side state
+        const oldPersonState = person;
+        setPerson({ ...person, activeRole: role });
+
         startTransition(async () => {
             if (!person?.personId) {
                 toast({ title: "Error", description: "User profile ID not found.", variant: "destructive" });
+                setPerson(oldPersonState); // Revert on failure
                 return;
             }
             try {
-                // Optimistically update the client-side state
-                const oldPersonState = person;
-                setPerson({ ...person, activeRole: role });
-                
                 await updateActiveRoleAction(person.personId, role);
-                
                 // Force a reload to ensure all server components re-render with the new role context
                 router.refresh();
-                
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
             } catch (error) {
                 // Revert on failure
-                setPerson(person);
+                setPerson(oldPersonState);
                 toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });
             }
         });
@@ -184,6 +185,7 @@ export function Header() {
     const { user, person } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const activeRole = person?.activeRole || 'Player'; // Default to a non-admin role
 
     const { topLevel: topLevelNavItems, groups: navGroups } = getNavConfig(activeRole);
