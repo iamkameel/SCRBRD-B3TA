@@ -58,8 +58,20 @@ export async function removeRoleFromUserAction(targetUserId: string, role: strin
         throw new Error("Cannot remove the last role from a user. Assign a new role first.");
     }
 
+    const currentRoles: string[] = userSnap.data()?.roles || [];
+    const activeRole = userSnap.data()?.activeRole;
+
+    const newRoles = currentRoles.filter(r => r !== role);
+    let newActiveRole = activeRole;
+
+    // If the active role was the one removed, set a new active role
+    if (activeRole === role) {
+        newActiveRole = newRoles.length > 0 ? newRoles[0] : undefined;
+    }
+
     await updateDoc(userRef, {
-        roles: arrayRemove(role)
+        roles: arrayRemove(role),
+        activeRole: newActiveRole,
     });
 
     const person = await getPerson(targetUserId);
@@ -72,4 +84,3 @@ export async function removeRoleFromUserAction(targetUserId: string, role: strin
     
     revalidatePath('/user-management');
 }
-

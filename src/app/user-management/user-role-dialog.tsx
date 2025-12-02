@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from "react";
@@ -24,8 +25,12 @@ const roleUpdateSchema = z.object({
   roles: z.array(z.string()).refine((value) => value.length > 0, "At least one role must be selected."),
   activeRole: z.string().optional(),
 }).refine(data => {
-    if (data.roles && data.roles.length > 0 && !data.activeRole) return false;
-    if (data.activeRole && !data.roles.includes(data.activeRole)) return false;
+    if (data.roles && data.roles.length > 0 && !data.activeRole) {
+        return false;
+    }
+    if (data.activeRole && !data.roles.includes(data.activeRole)) {
+        return false;
+    }
     return true;
 }, {
     message: "An active role must be selected from the assigned roles.",
@@ -141,7 +146,7 @@ export function UserRoleDialog({ users, currentUser, open, onOpenChange }: { use
                             <div className="grid grid-cols-2 gap-2 border p-4 rounded-md">
                                 {group.roles.map((item) => {
                                 const isSystemRole = item.id === 'Admin' || item.id === 'System Architect';
-                                const isDisabled = isSystemRole && !(currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect'));
+                                const isDisabled = isSystemRole && !(currentUser?.roles.includes('System Architect'));
                                 return (
                                     <FormField
                                     key={item.id}
@@ -157,9 +162,7 @@ export function UserRoleDialog({ users, currentUser, open, onOpenChange }: { use
                                                 ? [...(field.value || []), item.id]
                                                 : (field.value || []).filter((v) => v !== item.id);
                                                 field.onChange(newRoles);
-                                                if (newRoles && !newRoles.includes(form.getValues('activeRole'))) {
-                                                    form.setValue('activeRole', newRoles[0]);
-                                                }
+                                                if (newRoles && !newRoles.includes(form.getValues('activeRole') || '')) { form.setValue('activeRole', newRoles[0]); }
                                             }}
                                             disabled={isDisabled || isPending}
                                             />
