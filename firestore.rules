@@ -13,13 +13,13 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    function getUserData() {
+    function getUserData(userId) {
       // Use the personId which should match the auth UID
-      return get(/databases/$(database)/documents/people/$(request.auth.uid)).data;
+      return get(/databases/$(database)/documents/people/$(userId)).data;
     }
     
     function hasRole(role) {
-      return role in getUserData().roles;
+      return role in getUserData(request.auth.uid).roles;
     }
 
     function isSystemArchitect() {
@@ -41,7 +41,7 @@ service cloud.firestore {
     // People: Users can read/update their own profile. Admins can read/write any.
     match /people/{personId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn(); // User creation is handled by a server action, but allow for signup.
+      allow create: if isSignedIn();
       allow update: if isOwner(personId) || canManageData();
       allow delete: if isAdmin();
     }

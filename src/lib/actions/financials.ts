@@ -47,7 +47,7 @@ const transactionSchema = z.object({
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 export async function addTransactionAction(data: TransactionFormValues) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   await checkManagementPermission(userId);
   const validatedFields = transactionSchema.safeParse(data);
@@ -75,7 +75,7 @@ const updateTransactionSchema = transactionSchema.extend({
 });
 
 export async function updateTransactionAction(data: z.infer<typeof updateTransactionSchema>) {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
     await checkManagementPermission(userId);
     const validatedFields = updateTransactionSchema.safeParse(data);
@@ -101,7 +101,7 @@ export async function updateTransactionAction(data: z.infer<typeof updateTransac
 }
 
 export async function deleteTransactionAction(transactionId: string) {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
   await checkManagementPermission(userId);
   if (!transactionId) throw new Error("Transaction ID is required.");

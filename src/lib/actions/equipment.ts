@@ -10,7 +10,7 @@ import { getPerson } from './players';
 import { getUserId } from '@/lib/server-auth';
 
 const checkManagementPermission = async () => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
     const user = await getPerson(userId);
@@ -119,7 +119,7 @@ export async function assignEquipmentAction(itemId: string, personId: string) {
 }
 
 export async function returnEquipmentAction(assignmentId: string) {
-  const userId = await checkManagementPermission();
+  await checkManagementPermission();
   const assignmentRef = doc(db, 'equipmentAssignments', assignmentId);
   const assignmentSnap = await getDoc(assignmentRef);
   if (!assignmentSnap.exists()) throw new Error("Assignment not found or permission denied.");
