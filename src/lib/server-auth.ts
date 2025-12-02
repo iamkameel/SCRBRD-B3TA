@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
@@ -6,8 +7,7 @@ import { adminApp } from './firebase-admin';
 
 // This function is NOT cached. It must run on every request to get the current user.
 export const getUserId = async (): Promise<string | null> => {
-    const headersList = await headers();
-    const authorization = headersList.get('Authorization');
+    const authorization = headers().get('Authorization');
     
     if (!authorization?.startsWith('Bearer ')) {
         return null;

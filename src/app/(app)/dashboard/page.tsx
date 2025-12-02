@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -52,14 +53,13 @@ export default function DashboardPage() {
       return <DashboardSkeleton />;
   }
 
-  // This check is the root cause of the "locked out" feeling.
-  // It triggers if the `person` object hasn't loaded from Firestore yet,
-  // which happens if the auth state is resolved but the DB fetch is pending.
+  // This is the key check. If `person` is still null after loading,
+  // it means the Firestore document doesn't exist for this user.
   if (!person) {
-    return <DashboardSkeleton />;
+    return <WelcomeCard />;
   }
 
-  // The second part of the check for profile completeness.
+  // A more robust check for a "complete" profile
   const isProfileIncomplete = !person.firstName || !person.lastName || !person.roles || person.roles.length === 0;
   if (isProfileIncomplete) {
       return <WelcomeCard />;
