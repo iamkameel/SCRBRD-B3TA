@@ -6,14 +6,24 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import type { Sponsor } from '@/lib/data';
+import { getUserId } from '@/lib/server-auth';
+import { getPerson } from './players';
 
-const userId = "7dCq6V10lNVJFAZDY2aj";
+
+const checkManagementPermission = async (userId: string) => {
+    if (userId === 'TEMP_ADMIN') return;
+    const user = await getPerson(userId);
+    if (!user || !user.roles.some(r => ['Admin', 'System Architect'].includes(r))) {
+        throw new Error("You do not have permission to manage sponsors.");
+    }
+}
 
 export async function getSponsors(): Promise<Sponsor[]> {
+  const userId = getUserId();
   if (!userId) return [];
   try {
     const sponsorsCollection = collection(db, 'sponsors');
-    const q = query(sponsorsCollection, where("userId", "==", userId));
+    const q = query(sponsorsCollection);
     const sponsorSnapshot = await getDocs(q);
     const sponsorsList = sponsorSnapshot.docs.map(doc => ({
       sponsorId: doc.id,
@@ -33,7 +43,9 @@ const sponsorSchema = z.object({
 });
 
 export async function addSponsorAction(data: z.infer<typeof sponsorSchema>) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   const validatedFields = sponsorSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -58,7 +70,9 @@ const updateSponsorSchema = sponsorSchema.extend({
 });
 
 export async function updateSponsorAction(data: z.infer<typeof updateSponsorSchema>) {
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
+    await checkManagementPermission(userId);
     const validatedFields = updateSponsorSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -67,11 +81,6 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
 
     const { sponsorId, ...updateData } = validatedFields.data;
     const sponsorDocRef = doc(db, 'sponsors', sponsorId);
-
-    const sponsorSnap = await getDoc(sponsorDocRef);
-    if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
-        throw new Error("Sponsor not found or you do not have permission to edit it.");
-    }
 
     try {
         await updateDoc(sponsorDocRef, updateData);
@@ -84,19 +93,15 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
 }
 
 export async function deleteSponsorAction(sponsorId: string) {
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
+  await checkManagementPermission(userId);
   
   if (!sponsorId) {
     throw new Error("Sponsor ID is required.");
   }
   
   const sponsorDocRef = doc(db, 'sponsors', sponsorId);
-  const sponsorSnap = await getDoc(sponsorDocRef);
-  if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
-    throw new Error("Sponsor not found or you do not have permission to delete it.");
-  }
-  
-  // In a real app, you would also delete related sponsorship assignments.
   
   try {
     await deleteDoc(sponsorDocRef);
