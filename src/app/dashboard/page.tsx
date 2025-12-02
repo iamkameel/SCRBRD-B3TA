@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -47,18 +48,18 @@ function WelcomeCard() {
 
 
 export default function DashboardPage() {
-  const { person } = useAuth();
+  const { person, loading } = useAuth();
 
-  // The loading state is now handled by the PageShell component,
-  // so we can assume `person` is loaded here.
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   if (!person) {
-    // This case should ideally not be hit if the user is on the dashboard
-    // as PageShell would have redirected them. But as a fallback:
+    // This case handles a user who is authenticated but has no Firestore profile.
     return <WelcomeCard />;
   }
 
-  // Check for incomplete profile
+  // Check for incomplete profile after we know the person object exists.
   const isProfileIncomplete = !person.firstName || !person.lastName || person.roles.length === 0;
   if (isProfileIncomplete) {
       return <WelcomeCard />;

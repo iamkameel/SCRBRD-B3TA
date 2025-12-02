@@ -33,7 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
       setUser(firebaseUser);
       if (firebaseUser) {
         const personRef = doc(db, 'people', firebaseUser.uid);
@@ -52,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               dateOfBirth: data.dateOfBirth?.toDate()
             } as Person);
           } else {
+            // This case handles a user authenticated with Firebase Auth
+            // but without a corresponding 'people' document yet.
             setPerson(null);
           }
           setLoading(false);
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, person, loading, setPerson }}>
-      {loading ? <DashboardSkeleton /> : children}
+      {children}
     </AuthContext.Provider>
   );
 }
