@@ -38,7 +38,7 @@ export async function getSponsors(): Promise<Sponsor[]> {
 
 const sponsorSchema = z.object({
   name: z.string().min(1, { message: "Sponsor name is required." }),
-  logoUrl: z.string().url({ message: "A valid logo URL is required." }).or(z.literal('')),
+  logoUrl: z.string().url({ message: "A valid logo URL is required." }).optional().or(z.literal('')),
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
