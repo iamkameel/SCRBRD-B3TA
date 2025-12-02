@@ -78,7 +78,7 @@ export async function signupUserAction(data: SignupActionInput): Promise<{ succe
 
     if (isGodTierAdmin) {
         rolesToAssign = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
-        activeRole = 'System Architect';
+        activeRole = 'Admin'; // Set active role to Admin for dashboard compatibility
         status = 'active';
     } else {
         rolesToAssign = [data.role];
