@@ -27,8 +27,14 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // While loading, or if the user is not logged in yet (and a redirect is pending), show a skeleton.
-  if (loading || !user) {
+  // Always show a skeleton during the initial loading phase.
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  // If loading is complete but there's still no user, it means the redirect is pending.
+  // Continue showing the skeleton to avoid a flash of an empty/error state.
+  if (!user) {
     return <DashboardSkeleton />;
   }
   

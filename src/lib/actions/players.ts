@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -15,6 +14,7 @@ import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
 import { getUserId } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
+import { getTeams, getTeamRoster } from './teams';
 
 export async function getPlayers(): Promise<Person[]> {
   const userId = await getUserId();
@@ -25,7 +25,6 @@ export async function getPlayers(): Promise<Person[]> {
 
   const peopleCollection = collection(db, 'people');
   
-  // Admin sees all people.
   if (currentUser.activeRole === 'Admin' || currentUser.activeRole === 'System Architect') {
       try {
         const peopleSnapshot = await getDocs(peopleCollection);
@@ -43,7 +42,6 @@ export async function getPlayers(): Promise<Person[]> {
       }
   }
 
-  // Sportsmaster sees people from their assigned schools.
   if (currentUser.activeRole === 'Sportsmaster') {
       if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
           return [];
@@ -51,25 +49,20 @@ export async function getPlayers(): Promise<Person[]> {
       
       try {
         const peopleIds = new Set<string>();
-
-        // 1. Get people directly assigned to the schools (staff)
         const staffQuery = query(peopleCollection, where('assignedSchools', 'array-contains-any', currentUser.assignedSchools));
         const staffSnapshot = await getDocs(staffQuery);
         staffSnapshot.forEach(doc => {
             peopleIds.add(doc.id);
         });
         
-        // 2. Get teams for the sportsmaster's schools
         const teamsQuery = query(collection(db, 'teams'), where("schoolId", "in", currentUser.assignedSchools));
         const teamsSnapshot = await getDocs(teamsQuery);
         const accessibleTeamIds = new Set(teamsSnapshot.docs.map(doc => doc.id));
 
         if (accessibleTeamIds.size > 0) {
-            // 3. Use a single collectionGroup query to find all relevant roster members efficiently
             const rosterGroupQuery = query(collectionGroup(db, 'roster'));
             const allRosterMembersSnapshot = await getDocs(rosterGroupQuery);
 
-            // 4. Filter roster members in memory to find players from accessible teams
             allRosterMembersSnapshot.forEach(rosterDoc => {
                 const teamId = rosterDoc.ref.parent.parent?.id;
                 if (teamId && accessibleTeamIds.has(teamId)) {
@@ -78,7 +71,6 @@ export async function getPlayers(): Promise<Person[]> {
             });
         }
         
-        // 5. Fetch all unique people documents in chunks
         if (peopleIds.size === 0) {
             return [];
         }
@@ -111,7 +103,6 @@ export async function getPlayers(): Promise<Person[]> {
       }
   }
   
-  // Default behavior for other roles: fetch all people.
   try {
     const peopleSnapshot = await getDocs(peopleCollection);
     return peopleSnapshot.docs.map(doc => {
@@ -453,7 +444,6 @@ export async function deletePlayerAction(personId: string) {
   
   const batch = writeBatch(db);
   
-  // 1. Remove from all team rosters
   const teamsQuery = query(collection(db, 'teams'));
   const teamsSnapshot = await getDocs(teamsQuery);
 
@@ -465,14 +455,12 @@ export async function deletePlayerAction(personId: string) {
       });
   }
 
-  // 2. Remove family links
   const parentLinksQuery = query(collection(db, 'familyLinks'), where("parentId", "==", personId));
   const childLinksQuery = query(collection(db, 'familyLinks'), where("childId", "==", personId));
   const [parentLinks, childLinks] = await Promise.all([getDocs(parentLinksQuery), getDocs(childLinksQuery)]);
   parentLinks.forEach(doc => batch.delete(doc.ref));
   childLinks.forEach(doc => batch.delete(doc.ref));
 
-  // 3. Delete the person document itself
   batch.delete(personRef);
 
   try {
@@ -656,29 +644,11 @@ export async function updateActiveRoleAction(personId: string, role: string) {
 
     try {
         await updateDoc(personRef, { activeRole: role });
-        // The revalidation will be handled by the client-side router.refresh()
     } catch (error) {
         console.error("Error updating active role:", error);
         throw new Error("Could not update active role.");
     }
 }
-
-export async function getSchoolStaff(schoolId: string): Promise<Person[]> {
-  try {
-    const peopleCollection = collection(db, 'people');
-    const q = query(peopleCollection, where("assignedSchools", "array-contains", schoolId));
-    const staffSnapshot = await getDocs(q);
-    const staffList = staffSnapshot.docs.map(doc => ({
-      personId: doc.id,
-      ...doc.data()
-    } as Person));
-    return staffList;
-  } catch (error) {
-    console.error('Error fetching staff for school ${schoolId}:', error);
-    return [];
-  }
-}
-
 
 export async function assignPersonToSchoolAction(personId: string, schoolId: string | null) {
   const currentUserId = await getUserId();
