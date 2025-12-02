@@ -22,6 +22,8 @@ import { getTransactions } from './financials';
 import type { Person } from '../data';
 import { logAuditEvent } from './audit';
 
+const userId = "7dCq6V10lNVJFAZDY2aj";
+
 const collectionNameMap = {
     'Schools': 'schools', 'Divisions': 'divisions', 'Seasons': 'seasons',
     'Fields': 'fields', 'People': 'people', 'Teams': 'teams', 'Matches': 'matches', 'Competitions': 'competitions',

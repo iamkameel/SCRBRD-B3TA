@@ -6,22 +6,14 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from 'firebase/firestore';
 import type { Transaction } from '@/lib/data';
-import { getPerson } from './players';
-import { getUserId } from '@/lib/server-auth';
 
-
-const checkManagementPermission = async (userId: string) => {
-    if (userId === 'TEMP_ADMIN') return;
-    const user = await getPerson(userId);
-    if (!user || !user.roles.some(r => ['Admin', 'System Architect'].includes(r))) {
-        throw new Error("You do not have permission to manage financials.");
-    }
-};
+const userId = "7dCq6V10lNVJFAZDY2aj";
 
 export async function getTransactions(): Promise<Transaction[]> {
+  if (!userId) return [];
   try {
     const transactionsCollection = collection(db, 'financials');
-    const q = query(transactionsCollection);
+    const q = query(transactionsCollection, where("userId", "==", userId));
     const transactionSnapshot = await getDocs(q);
     const transactionsList = transactionSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -49,9 +41,7 @@ const transactionSchema = z.object({
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 export async function addTransactionAction(data: TransactionFormValues) {
-  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  await checkManagementPermission(userId);
   const validatedFields = transactionSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -77,9 +67,7 @@ const updateTransactionSchema = transactionSchema.extend({
 });
 
 export async function updateTransactionAction(data: z.infer<typeof updateTransactionSchema>) {
-    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
-    await checkManagementPermission(userId);
     const validatedFields = updateTransactionSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -90,7 +78,7 @@ export async function updateTransactionAction(data: z.infer<typeof updateTransac
     const transactionDocRef = doc(db, 'financials', transactionId);
 
     const transactionSnap = await getDoc(transactionDocRef);
-    if (!transactionSnap.exists()) {
+    if (!transactionSnap.exists() || transactionSnap.data().userId !== userId) {
         throw new Error("Transaction not found or you do not have permission to edit it.");
     }
 
@@ -108,14 +96,12 @@ export async function updateTransactionAction(data: z.infer<typeof updateTransac
 }
 
 export async function deleteTransactionAction(transactionId: string) {
-  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  await checkManagementPermission(userId);
   if (!transactionId) throw new Error("Transaction ID is required.");
   
   const transactionDocRef = doc(db, 'financials', transactionId);
   const transactionSnap = await getDoc(transactionDocRef);
-  if (!transactionSnap.exists()) {
+  if (!transactionSnap.exists() || transactionSnap.data().userId !== userId) {
     throw new Error("Transaction not found or you do not have permission to delete it.");
   }
   

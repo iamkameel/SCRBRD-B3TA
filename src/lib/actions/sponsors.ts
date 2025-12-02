@@ -5,23 +5,15 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import type { Sponsor, Person } from '@/lib/data';
-import { cache } from 'react';
-import { getUserId } from '@/lib/server-auth';
-import { getPerson } from './players';
+import type { Sponsor } from '@/lib/data';
 
-const checkManagementPermission = async (userId: string) => {
-    if (userId === 'TEMP_ADMIN') return;
-    const user = await getPerson(userId);
-    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r))) {
-        throw new Error("You do not have permission to manage sponsors.");
-    }
-}
+const userId = "7dCq6V10lNVJFAZDY2aj";
 
 export async function getSponsors(): Promise<Sponsor[]> {
+  if (!userId) return [];
   try {
     const sponsorsCollection = collection(db, 'sponsors');
-    const q = query(sponsorsCollection);
+    const q = query(sponsorsCollection, where("userId", "==", userId));
     const sponsorSnapshot = await getDocs(q);
     const sponsorsList = sponsorSnapshot.docs.map(doc => ({
       sponsorId: doc.id,
@@ -36,14 +28,12 @@ export async function getSponsors(): Promise<Sponsor[]> {
 
 const sponsorSchema = z.object({
   name: z.string().min(1, { message: "Sponsor name is required." }),
-  logoUrl: z.string().url({ message: "A valid logo URL is required." }).optional().or(z.literal('')),
+  logoUrl: z.string().url({ message: "A valid logo URL is required." }).or(z.literal('')),
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 export async function addSponsorAction(data: z.infer<typeof sponsorSchema>) {
-  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  await checkManagementPermission(userId);
   const validatedFields = sponsorSchema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -68,9 +58,7 @@ const updateSponsorSchema = sponsorSchema.extend({
 });
 
 export async function updateSponsorAction(data: z.infer<typeof updateSponsorSchema>) {
-    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated");
-    await checkManagementPermission(userId);
     const validatedFields = updateSponsorSchema.safeParse(data);
 
     if (!validatedFields.success) {
@@ -81,7 +69,7 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
     const sponsorDocRef = doc(db, 'sponsors', sponsorId);
 
     const sponsorSnap = await getDoc(sponsorDocRef);
-    if (!sponsorSnap.exists()) {
+    if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
         throw new Error("Sponsor not found or you do not have permission to edit it.");
     }
 
@@ -96,9 +84,7 @@ export async function updateSponsorAction(data: z.infer<typeof updateSponsorSche
 }
 
 export async function deleteSponsorAction(sponsorId: string) {
-  const userId = await getUserId();
   if (!userId) throw new Error("User not authenticated");
-  await checkManagementPermission(userId);
   
   if (!sponsorId) {
     throw new Error("Sponsor ID is required.");
@@ -106,7 +92,7 @@ export async function deleteSponsorAction(sponsorId: string) {
   
   const sponsorDocRef = doc(db, 'sponsors', sponsorId);
   const sponsorSnap = await getDoc(sponsorDocRef);
-  if (!sponsorSnap.exists()) {
+  if (!sponsorSnap.exists() || sponsorSnap.data().userId !== userId) {
     throw new Error("Sponsor not found or you do not have permission to delete it.");
   }
   
