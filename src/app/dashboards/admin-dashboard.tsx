@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -277,6 +278,11 @@ export default function AdminDashboard() {
 
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <div className="lg:col-span-2 space-y-8">
+                <FixtureCentreCard
+                    liveMatches={liveMatches}
+                    upcomingFixtures={upcomingFixtures}
+                    recentResults={recentResults}
+                />
                  <Card>
                     <CardHeader>
                         <CardTitle>Global Overview</CardTitle>
@@ -310,11 +316,7 @@ export default function AdminDashboard() {
                 </Card>
             </div>
             <div className="lg:col-span-1">
-                 <FixtureCentreCard
-                    liveMatches={liveMatches}
-                    upcomingFixtures={upcomingFixtures}
-                    recentResults={recentResults}
-                />
+                 {/* This space is intentionally left empty since FixtureCentreCard was moved. */}
             </div>
         </div>
     </div>
