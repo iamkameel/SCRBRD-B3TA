@@ -10,7 +10,7 @@ import { getPerson } from './players';
 import { getUserId } from '@/lib/server-auth';
 
 const checkManagementPermission = async () => {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
     const user = await getPerson(userId);
@@ -21,8 +21,6 @@ const checkManagementPermission = async () => {
 }
 
 export async function getEquipment(): Promise<EquipmentItem[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const q = query(collection(db, 'equipment'));
     const snapshot = await getDocs(q);
@@ -149,8 +147,6 @@ export async function returnEquipmentAction(assignmentId: string) {
 }
 
 export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignment[]> {
-    const userId = await getUserId();
-    if (!userId) return [];
     try {
         const q = query(collection(db, 'equipmentAssignments'));
         const snapshot = await getDocs(q);

@@ -17,8 +17,6 @@ const checkManagementPermission = async (userId: string) => {
 }
 
 export async function getTransactions(): Promise<Transaction[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
   try {
     const transactionsCollection = collection(db, 'financials');
     const q = query(transactionsCollection);
@@ -49,7 +47,7 @@ const transactionSchema = z.object({
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 export async function addTransactionAction(data: TransactionFormValues) {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   await checkManagementPermission(userId);
   const validatedFields = transactionSchema.safeParse(data);
@@ -77,7 +75,7 @@ const updateTransactionSchema = transactionSchema.extend({
 });
 
 export async function updateTransactionAction(data: z.infer<typeof updateTransactionSchema>) {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) throw new Error("User not authenticated");
     await checkManagementPermission(userId);
     const validatedFields = updateTransactionSchema.safeParse(data);
@@ -103,7 +101,7 @@ export async function updateTransactionAction(data: z.infer<typeof updateTransac
 }
 
 export async function deleteTransactionAction(transactionId: string) {
-  const userId = await getUserId();
+  const userId = getUserId();
   if (!userId) throw new Error("User not authenticated");
   await checkManagementPermission(userId);
   if (!transactionId) throw new Error("Transaction ID is required.");

@@ -1,16 +1,35 @@
-
-
 'use client';
 
 import * as React from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import type { Person } from '@/lib/data';
-import DashboardSkeleton from '@/app/loading';
-import { ROLE_GROUPS } from './roles';
 
-const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
+// --- OVERRIDE: Authentication is disabled. ---
+// This context now provides a mock System Architect user by default.
+// This allows full access to the application for development and testing
+// without needing to go through a login flow.
+
+const MOCK_USER_ID = "EAycpBbKwRaRI7RALEQkb33eOu63";
+
+const mockPerson: Person = {
+  personId: MOCK_USER_ID,
+  firstName: "Kameel",
+  lastName: "Kalyan",
+  displayName: "Kameel",
+  email: "kameel@maverickdesign.co.za",
+  roles: ["System Architect", "Admin", "Sportsmaster", "School Admin", "Coach", "Assistant Coach", "Team Manager", "Captain", "Player", "Guardian", "Spectator", "Trainer", "Physiotherapist", "Doctor", "First Aid", "Umpire", "Scorer", "Grounds-Keeper", "Driver"],
+  activeRole: 'System Architect',
+  assignedSchools: [],
+  notificationPreferences: { email: true, push: false },
+  userId: MOCK_USER_ID,
+};
+
+const mockUser = {
+  uid: MOCK_USER_ID,
+  email: "kameel@maverickdesign.co.za",
+  displayName: "Kameel Kalyan",
+} as User;
+
 
 interface AuthContextType {
   user: User | null;
@@ -27,54 +46,17 @@ const AuthContext = React.createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(null);
-  const [person, setPerson] = React.useState<Person | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [person, setPerson] = React.useState<Person | null>(mockPerson);
 
-  React.useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        const personRef = doc(db, 'people', firebaseUser.uid);
-        const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Spectator'];
-            const activeRole = data.activeRole && roles.includes(data.activeRole) 
-                  ? data.activeRole 
-                  : roles[0];
-            setPerson({
-              personId: docSnap.id,
-              ...data,
-              roles,
-              activeRole,
-              dateOfBirth: data.dateOfBirth?.toDate()
-            } as Person);
-          } else {
-            // This case handles a user authenticated with Firebase Auth
-            // but without a corresponding 'people' document yet.
-            setPerson(null);
-          }
-          setLoading(false);
-        }, (error) => {
-          console.error("Error with profile snapshot listener:", error);
-          setPerson(null);
-          setLoading(false);
-        });
-        
-        return () => unsubscribeSnapshot();
-      } else {
-        setPerson(null);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribeAuth();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const value = {
+    user: mockUser,
+    person,
+    loading: false, // Never show loading, user is always "logged in"
+    setPerson,
+  };
 
   return (
-    <AuthContext.Provider value={{ user, person, loading, setPerson }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

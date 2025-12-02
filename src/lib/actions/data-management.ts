@@ -32,7 +32,7 @@ const independentSubsets: SubsetName[] = ['Schools', 'Divisions', 'Seasons', 'Fi
 
 
 export async function deleteAllDataAction(): Promise<{ success: boolean; message: string }> {
-    const actorId = await getUserId();
+    const actorId = getUserId();
     if (!actorId) {
         return { success: false, message: "User not authenticated." };
     }
@@ -131,7 +131,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
 
 
 export async function migrateSampleDataAction(): Promise<{ success: boolean, message: string }> {
-    const actorId = await getUserId();
+    const actorId = getUserId();
     if (!actorId) throw new Error("User not authenticated");
 
     try {
@@ -392,7 +392,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
 }
 
 export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) {
         return { success: true, message: "No active user, so no data to delete." };
     }
@@ -464,7 +464,7 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
 }
 
 export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ success: boolean; message: string }> {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) {
         return { success: false, message: "No admin user found. Please use the 'Migrate All Sample Data' function first to create an admin user." };
     }
@@ -523,7 +523,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
 }
 
 export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: string; error?: string }> {
-    const userId = await getUserId();
+    const userId = getUserId();
     if (!userId) {
         return { error: "User not authenticated." };
     }
