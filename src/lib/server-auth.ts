@@ -4,15 +4,14 @@
 import { getAuth } from 'firebase-admin/auth';
 import { headers } from 'next/headers';
 import { adminApp } from './firebase-admin';
+import { GOD_TIER_EMAIL, GOD_TIER_UID } from './data';
 
 // This function is NOT cached. It must run on every request to get the current user.
 export async function getUserId(): Promise<string | null> {
-    // Correctly await the headers object before accessing its properties.
     const headersList = await headers();
     const authorization = headersList.get('Authorization');
     
     if (!authorization) {
-        // This is a common case for public pages, so we don't log an error.
         return null;
     }
 
@@ -22,10 +21,14 @@ export async function getUserId(): Promise<string | null> {
           return null;
         }
         const decodedToken = await getAuth(adminApp).verifyIdToken(token);
+        
+        // If the token belongs to the special admin, return the consistent hardcoded UID.
+        if (decodedToken.email === GOD_TIER_EMAIL) {
+            return GOD_TIER_UID;
+        }
+
         return decodedToken.uid;
     } catch (error) {
-        // This can happen if the token is expired or invalid. It's not necessarily an "error"
-        // in the traditional sense, just an unauthenticated user.
         return null;
     }
 };

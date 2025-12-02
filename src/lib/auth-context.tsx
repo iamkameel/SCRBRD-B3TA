@@ -4,14 +4,13 @@
 import * as React from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
 import { ROLE_GROUPS } from './roles';
 import { GOD_TIER_EMAIL, GOD_TIER_UID } from './data';
 
 const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
-
 
 interface AuthContextType {
   user: User | null;
@@ -45,10 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 displayName: 'System Architect',
                 email: GOD_TIER_EMAIL,
                 roles: ALL_ROLES,
-                activeRole: 'System Architect',
+                activeRole: person?.activeRole || 'System Architect', // Persist active role across reloads
             });
             setLoading(false);
-            // Crucially, we return here to stop the Firestore lookup for the god-tier user.
             return;
         }
 

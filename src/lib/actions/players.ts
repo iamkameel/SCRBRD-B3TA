@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -643,9 +642,10 @@ export async function updateActiveRoleAction(personId: string, role: string) {
         throw new Error("You can only change your own active role.");
     }
 
+    // Handle the special case for the virtual System Architect
     if (personId === GOD_TIER_UID) {
-        // This is a virtual user, no DB update is needed. 
-        // The client-side state is handled optimistically.
+        // No database update needed, the client state is handled optimistically.
+        // Returning success allows the client-side refresh to proceed correctly.
         return;
     }
 
@@ -755,4 +755,3 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
         throw new Error("Could not update player skills.");
     }
 }
-
