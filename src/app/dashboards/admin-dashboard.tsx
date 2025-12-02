@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -276,48 +275,43 @@ export default function AdminDashboard() {
             </Card>
         )}
 
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-2 space-y-8">
-                <FixtureCentreCard
-                    liveMatches={liveMatches}
-                    upcomingFixtures={upcomingFixtures}
-                    recentResults={recentResults}
-                />
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Global Overview</CardTitle>
-                        <CardDescription>High-level metrics across the entire system. Click a card to navigate.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                        <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} href="/competitions" description="active this season" />
-                        <StatCard title="Schools" value={kpis.schools} icon={Building} href="/schools" description="registered in system" />
-                        <StatCard title="Teams" value={kpis.teams} icon={Users} href="/teams" description="across all divisions"/>
-                        <StatCard title="Players" value={kpis.players} icon={User} href="/people" description="active players" />
-                        <StatCard title="Staff" value={kpis.staff} icon={UserCog} href="/people" description="coaches & officials" />
-                        <StatCard title="Medical & Support" value={kpis.medicalSupport} icon={HeartPulse} href="/people" description="all support staff" />
-                        <StatCard title="Fields & Venues" value={kpis.fieldsVenues} icon={MapPin} href="/fields" description="available for booking" />
-                        <StatCard title="Officials" value={kpis.officials} icon={Users} href="/people" description="umpires & scorers" />
-                        <StatCard title="Ground Staff" value={kpis.groundStaff} icon={Wrench} href="/people" description="assigned groundskeepers" />
-                        <StatCard title="Fixtures" value={kpis.fixtures} icon={ClipboardList} href="/matches" description="total matches" />
-                        <StatCard title="Transport" value={kpis.transport} icon={Bus} href="/transport" description="vehicles in fleet" />
-                        <StatCard title="Awards" value={kpis.awards} icon={Medal} href="/awards" description="trophies & accolades" />
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Management Hub</CardTitle>
-                        <CardDescription>Quick access to key management areas where you can add and assign resources.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {managementLinks.map(link => (
-                        <ManagementLink key={link.title} {...link} />
-                    ))}
-                    </CardContent>
-                </Card>
-            </div>
-            <div className="lg:col-span-1">
-                 {/* This space is intentionally left empty since FixtureCentreCard was moved. */}
-            </div>
+         <div className="space-y-8">
+            <FixtureCentreCard
+                liveMatches={liveMatches}
+                upcomingFixtures={upcomingFixtures}
+                recentResults={recentResults}
+            />
+             <Card>
+                <CardHeader>
+                    <CardTitle>Global Overview</CardTitle>
+                    <CardDescription>High-level metrics across the entire system. Click a card to navigate.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                    <StatCard title="Competitions" value={kpis.competitions} icon={Trophy} href="/competitions" description="active this season" />
+                    <StatCard title="Schools" value={kpis.schools} icon={Building} href="/schools" description="registered in system" />
+                    <StatCard title="Teams" value={kpis.teams} icon={Users} href="/teams" description="across all divisions"/>
+                    <StatCard title="Players" value={kpis.players} icon={User} href="/people" description="active players" />
+                    <StatCard title="Staff" value={kpis.staff} icon={UserCog} href="/people" description="coaches & officials" />
+                    <StatCard title="Medical & Support" value={kpis.medicalSupport} icon={HeartPulse} href="/people" description="all support staff" />
+                    <StatCard title="Fields & Venues" value={kpis.fieldsVenues} icon={MapPin} href="/fields" description="available for booking" />
+                    <StatCard title="Officials" value={kpis.officials} icon={Users} href="/people" description="umpires & scorers" />
+                    <StatCard title="Ground Staff" value={kpis.groundStaff} icon={Wrench} href="/people" description="assigned groundskeepers" />
+                    <StatCard title="Fixtures" value={kpis.fixtures} icon={ClipboardList} href="/matches" description="total matches" />
+                    <StatCard title="Transport" value={kpis.transport} icon={Bus} href="/transport" description="vehicles in fleet" />
+                    <StatCard title="Awards" value={kpis.awards} icon={Medal} href="/awards" description="trophies & accolades" />
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Management Hub</CardTitle>
+                    <CardDescription>Quick access to key management areas where you can add and assign resources.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {managementLinks.map(link => (
+                    <ManagementLink key={link.title} {...link} />
+                ))}
+                </CardContent>
+            </Card>
         </div>
     </div>
 
