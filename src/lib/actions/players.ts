@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -400,15 +399,15 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
   const personSnap = await getDoc(personRef);
   if (!personSnap.exists()) throw new Error("Person not found or you do not have permission.");
   
+  const originalRoles = personSnap.data().roles || [];
+
   if (personId !== currentUserId) {
-    const originalRoles = personSnap.data().roles || [];
-    const newRoles = updateData.roles;
-    if (!hasPermissionToAssign(currentUser, newRoles, originalRoles)) {
+    if (!hasPermissionToAssign(currentUser, updateData.roles, originalRoles)) {
         throw new Error("You do not have permission to assign or remove one or more of the selected roles.");
     }
   } else if (!currentUser.roles.includes('System Architect')) {
     // A user can always update their own profile information, but only a System Architect can change their own roles.
-    updateData.roles = personSnap.data().roles;
+    updateData.roles = originalRoles;
   }
 
   const updatePayload: {[key: string]: any} = {
@@ -649,6 +648,7 @@ export async function updateActiveRoleAction(personId: string, role: string) {
 
     try {
         await updateDoc(personRef, { activeRole: role });
+        revalidatePath('/', 'layout');
     } catch (error) {
         console.error("Error updating active role:", error);
         throw new Error("Could not update active role.");
@@ -723,3 +723,5 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
         throw new Error("Could not update player skills.");
     }
 }
+
+    
