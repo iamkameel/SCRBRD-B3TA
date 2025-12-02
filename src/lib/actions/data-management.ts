@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -42,7 +43,7 @@ export async function deleteAllDataAction(): Promise<{ success: boolean; message
         let operationCount = 0;
         let deletedCount = 0;
 
-        const godTierEmails = ['kameel@maverickdesign.co.za', 'kameel@scrbrd.com', 'admin@scrbrd.app'];
+        const godTierEmails = ['kameel@maverickdesign.co.za'];
         const adminQuery = query(collection(db, 'people'), where('email', 'in', godTierEmails));
         const adminSnapshot = await getDocs(adminQuery);
         const adminIds = new Set(adminSnapshot.docs.map(d => d.id));

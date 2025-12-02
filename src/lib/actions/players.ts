@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -14,7 +15,6 @@ import { SimplifiedPlayerStatsSchema } from '@/ai/schemas';
 import { cache } from 'react';
 import { getUserId } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
-import { GOD_TIER_UID } from '../data';
 
 export async function getPlayers(): Promise<Person[]> {
   const userId = await getUserId();
@@ -640,13 +640,6 @@ export async function updateActiveRoleAction(personId: string, role: string) {
     const userId = await getUserId();
     if (!userId || personId !== userId) {
         throw new Error("You can only change your own active role.");
-    }
-
-    // Handle the special case for the virtual System Architect
-    if (personId === GOD_TIER_UID) {
-        // No database update needed, the client state is handled optimistically.
-        // Returning success allows the client-side refresh to proceed correctly.
-        return;
     }
 
     const personRef = doc(db, 'people', personId);

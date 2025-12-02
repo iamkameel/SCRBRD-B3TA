@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -8,7 +9,6 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import type { Person } from '@/lib/data';
 import DashboardSkeleton from '@/app/loading';
 import { ROLE_GROUPS } from './roles';
-import { GOD_TIER_EMAIL, GOD_TIER_UID } from './data';
 
 const ALL_ROLES = ROLE_GROUPS.flatMap(g => g.roles.map(r => r.id));
 
@@ -36,20 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setUser(firebaseUser);
       if (firebaseUser) {
-        if (firebaseUser.email === GOD_TIER_EMAIL) {
-            setPerson({
-                personId: GOD_TIER_UID,
-                firstName: 'Kameel',
-                lastName: 'Kalyan',
-                displayName: 'System Architect',
-                email: GOD_TIER_EMAIL,
-                roles: ALL_ROLES,
-                activeRole: person?.activeRole || 'System Architect', // Persist active role across reloads
-            });
-            setLoading(false);
-            return;
-        }
-
         const personRef = doc(db, 'people', firebaseUser.uid);
         const unsubscribeSnapshot = onSnapshot(personRef, (docSnap) => {
           if (docSnap.exists()) {
