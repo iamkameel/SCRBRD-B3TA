@@ -10,18 +10,18 @@ import { getPerson } from './players';
 import { getUserId } from '@/lib/server-auth';
 
 const checkManagementPermission = async () => {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated.");
 
     const user = await getPerson(userId);
-    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'Team Manager'].includes(r))) {
+    if (!user || !user.roles.some(r => ['Admin', 'Sportsmaster', 'Team Manager', 'System Architect'].includes(r))) {
         throw new Error("You do not have permission to manage equipment.");
     }
     return userId;
 }
 
 export async function getEquipment(): Promise<EquipmentItem[]> {
-  const userId = getUserId();
+  const userId = await getUserId();
   if (!userId) return [];
   try {
     const q = query(collection(db, 'equipment'));
@@ -57,7 +57,7 @@ export async function addEquipmentItemAction(data: z.infer<typeof itemSchema>) {
 
 const updateItemSchema = itemSchema.extend({ itemId: z.string() });
 export async function updateEquipmentItemAction(data: z.infer<typeof updateItemSchema>) {
-    const userId = await checkManagementPermission();
+    await checkManagementPermission();
     const validatedFields = updateItemSchema.safeParse(data);
     if (!validatedFields.success) throw new Error('Invalid item data.');
     const { itemId, ...updateData } = validatedFields.data;
@@ -72,7 +72,7 @@ export async function updateEquipmentItemAction(data: z.infer<typeof updateItemS
 }
 
 export async function deleteEquipmentItemAction(itemId: string) {
-  const userId = await checkManagementPermission();
+  await checkManagementPermission();
   const itemRef = doc(db, 'equipment', itemId);
   
   const batch = writeBatch(db);
@@ -149,7 +149,7 @@ export async function returnEquipmentAction(assignmentId: string) {
 }
 
 export async function getAllEquipmentAssignments(): Promise<FullEquipmentAssignment[]> {
-    const userId = getUserId();
+    const userId = await getUserId();
     if (!userId) return [];
     try {
         const q = query(collection(db, 'equipmentAssignments'));
