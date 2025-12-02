@@ -4,7 +4,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Menu, Settings, LogOut, ChevronDown, User, Bell, Calendar, Loader2 } from 'lucide-react';
 import {
   Sheet,
@@ -260,7 +260,7 @@ export function Header() {
                                             <AccordionContent className="pt-1 pb-0 pl-8">
                                                 <div className="flex flex-col gap-1">
                                                     {visibleItems.map((item) => {
-                                                        const isActive = pathname.startsWith(item.href);
+                                                        const isActive = pathname.startsWith(item.href.split('?')[0]);
                                                         return (
                                                             <SheetClose asChild key={item.label}>
                                                                 <Link
