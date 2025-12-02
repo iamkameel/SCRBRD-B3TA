@@ -12,23 +12,25 @@ import type { Person } from '@/lib/data';
 
 export default async function UserManagementPage() {
     const userId = await getUserId();
-    let user = userId ? await getPerson(userId) : null;
+    const user = userId ? await getPerson(userId) : null;
 
     if (!user) {
-        // Fallback for when the user might not exist in Firestore but has a valid auth token.
-        // This is primarily for the System Architect during initial setup.
-        user = {
-            personId: userId || 'TEMP_ADMIN',
-            firstName: 'Guest',
-            lastName: 'Admin',
-            email: 'temp@admin.com',
-            roles: ['System Architect'],
-            activeRole: 'System Architect',
-        } as Person;
+         return (
+            <Card className="w-full max-w-md mx-auto mt-16">
+                <CardHeader className="text-center">
+                    <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
+                    <CardTitle className="mt-4">User Not Found</CardTitle>
+                    <CardDescription>
+                       Could not retrieve your user profile. Please try logging in again.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+        );
     }
+    
+    const authorizedRoles = ['Admin', 'Sportsmaster', 'System Architect'];
 
-    // Role-based access control check
-    if (!user.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r))) {
+    if (!user.roles.some(r => authorizedRoles.includes(r))) {
         return (
             <Card className="w-full max-w-md mx-auto mt-16">
                 <CardHeader className="text-center">

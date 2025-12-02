@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getMatches } from '@/lib/actions/matches';
@@ -14,12 +13,12 @@ import { getSeasons } from '@/lib/actions/seasons';
 import { getDivisions } from '@/lib/actions/divisions';
 
 export default async function MatchesPage() {
-  const [matches, teams, fields, competitions, userId, seasons, divisions] = await Promise.all([
+  const userId = await getUserId();
+  const [matches, teams, fields, competitions, seasons, divisions] = await Promise.all([
     getMatches(),
     getTeams(),
     getFields(),
     getCompetitions(),
-    getUserId(),
     getSeasons(),
     getDivisions(),
   ]);
