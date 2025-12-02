@@ -32,7 +32,7 @@ function WelcomeCard() {
             </CardHeader>
             <CardContent className="text-center">
                 <p className="text-muted-foreground mb-6">
-                    Your profile is incomplete. Please go to your settings to add your name and confirm your role.
+                    Your profile appears to be incomplete. Please go to your settings to add your name and confirm your role.
                 </p>
                 <Button asChild>
                     <Link href="/settings">
@@ -52,16 +52,18 @@ export default function DashboardPage() {
       return <DashboardSkeleton />;
   }
 
+  // This check is the root cause of the "locked out" feeling.
+  // It triggers if the `person` object hasn't loaded from Firestore yet,
+  // which happens if the auth state is resolved but the DB fetch is pending.
   if (!person) {
-    return <WelcomeCard />;
+    return <DashboardSkeleton />;
   }
 
-  // Check for incomplete profile after we know the person object exists.
-  const isProfileIncomplete = !person.firstName || !person.lastName || person.roles.length === 0;
+  // The second part of the check for profile completeness.
+  const isProfileIncomplete = !person.firstName || !person.lastName || !person.roles || person.roles.length === 0;
   if (isProfileIncomplete) {
       return <WelcomeCard />;
   }
-
 
   const role = person.activeRole || person.roles[0] || 'Spectator';
 

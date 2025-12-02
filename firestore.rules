@@ -154,7 +154,7 @@ service cloud.firestore {
     }
     
     match /assignmentRequests/{reqId} {
-      allow read: if isSignedIn();
+      allow read: if isOwner(resource.data.userId) || isOwner(resource.data.requesterId) || canManageData();
       allow create: if isSignedIn();
       allow update: if canManageData(); // Only admins/sportsmasters can approve/deny
     }
