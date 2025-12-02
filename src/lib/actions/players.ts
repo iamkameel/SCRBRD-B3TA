@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -389,7 +390,7 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
   if (!validated.success) throw new Error('Invalid person data.');
 
   const currentUserId = await getUserId();
-  if (!currentUserId) throw new Error("You must be logged in to perform this action.");
+  if (!currentUserId) throw new Error("User not authenticated");
   
   const currentUser = await getPerson(currentUserId);
   if (!currentUser) throw new Error("Could not verify your identity.");
@@ -483,7 +484,7 @@ export async function generateAndSavePlayerPortraitAction(personId: string) {
     if (!person) throw new Error("Person not found or permission denied.");
 
     const currentUser = currentUserId ? await getPerson(currentUserId) : null;
-    const canManage = currentUser?.roles.includes('Admin') || false;
+    const canManage = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect') || false;
 
     if (currentUserId !== personId && !canManage) {
         throw new Error("You do not have permission to generate a portrait for this user.");
@@ -718,3 +719,4 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
         throw new Error("Could not update player skills.");
     }
 }
+
