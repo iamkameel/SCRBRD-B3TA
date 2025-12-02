@@ -17,24 +17,21 @@ export default function PageShell({ children }: { children: React.ReactNode }) {
 
   const isShellDisabledRoute = SHELL_DISABLED_ROUTES.some(path => pathname.startsWith(path));
 
+  // Redirect unauthenticated users from protected routes
   React.useEffect(() => {
     if (!loading && !user && !isShellDisabledRoute) {
       router.push('/home');
     }
   }, [user, loading, isShellDisabledRoute, router, pathname]);
 
+  // For public routes like /home, /login, /signup, don't render the shell.
   if (isShellDisabledRoute) {
     return <>{children}</>;
   }
 
-  // Always show a skeleton during the initial loading phase.
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
-
-  // If loading is complete but there's still no user, it means the redirect is pending.
-  // Continue showing the skeleton to avoid a flash of an empty/error state.
-  if (!user) {
+  // If loading or the user is not yet available on a protected route, show a skeleton.
+  // This prevents flashing content or "profile not found" errors.
+  if (loading || !user) {
     return <DashboardSkeleton />;
   }
   

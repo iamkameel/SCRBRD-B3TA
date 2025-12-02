@@ -54,11 +54,8 @@ export default function DashboardPage() {
   }
 
   if (!person) {
-    return (
-        <div className="flex items-center justify-center h-full">
-            <p>User profile not found. Please log in again.</p>
-        </div>
-    );
+    // This case should now be handled by PageShell, but as a fallback:
+    return <DashboardSkeleton />;
   }
 
   // Check for incomplete profile
