@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -47,13 +46,13 @@ function WelcomeCard() {
 
 
 export default function DashboardPage() {
-  const { person } = useAuth();
+  const { person, loading } = useAuth();
 
-  // The (app) layout handles the main loading state.
-  // We only check for the existence of the person object here.
+  if (loading) {
+      return <DashboardSkeleton />;
+  }
 
   if (!person) {
-    // This case handles a user who is authenticated but has no Firestore profile.
     return <WelcomeCard />;
   }
 

@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import type { Match, Team } from '@/lib/data';
@@ -12,13 +10,8 @@ import { getUserId } from '@/lib/server-auth';
 
 
 export async function getFixtureConflicts(): Promise<FixtureConflict[]> {
-    const userId = await getUserId();
-    if (!userId) return [];
-
-    const [allMatches, allTeams] = await Promise.all([
-        getMatches(),
-        getTeams()
-    ]);
+    const allMatches = await getMatches();
+    const allTeams = await getTeams()
 
     const scheduledMatches = allMatches.filter(m => m.status === 'scheduled');
     const teamMap = new Map<string, Team>(allTeams.map(t => [t.teamId, t]));
