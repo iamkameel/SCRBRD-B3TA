@@ -10,14 +10,12 @@ export async function getUserId(): Promise<string | null> {
     const authorization = headersList.get('Authorization');
     
     if (!authorization?.startsWith('Bearer ')) {
-        console.log("No authorization token found");
         return null;
     }
 
     try {
         const token = authorization.split('Bearer ')[1];
         if (!token) {
-          console.log("Token is empty after split");
           return null;
         }
         const decodedToken = await getAuth(adminApp).verifyIdToken(token);
