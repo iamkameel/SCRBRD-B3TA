@@ -14,7 +14,7 @@ import { ALL_ROLES } from './roles';
 const MOCK_USER_ID = "EAycpBbKwRaRI7RALEQkb33eOu63";
 
 const mockRoleAssignments: RoleAssignment[] = ALL_ROLES.map(role => ({
-  assignmentId: `assign_${''-role.code}`,
+  assignmentId: `assign_${role.code}`,
   personId: MOCK_USER_ID,
   roleId: role.roleId,
   roleCode: role.code,
