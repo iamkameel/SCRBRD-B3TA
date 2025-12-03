@@ -1,6 +1,7 @@
+
 'use server';
 
-import { getPlayers, getPerson } from '@/lib/actions/players';
+import { getAllPeople, getPerson } from '@/lib/actions/players';
 import PeopleClient from './client';
 import { getUserId } from '@/lib/server-auth';
 import { getSchools } from '@/lib/actions/schools';
@@ -13,7 +14,7 @@ import type { Person, Team } from '@/lib/data';
 
 export default async function PeoplePage() {
   const [people, userId, schools, teams, divisions] = await Promise.all([
-    getPlayers(),
+    getAllPeople(),
     getUserId(),
     getSchools(),
     getTeams(),
