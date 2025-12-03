@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Menu, Settings, LogOut, ChevronDown, User, Bell, Calendar, Loader2 } from 'lucide-react';
 import {
   Sheet,
@@ -192,8 +192,6 @@ export function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
-                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                    <SheetDescription className="sr-only">A list of pages to navigate through the application.</SheetDescription>
                     <div className="flex items-center h-16 px-6 border-b border-sidebar-border">
                         <Link href="/" className="flex items-center gap-2 font-bold text-sidebar-foreground">
                           <Logo />
