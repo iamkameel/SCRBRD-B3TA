@@ -119,7 +119,6 @@ export async function updateDivisionAction(data: z.infer<typeof updateDivisionSc
     const { divisionId, name } = validatedFields.data;
     const divisionDocRef = doc(db, 'divisions', divisionId);
 
-    // Verify ownership
     const divisionSnap = await getDoc(divisionDocRef);
     if (!divisionSnap.exists()) {
         throw new Error("Division not found or you do not have permission to edit it.");
