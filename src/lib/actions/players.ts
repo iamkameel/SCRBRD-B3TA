@@ -43,17 +43,21 @@ export async function getPlayers(): Promise<Person[]> {
   if (!currentUser) return [];
 
   const peopleCollection = collection(db, 'people');
-  const teamsCollection = collection(db, 'teams');
   
-  let q;
-
-  // System Architect and Admin see everyone.
+  // System Architect and Admin see everyone, no filtering needed.
   if (currentUser.roles.includes('System Architect') || currentUser.roles.includes('Admin')) {
-    q = query(peopleCollection);
+    const allPeopleSnapshot = await getDocs(query(peopleCollection));
+    return allPeopleSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            personId: doc.id, ...data, dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined
+        } as Person;
+    });
   }
+
   // Sportsmaster and School Admin see people from their assigned schools.
-  else if ((currentUser.roles.includes('Sportsmaster') || currentUser.roles.includes('School Admin')) && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
-      const teamsInSchoolsQuery = query(teamsCollection, where('schoolId', 'in', currentUser.assignedSchools));
+  if ((currentUser.roles.includes('Sportsmaster') || currentUser.roles.includes('School Admin')) && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
+      const teamsInSchoolsQuery = query(collection(db, 'teams'), where('schoolId', 'in', currentUser.assignedSchools));
       const teamsSnapshot = await getDocs(teamsInSchoolsQuery);
       
       const peopleIds = new Set<string>();
@@ -82,46 +86,25 @@ export async function getPlayers(): Promise<Person[]> {
       const peopleSnapshots = await Promise.all(peopleQueryChunks.map(chunk => getDocs(chunk)));
       return peopleSnapshots.flatMap(snapshot => snapshot.docs.map(doc => ({ personId: doc.id, ...doc.data(), dateOfBirth: (doc.data().dateOfBirth as Timestamp)?.toDate() } as Person)));
   }
-  // Coaches and Team Managers see players from their teams.
-  else if (currentUser.roles.some(r => ['Coach', 'Team Manager'].includes(r))) {
-      const assignments = await getPersonTeamAssignments(userId);
-      const teamIds = assignments.map(a => a.teamId);
-      if (teamIds.length === 0) return [];
-      
+
+  // Default case for other roles (Coach, Player etc.)
+  const assignments = await getPersonTeamAssignments(userId);
+  const teamIds = assignments.map(a => a.teamId);
+  if (teamIds.length > 0) {
       const peopleIds = new Set<string>();
-      const rosterGroupQuery = query(collectionGroup(db, 'roster'), where('personId', 'in', teamIds));
-      const rosterSnapshots = await getDocs(rosterGroupQuery);
+      const teamRosterPromises = teamIds.map(teamId => getDocs(collection(db, 'teams', teamId, 'roster')));
+      const rosterSnapshots = await Promise.all(teamRosterPromises);
+      rosterSnapshots.forEach(snapshot => snapshot.forEach(doc => peopleIds.add(doc.data().personId)));
 
-      for (const rosterDoc of rosterSnapshots.docs) {
-          if (teamIds.includes(rosterDoc.ref.parent.parent!.id)) {
-              peopleIds.add(rosterDoc.data().personId);
-          }
+      if (peopleIds.size > 0) {
+        const peopleQuery = query(peopleCollection, where(documentId(), 'in', Array.from(peopleIds)));
+        const peopleSnapshot = await getDocs(peopleQuery);
+        return peopleSnapshot.docs.map(doc => ({ personId: doc.id, ...doc.data(), dateOfBirth: (doc.data().dateOfBirth as Timestamp)?.toDate() } as Person));
       }
-
-      if (peopleIds.size === 0) return [];
-      const peopleQuery = query(peopleCollection, where(documentId(), 'in', Array.from(peopleIds)));
-      const peopleSnapshot = await getDocs(peopleQuery);
-      return peopleSnapshot.docs.map(doc => ({ personId: doc.id, ...doc.data(), dateOfBirth: (doc.data().dateOfBirth as Timestamp)?.toDate() } as Person));
-  }
-  // Default for all other roles is to see everyone for now.
-  else {
-      q = query(peopleCollection);
   }
 
-  try {
-    const peopleSnapshot = await getDocs(q);
-    return peopleSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            personId: doc.id,
-            ...data,
-            dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
-        } as Person
-    });
-  } catch (error) {
-    console.error("Error fetching people:", error);
-    return [];
-  }
+  // Fallback: return the current user if no other context is found
+  return [currentUser];
 }
 
 export async function getPeopleByRole(role: string): Promise<Person[]> {
