@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -57,7 +58,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
-const PersonDialog = dynamic(() => import('./person-dialog').then(mod => mod.PersonDialog), {
+const PersonDialog = dynamic(() => import('@/app/(app)/people/person-dialog').then(mod => mod.PersonDialog), {
   ssr: false,
 });
 
@@ -312,8 +313,8 @@ export default function PeopleClient({ people, user, schools, teams, divisions, 
                 bValue = `${b.firstName} ${b.lastName}`.toLowerCase();
                 break;
             default: // email
-                aValue = a[sortConfig.key]?.toLowerCase() ?? '';
-                bValue = b[sortConfig.key]?.toLowerCase() ?? '';
+                aValue = a[sortConfig.key as keyof typeof a]?.toLowerCase() ?? '';
+                bValue = b[sortConfig.key as keyof typeof b]?.toLowerCase() ?? '';
         }
 
         if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -736,5 +737,7 @@ export default function PeopleClient({ people, user, schools, teams, divisions, 
         </AlertDialogContent>
       </AlertDialog>}
     </>
-  );
-}
+
+    
+
+    
