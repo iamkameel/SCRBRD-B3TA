@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { AlertTriangle } from 'lucide-react';
 import { collection, getDocs, query, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Match, Competition, Division, Team, Field } from '@/lib/data';
+import type { Match, Competition, Division, Field } from '@/lib/data';
 import { getFields } from '@/lib/actions/fields';
 
 async function getAllMatches(): Promise<Match[]> {
