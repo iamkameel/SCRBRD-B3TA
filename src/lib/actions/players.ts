@@ -24,94 +24,73 @@ export async function getPlayers(): Promise<Person[]> {
   if (!currentUser) return [];
 
   const peopleCollection = collection(db, 'people');
+  const teamsCollection = collection(db, 'teams');
+  
   let q;
 
-  // Admins and System Architects should see all people.
-  if (currentUser.roles.includes('Admin') || currentUser.roles.includes('System Architect')) {
-      q = query(peopleCollection);
-      try {
-        const peopleSnapshot = await getDocs(q);
-        return peopleSnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                personId: doc.id,
-                ...data,
-                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
-            } as Person
-        });
-      } catch (error) {
-        console.error("Error fetching all people for admin:", error);
-        return [];
-      }
+  // System Architect and Admin see everyone.
+  if (currentUser.roles.includes('System Architect') || currentUser.roles.includes('Admin')) {
+    q = query(peopleCollection);
   }
-
-  // Sportsmasters see people in their assigned schools.
-  if (currentUser.activeRole === 'Sportsmaster') {
-      if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
-          return [];
-      }
+  // Sportsmaster and School Admin see people from their assigned schools.
+  else if ((currentUser.roles.includes('Sportsmaster') || currentUser.roles.includes('School Admin')) && currentUser.assignedSchools && currentUser.assignedSchools.length > 0) {
+      const teamsInSchoolsQuery = query(teamsCollection, where('schoolId', 'in', currentUser.assignedSchools));
+      const teamsSnapshot = await getDocs(teamsInSchoolsQuery);
       
-      try {
-        const peopleIds = new Set<string>();
-        // Get staff assigned directly to the school
-        const staffQuery = query(peopleCollection, where('assignedSchools', 'array-contains-any', currentUser.assignedSchools));
-        const staffSnapshot = await getDocs(staffQuery);
-        staffSnapshot.forEach(doc => {
-            peopleIds.add(doc.id);
-        });
-        
-        // Get players on teams within those schools
-        const teamsQuery = query(collection(db, 'teams'), where("schoolId", "in", currentUser.assignedSchools));
-        const teamsSnapshot = await getDocs(teamsQuery);
-        const accessibleTeamIds = new Set(teamsSnapshot.docs.map(doc => doc.id));
-
-        if (accessibleTeamIds.size > 0) {
-            const rosterGroupQuery = query(collectionGroup(db, 'roster'));
-            const allRosterMembersSnapshot = await getDocs(rosterGroupQuery);
-
-            allRosterMembersSnapshot.forEach(rosterDoc => {
-                const teamId = rosterDoc.ref.parent.parent?.id;
-                if (teamId && accessibleTeamIds.has(teamId)) {
-                    peopleIds.add(rosterDoc.data().personId);
-                }
-            });
-        }
-        
-        if (peopleIds.size === 0) {
-            return [];
-        }
-
-        const personIdChunks: string[][] = [];
-        const allPersonIds = Array.from(peopleIds);
-        for (let i = 0; i < allPersonIds.length; i += 30) {
-            personIdChunks.push(allPersonIds.slice(i, i + 30));
-        }
-
-        const people: Person[] = [];
-        for (const chunk of personIdChunks) {
-            if (chunk.length === 0) continue;
-            const peopleQuery = query(peopleCollection, where(documentId(), 'in', chunk));
-            const peopleSnapshot = await getDocs(peopleQuery);
-            peopleSnapshot.forEach(doc => {
-                 const data = doc.data();
-                people.push({ 
-                    personId: doc.id, 
-                    ...data,
-                    dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
-                } as Person);
-            });
-        }
-        return people;
-
-      } catch (error) {
-        console.error("Error fetching people for sportsmaster:", error);
-        return [];
+      const peopleIds = new Set<string>();
+      
+      // Add staff assigned to the school directly
+      const staffQuery = query(peopleCollection, where('assignedSchools', 'array-contains-any', currentUser.assignedSchools));
+      const staffSnapshot = await getDocs(staffQuery);
+      staffSnapshot.forEach(doc => peopleIds.add(doc.id));
+      
+      // Add players from teams in those schools
+      const teamRosterPromises = teamsSnapshot.docs.map(teamDoc => getDocs(collection(db, 'teams', teamDoc.id, 'roster')));
+      const rosterSnapshots = await Promise.all(teamRosterPromises);
+      
+      for (const rosterSnapshot of rosterSnapshots) {
+          rosterSnapshot.forEach(rosterDoc => peopleIds.add(rosterDoc.data().personId));
       }
+
+      if (peopleIds.size === 0) return [];
+      
+      const peopleQueryChunks = [];
+      const personIdArray = Array.from(peopleIds);
+      for (let i = 0; i < personIdArray.length; i += 30) {
+        peopleQueryChunks.push(query(peopleCollection, where(documentId(), 'in', personIdArray.slice(i, i + 30))));
+      }
+
+      const peopleSnapshots = await Promise.all(peopleQueryChunks.map(chunk => getDocs(chunk)));
+      return peopleSnapshots.flatMap(snapshot => snapshot.docs.map(doc => ({ personId: doc.id, ...doc.data(), dateOfBirth: (doc.data().dateOfBirth as Timestamp)?.toDate() } as Person)));
   }
-  
-  // Default: other roles see all users for now, can be refined further if needed
+  // Coaches and Team Managers see players from their teams.
+  else if (currentUser.roles.some(r => ['Coach', 'Team Manager'].includes(r))) {
+      const assignments = await getPersonTeamAssignments(userId);
+      const teamIds = assignments.map(a => a.teamId);
+      if (teamIds.length === 0) return [];
+      
+      const peopleIds = new Set<string>();
+      const rosterGroupQuery = query(collectionGroup(db, 'roster'), where('personId', 'in', teamIds));
+      const rosterSnapshots = await getDocs(rosterGroupQuery);
+
+      for (const rosterDoc of rosterSnapshots.docs) {
+          if (teamIds.includes(rosterDoc.ref.parent.parent!.id)) {
+              peopleIds.add(rosterDoc.data().personId);
+          }
+      }
+
+      if (peopleIds.size === 0) return [];
+      const peopleQuery = query(peopleCollection, where(documentId(), 'in', Array.from(peopleIds)));
+      const peopleSnapshot = await getDocs(peopleQuery);
+      return peopleSnapshot.docs.map(doc => ({ personId: doc.id, ...doc.data(), dateOfBirth: (doc.data().dateOfBirth as Timestamp)?.toDate() } as Person));
+  }
+  // Default for all other roles is to see everyone for now.
+  else {
+      q = query(peopleCollection);
+  }
+
   try {
-    const peopleSnapshot = await getDocs(peopleCollection);
+    const peopleSnapshot = await getDocs(q);
     return peopleSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
