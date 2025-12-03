@@ -314,7 +314,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, se
                     <TableHead className="hidden md:table-cell">Venue</TableHead>
                     <TableHead><Button variant="ghost" onClick={() => requestSort('dateTime')} className="px-0 hover:bg-transparent">Date & Time {getSortIcon('dateTime')}</Button></TableHead>
                     <TableHead>Status</TableHead>
-                    {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -326,7 +326,7 @@ export default function MatchesClient({ matches, teams, fields, competitions, se
                         <TableCell className="hidden md:table-cell">{match.fieldName}</TableCell>
                         <TableCell>{format(match.dateTime, "PPP p")}</TableCell>
                         <TableCell><Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize">{match.status}</Badge></TableCell>
-                        {isAdmin && <TableCell className="text-right">
+                        <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -335,11 +335,11 @@ export default function MatchesClient({ matches, teams, fields, competitions, se
                               {isAdmin && <DropdownMenuItem onSelect={() => { setSelectedMatch(match); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="mr-2" />Delete</DropdownMenuItem>}
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </TableCell>}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
-                    <TableRow><TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found."}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="h-24 text-center">{filtersApplied ? "No matches found matching your filters." : "No matches found."}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

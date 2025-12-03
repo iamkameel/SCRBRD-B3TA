@@ -164,16 +164,6 @@ export default function NewMatchClient({ teams, competitions, fields, seasons = 
               
                <FormField control={form.control} name="competitionId" render={({ field }) => (<FormItem><FormLabel>3. Competition</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || !selectedDate}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDate ? "Select a date first" : "Select a competition"} /></SelectTrigger></FormControl><SelectContent><SelectItem value="friendly">-- Friendly Match --</SelectItem>{availableCompetitions.map((comp) => (<SelectItem key={comp.competitionId} value={comp.competitionId}>{comp.name} ({comp.divisionName})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
 
-              {isFriendly && (
-                  <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertTitle>Friendly Mode</AlertTitle>
-                      <AlertDescription>
-                          All teams are available for selection, regardless of division or season.
-                      </AlertDescription>
-                  </Alert>
-              )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField control={form.control} name="teamAId" render={({ field }) => (<FormItem><FormLabel>4. Home Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamBId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="teamBId" render={({ field }) => (<FormItem><FormLabel>5. Away Team</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ""} disabled={isPending || eligibleTeams.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCompetitionId ? "Select competition first" : "Select a team"} /></SelectTrigger></FormControl><SelectContent>{eligibleTeams.map((team) => (<SelectItem key={team.teamId} value={team.teamId} disabled={team.teamId === teamAId}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
