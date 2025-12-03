@@ -1,12 +1,25 @@
+
 'use server';
 
-// --- OVERRIDE: Authentication is disabled. ---
-// This function now always returns the hardcoded System Architect's user ID
-// to ensure all server-side actions are performed with full privileges.
+import { headers } from 'next/headers';
+import { getAuth } from 'firebase-admin/auth';
+import { adminApp } from '@/lib/firebase-admin';
 
-export async function getUserId(): Promise<string> {
-  // This is the UID for the hardcoded 'Kameel Kalyan' user.
-  // Using this ensures that all server actions, especially data creation,
-  // are performed under this administrative user account.
-  return "EAycpBbKwRaRI7RALEQkb33eOu63";
+// This is the correct, secure way to get the user's ID on the server.
+// It verifies the session cookie from the headers.
+export async function getUserId(): Promise<string | null> {
+  const session = headers().get('Authorization')?.split('Bearer ')[1];
+  if (!session) {
+    // This will be the case for unauthenticated users.
+    return null;
+  }
+  
+  try {
+    const decodedIdToken = await getAuth(adminApp).verifySessionCookie(session, true);
+    return decodedIdToken.uid;
+  } catch (error) {
+    console.warn("Failed to verify session cookie:", error);
+    // This can happen if the cookie is expired or invalid.
+    return null;
+  }
 };

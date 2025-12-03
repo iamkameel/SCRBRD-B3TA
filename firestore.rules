@@ -31,11 +31,11 @@ service cloud.firestore {
     }
     
     function isSportsmaster() {
-      return hasRole('Sportsmaster');
+      return hasRole('Sportsmaster') || isAdmin();
     }
     
     function canManageData() {
-        return isAdmin() || isSportsmaster();
+        return isSportsmaster();
     }
     
     // People: Users can read/update their own profile. Admins can read/write any.
