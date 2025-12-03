@@ -170,7 +170,7 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         for (const collName of collectionsInOrder) {
             for (const item of sampleData[collName as keyof typeof sampleData]) {
                 const idKey = idKeyMap[collName as keyof typeof idKeyMap];
-                if (!idKey) throw new Error(\`No idKey mapping for collection: \${collName}\`);
+                if (!idKey) throw new Error(`No idKey mapping for collection: ${collName}`);
                 
                 const tempId = (item as any)[idKey as keyof typeof item];
 
@@ -440,7 +440,7 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         else if (subsetName === 'Sponsors') idKey = 'sponsorId';
 
         if (!getAction || !deleteAction || !idKey) {
-            throw new Error(\`Invalid subset name for deletion: \${subsetName}\`);
+            throw new Error(`Invalid subset name for deletion: ${subsetName}`);
         }
 
         const items = await (getAction as () => Promise<any[]>)();
@@ -455,9 +455,9 @@ export async function deleteSubsetAction(subsetName: SubsetName): Promise<{ succ
         });
 
         revalidatePath('/data-management');
-        return { success: true, message: `All \${subsetName} data has been deleted.` };
+        return { success: true, message: `All ${subsetName} data has been deleted.` };
     } catch (error) {
-        const message = error instanceof Error ? error.message : `Failed to delete \${subsetName} data.`;
+        const message = error instanceof Error ? error.message : `Failed to delete ${subsetName} data.`;
         console.error(message);
         return { success: false, message };
     }
@@ -470,7 +470,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
     }
     
     if (!independentSubsets.includes(subsetName)) {
-        return { success: false, message: `Individual migration for \${subsetName} is not supported due to data dependencies. Please use the full data migration.` };
+        return { success: false, message: `Individual migration for ${subsetName} is not supported due to data dependencies. Please use the full data migration.` };
     }
 
     try {
@@ -488,7 +488,7 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
             else if (subsetName === 'Sponsors') idKey = 'sponsorId';
             else if (subsetName === 'Fields') idKey = 'fieldId';
             else if (subsetName === 'Drills') idKey = 'drillId';
-            else idKey = `\${collectionName.slice(0, -1)}Id`;
+            else idKey = `${collectionName.slice(0, -1)}Id`;
             
             const { [idKey]: _, ...itemData } = item as any;
             
@@ -513,10 +513,10 @@ export async function migrateSubsetAction(subsetName: SubsetName): Promise<{ suc
         });
 
         revalidatePath('/data-management');
-        return { success: true, message: `\${count} sample \${subsetName} migrated.` };
+        return { success: true, message: `${count} sample ${subsetName} migrated.` };
 
     } catch (error) {
-         const message = error instanceof Error ? error.message : `Failed to migrate \${subsetName} data.`;
+         const message = error instanceof Error ? error.message : `Failed to migrate ${subsetName} data.`;
         console.error(message);
         return { success: false, message };
     }
@@ -557,9 +557,7 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
         return { csv };
 
     } catch (error) {
-        console.error("Error exporting \${subsetName}:", error);
-        return { error: `Failed to export \${subsetName} data.` };
+        console.error(`Error exporting ${subsetName}:`, error);
+        return { error: `Failed to export ${subsetName} data.` };
     }
 }
-
-    
