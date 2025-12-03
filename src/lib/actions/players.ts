@@ -26,13 +26,10 @@ export async function getAllPeople(): Promise<Person[]> {
                 personId: doc.id,
                 ...data,
                 dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
-                // The roles array is now the source of truth for UI, so we ensure it's populated.
                 roles: Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['SPECTATOR'],
                 activeRole: data.activeRole || (Array.isArray(data.roles) && data.roles.length > 0 ? data.roles[0] : 'SPECTATOR'),
             } as Person;
             
-            // For components that need it, we'll attach the rich assignments.
-            person.roleAssignments = await getRoleAssignmentsForPerson(person.personId);
             return person;
         }));
         return people;
@@ -124,9 +121,6 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
 });
 
 
-// ... (rest of the file remains unchanged) ...
-// The rest of the file is omitted for brevity but is unchanged.
-// The key fixes are in getAllPeople and getPerson to correctly construct the user object.
 export async function getPersonByEmail(email: string): Promise<Person | null> {
     try {
         const peopleCollection = collection(db, 'people');

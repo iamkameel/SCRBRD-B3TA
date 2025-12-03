@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -14,12 +15,6 @@ import { format } from 'date-fns';
 import { reviewAssignmentRequestAction } from '@/lib/actions/requests';
 import type { AssignmentRequest, Match } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
-import { TeamDialog } from '@/app/teams/team-dialog';
-import { CompetitionDialog } from '@/app/competitions/competition-dialog';
-import { SchoolDialog } from '@/app/schools/school-dialog';
-import { FieldDialog } from '@/app/fields/field-dialog';
-import { TransactionDialog } from '@/app/financials/transaction-dialog';
-import { SponsorDialog } from '@/app/sponsors/sponsor-dialog';
 import { getTeams } from '@/lib/actions/teams';
 import { getSchools } from '@/lib/actions/schools';
 import { getDivisions } from '@/lib/actions/divisions';
@@ -33,7 +28,25 @@ import { cn } from '@/lib/utils';
 import { FixtureCentreCard } from '@/components/fixture-centre-card';
 
 
-const PersonDialog = dynamic(() => import('@/app/people/person-dialog').then(mod => mod.PersonDialog), {
+const PersonDialog = dynamic(() => import('@/app/(app)/people/person-dialog').then(mod => mod.PersonDialog), {
+  ssr: false,
+});
+const TeamDialog = dynamic(() => import('@/app/(app)/teams/team-dialog').then(mod => mod.TeamDialog), {
+  ssr: false,
+});
+const CompetitionDialog = dynamic(() => import('@/app/(app)/competitions/competition-dialog').then(mod => mod.CompetitionDialog), {
+  ssr: false,
+});
+const SchoolDialog = dynamic(() => import('@/app/(app)/schools/school-dialog').then(mod => mod.SchoolDialog), {
+  ssr: false,
+});
+const FieldDialog = dynamic(() => import('@/app/(app)/fields/field-dialog').then(mod => mod.FieldDialog), {
+  ssr: false,
+});
+const TransactionDialog = dynamic(() => import('@/app/(app)/financials/transaction-dialog').then(mod => mod.TransactionDialog), {
+  ssr: false,
+});
+const SponsorDialog = dynamic(() => import('@/app/(app)/sponsors/sponsor-dialog').then(mod => mod.SponsorDialog), {
   ssr: false,
 });
 

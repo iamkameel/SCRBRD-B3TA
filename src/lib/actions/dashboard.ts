@@ -44,7 +44,7 @@ export async function getAdminDashboardData() {
         getCompetitions(),
         getSchools(),
         getTeams(),
-        getAllPeople(), // <-- CORRECTED: Use getAllPeople instead of getPlayers
+        getAllPeople(),
         getFields(),
         getMatches(),
         getVehicles(),
@@ -123,7 +123,7 @@ export async function getSportsmasterDashboardData() {
     ] = await Promise.all([
         getCompetitions(),
         getTeams(),
-        getAllPeople(), // <-- CORRECTED: Use getAllPeople for consistency
+        getAllPeople(),
         getFields(),
         getPendingAssignmentRequests(),
         getMatches(),
@@ -307,7 +307,7 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
                 const now = new Date();
                 nextMatch = teamMatches
                     .filter(m => m.status === 'scheduled' && m.dateTime >= now)
-                    .sort((a, b) => a.dateTime.getTime() - b.date.getTime())[0] || null;
+                    .sort((a, b) => a.date.getTime() - b.date.getTime())[0] || null;
             }
             
             return {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -52,13 +53,10 @@ export default function DashboardPage() {
       return <DashboardSkeleton />;
   }
 
-  // This is the key check. If `person` is still null after loading,
-  // it means the Firestore document doesn't exist for this user.
   if (!person) {
     return <WelcomeCard />;
   }
 
-  // A more robust check for a "complete" profile
   const isProfileIncomplete = !person.firstName || !person.lastName || !person.roles || person.roles.length === 0;
   if (isProfileIncomplete) {
       return <WelcomeCard />;
@@ -98,7 +96,6 @@ export default function DashboardPage() {
     case 'SCHOOL_ADMIN':
       return <SpectatorDashboard />;
     default:
-      // A safe default for any other roles
       return <SpectatorDashboard />;
   }
 }
