@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import { getSponsors } from '@/lib/actions/sponsors';

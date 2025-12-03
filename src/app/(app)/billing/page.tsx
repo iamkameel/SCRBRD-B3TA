@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import BillingClient from './client';

@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import { getSchools } from '@/lib/actions/schools';
