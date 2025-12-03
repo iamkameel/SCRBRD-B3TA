@@ -1,19 +1,29 @@
+
 'use server';
 
 import UserManagementClient from './client';
-import { getPlayers } from '@/lib/actions/players';
-import { getPerson } from '@/lib/actions/players';
+import { getAllPeople, getPerson } from '@/lib/actions/players';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { getUserId } from '@/lib/server-auth';
 import type { Person } from '@/lib/data';
 
+// Helper function to serialize date objects
+const serializePerson = (person: Person): Person => {
+    return {
+        ...person,
+        dateOfBirth: person.dateOfBirth ? person.dateOfBirth.toISOString() as any : undefined,
+        developmentPlanGeneratedAt: person.developmentPlanGeneratedAt ? person.developmentPlanGeneratedAt.toISOString() as any : undefined,
+        // Add any other date fields here if they exist
+    };
+};
+
 
 export default async function UserManagementPage() {
     const userId = await getUserId();
-    const user = userId ? await getPerson(userId) : null;
+    const userResult = userId ? await getPerson(userId) : null;
 
-    if (!user) {
+    if (!userResult) {
          return (
             <Card className="w-full max-w-md mx-auto mt-16">
                 <CardHeader className="text-center">
@@ -26,10 +36,10 @@ export default async function UserManagementPage() {
             </Card>
         );
     }
-    
+
     const authorizedRoles = ['Admin', 'Sportsmaster', 'System Architect'];
 
-    if (!user.roles.some(r => authorizedRoles.includes(r))) {
+    if (!userResult.roles.some(r => authorizedRoles.includes(r))) {
         return (
             <Card className="w-full max-w-md mx-auto mt-16">
                 <CardHeader className="text-center">
@@ -43,6 +53,11 @@ export default async function UserManagementPage() {
         );
     }
     
-    const users = await getPlayers();
-    return <UserManagementClient users={users} currentUser={user} />;
+    const users = await getAllPeople();
+    
+    // Serialize the user objects to make them safe to pass to a Client Component
+    const serializableUsers = users.map(serializePerson);
+    const serializableCurrentUser = serializePerson(userResult);
+    
+    return <UserManagementClient users={serializableUsers} currentUser={serializableCurrentUser} />;
 }
