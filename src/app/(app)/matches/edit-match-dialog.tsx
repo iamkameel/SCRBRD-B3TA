@@ -47,7 +47,7 @@ export function EditMatchDialog({ match, teams, competitions, fields, open, onOp
       teamBId: match.teamBId,
       competitionId: match.competitionId,
       fieldId: match.fieldId,
-      dateTime: match.dateTime,
+      dateTime: new Date(match.dateTime),
       time: format(new Date(match.dateTime), "HH:mm"),
       status: match.status,
       statusReason: match.statusReason || "",
