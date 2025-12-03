@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -49,7 +48,7 @@ export function EditMatchDialog({ match, teams, competitions, fields, open, onOp
       competitionId: match.competitionId,
       fieldId: match.fieldId,
       dateTime: match.dateTime,
-      time: format(match.dateTime, "HH:mm"),
+      time: format(new Date(match.dateTime), "HH:mm"),
       status: match.status,
       statusReason: match.statusReason || "",
     },
@@ -62,7 +61,7 @@ export function EditMatchDialog({ match, teams, competitions, fields, open, onOp
   React.useEffect(() => {
     if (match) {
         form.reset({
-            teamAId: match.teamAId, teamBId: match.teamBId, competitionId: match.competitionId, fieldId: match.fieldId, dateTime: match.dateTime, time: format(match.dateTime, "HH:mm"), status: match.status, statusReason: match.statusReason || "",
+            teamAId: match.teamAId, teamBId: match.teamBId, competitionId: match.competitionId, fieldId: match.fieldId, dateTime: new Date(match.dateTime), time: format(new Date(match.dateTime), "HH:mm"), status: match.status, statusReason: match.statusReason || "",
         });
     }
   }, [match, form]);

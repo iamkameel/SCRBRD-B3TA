@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -43,13 +42,13 @@ export function MatchCard({ match, onEdit, onDelete, onAssignScorer, isAdmin, ca
                         <CardTitle className="text-lg">
                              <Link href={`/matches/${match.matchId}`} className="hover:underline leading-tight block">
                                 <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName[0]}</AvatarFallback></Avatar>
+                                    <Avatar className="h-6 w-6"><AvatarImage src={match.teamALogoUrl} /><AvatarFallback>{match.teamAName?.[0]}</AvatarFallback></Avatar>
                                     <span className="truncate">{match.teamAName}</span>
                                 </div>
                                 <div className="text-xs text-muted-foreground font-normal pl-8 my-0.5">vs</div>
                                 <div className="flex items-center gap-2">
                                     <Avatar className="h-6 w-6"><AvatarImage src={match.teamBLogoUrl} /><AvatarFallback>{match.teamBName?.[0]}</AvatarFallback></Avatar>
-                                    <span className="truncate">{match.teamBName}</span>
+                                    <span className="truncate">{match.teamBName || 'TBD'}</span>
                                 </div>
                              </Link>
                         </CardTitle>
@@ -68,11 +67,11 @@ export function MatchCard({ match, onEdit, onDelete, onAssignScorer, isAdmin, ca
                  <div className="text-sm text-muted-foreground space-y-2">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 flex-shrink-0" />
-                        <span>{isClient ? format(match.dateTime, "PPP") : '\u00A0'}</span>
+                        <span>{isClient ? format(new Date(match.dateTime), "PPP") : '\u00A0'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{isClient ? format(match.dateTime, "p") : '\u00A0'} at {match.fieldName}</span>
+                        <span className="truncate">{isClient ? format(new Date(match.dateTime), "p") : '\u00A0'} at {match.fieldName}</span>
                     </div>
                 </div>
             </CardContent>

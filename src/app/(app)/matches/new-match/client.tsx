@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -81,9 +80,11 @@ export default function NewMatchClient({ teams, competitions, fields, seasons = 
 
   const availableCompetitions = React.useMemo(() => {
     if (!selectedDate || !seasons) return [];
-    const activeSeason = seasons.find(s => 
-        s.active && selectedDate >= s.startDate && selectedDate <= s.endDate
-    );
+    const activeSeason = seasons.find(s => {
+      const startDate = new Date(s.startDate);
+      const endDate = new Date(s.endDate);
+      return s.active && selectedDate >= startDate && selectedDate <= endDate
+    });
     if (!activeSeason) return [];
     return competitions.filter(c => c.seasonId === activeSeason.seasonId);
   }, [selectedDate, seasons, competitions]);

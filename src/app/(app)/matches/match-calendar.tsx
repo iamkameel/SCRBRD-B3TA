@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -19,12 +18,12 @@ export function MatchCalendar({ matches }: { matches: Match[] }) {
 
   const selectedDayMatches = React.useMemo(() => {
     if (!date) return [];
-    return matches.filter((match) => isSameDay(match.dateTime, date))
-                  .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+    return matches.filter((match) => isSameDay(new Date(match.dateTime), date))
+                  .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
   }, [date, matches]);
 
   const matchDays = React.useMemo(() => {
-    return matches.map((match) => match.dateTime);
+    return matches.map((match) => new Date(match.dateTime));
   }, [matches]);
 
   return (
@@ -57,7 +56,7 @@ export function MatchCalendar({ matches }: { matches: Match[] }) {
                         {selectedDayMatches.map(match => (
                              <li key={match.matchId} className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
                                 <Link href={`/matches/${match.matchId}`} className="font-semibold hover:underline block">{match.teamAName} vs {match.teamBName}</Link>
-                                <p className="text-sm text-muted-foreground">{isClient ? format(match.dateTime, 'p') : '\u00A0'} at {match.fieldName}</p>
+                                <p className="text-sm text-muted-foreground">{isClient ? format(new Date(match.dateTime), 'p') : '\u00A0'} at {match.fieldName}</p>
                                 <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="capitalize mt-2">{match.status}</Badge>
                              </li>
                         ))}
