@@ -152,9 +152,9 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
         const kameelTempId = 'p_kameel';
         const kameelData = sampleData.people.find(p => p.personId === kameelTempId);
         if (kameelData) {
+            // This ensures the temp ID 'p_kameel' maps to the currently logged-in user's actual UID
             idMap.set(kameelTempId, actorId);
         }
-
 
         const idKeyMap: { [key: string]: string } = {
             schools: 'schoolId', divisions: 'divisionId', seasons: 'seasonId', fields: 'fieldId',
@@ -175,6 +175,15 @@ export async function migrateSampleDataAction(): Promise<{ success: boolean, mes
                 const tempId = (item as any)[idKey as keyof typeof item];
 
                 if (collName === 'people' && tempId === kameelTempId) {
+                     // Get the user's specific data from sampleData
+                    const { personId: _, ...kameelItemData } = kameelData!;
+                    // **CRITICAL FIX**: Ensure the userId field inside the doc matches the doc ID (actorId)
+                    const dataToSave = { ...kameelItemData, userId: actorId };
+                    
+                    const docRef = doc(db, 'people', actorId);
+                    batch.set(docRef, dataToSave);
+                    itemCount++;
+                    await commitBatchIfNeeded();
                     continue; 
                 }
                 
@@ -561,3 +570,5 @@ export async function exportDataAction(subsetName: SubsetName): Promise<{ csv?: 
         return { error: `Failed to export ${subsetName} data.` };
     }
 }
+
+    
