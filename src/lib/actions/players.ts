@@ -24,10 +24,13 @@ export async function getPlayers(): Promise<Person[]> {
   if (!currentUser) return [];
 
   const peopleCollection = collection(db, 'people');
-  
+  let q;
+
+  // Admins and System Architects should see all people.
   if (currentUser.roles.includes('Admin') || currentUser.roles.includes('System Architect')) {
+      q = query(peopleCollection);
       try {
-        const peopleSnapshot = await getDocs(peopleCollection);
+        const peopleSnapshot = await getDocs(q);
         return peopleSnapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -42,6 +45,7 @@ export async function getPlayers(): Promise<Person[]> {
       }
   }
 
+  // Sportsmasters see people in their assigned schools.
   if (currentUser.activeRole === 'Sportsmaster') {
       if (!currentUser.assignedSchools || currentUser.assignedSchools.length === 0) {
           return [];
@@ -49,12 +53,14 @@ export async function getPlayers(): Promise<Person[]> {
       
       try {
         const peopleIds = new Set<string>();
+        // Get staff assigned directly to the school
         const staffQuery = query(peopleCollection, where('assignedSchools', 'array-contains-any', currentUser.assignedSchools));
         const staffSnapshot = await getDocs(staffQuery);
         staffSnapshot.forEach(doc => {
             peopleIds.add(doc.id);
         });
         
+        // Get players on teams within those schools
         const teamsQuery = query(collection(db, 'teams'), where("schoolId", "in", currentUser.assignedSchools));
         const teamsSnapshot = await getDocs(teamsQuery);
         const accessibleTeamIds = new Set(teamsSnapshot.docs.map(doc => doc.id));
@@ -103,6 +109,7 @@ export async function getPlayers(): Promise<Person[]> {
       }
   }
   
+  // Default: other roles see all users for now, can be refined further if needed
   try {
     const peopleSnapshot = await getDocs(peopleCollection);
     return peopleSnapshot.docs.map(doc => {
