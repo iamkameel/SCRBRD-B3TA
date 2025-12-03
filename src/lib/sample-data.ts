@@ -258,16 +258,6 @@ export const sampleData = {
 };
 
 export const sampleLineupData = {
-    "match_live_test": {
-        teamA: {
-            teamId: 'WBHS_open_1xi',
-            playerIds: Array.from({length: 11}, (_, i) => `WBHS_open_1xi_${(i + 1).toString().padStart(2, '0')}`)
-        },
-        teamB: {
-            teamId: 'DHS_open_1xi',
-            playerIds: Array.from({length: 11}, (_, i) => `DHS_open_1xi_${(i + 1).toString().padStart(2, '0')}`)
-        }
-    },
     "live_scoring_demo": {
         teamA: {
             teamId: 'WBHS_open_1xi',
