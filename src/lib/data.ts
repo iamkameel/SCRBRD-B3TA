@@ -1,5 +1,4 @@
 
-
 import type { PlayerDevelopmentPlanOutput } from '@/ai/schemas';
 import type { PlayerStats } from './data';
 
@@ -74,6 +73,39 @@ export interface PersonSkills {
   physical: PhysicalSkills;
 }
 
+export type RoleScope = 'SYSTEM' | 'SCHOOL' | 'TEAM' | 'FIXTURE' | 'TRIP' | 'FACILITY' | 'PERSON';
+
+export interface Role {
+  roleId: string;
+  code: string;
+  label: string;
+  description: string;
+  roleCategoryId: string;
+  defaultScope: RoleScope;
+  isAssignable: boolean;
+}
+
+export interface RoleCategory {
+  roleCategoryId: string;
+  code: string;
+  name: string;
+  displayOrder: number;
+}
+
+export interface RoleAssignment {
+  assignmentId: string;
+  personId: string;
+  roleId: string; // The ID of the role from the 'roles' collection
+  roleCode: string; // The unique code of the role (e.g., 'COACH', 'SYSTEM_ARCHITECT')
+  contextType: RoleScope;
+  contextId?: string; // ID of the school, team, fixture, person, etc.
+  contextName?: string; // Denormalized name for easier display
+  isPrimary: boolean;
+  isActive: boolean;
+  seasonId?: string;
+  startDate?: Date;
+  endDate?: Date;
+}
 
 export interface Person {
   personId: string;
@@ -89,8 +121,9 @@ export interface Person {
     phone: string;
   };
   profileImageUrl?: string;
-  roles: string[];
-  activeRole: string;
+  roles: string[]; // This will now store role CODES for easy checking in security rules.
+  activeRole: string; // This will store the active role CODE.
+  roleAssignments?: RoleAssignment[]; // Rich role assignments, added client-side
   assignedSchools?: string[];
   physicalAttributes?: {
     heightCm?: number;
@@ -115,6 +148,7 @@ export interface Person {
   usedInviteCode?: string;
   requestedPlayerLink?: string;
 }
+
 
 export interface School {
   schoolId: string;
