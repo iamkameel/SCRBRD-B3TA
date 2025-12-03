@@ -16,6 +16,25 @@ import { getUserId } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
 import { getTeams, getTeamRoster } from './teams';
 
+export async function getAllPeople(): Promise<Person[]> {
+    // This is a new, simplified function to get ALL people in the system.
+    // It is intended for use by global administrative components like the main dashboard.
+    try {
+        const peopleSnapshot = await getDocs(collection(db, 'people'));
+        return peopleSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                personId: doc.id,
+                ...data,
+                dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
+            } as Person
+        });
+    } catch (error) {
+        console.error("Error fetching all people:", error);
+        return [];
+    }
+}
+
 export async function getPlayers(): Promise<Person[]> {
   const userId = await getUserId();
   if (!userId) return [];

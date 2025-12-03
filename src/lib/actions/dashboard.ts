@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getLeaderboards as getLeaderboardsFromService, getTeamStandings as getTeamStandingsFromService } from '@/lib/services/stats-service';
@@ -9,7 +10,7 @@ import { getCompetitions } from './competitions';
 import { getPendingAssignmentRequests } from './requests';
 import { getSessionsByTeam } from './sessions';
 import { cache } from 'react';
-import { getPlayers, getPersonTeamAssignments, getPerson } from './players';
+import { getAllPeople, getPersonTeamAssignments, getPerson } from './players';
 import { getVehicles, getMatchTransportAssignments } from './transport';
 import { getUserId } from '@/lib/server-auth';
 import { getSchools } from './schools';
@@ -42,7 +43,7 @@ export async function getAdminDashboardData() {
         getCompetitions(),
         getSchools(),
         getTeams(),
-        getPlayers(),
+        getAllPeople(), // <-- CORRECTED: Use getAllPeople instead of getPlayers
         getFields(),
         getMatches(),
         getVehicles(),
@@ -64,6 +65,7 @@ export async function getAdminDashboardData() {
         if (person.roles.includes('Player')) {
             playerCount++;
         }
+        // A person can be a player AND staff, so these are not mutually exclusive counts.
         if (person.roles.some(r => staffRoles.has(r))) {
             staffCount++;
         }
@@ -120,7 +122,7 @@ export async function getSportsmasterDashboardData() {
     ] = await Promise.all([
         getCompetitions(),
         getTeams(),
-        getPlayers(),
+        getAllPeople(), // <-- CORRECTED: Use getAllPeople for consistency
         getFields(),
         getPendingAssignmentRequests(),
         getMatches(),
@@ -159,8 +161,7 @@ export async function getTeamManagerDashboardData(personId: string) {
         };
     }
     
-    const teams = await Promise.all(managedTeamIds.map(id => getTeam(id)));
-    const validTeams = teams.filter((t): t is Team => t !== null);
+    const teams = (await Promise.all(managedTeamIds.map(id => getTeam(id)))).filter((t): t is Team => t !== null);
 
     const [
         allTeamMatches,
@@ -200,7 +201,7 @@ export async function getTeamManagerDashboardData(personId: string) {
     }
 
     const kpis = {
-        managedTeams: validTeams.length,
+        managedTeams: teams.length,
         upcomingFixtures: upcomingMatches.length,
         pendingAvailability,
         transportNeeded,
@@ -209,7 +210,7 @@ export async function getTeamManagerDashboardData(personId: string) {
     return {
         kpis,
         upcomingMatches: upcomingMatches.slice(0, 5),
-        teams: validTeams,
+        teams: teams,
         pendingRequests,
     };
 }
