@@ -8,7 +8,8 @@ import { adminApp } from '@/lib/firebase-admin';
 // This is the correct, secure way to get the user's ID on the server.
 // It verifies the session cookie from the headers.
 export async function getUserId(): Promise<string | null> {
-  const session = headers().get('Authorization')?.split('Bearer ')[1];
+  const headerList = headers();
+  const session = headerList.get('Authorization')?.split('Bearer ')[1];
   if (!session) {
     // This will be the case for unauthenticated users.
     return null;
