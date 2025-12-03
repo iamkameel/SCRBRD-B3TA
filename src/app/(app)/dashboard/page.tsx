@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -65,38 +64,38 @@ export default function DashboardPage() {
       return <WelcomeCard />;
   }
 
-  const role = person.activeRole || person.roles[0] || 'Spectator';
+  const role = person.activeRole || person.roles[0] || 'SPECTATOR';
 
   switch (role) {
-    case 'System Architect':
-    case 'Admin':
+    case 'SYSTEM_ARCHITECT':
+    case 'ADMIN':
       return <AdminDashboard />;
-    case 'Sportsmaster':
+    case 'SPORTSMASTER':
       return <SportsmasterDashboard />;
-    case 'Coach':
-    case 'Team Manager':
+    case 'COACH':
+    case 'TEAM_MANAGER':
       return <CoachDashboard />;
-    case 'Player':
-    case 'Assistant Coach':
-    case 'Captain':
+    case 'PLAYER':
+    case 'ASSISTANT_COACH':
+    case 'CAPTAIN':
        return <PlayerDashboard />;
-    case 'Umpire':
-    case 'Scorer':
+    case 'UMPIRE':
+    case 'SCORER':
       return <UmpireScorerDashboard />;
-    case 'Driver':
+    case 'DRIVER':
       return <DriverDashboard />;
-    case 'Grounds-Keeper':
+    case 'GROUNDS_KEEPER':
       return <GroundskeeperDashboard />;
-    case 'Guardian':
+    case 'GUARDIAN':
       return <GuardianDashboard />;
-    case 'Trainer':
+    case 'TRAINER':
       return <TrainerDashboard />;
-    case 'First Aid':
-    case 'Doctor':
-    case 'Physiotherapist':
+    case 'FIRST_AID':
+    case 'DOCTOR':
+    case 'PHYSIOTHERAPIST':
       return <MedicalDashboard />;
-    case 'Spectator':
-    case 'School Admin':
+    case 'SPECTATOR':
+    case 'SCHOOL_ADMIN':
       return <SpectatorDashboard />;
     default:
       // A safe default for any other roles
