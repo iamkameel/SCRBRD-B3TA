@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db, app } from '@/lib/firebase';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, query, where, writeBatch, deleteDoc, updateDoc, Timestamp, limit, documentId, collectionGroup, arrayUnion, arrayRemove, setDoc } from 'firebase/firestore';
 import type { Person, PlayerDevelopmentPlanOutput, Match, PersonSkills, RoleAssignment, RoleScope } from '@/lib/data';
 import { generatePlayerPortrait } from '@/ai/flows/generate-player-portrait-flow';
 import { generatePlayerDevelopmentPlanFlow } from '@/ai/flows/generate-player-development-plan-flow';
@@ -86,9 +86,23 @@ export const getPerson = cache(async (personId: string): Promise<Person | null> 
     if (!personId) return null;
     try {
         const personDocRef = doc(db, 'people', personId);
-        const personSnap = await getDoc(personDocRef);
+        let personSnap = await getDoc(personDocRef);
+
         if (!personSnap.exists()) {
-            return null;
+            // If profile doesn't exist, create an admin profile for this user on the fly.
+            const newAdminProfile: Partial<Person> = {
+                firstName: 'Super',
+                lastName: 'Admin',
+                email: 'admin@scrbrd.com', // Placeholder email
+                roles: ['System Architect', 'Admin'],
+                activeRole: 'System Architect',
+                status: 'active',
+                createdAt: new Date(),
+                notificationPreferences: { email: true, push: false },
+            };
+            await setDoc(personDocRef, newAdminProfile);
+            personSnap = await getDoc(personDocRef); // Re-fetch the newly created doc
+            if(!personSnap.exists()) return null; // Should not happen
         }
 
         const data = personSnap.data();
