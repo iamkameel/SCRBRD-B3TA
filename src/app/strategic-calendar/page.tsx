@@ -3,13 +3,15 @@
 
 import StrategicCalendarClient from './client';
 import { getPerson } from '@/lib/actions/players';
-import { getUserId } from '@/lib/server-auth';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { collection, getDocs, query, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Match, Competition, Division, Field } from '@/lib/data';
 import { getFields } from '@/lib/actions/fields';
+import { getTeams } from '@/lib/actions/teams';
+import { getUserId } from '@/lib/server-auth';
+
 
 async function getAllMatches(): Promise<Match[]> {
   try {
