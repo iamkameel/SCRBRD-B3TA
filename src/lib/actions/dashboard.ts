@@ -14,6 +14,7 @@ import { getAllPeople, getPersonTeamAssignments, getPerson } from './players';
 import { getVehicles, getMatchTransportAssignments } from './transport';
 import { getUserId } from '@/lib/server-auth';
 import { getSchools } from './schools';
+import { getPersonLinks } from '@/lib/actions/players';
 
 // Wrapper functions to maintain the existing public API for the dashboard
 export async function getLeaderboards(filters: { divisionId?: string; teamClass?: string; seasonId?: string; competitionId?: string; teamId?: string } = {}): Promise<{ topRunScorers: LeaderboardPlayer[], topWicketTakers: LeaderboardPlayer[] }> {
@@ -306,7 +307,7 @@ export const getGuardianDashboardData = cache(async (personId: string): Promise<
                 const now = new Date();
                 nextMatch = teamMatches
                     .filter(m => m.status === 'scheduled' && m.dateTime >= now)
-                    .sort((a, b) => a.date.getTime() - b.date.getTime())[0] || null;
+                    .sort((a, b) => a.dateTime.getTime() - b.date.getTime())[0] || null;
             }
             
             return {
