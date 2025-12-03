@@ -12,6 +12,16 @@ import { db } from '@/lib/firebase';
 import { differenceInYears } from 'date-fns';
 import type { Person, Team } from '@/lib/data';
 
+// Helper function to serialize date objects
+const serializePerson = (person: Person): Person => {
+    return {
+        ...person,
+        // Convert Date objects to ISO strings, which are serializable
+        dateOfBirth: person.dateOfBirth ? person.dateOfBirth.toISOString() as any : undefined,
+        developmentPlanGeneratedAt: person.developmentPlanGeneratedAt ? person.developmentPlanGeneratedAt.toISOString() as any : undefined,
+    };
+};
+
 export default async function PeoplePage() {
   const [people, userId, schools, teams, divisions] = await Promise.all([
     getAllPeople(),
@@ -85,6 +95,10 @@ export default async function PeoplePage() {
       divisionName,
     };
   });
+  
+  // Serialize the user objects to make them safe to pass to a Client Component
+  const serializablePeople = augmentedPeople.map(serializePerson);
+  const serializableCurrentUser = user ? serializePerson(user) : null;
 
-  return <PeopleClient people={augmentedPeople} user={user} schools={schools} teams={teams} divisions={divisions} canManage={canManage} canEditUsers={canEditUsers} />;
+  return <PeopleClient people={serializablePeople} user={serializableCurrentUser} schools={schools} teams={teams} divisions={divisions} canManage={canManage} canEditUsers={canEditUsers} />;
 }
