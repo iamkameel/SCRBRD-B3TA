@@ -19,7 +19,7 @@ service cloud.firestore {
     }
     
     function hasRole(role) {
-      return getUserData(request.auth.uid).roles[role] == true;
+      return role in getUserData(request.auth.uid).roles;
     }
 
     function isSystemArchitect() {
@@ -35,7 +35,7 @@ service cloud.firestore {
     }
     
     function canManageData() {
-      return isSportsmaster();
+        return isSportsmaster();
     }
     
     // People: Users can read/update their own profile. Admins can read/write any.
