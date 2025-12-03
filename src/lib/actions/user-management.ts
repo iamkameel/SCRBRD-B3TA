@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -40,7 +39,7 @@ export async function addRoleToUserAction(targetUserId: string, role: string) {
     await logAuditEvent({
         actorId: adminId,
         action: 'user.role.add',
-        target: { type: 'Person', id: targetUserId, name: `${person?.firstName} ${person?.lastName}`},
+        target: { type: 'Person', id: targetUserId, name: `\${person?.firstName} \${person?.lastName}`},
         details: { roleAdded: role }
     });
     
@@ -78,9 +77,11 @@ export async function removeRoleFromUserAction(targetUserId: string, role: strin
     await logAuditEvent({
         actorId: adminId,
         action: 'user.role.remove',
-        target: { type: 'Person', id: targetUserId, name: `${person?.firstName} ${person?.lastName}`},
+        target: { type: 'Person', id: targetUserId, name: `\${person?.firstName} \${person?.lastName}`},
         details: { roleRemoved: role }
     });
     
     revalidatePath('/user-management');
 }
+
+    

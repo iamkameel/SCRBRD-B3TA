@@ -157,13 +157,13 @@ export async function getMatchTransportAssignments(matchId: string): Promise<Tra
         vehicleName: vehicleData.name,
         vehicleType: vehicleData.type,
         driverId: assignData.driverId,
-        driverName: `${driverData.firstName} ${driverData.lastName}`,
+        driverName: `\${driverData.firstName} \${driverData.lastName}`,
       };
     });
 
     return (await Promise.all(assignmentsPromises)).filter((a): a is TransportAssignment => a !== null);
   } catch (error) {
-    console.error(`Error fetching transport assignments for match ${matchId}:`, error);
+    console.error("Error fetching transport assignments for match \${matchId}:", error);
     return [];
   }
 }
@@ -178,7 +178,7 @@ export async function getAllTransportAssignments(): Promise<FullTransportAssignm
             allAssignments.push({
                 ...assignment,
                 matchId: match.matchId,
-                matchName: `${match.teamAName} vs ${match.teamBName}`,
+                matchName: `\${match.teamAName} vs \${match.teamBName}`,
                 dateTime: match.dateTime,
             });
         }
@@ -212,13 +212,13 @@ export async function getAssignmentsForDriver(personId: string): Promise<FullTra
             return {
                 assignmentId: docSnap.id,
                 matchId: match.matchId,
-                matchName: `${match.teamAName} vs ${match.teamBName}`,
+                matchName: `\${match.teamAName} vs \${match.teamBName}`,
                 dateTime: match.dateTime,
                 vehicleId: assignmentData.vehicleId,
                 vehicleName: vehicleSnap.data().name,
                 vehicleType: vehicleSnap.data().type,
                 driverId: personId,
-                driverName: `${driver.firstName} ${driver.lastName}`
+                driverName: `\${driver.firstName} \${driver.lastName}`
             };
         });
         const results = (await Promise.all(assignmentsPromises)).filter((a): a is FullTransportAssignment => a !== null);
@@ -276,7 +276,7 @@ export async function assignVehicleToMatchAction(matchId: string, data: z.infer<
     console.error("Error assigning vehicle to match:", error);
     throw new Error("Could not assign vehicle to match.");
   }
-  revalidatePath(`/matches/${matchId}`);
+  revalidatePath(`/matches/\${matchId}`);
 }
 
 export async function removeVehicleFromMatchAction(matchId: string, assignmentId: string) {
@@ -301,5 +301,7 @@ export async function removeVehicleFromMatchAction(matchId: string, assignmentId
         console.error("Error removing transport assignment:", error);
         throw new Error("Could not remove transport assignment.");
     }
-    revalidatePath(`/matches/${matchId}`);
+    revalidatePath(`/matches/\${matchId}`);
 }
+
+    
