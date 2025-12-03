@@ -347,10 +347,11 @@ export default function AdminDashboard() {
             <FieldDialog mode="add" open={dialogState.field} onOpenChange={(open) => setDialogState(s => ({...s, field: open}))} schools={dialogData.schools} groundkeepers={dialogData.groundskeeper} />
             <TransactionDialog mode="add" open={dialogState.financial} onOpenChange={(open) => setDialogState(s => ({...s, financial: open}))} />
             <SponsorDialog mode="add" open={dialogState.sponsor} onOpenChange={(open) => setDialogState(s => ({...s, sponsor: open}))} />
-            {isPending && <p>Loading...</p>}
+            {loading && <p>Loading...</p>}
             
         </>
     )}
     </>
   );
 }
+
