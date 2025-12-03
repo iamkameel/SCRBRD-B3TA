@@ -1,18 +1,15 @@
 
-
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Settings, LogOut, ChevronDown, User, Bell, Calendar, Loader2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
   SheetClose,
-  SheetTitle,
-  SheetDescription,
 } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -40,7 +37,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ScrollArea } from './ui/scroll-area';
-import { ROLE_GROUPS } from '@/lib/roles';
 import { getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 import { CommandSearch } from './command-search';
 
@@ -58,31 +54,26 @@ function RoleSwitcher() {
     const handleRoleChange = (role: string) => {
         if (role === person.activeRole) return;
         
-        // Optimistically update the client-side state
         const oldPersonState = person;
         setPerson({ ...person, activeRole: role });
 
         startTransition(async () => {
             if (!person?.personId) {
                 toast({ title: "Error", description: "User profile ID not found.", variant: "destructive" });
-                setPerson(oldPersonState); // Revert on failure
+                setPerson(oldPersonState);
                 return;
             }
             try {
                 await updateActiveRoleAction(person.personId, role);
-                // Force a reload to ensure all server components re-render with the new role context
                 router.refresh();
                 toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
             } catch (error) {
-                // Revert on failure
                 setPerson(oldPersonState);
                 toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });
             }
         });
     };
     
-    const userRoles = new Set(person.roles);
-
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -95,23 +86,12 @@ function RoleSwitcher() {
                 <DropdownMenuRadioGroup value={person.activeRole} onValueChange={handleRoleChange}>
                     <DropdownMenuLabel>Switch Active Role</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {ROLE_GROUPS.map(group => {
-                        const userRolesInGroup = group.roles.filter(role => userRoles.has(role.id));
-                        if (userRolesInGroup.length === 0) return null;
-
-                        return (
-                            <React.Fragment key={group.group}>
-                                <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-xs font-bold uppercase tracking-wider">
-                                    {group.group}
-                                </DropdownMenuLabel>
-                                {userRolesInGroup.map(role => (
-                                    <DropdownMenuRadioItem key={role.id} value={role.id} className="capitalize">
-                                        {role.label}
-                                    </DropdownMenuRadioItem>
-                                ))}
-                            </React.Fragment>
-                        );
-                    })}
+                    {person.roleAssignments?.map(assignment => (
+                      <DropdownMenuRadioItem key={assignment.assignmentId} value={assignment.roleCode} className="capitalize">
+                          {assignment.roleCode.replace(/_/g, ' ').toLowerCase()}
+                          {assignment.contextName && <span className="text-xs text-muted-foreground ml-2">({assignment.contextName})</span>}
+                      </DropdownMenuRadioItem>
+                    ))}
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -125,7 +105,7 @@ function NotificationBell() {
     const { person } = useAuth();
     const pathname = usePathname();
 
-    const isOfficial = person?.roles.includes('Umpire') || person?.roles.includes('Scorer');
+    const isOfficial = person?.roles.includes('UMPIRE') || person?.roles.includes('SCORER');
 
     React.useEffect(() => {
         if (isOfficial && person?.personId) {
@@ -186,7 +166,7 @@ export function Header() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const activeRole = person?.activeRole || 'Player'; // Default to a non-admin role
+    const activeRole = person?.activeRole || 'SPECTATOR'; 
 
     const { topLevel: topLevelNavItems, groups: navGroups } = getNavConfig(activeRole);
 
@@ -241,14 +221,10 @@ export function Header() {
                             
                             <Accordion type="multiple" defaultValue={defaultOpenItems} className="w-full">
                                 {navGroups.map((group) => {
-                                    const isAdminRole = activeRole === 'Admin' || activeRole === 'System Architect';
-                                    const isSportsmaster = activeRole === 'Sportsmaster';
+                                    const isAdminRole = activeRole === 'ADMIN' || activeRole === 'SYSTEM_ARCHITECT';
                                     if (group.adminOnly && !isAdminRole) return null;
                                     
-                                    const visibleItems = group.items.filter(item => {
-                                        if (item.adminOnly && !isAdminRole && !isSportsmaster) return false;
-                                        return true;
-                                    });
+                                    const visibleItems = group.items.filter(item => !(item.adminOnly && !isAdminRole));
                                     if (visibleItems.length === 0) return null;
                                     
                                     return (

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -21,7 +20,7 @@ export function Sidebar() {
   const { person } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeRole = person?.activeRole || 'Player'; // Default to a non-admin role
+  const activeRole = person?.activeRole || 'SPECTATOR';
 
   const { topLevel: topLevelNavItems, groups: navGroups } = getNavConfig(activeRole);
   
@@ -63,16 +62,12 @@ export function Sidebar() {
           <Accordion type="multiple" defaultValue={defaultOpenItems} className="w-full">
               {navGroups.map((group) => {
                   const isAdminRole = activeRole === 'Admin' || activeRole === 'System Architect';
-                  const isSportsmaster = activeRole === 'Sportsmaster';
-
+                  
                   if (group.adminOnly && !isAdminRole) {
                       return null;
                   }
                   
-                  const visibleItems = group.items.filter(item => {
-                      if (item.adminOnly && !isAdminRole) return false;
-                      return true;
-                  });
+                  const visibleItems = group.items.filter(item => !(item.adminOnly && !isAdminRole));
 
                   if (visibleItems.length === 0) return null;
 
@@ -85,7 +80,7 @@ export function Sidebar() {
                           <AccordionContent className="pl-4 pt-1 pb-0">
                               <div className="flex flex-col gap-1">
                                   {visibleItems.map((item) => {
-                                      const isActive = item.href === currentHref;
+                                      const isActive = item.href === currentHref || (item.href !== '/dashboard' && pathname.startsWith(item.href.split('?')[0]));
                                       return (
                                           <Link
                                               key={item.label}
