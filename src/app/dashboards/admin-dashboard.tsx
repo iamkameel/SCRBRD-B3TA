@@ -5,7 +5,7 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle, HeartPulse, Wrench, Medal, Mail, ThumbsUp, ThumbsDown, Loader2, Handshake } from 'lucide-react';
+import { Users, Shield, Trophy, MapPin, Database, Bus, Building, ClipboardList, UserCog, Banknote, ArrowRight, User, PlusCircle, HeartPulse, Wrench, Medal, Mail, ThumbsUp, ThumbsDown, Loader2, Handshake, Presentation, FileClock } from 'lucide-react';
 import { getAdminDashboardData } from '@/lib/actions/dashboard';
 import DashboardSkeleton from '@/app/loading';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,13 @@ const TransactionDialog = dynamic(() => import('@/app/(app)/financials/transacti
 const SponsorDialog = dynamic(() => import('@/app/(app)/sponsors/sponsor-dialog').then(mod => mod.SponsorDialog), {
   ssr: false,
 });
+const DivisionDialog = dynamic(() => import('@/app/(app)/divisions/client').then(mod => mod.default), {
+  ssr: false,
+});
+const SeasonDialog = dynamic(() => import('@/app/(app)/seasons/client').then(mod => mod.default), {
+  ssr: false,
+});
+
 
 const GradientBase = ({ children }: { children: React.ReactNode }) => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#icon-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
@@ -167,6 +174,8 @@ export default function AdminDashboard() {
       sponsor: false,
       person: false,
       userRole: false,
+      division: false,
+      season: false,
   });
 
   const handleReview = (requestId: string, decision: 'approve' | 'deny') => {
@@ -228,7 +237,9 @@ export default function AdminDashboard() {
     { href: "/teams", title: "Team Management", description: "Create teams and manage rosters.", icon: GradientUsersIcon, onAddClick: () => setDialogState(s => ({...s, team: true})) },
     { href: "/competitions", title: "Competition Management", description: "Set up leagues, cups, and tournaments.", icon: GradientTrophy, onAddClick: () => setDialogState(s => ({...s, competition: true})) },
     { href: "/matches", title: "Fixture Management", description: "Schedule and update all matches.", icon: GradientClipboardList },
-    { href: "/schools", title: "School & Division Management", description: "Manage schools, divisions, and seasons.", icon: GradientBuilding, onAddClick: () => setDialogState(s => ({...s, school: true})) },
+    { href: "/schools", title: "School Management", description: "Manage schools participating in the league.", icon: GradientBuilding, onAddClick: () => setDialogState(s => ({...s, school: true})) },
+    { href: "/divisions", title: "Division Management", description: "Manage age groups and competitive divisions.", icon: GradientBuilding, onAddClick: () => setDialogState(s => ({...s, division: true})) },
+    { href: "/seasons", title: "Season Management", description: "Define start and end dates for seasons.", icon: GradientBuilding, onAddClick: () => setDialogState(s => ({...s, season: true})) },
     { href: "/fields", title: "Field & Venue Management", description: "Manage all available grounds.", icon: GradientMapPin, onAddClick: () => setDialogState(s => ({...s, field: true})) },
     { href: "/transport", title: "Transport Hub", description: "Manage vehicles and driver assignments.", icon: GradientBus },
     { href: "/financials", title: "Financials", description: "Track income and expenses.", icon: GradientBanknote, onAddClick: () => setDialogState(s => ({...s, financial: true})) },
@@ -336,24 +347,8 @@ export default function AdminDashboard() {
             <FieldDialog mode="add" open={dialogState.field} onOpenChange={(open) => setDialogState(s => ({...s, field: open}))} schools={dialogData.schools} groundkeepers={dialogData.groundskeeper} />
             <TransactionDialog mode="add" open={dialogState.financial} onOpenChange={(open) => setDialogState(s => ({...s, financial: open}))} />
             <SponsorDialog mode="add" open={dialogState.sponsor} onOpenChange={(open) => setDialogState(s => ({...s, sponsor: open}))} />
-            {dialogState.person && (
-                <PersonDialog
-                    mode="add"
-                    person={undefined}
-                    currentUser={person}
-                    open={dialogState.person}
-                    onOpenChange={(open) => setDialogState(s => ({ ...s, person: open }))}
-                    schools={dialogData.schools}
-                />
-            )}
-            {dialogState.userRole && (
-                <UserRoleDialog
-                    users={dialogData.allPeople}
-                    currentUser={person}
-                    open={dialogState.userRole}
-                    onOpenChange={(open) => setDialogState(s => ({ ...s, userRole: open }))}
-                />
-            )}
+            {isPending && <p>Loading...</p>}
+            
         </>
     )}
     </>

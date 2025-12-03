@@ -66,12 +66,12 @@ export default function DashboardPage() {
 
   switch (role) {
     case 'SYSTEM_ARCHITECT':
-    case 'ADMIN':
+    case 'Admin':
       return <AdminDashboard />;
     case 'SPORTSMASTER':
       return <SportsmasterDashboard />;
     case 'COACH':
-    case 'TEAM_MANAGER':
+    case 'Team Manager':
       return <CoachDashboard />;
     case 'PLAYER':
     case 'ASSISTANT_COACH':
