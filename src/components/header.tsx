@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,8 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/icons/logo';
 import { useAuth } from '@/lib/auth-context';
 import { updateActiveRoleAction } from '@/lib/actions/players';
-import { signOutAction } from '@/lib/actions/auth';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import {
   Accordion,
@@ -39,6 +41,7 @@ import {
 import { ScrollArea } from './ui/scroll-area';
 import { getUnconfirmedAssignmentsCount } from '@/lib/actions/alerts';
 import { CommandSearch } from './command-search';
+import { ROLE_CATEGORIES } from '@/lib/roles';
 
 
 function RoleSwitcher() {
@@ -47,15 +50,15 @@ function RoleSwitcher() {
     const router = useRouter();
     const [isPending, startTransition] = React.useTransition();
 
-    if (!person || !person.roles || person.roles.length <= 1) {
+    if (!person || !person.roleAssignments || person.roleAssignments.length <= 1) {
         return <p className="text-sm font-medium text-primary-foreground/90">{person?.activeRole || 'User'}</p>;
     }
-
-    const handleRoleChange = (role: string) => {
-        if (role === person.activeRole) return;
+    
+    const handleRoleChange = (roleCode: string) => {
+        if (roleCode === person.activeRole) return;
         
-        const oldPersonState = person;
-        setPerson({ ...person, activeRole: role });
+        const oldPersonState = { ...person };
+        setPerson({ ...person, activeRole: roleCode });
 
         startTransition(async () => {
             if (!person?.personId) {
@@ -64,9 +67,9 @@ function RoleSwitcher() {
                 return;
             }
             try {
-                await updateActiveRoleAction(person.personId, role);
+                await updateActiveRoleAction(person.personId, roleCode);
                 router.refresh();
-                toast({ title: "Role Switched", description: `You are now acting as a ${role}.` });
+                toast({ title: "Role Switched", description: `You are now acting as a ${roleCode}.` });
             } catch (error) {
                 setPerson(oldPersonState);
                 toast({ title: "Error", description: "Could not switch role.", variant: "destructive" });
@@ -74,6 +77,27 @@ function RoleSwitcher() {
         });
     };
     
+    const groupedRoles = person.roleAssignments.reduce((acc, assignment) => {
+        const roleInfo = ALL_ROLES.find(r => r.code === assignment.roleCode);
+        if (!roleInfo) return acc;
+
+        const category = ROLE_CATEGORIES.find(c => c.roleCategoryId === roleInfo.roleCategoryId);
+        if (!category) return acc;
+        
+        if (!acc[category.name]) {
+            acc[category.name] = [];
+        }
+        acc[category.name].push({ ...assignment, roleLabel: roleInfo.label });
+        
+        return acc;
+    }, {} as Record<string, ({ roleLabel: string } & typeof person.roleAssignments[0])[]>);
+    
+    const sortedCategories = Object.keys(groupedRoles).sort((a,b) => {
+        const catA = ROLE_CATEGORIES.find(c => c.name === a)?.displayOrder || 99;
+        const catB = ROLE_CATEGORIES.find(c => c.name === b)?.displayOrder || 99;
+        return catA - catB;
+    });
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -86,18 +110,22 @@ function RoleSwitcher() {
                 <DropdownMenuRadioGroup value={person.activeRole} onValueChange={handleRoleChange}>
                     <DropdownMenuLabel>Switch Active Role</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {person.roleAssignments?.map(assignment => (
-                      <DropdownMenuRadioItem key={assignment.assignmentId} value={assignment.roleCode} className="capitalize">
-                          {assignment.roleCode.replace(/_/g, ' ').toLowerCase()}
-                          {assignment.contextName && <span className="text-xs text-muted-foreground ml-2">({assignment.contextName})</span>}
-                      </DropdownMenuRadioItem>
+                    {sortedCategories.map(categoryName => (
+                        <DropdownMenuGroup key={categoryName}>
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">{categoryName}</DropdownMenuLabel>
+                            {groupedRoles[categoryName].map(assignment => (
+                                <DropdownMenuRadioItem key={assignment.assignmentId} value={assignment.roleCode} className="capitalize flex flex-col items-start">
+                                    <span>{assignment.roleLabel.replace(/_/g, ' ').toLowerCase()}</span>
+                                    {assignment.contextName && <span className="text-xs text-muted-foreground -mt-1">({assignment.contextName})</span>}
+                                </DropdownMenuRadioItem>
+                            ))}
+                        </DropdownMenuGroup>
                     ))}
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>
     );
 }
-
 
 function NotificationBell() {
     const [count, setCount] = React.useState(0);
@@ -178,7 +206,7 @@ export function Header() {
     );
 
     const handleSignOut = async () => {
-      await signOutAction();
+      await signOut(auth);
       router.push('/login');
     };
 
@@ -234,7 +262,7 @@ export function Header() {
                                             <AccordionContent className="pt-1 pb-0 pl-8">
                                                 <div className="flex flex-col gap-1">
                                                     {visibleItems.map((item) => {
-                                                        const isActive = pathname.startsWith(item.href.split('?')[0]);
+                                                        const isActive = pathname.startsWith(item.href);
                                                         return (
                                                             <SheetClose asChild key={item.label}>
                                                                 <Link

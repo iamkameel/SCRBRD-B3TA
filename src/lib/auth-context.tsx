@@ -2,47 +2,13 @@
 'use client';
 
 import * as React from 'react';
-import type { User } from 'firebase/auth';
-import type { Person, RoleAssignment } from '@/lib/data';
-import { ALL_ROLES } from './roles';
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
+import type { Person } from '@/lib/data';
+import { app } from '@/lib/firebase';
+import { getPerson } from '@/lib/actions/players';
+import DashboardSkeleton from '@/app/loading';
 
-// --- OVERRIDE: Authentication is disabled. ---
-// This context now provides a mock System Architect user by default.
-// This allows full access to the application for development and testing
-// without needing to go through a login flow.
-
-const MOCK_USER_ID = "EAycpBbKwRaRI7RALEQkb33eOu63";
-
-const mockRoleAssignments: RoleAssignment[] = ALL_ROLES.map(role => ({
-  assignmentId: `assign_${role.code}`,
-  personId: MOCK_USER_ID,
-  roleId: role.roleId,
-  roleCode: role.code,
-  contextType: role.defaultScope,
-  isPrimary: role.code === 'SYSTEM_ARCHITECT',
-  isActive: true,
-}));
-
-const mockPerson: Person = {
-  personId: MOCK_USER_ID,
-  firstName: "Kameel",
-  lastName: "Kalyan",
-  displayName: "Kameel",
-  email: "kameel@maverickdesign.co.za",
-  roles: ALL_ROLES.map(r => r.code), // Keep the simple array for security rules
-  activeRole: 'SYSTEM_ARCHITECT',
-  roleAssignments: mockRoleAssignments, // Add the rich assignment data
-  assignedSchools: [],
-  notificationPreferences: { email: true, push: false },
-  userId: MOCK_USER_ID,
-};
-
-const mockUser = {
-  uid: MOCK_USER_ID,
-  email: "kameel@maverickdesign.co.za",
-  displayName: "Kameel Kalyan",
-} as User;
-
+const auth = getAuth(app);
 
 interface AuthContextType {
   user: User | null;
@@ -59,14 +25,37 @@ const AuthContext = React.createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [person, setPerson] = React.useState<Person | null>(mockPerson);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [person, setPerson] = React.useState<Person | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
+      if (user) {
+        setUser(user);
+        const personProfile = await getPerson(user.uid);
+        setPerson(personProfile);
+      } else {
+        setUser(null);
+        setPerson(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const value = {
-    user: mockUser,
+    user,
     person,
-    loading: false, // Never show loading, user is always "logged in"
+    loading,
     setPerson,
   };
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <AuthContext.Provider value={value}>

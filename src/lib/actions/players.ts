@@ -15,7 +15,7 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
 import { getTeams, getTeamRoster } from './teams';
-import { ALL_ROLES, ROLE_GROUPS, ROLE_CATEGORIES } from '../roles';
+import { ALL_ROLES } from '../roles';
 
 export async function getAllPeople(): Promise<Person[]> {
     try {
@@ -42,12 +42,6 @@ export async function getAllPeople(): Promise<Person[]> {
 
 
 export async function getPlayers(): Promise<Person[]> {
-  const userId = await getUserId();
-  if (!userId) return [];
-
-  const currentUser = await getPerson(userId);
-  if (!currentUser) return [];
-  
   return getAllPeople();
 }
 
@@ -395,7 +389,7 @@ export async function updatePlayerAction(data: z.infer<typeof updatePlayerSchema
 export async function deletePlayerAction(personId: string) {
   const currentUserId = await getUserId();
   const currentUser = currentUserId ? await getPerson(currentUserId) : null;
-  if (!currentUser || !(currentUser.roles.includes('ADMIN') || currentUser.roles.includes('SYSTEM_ARCHITECT'))) {
+  if (!currentUser || !(currentUser.roles.includes('Admin') || currentUser.roles.includes('System Architect'))) {
     throw new Error("Only administrators can delete people.");
   }
   
@@ -447,7 +441,7 @@ export async function generateAndSavePlayerPortraitAction(personId: string) {
     if (!person) throw new Error("Person not found or permission denied.");
 
     const currentUser = currentUserId ? await getPerson(currentUserId) : null;
-    const canManage = currentUser?.roles.includes('ADMIN') || currentUser?.roles.includes('SYSTEM_ARCHITECT') || false;
+    const canManage = currentUser?.roles.includes('Admin') || currentUser?.roles.includes('System Architect') || false;
 
     if (currentUserId !== personId && !canManage) {
         throw new Error("You do not have permission to generate a portrait for this user.");
@@ -588,7 +582,7 @@ export async function generatePlayerDevelopmentPlanAction(personId: string): Pro
     }
 }
 
-export async function updateActiveRoleAction(personId: string, role: string) {
+export async function updateActiveRoleAction(personId: string, roleCode: string) {
     const userId = await getUserId();
     if (!userId || personId !== userId) {
         throw new Error("You can only change your own active role.");
@@ -602,12 +596,12 @@ export async function updateActiveRoleAction(personId: string, role: string) {
     }
 
     const personData = personSnap.data() as Person;
-    if (!personData.roles.includes(role)) {
+    if (!personData.roles.includes(roleCode)) {
         throw new Error("Cannot switch to a role the user does not have.");
     }
 
     try {
-        await updateDoc(personRef, { activeRole: role });
+        await updateDoc(personRef, { activeRole: roleCode });
         revalidatePath('/', 'layout');
     } catch (error) {
         console.error("Error updating active role:", error);
@@ -620,7 +614,7 @@ export async function assignPersonToSchoolAction(personId: string, schoolId: str
   if (!currentUserId) throw new Error("You must be logged in to perform this action.");
 
   const currentUser = await getPerson(currentUserId);
-  const permittedRoles = ['ADMIN', 'SPORTSMASTER', 'TEAM_MANAGER', 'SYSTEM_ARCHITECT'];
+  const permittedRoles = ['Admin', 'Sportsmaster', 'Team Manager', 'System Architect'];
   if (!currentUser || !currentUser.roles.some(role => permittedRoles.includes(role))) {
       throw new Error("You do not have permission to perform this action.");
   }
@@ -664,7 +658,7 @@ export async function updatePlayerSkillsAction(personId: string, skills: PersonS
     if (!userId) throw new Error("User not authenticated.");
 
     const person = await getPerson(userId);
-    if (!person || (!person.roles.includes('ADMIN') && !person.roles.includes('COACH'))) {
+    if (!person || (!person.roles.includes('Admin') && !person.roles.includes('Coach'))) {
         throw new Error("You do not have permission to edit player skills.");
     }
     
