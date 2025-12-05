@@ -15,19 +15,22 @@ import { cache } from 'react';
 import { getUserId } from '@/lib/server-auth';
 import { logAuditEvent } from './audit';
 import { getTeams, getTeamRoster } from './teams';
-import { ALL_ROLES } from '../roles';
+import { ALL_ROLES, ROLE_CATEGORIES } from '../roles';
 
 export async function getAllPeople(): Promise<Person[]> {
     try {
         const peopleSnapshot = await getDocs(collection(db, 'people'));
         const people = await Promise.all(peopleSnapshot.docs.map(async doc => {
             const data = doc.data();
+            const roles = Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['SPECTATOR'];
             const person: Person = {
                 personId: doc.id,
                 ...data,
                 dateOfBirth: data.dateOfBirth ? (data.dateOfBirth as Timestamp).toDate() : undefined,
-                roles: Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['SPECTATOR'],
-                activeRole: data.activeRole || (Array.isArray(data.roles) && data.roles.length > 0 ? data.roles[0] : 'SPECTATOR'),
+                roles: roles,
+                activeRole: data.activeRole && roles.includes(data.activeRole) 
+                    ? data.activeRole 
+                    : roles[0],
             } as Person;
             
             return person;
