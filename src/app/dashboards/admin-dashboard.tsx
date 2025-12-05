@@ -23,7 +23,7 @@ import { getCompetitions } from '@/lib/actions/competitions';
 import { getFields } from '@/lib/actions/fields';
 import { getPlayers, getPeopleByRole } from '@/lib/actions/players';
 import type { Team, School, Division, Season, Person, Field, Competition } from '@/lib/data';
-import { UserRoleDialog } from '@/app/user-management/user-role-dialog';
+import { UserRoleDialog } from '@/app/(app)/user-management/user-role-dialog';
 import { cn } from '@/lib/utils';
 import { FixtureCentreCard } from '@/components/fixture-centre-card';
 

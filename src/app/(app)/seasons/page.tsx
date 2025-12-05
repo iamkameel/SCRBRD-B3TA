@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getSeasons } from '@/lib/actions/seasons';
@@ -6,11 +7,18 @@ import { getPerson } from '@/lib/actions/players';
 import { getUserId } from '@/lib/server-auth';
 
 export default async function SeasonsPage() {
-  const seasons = await getSeasons();
+  const seasonsData = await getSeasons();
   
   const userId = await getUserId();
   const user = userId ? await getPerson(userId) : null;
   const isAdmin = user?.roles.some(r => ['Admin', 'Sportsmaster', 'System Architect'].includes(r)) ?? false;
 
-  return <SeasonsClient seasons={seasons} isAdmin={isAdmin} />;
+  // Serialize date objects to be safe to pass to a client component
+  const seasons = seasonsData.map(season => ({
+    ...season,
+    startDate: season.startDate.toISOString(),
+    endDate: season.endDate.toISOString(),
+  }));
+
+  return <SeasonsClient seasons={seasons as any} isAdmin={isAdmin} />;
 }

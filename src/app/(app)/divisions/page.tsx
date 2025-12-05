@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getDivisions } from '@/lib/actions/divisions';

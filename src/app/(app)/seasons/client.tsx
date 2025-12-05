@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -60,7 +61,7 @@ function SeasonDialog({ mode, season, open, onOpenChange }: { mode: 'add' | 'edi
   const form = useForm<SeasonFormValues>({
     resolver: zodResolver(seasonSchema),
     defaultValues: mode === 'edit' && season ? {
-      name: season.name, startDate: season.startDate, endDate: season.endDate, active: season.active
+      name: season.name, startDate: new Date(season.startDate), endDate: new Date(season.endDate), active: season.active
     } : {
       name: "", active: false,
     },
@@ -162,8 +163,8 @@ export default function SeasonsClient({ seasons, isAdmin }: { seasons: Season[],
                   seasons.map((season) => (
                     <TableRow key={season.seasonId}>
                       <TableCell className="font-medium">{season.name}</TableCell>
-                      <TableCell>{format(season.startDate, "PPP")}</TableCell>
-                      <TableCell>{format(season.endDate, "PPP")}</TableCell>
+                      <TableCell>{format(new Date(season.startDate), "PPP")}</TableCell>
+                      <TableCell>{format(new Date(season.endDate), "PPP")}</TableCell>
                       <TableCell><Badge variant={season.active ? "default" : "secondary"}>{season.active ? "Active" : "Inactive"}</Badge></TableCell>
                       {isAdmin && <TableCell className="text-right">
                         <DropdownMenu>

@@ -25,5 +25,3 @@ export default async function CompetitionsPage() {
   
   return <CompetitionsClient competitions={competitions} seasons={seasons} divisions={divisions} teams={teams} sponsors={sponsors} isAdmin={isAdmin} />;
 }
-
-    

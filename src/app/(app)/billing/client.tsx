@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -5,16 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FileText, FileBarChart, Receipt, FileClock, Wrench } from 'lucide-react';
+import { PlusCircle, FileText, FileBarChart, Receipt, FileClock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import type { Invoice, School } from '@/lib/data';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -90,7 +83,7 @@ export default function BillingClient({ initialInvoices, clients }: BillingClien
                           <TableRow key={invoice.invoiceId}>
                               <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                               <TableCell>{invoice.clientName}</TableCell>
-                              <TableCell>{format(invoice.issueDate, 'dd MMM yyyy')}</TableCell>
+                              <TableCell>{format(new Date(invoice.issueDate), 'dd MMM yyyy')}</TableCell>
                               <TableCell><Badge variant="secondary" className={cn("capitalize", statusVariant)}>{invoice.status}</Badge></TableCell>
                               <TableCell className="text-right font-mono">{formatCurrency(invoice.total)}</TableCell>
                           </TableRow>

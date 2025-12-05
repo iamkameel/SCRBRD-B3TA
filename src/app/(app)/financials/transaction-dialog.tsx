@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -36,14 +37,14 @@ export function TransactionDialog({ mode, transaction, open, onOpenChange }: { m
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: mode === 'edit' && transaction ? { ...transaction } : {
+    defaultValues: mode === 'edit' && transaction ? { ...transaction, date: new Date(transaction.date) } : {
       type: 'Expense', category: 'Other', date: new Date(),
     },
   });
   
   React.useEffect(() => {
     if (open) {
-        form.reset(mode === 'edit' && transaction ? transaction : { description: '', amount: 0, type: 'Expense', category: 'Other', date: new Date() });
+        form.reset(mode === 'edit' && transaction ? {...transaction, date: new Date(transaction.date)} : { description: '', amount: 0, type: 'Expense', category: 'Other', date: new Date() });
     }
   }, [transaction, mode, open, form]);
 

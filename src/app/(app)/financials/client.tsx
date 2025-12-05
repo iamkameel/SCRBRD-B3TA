@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -80,7 +81,7 @@ export default function FinancialsClient({ transactions, isAdmin }: { transactio
                 {transactions.length > 0 ? (
                   transactions.map((t) => (
                     <TableRow key={t.transactionId}>
-                      <TableCell>{format(t.date, 'dd MMM yyyy')}</TableCell>
+                      <TableCell>{format(new Date(t.date), 'dd MMM yyyy')}</TableCell>
                       <TableCell className="font-medium">{t.description}</TableCell>
                       <TableCell><Badge variant="outline">{t.category}</Badge></TableCell>
                       <TableCell><Badge variant={t.type === 'Income' ? 'secondary' : 'destructive'} className={t.type === 'Income' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'}>{t.type}</Badge></TableCell>
